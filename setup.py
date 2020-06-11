@@ -1,15 +1,17 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 
 setup(
-    name="helloworld",
-    version="0.0.1",
-    description="Say hello!",
-    py_modules=["hello world"],
-    package_dir={"": "src"},
+    name="redbrick-sdk",
+    url="https://github.com/dereklukacs/redbrick-sdk",
+    version="0.0.6",
+    description="RedBrick platform python SDK!",
+    py_modules=["redbrick"],
+    packages=find_packages(),
+    # package_dir={"": "redbrick"},
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=[
@@ -26,6 +28,7 @@ setup(
             "black==19.10b0",
             "pydocstyle==5.0.2",
             "pycodestyle==2.6.0",
+            "twine==3.1.1",
         ]
     },
 )

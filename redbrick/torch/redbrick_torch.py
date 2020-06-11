@@ -6,7 +6,8 @@ from torchvision import transforms  # type: ignore
 from torch.utils.data import Dataset
 from random import randint
 
-from redbrick.labelset.loader import LabelsetLoader, BBOXImageItem
+from redbrick.labelset.loader import LabelsetLoader
+from redbrick.base import BBOXImageItem
 
 
 class RedbrickTorchDataset(Dataset):

@@ -9,7 +9,7 @@ import cv2  # type: ignore
 import numpy as np  # type: ignore
 
 from redbrick.api import DataPoint
-from redbrick.temp_classes import LABELS
+from redbrick.coco_classes import COCO_INSTANCE_CATEGORY_NAMES
 
 
 @dataclass
@@ -37,7 +37,7 @@ def _url_to_image(url: str) -> np.ndarray:
     image = np.asarray(bytearray(resp.raw.read()), dtype="uint8")
 
     image = cv2.imdecode(image, cv2.IMREAD_COLOR)
-    # for some reason rgb channels are flipped
+    # cv2 returns a BGR image, need to convert to RGB
     # the copy operation makes the memory contiguous for tensorify-ing
     return np.flip(image, axis=2).copy()
 
@@ -50,7 +50,9 @@ def get_category_array(labels: List) -> np.ndarray:
     """
     categories = [label["category"] for label in labels]
 
-    category_index = [LABELS.index(categ[0][0]) for categ in categories]
+    category_index = [
+        COCO_INSTANCE_CATEGORY_NAMES.index(categ[0][0]) for categ in categories
+    ]
     category_array = np.array(category_index)
     return category_array
 
