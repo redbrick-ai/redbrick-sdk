@@ -6,10 +6,10 @@ Derek Lukacs, 2020
 
 from .client import RedBrickClient
 import redbrick.api
-import redbrick.base
+
+# import redbrick.base
 import redbrick.client
 import redbrick.labelset
-import redbrick.torch
 
 
 def init(api_key: str) -> None:

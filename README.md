@@ -25,64 +25,60 @@ label_set = redbrick.labelset.LabelsetLoader(org_id="ORG_ID_HERE", label_set_nam
 
 label_set.show_random_image()
 
-# load all images and labels into memory
-all_images = []
+# load all images and labels into memory (not recommended for large labelsets)
+all_items = []
 for ii in range(label_set.number_of_datapoints()):
-    item = label_set.get_item(ii)
-    all_images.append(item)
+    item = label_set[ii]
+    all_items.append(item)
 
-label_set.show_image(all_images[0])
+# Showing some properties of the items returned by label_set
+example_item = all_items[-1]
+example_item.show_image()
+example_item.image.shape
+example_item.height
+example_item.width
+example_item.gt_boxes
+example_item.gt_boxes_classes
 
 ```
+You now all of the images and their labels in memory. Now you just need to plug this data in to your machine learning framework.
 
-## PyTorch
-A basic implementation of a PyTorch Dataset object is given below.
 
-This Dataset can be used with the PyTorch DataLoader to perform batching and multithreading.
+## Torch
+PyTorch has a Dataset class that can be subclassed. This can be used to connect the data in your RedBrick labelset
+to your model for training or inference.
 
-This example also demonstrates the redbrick.labelset.training function which creates LabelsetLoaders
-for train and test data.
+[https://pytorch.org/tutorials/beginner/data_loading_tutorial.html](https://pytorch.org/tutorials/beginner/data_loading_tutorial.html)
+
 ```python
-"""redbrick-sdk quickstart, PyTorch Dataset."""
-import redbrick
-from redbrick.torch.transforms import (
-    DetectoFormat,
-    MinMaxBoxes,
-    UnnormalizeBoxes,
-    RedbrickToTensor,
-)
-from redbrick.torch import RedbrickTorchDataset
-from torchvision.transforms import Compose
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
 
-redbrick.init(api_key="YOUR_API_KEY_HERE")
 
-train_set, test_set = redbrick.labelset.training(
-    org_id="ORG_ID_HERE",
-    label_set_name="NAME",
-    test_split=0.1,  # 10% of data will be held back for testing
-)
-transforms = Compose(
-    [
-        MinMaxBoxes(),  # [x1, y1, w, h] -> [x1, y1, x2, y2]
-        UnnormalizeBoxes(),  # Convert box points from [0,1] -> [0, image size]
-        RedbrickToTensor(),  # Convert image from np.ndarray to torch.tensor
-        DetectoFormat(),  # tuple(image, {"boxes": boxes, "labels": labels})
-    ]
-)
+class ExampleRedbrickTorchDataset(Dataset):
+    """A convenient way to train with pytorch using your data hosted on redbrick."""
 
-train_dataset = RedbrickTorchDataset(train_set, transforms=transforms)
-test_dataset = RedbrickTorchDataset(test_set, transforms=transforms)
+    def __init__(self, rb_loader, transforms=None) -> None:
+        """Construct RedbrickTorchDataset."""
+        self.loader = rb_loader
+        self.transforms = transforms
 
-training_data_loader = DataLoader(
-    train_dataset, shuffle=True, batch_size=20, num_workers=20
-)
+    def __len__(self):
+        """Get the number of datapoints available."""
+        return self.loader.number_of_datapoints()
+
+    def __getitem__(self, idx):
+        """Get a specific item."""
+        item = self.loader[idx]
+        if self.transforms:
+            item = self.transforms(item)
+        return item
 
 ```
+This dataset can then be used with a PyTorch DataLoader for batching.
 
+Note: Proper transformations will need to be implemented in order to convert data from the redbrick-sdk DataPoint format
+to whatever format your model expects.
 
-## Developing
+## TensorFlow
 
-```bash
-pip install -e .[dev]
-```
+TODO: reference implementation of `tf.data`

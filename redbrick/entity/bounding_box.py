@@ -12,6 +12,10 @@ class BoundingBox:
         self._wnorm: float
         self._hnorm: float
 
+    def __repr__(self) -> str:
+        """Get a string representation of object."""
+        return f"BBOX<xmin={self._xnorm}, ymin={self._ynorm}, width={self._wnorm}, height={self._hnorm}>"
+
     def as_array(self, min_max: bool = False) -> np.ndarray:
         """Get array representation of bounding box."""
         if not min_max:
@@ -39,7 +43,7 @@ class BoundingBox:
     def from_array(cls, obj: np.ndarray) -> "BoundingBox":
         """Convert a numpy array to BoundingBox."""
         if not obj.shape == (1, 4):
-            raise ValueError("box.shape must (1,4)")
+            raise ValueError("box.shape must be (1,4)")
         for val in obj:
             if val > 1 or val < 0:
                 raise ValueError("Box points must be [0,1]")
