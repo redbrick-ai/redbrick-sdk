@@ -15,8 +15,6 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=[
-        "torch==1.5.0",
-        "torchvision==0.6.0",
         "opencv-python==4.2.0.34",
         "numpy==1.18.5",
         "matplotlib==3.2.1",
