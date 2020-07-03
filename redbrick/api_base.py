@@ -15,3 +15,6 @@ class RedBrickApiBase(ABC):
     @abstractmethod
     def get_datapoint(self, org_id: str, label_set_name: str, dp_id: str) -> DataPoint:
         """Get all relevant information related to a datapoint."""
+
+    # @abstractmethod
+    # def get_remote_labeling_tasks(self, org_id: str, project_id: str, stage_name: str, num_tasks: int) ->

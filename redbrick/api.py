@@ -21,7 +21,7 @@ class RedBrickApi(RedBrickApiBase):
         if custom_url:
             self.url = custom_url
         else:
-            self.url = "https://redbrick-backend.herokuapp.com/graphql/"
+            self.url = "https://redbrick-prod-1.herokuapp.com/graphql/"
 
     def get_datapoint_ids(self, org_id: str, label_set_name: str) -> List[str]:
         """Get a list of datapoint ids in labelset."""
@@ -102,44 +102,3 @@ class RedBrickApi(RedBrickApiBase):
         except ValueError:
             print(response.content)
             print(response.status_code)
-
-
-# @dataclass
-# class GraphQLQuery:
-#     """Query to execute on GraphQL."""
-
-#     query: str
-#     variables: Dict
-
-
-# @dataclass
-# class DataPoint:
-#     """A Datapoint returned by GraphQL query."""
-
-#     image_url: str
-#     labels: str
-
-
-# def get_datapoint_ids(org_id: str, label_set_name: str) -> List[str]:
-#     """Get all data points in the label set."""
-
-
-# def get_datapoint(org_id: str, label_set_name: str, dp_id: str) -> DataPoint:
-#     """Get data needed for a specific data point."""
-#     query_string = """
-#         query ($orgId: UUID!, $dpId: UUID!, $name:String!) {
-#             labelData(orgId: $orgId, dpId: $dpId, customGroupName: $name) {
-#                 blob
-#                 dataPoint {
-#                     items(presigned:true)
-#                 }
-#             }
-#         }
-#     """
-#     query_variables = {"orgId": org_id, "name": label_set_name, "dpId": dp_id}
-#     query = GraphQLQuery(query_string, query_variables)
-#     result = execute_query(query)
-#     return DataPoint(
-#         labels=result["labelData"]["blob"],
-#         image_url=result["labelData"]["dataPoint"]["items"][0],
-#     )
