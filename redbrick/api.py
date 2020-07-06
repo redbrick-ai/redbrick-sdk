@@ -21,7 +21,7 @@ class RedBrickApi(RedBrickApiBase):
         if custom_url:
             self.url = custom_url
         else:
-            self.url = "https://redbrick-backend.herokuapp.com/graphql/"
+            self.url = "https://redbrick-prod-1.herokuapp.com/graphql/"
 
     def get_datapoint_ids(self, org_id: str, label_set_name: str) -> List[str]:
         """Get a list of datapoint ids in labelset."""
