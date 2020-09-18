@@ -1,0 +1,17 @@
+from dataclasses import dataclass
+from .datapoint import DataPoint
+from abc import ABC, abstractmethod
+
+
+@dataclass
+class RemoteLabelTaskBase(ABC):
+    org_id: str
+    project_id: str
+    stage_name: str
+    task_id: str
+    dp_id: str
+
+    @abstractmethod
+    @property
+    def datapoint(self) -> DataPoint:
+        """Get the datapoint corresponding to this RemoteLabelTask."""
