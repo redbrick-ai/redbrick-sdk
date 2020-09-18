@@ -23,7 +23,7 @@ class RedBrickClient:
         """Construct instance of RedBrickClient."""
         if not api_key:
             if not RedBrickClient.instance:
-                raise Exception("Must specify api_key and org_id")
+                raise Exception("Must specify api_key")
             return
         if not RedBrickClient.instance:
             RedBrickClient.instance = RedBrickClient.__RedBrickClient(api_key)
