@@ -9,9 +9,10 @@ class RedBrickClient:
     class __RedBrickClient:
         """A private singleton for redbrick."""
 
-        def __init__(self, api_key: str) -> None:
+        def __init__(self, api_key: str, custom_url: Optional[str] = None) -> None:
             """Construct RedBrick client singleton."""
             self.api_key = api_key
+            self.custom_url = custom_url
 
         def __str__(self) -> str:
             """Get string representation."""
@@ -19,14 +20,16 @@ class RedBrickClient:
 
     instance: Optional[__RedBrickClient] = None
 
-    def __init__(self, api_key: Optional[str] = None,) -> None:
+    def __init__(
+        self, api_key: Optional[str] = None, url: Optional[str] = None
+    ) -> None:
         """Construct instance of RedBrickClient."""
         if not api_key:
             if not RedBrickClient.instance:
                 raise Exception("Must specify api_key")
             return
         if not RedBrickClient.instance:
-            RedBrickClient.instance = RedBrickClient.__RedBrickClient(api_key)
+            RedBrickClient.instance = RedBrickClient.__RedBrickClient(api_key, url)
         else:
             RedBrickClient.instance.api_key = api_key
 

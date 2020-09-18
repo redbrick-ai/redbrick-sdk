@@ -18,8 +18,12 @@ class RedBrickApi(RedBrickApiBase):
         """Construct RedBrickApi."""
         self.cache: Dict[str, Dict[str, Dict[str, DataPoint]]] = {}
         self.client = redbrick.client.RedBrickClient()
+        print(self.client.custom_url)
         if custom_url:
             self.url = custom_url
+        elif self.client.custom_url:
+
+            self.url = self.client.custom_url
         else:
             self.url = "https://redbrick-prod-1.herokuapp.com/graphql/"
 
@@ -71,6 +75,7 @@ class RedBrickApi(RedBrickApiBase):
 
         dpoint = DataPoint(org_id, label_set_name, dp_id, image)
         # convert labels and initialize ground truth
+        print(labels)
         dpoint.gt_boxes = [BoundingBox.from_remote(label["bbox2d"]) for label in labels]
         dpoint.gt_boxes_classes = [label["category"][0][0] for label in labels]
 
@@ -95,6 +100,7 @@ class RedBrickApi(RedBrickApiBase):
 
     def _execute_query(self, query: Dict) -> Any:
         """Execute a graphql query."""
+        print(self.url)
         headers = {"ApiKey": self.client.api_key}
         try:
             response = requests.post(self.url, headers=headers, json=query)
