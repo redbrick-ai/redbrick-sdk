@@ -6,6 +6,9 @@ from random import randint
 import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 from matplotlib import patches
+import os
+import datetime
+from tqdm import tqdm
 
 from redbrick.api import RedBrickApi
 from redbrick.entity import DataPoint
@@ -23,19 +26,43 @@ class LabelsetLoader:
         self.api_client = RedBrickApi(cache=False)
 
         print("Counting available data points... ", end="")
+        # TODO: Get taxonomy map stuff here
         if dp_ids:
+            # Labelset with user defined datapoint id's
             self.dp_ids = dp_ids
+            custom_group = self.api_client.get_custom_group(
+                self.org_id, self.label_set_name)
+            self.task_type = custom_group.task_type
+            self.data_type = custom_group.data_type
+            self.taxonomy = custom_group.taxonomy
+
         else:
-            self.dp_ids = self.api_client.get_datapoint_ids(
+            self.dp_ids, custom_group = self.api_client.get_datapoint_ids(
                 self.org_id, self.label_set_name
             )
+            self.task_type = custom_group.task_type
+            self.data_type = custom_group.data_type
+            self.taxonomy = custom_group.taxonomy
+
         print(len(self.dp_ids))
 
     def __getitem__(self, index: int) -> DataPoint:
         """Get information needed for a single item."""
-        return self.api_client.get_datapoint(
-            self.org_id, self.label_set_name, self.dp_ids[index]
+        dp = self.api_client.get_datapoint(
+            self.org_id, self.label_set_name, self.dp_ids[index], self.task_type, self.taxonomy
         )
+        return dp
+
+    def export(self):
+        """Export."""
+        print('Exporting labels...')
+        time = str(datetime.datetime.now())
+        dir = 'RB_Export_%s' % time
+        os.mkdir(dir)
+
+        for i in tqdm(range(len(self.dp_ids))):
+            dp = self.__getitem__(i)
+            plt.imsave(dir + '/' + str(self.dp_ids[i]) + '.png', dp.gt._mask)
 
     def number_of_datapoints(self) -> int:
         """Get number of datapoints."""

@@ -3,12 +3,12 @@
 import redbrick
 import json
 from dataclasses import dataclass, asdict
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 import requests
 import numpy as np  # type: ignore
 import cv2  # type: ignore
 from .api_base import RedBrickApiBase
-from .entity import DataPoint, BoundingBox
+from .entity import DataPoint, BoundingBox, CustomGroup
 
 
 class RedBrickApi(RedBrickApiBase):
@@ -18,16 +18,14 @@ class RedBrickApi(RedBrickApiBase):
         """Construct RedBrickApi."""
         self.cache: Dict[str, Dict[str, Dict[str, DataPoint]]] = {}
         self.client = redbrick.client.RedBrickClient()
-        print(self.client.custom_url)
         if custom_url:
             self.url = custom_url
         elif self.client.custom_url:
-
             self.url = self.client.custom_url
         else:
             self.url = "https://redbrick-prod-1.herokuapp.com/graphql/"
 
-    def get_datapoint_ids(self, org_id: str, label_set_name: str) -> List[str]:
+    def get_datapoint_ids(self, org_id: str, label_set_name: str) -> Tuple[List[str], CustomGroup]:
         """Get a list of datapoint ids in labelset."""
         query_string = """
             query ($orgId:UUID!, $name:String!) {
@@ -35,6 +33,48 @@ class RedBrickApi(RedBrickApiBase):
                     datapoints(skip:0, first:-1) {
                         dpId
                     }
+                    taskType, 
+                    dataType
+                    taxonomy {
+                    name
+                    version
+                    categories {
+                        name
+                        children {
+                        name
+                        classId
+                        children {
+                            name
+                            classId
+                            children {
+                            name
+                            classId
+                            }
+                        }
+                        }
+                    }
+                    }
+                }
+            }
+        """
+        query_variables = {"orgId": org_id, "name": label_set_name}
+        query = dict(query=query_string, variables=query_variables)
+
+        result = self._execute_query(query)
+
+        all_dp_ids = [dp["dpId"] for dp in result["customGroup"]["datapoints"]]
+        custom_group = CustomGroup(
+            result['customGroup']['taskType'], result['customGroup']['dataType'], result['customGroup']['taxonomy'])
+        return all_dp_ids, custom_group
+
+    def get_custom_group(self, org_id: str, label_set_name: str) -> CustomGroup:
+        """Get the details of a custom group object."""
+
+        query_string = """
+            query ($orgId:UUID!, $name:String!) {
+                customGroup(orgId: $orgId, name: $name) {
+                    taskType,
+                    dataType
                 }
             }
         """
@@ -44,10 +84,11 @@ class RedBrickApi(RedBrickApiBase):
 
         result = self._execute_query(query)
 
-        all_dp_ids = [dp["dpId"] for dp in result["customGroup"]["datapoints"]]
-        return all_dp_ids
+        custom_group = CustomGroup(
+            result['customGroup']['taskType'], result['customGroup']['dataType'])
+        return custom_group
 
-    def get_datapoint(self, org_id: str, label_set_name: str, dp_id: str) -> DataPoint:
+    def get_datapoint(self, org_id: str, label_set_name: str, dp_id: str, task_type: str, taxonomy: dict) -> DataPoint:
         """Get all relevant information related to a datapoint."""
         temp = self.cache.get(org_id, {}).get(label_set_name, {}).get(dp_id)
         if temp:
@@ -59,13 +100,16 @@ class RedBrickApi(RedBrickApiBase):
                     blob
                     dataPoint {
                         items(presigned:true)
-                    }
+                    },
+                    taskType
                 }
             }
         """
-        query_variables = {"orgId": org_id, "name": label_set_name, "dpId": dp_id}
+        query_variables = {"orgId": org_id,
+                           "name": label_set_name, "dpId": dp_id}
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
+
         # parse result
         image_url = result["labelData"]["dataPoint"]["items"][0]
         labels = json.loads(result["labelData"]["blob"])["items"][0]["labels"]
@@ -73,15 +117,17 @@ class RedBrickApi(RedBrickApiBase):
         # get image array
         image = self._url_to_image(image_url)
 
-        dpoint = DataPoint(org_id, label_set_name, dp_id, image)
+        dpoint = DataPoint(org_id, label_set_name, dp_id,
+                           image, task_type, labels, taxonomy)
         # convert labels and initialize ground truth
-        print(labels)
-        dpoint.gt_boxes = [BoundingBox.from_remote(label["bbox2d"]) for label in labels]
-        dpoint.gt_boxes_classes = [label["category"][0][0] for label in labels]
+        """dpoint.gt = [BoundingBox.from_remote(
+            label["bbox2d"]) for label in labels]
+        dpoint.gt_classes = [label["category"][0][0] for label in labels]
 
         self.cache[org_id] = self.cache.get(org_id, {})
-        self.cache[org_id][label_set_name] = self.cache[org_id].get(label_set_name, {})
-        self.cache[org_id][label_set_name][dp_id] = dpoint
+        self.cache[org_id][label_set_name] = self.cache[org_id].get(
+            label_set_name, {})
+        self.cache[org_id][label_set_name][dp_id] = dpoint"""
 
         return dpoint
 
@@ -100,7 +146,6 @@ class RedBrickApi(RedBrickApiBase):
 
     def _execute_query(self, query: Dict) -> Any:
         """Execute a graphql query."""
-        print(self.url)
         headers = {"ApiKey": self.client.api_key}
         try:
             response = requests.post(self.url, headers=headers, json=query)

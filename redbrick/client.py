@@ -29,7 +29,8 @@ class RedBrickClient:
                 raise Exception("Must specify api_key")
             return
         if not RedBrickClient.instance:
-            RedBrickClient.instance = RedBrickClient.__RedBrickClient(api_key, url)
+            RedBrickClient.instance = RedBrickClient.__RedBrickClient(
+                api_key, url)
         else:
             RedBrickClient.instance.api_key = api_key
 

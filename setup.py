@@ -19,6 +19,7 @@ setup(
         "numpy==1.18.5",
         "matplotlib==3.2.1",
         "requests==2.23.0",
+        "tqdm===4.49.0"
     ],
     extras_require={
         "dev": [

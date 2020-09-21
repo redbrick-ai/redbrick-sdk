@@ -37,14 +37,15 @@ example_item.show_image()
 example_item.image.shape
 example_item.height
 example_item.width
-example_item.gt_boxes
-example_item.gt_boxes_classes
+example_item.gt
+example_item.gt_classes
 
 ```
+
 You now all of the images and their labels in memory. Now you just need to plug this data in to your machine learning framework.
 
-
 ## Torch
+
 PyTorch has a Dataset class that can be subclassed. This can be used to connect the data in your RedBrick labelset
 to your model for training or inference.
 
@@ -74,6 +75,7 @@ class ExampleRedbrickTorchDataset(Dataset):
         return item
 
 ```
+
 This dataset can then be used with a PyTorch DataLoader for batching.
 
 Note: Proper transformations will need to be implemented in order to convert data from the redbrick-sdk DataPoint format
