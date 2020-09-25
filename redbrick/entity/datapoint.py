@@ -7,35 +7,35 @@ from matplotlib import patches
 
 from .bounding_box import BoundingBox
 from .segmentation import Segmentation
+from .taxonomy import TaxonomyEntry
 import copy
 
 
 class DataPoint:
     def __init__(
-        self, org_id: str, label_set_name: str, dp_id: str, image: np.ndarray, task_type: str, labels: dict, taxonomy: dict = {}
+        self, org_id: str, label_set_name: str, dp_id: str, image: np.ndarray, image_url: str, image_url_not_signed: str, task_type: str, labels: dict, taxonomy: Optional[TaxonomyEntry] = None
     ) -> None:
         """Construct DataPoint."""
         self.org_id = org_id
         self.label_set_name = label_set_name
         self.dp_id = dp_id
         self.image: np.ndarray = image
-        self.task_type = task_type
-        self.gt: Optional(List[Union(BoundingBox, Segmentation)]) = None
-        self.gt_classes: Optional(List(str)) = None
+        self.image_url: str = image_url
+        self.image_url_not_signed: str = image_url_not_signed
+        self.task_type: str = task_type
+        self.gt: Optional[Union[BoundingBox, Segmentation]] = None
+        self.gt_classes: Optional[List[str]] = None
         self.color_map = matplotlib.cm.get_cmap('tab10')
-        self.taxonomy: dict = taxonomy
+        self.taxonomy: Optional[TaxonomyEntry] = taxonomy
 
         # Set the ground truth of the datapoint
         if task_type == 'BBOX':
             # Bounding box labels
-            self.gt = [BoundingBox.from_remote(
-                label["bbox2d"]) for label in labels]
-            self.gt_classes = [label["category"][0][-1] for label in labels]
+            self.gt = BoundingBox.from_remote(labels, self.taxonomy)
 
         elif task_type == 'SEGMENTATION':
             # Segmentation labels
             self.gt = Segmentation.from_remote(labels, self.taxonomy)
-            self.gt_classes = [label["category"][0][-1] for label in labels]
 
     def __repr__(self) -> str:
         """Get a str representation of DataPoint."""
@@ -54,8 +54,7 @@ class DataPoint:
         if self.task_type == 'SEGMENTATION':
             # Segmentation show image
             fig, ax = plt.subplots()
-            color_mask = self.gt.color_mask(
-                self.color_map, self.taxonomy, self.gt_classes)
+            color_mask = self.gt.color_mask(self.color_map)
             mask_image = copy.deepcopy(self.image).astype(float) / 256
             ax.imshow(mask_image)
             ax.imshow(color_mask, alpha=0.4)
@@ -68,8 +67,9 @@ class DataPoint:
                       "xkcd:green", "xkcd:orange", "xkcd:purple"]
 
             fig, ax = plt.subplots(1)
-            if show_gt and self.gt and self.gt_classes:
-                for ii, box in enumerate(self.gt):
+            if show_gt and self.gt:
+                for ii, box in enumerate(self.gt._labels):
+                    print(box.get_class().keys())
                     object_ = box.as_array()
                     color = colors[ii % (len(colors) - 1)]
                     height = object_[3] * self.height
@@ -89,7 +89,7 @@ class DataPoint:
                     ax.text(
                         bottom_left[0] + 1.4,
                         bottom_left[1] - 2,
-                        str(self.gt_classes[ii]),
+                        str(list(box.get_class().keys())[0]),
                         backgroundcolor=color,
                         fontsize=10,
                     )

@@ -9,6 +9,10 @@ from matplotlib import patches
 import os
 import datetime
 from tqdm import tqdm
+import logging
+from termcolor import colored
+import json
+import cv2
 
 from redbrick.api import RedBrickApi
 from redbrick.entity import DataPoint
@@ -25,8 +29,7 @@ class LabelsetLoader:
         self.label_set_name = label_set_name
         self.api_client = RedBrickApi(cache=False)
 
-        print("Counting available data points... ", end="")
-        # TODO: Get taxonomy map stuff here
+        print(colored('[INFO]:', 'blue'), "Counting available datapoints")
         if dp_ids:
             # Labelset with user defined datapoint id's
             self.dp_ids = dp_ids
@@ -37,14 +40,19 @@ class LabelsetLoader:
             self.taxonomy = custom_group.taxonomy
 
         else:
+            # All datapoints in labelset
             self.dp_ids, custom_group = self.api_client.get_datapoint_ids(
                 self.org_id, self.label_set_name
             )
             self.task_type = custom_group.task_type
             self.data_type = custom_group.data_type
             self.taxonomy = custom_group.taxonomy
+        print(colored("[INFO]:", 'blue'), "Number of Datapoints = %s" %
+              len(self.dp_ids))
 
-        print(len(self.dp_ids))
+        # Update taxonomy mapper if segmentation
+        if (self.task_type == 'SEGMENTATION'):
+            self.taxonomy_update_segmentation()
 
     def __getitem__(self, index: int) -> DataPoint:
         """Get information needed for a single item."""
@@ -55,14 +63,27 @@ class LabelsetLoader:
 
     def export(self):
         """Export."""
-        print('Exporting labels...')
+        print(colored('[INFO]:', 'blue'), 'Exporting labels')
         time = str(datetime.datetime.now())
         dir = 'RB_Export_%s' % time
         os.mkdir(dir)
 
-        for i in tqdm(range(len(self.dp_ids))):
-            dp = self.__getitem__(i)
-            plt.imsave(dir + '/' + str(self.dp_ids[i]) + '.png', dp.gt._mask)
+        if self.task_type == "SEGMENTATION":
+            # Save png of masks
+            for i in tqdm(range(len(self.dp_ids))):
+                dp = self.__getitem__(i)
+                dp.gt._mask.dump(
+                    dir + '/' + str(dp.image_url_not_signed).replace('/', '_') + '.dat')
+
+            # Save the class-mapping (taxonomy) in json format in the folder
+            with open('%s/class-mapping.json' % dir, 'w+') as file:
+                json.dump(dp.taxonomy, file, indent=2)
+
+        if self.task_type == "BBOX":
+            pass
+
+        print(colored('[INFO]', 'blue'), colored(
+            'Export Completed.', 'green'), "stored in ./%s" % dir)
 
     def number_of_datapoints(self) -> int:
         """Get number of datapoints."""
@@ -72,3 +93,15 @@ class LabelsetLoader:
         """Show a random image."""
         idx = randint(0, self.number_of_datapoints() - 1)
         self[idx].show_image(show_gt=True)
+
+    def taxonomy_update_segmentation(self):
+        """Fix the taxonomy mapper object to be 1-indexed for segmentation projects."""
+        for key in self.taxonomy.keys():
+            self.taxonomy[key] += 1
+            if (self.taxonomy[key] == 0):
+                print(colored(
+                    '[ERROR]:', 'red'), 'Taxonomy class id\'s must be 0 indexed. Please contact contact@redbrickai.com for help.')
+                exit(1)
+
+        # Add a background class for segmentation
+        self.taxonomy['background'] = 0

@@ -1,9 +1,28 @@
 import numpy as np
-from typing import Dict
+from typing import Dict, List, Optional
+from .taxonomy import TaxonomyEntry
 
 
 class BoundingBox:
-    """."""
+    """Object representing bounding boxes for a single datapoint."""
+
+    def __init__(self) -> None:
+        self._labels: List[BoundingBoxEntry]
+
+    @classmethod
+    def from_remote(cls, obj: Dict, taxonomy: Optional[TaxonomyEntry]) -> "BoundingBox":
+        """Convert return value from servier into Bounding box entity."""
+        this = cls()
+        labels = []
+        for label in obj:
+            labels += [BoundingBoxEntry.from_remote(label, taxonomy)]
+
+        this._labels = labels
+        return this
+
+
+class BoundingBoxEntry:
+    """Object representing a single bounding box label."""
 
     def __init__(self) -> None:
         """Construct BoundingBox."""
@@ -11,10 +30,15 @@ class BoundingBox:
         self._ynorm: float
         self._wnorm: float
         self._hnorm: float
+        self._class: TaxonomyEntry
 
     def __repr__(self) -> str:
         """Get a string representation of object."""
         return f"BBOX<xmin={self._xnorm}, ymin={self._ynorm}, width={self._wnorm}, height={self._hnorm}>"
+
+    def get_class(self) -> TaxonomyEntry:
+        """Get the class of this label."""
+        return self._class
 
     def as_array(self, min_max: bool = False) -> np.ndarray:
         """Get array representation of bounding box."""
@@ -30,17 +54,20 @@ class BoundingBox:
         )
 
     @classmethod
-    def from_remote(cls, obj: Dict) -> "BoundingBox":
+    def from_remote(cls, obj: Dict, taxonomy: Optional[TaxonomyEntry]) -> "BoundingBoxEntry":
         """Convert return value from server into BoundingBox entity."""
         this = cls()
-        this._xnorm = obj["xnorm"]
-        this._ynorm = obj["ynorm"]
-        this._wnorm = obj["wnorm"]
-        this._hnorm = obj["hnorm"]
+        this._xnorm = obj["bbox2d"]["xnorm"]
+        this._ynorm = obj["bbox2d"]["ynorm"]
+        this._wnorm = obj["bbox2d"]["wnorm"]
+        this._hnorm = obj["bbox2d"]["hnorm"]
+
+        category = str(obj["category"][0][-1])
+        this._class = {category: taxonomy[category]}
         return this
 
     @classmethod
-    def from_array(cls, obj: np.ndarray) -> "BoundingBox":
+    def from_array(cls, obj: np.ndarray) -> "BoundingBoxEntry":
         """Convert a numpy array to BoundingBox."""
         if not obj.shape == (1, 4):
             raise ValueError("box.shape must be (1,4)")

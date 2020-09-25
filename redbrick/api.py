@@ -33,7 +33,7 @@ class RedBrickApi(RedBrickApiBase):
                     datapoints(skip:0, first:-1) {
                         dpId
                     }
-                    taskType, 
+                    taskType,
                     dataType
                     taxonomy {
                     name
@@ -99,7 +99,8 @@ class RedBrickApi(RedBrickApiBase):
                 labelData(orgId: $orgId, dpId: $dpId, customGroupName: $name) {
                     blob
                     dataPoint {
-                        items(presigned:true)
+                        items:items(presigned:true)
+                        items_not_signed:items(presigned:false)
                     },
                     taskType
                 }
@@ -111,14 +112,15 @@ class RedBrickApi(RedBrickApiBase):
         result = self._execute_query(query)
 
         # parse result
-        image_url = result["labelData"]["dataPoint"]["items"][0]
+        signed_image_url = result["labelData"]["dataPoint"]["items"][0]
+        unsigned_image_url = result["labelData"]["dataPoint"]["items_not_signed"][0]
         labels = json.loads(result["labelData"]["blob"])["items"][0]["labels"]
 
         # get image array
-        image = self._url_to_image(image_url)
+        image = self._url_to_image(signed_image_url)
 
         dpoint = DataPoint(org_id, label_set_name, dp_id,
-                           image, task_type, labels, taxonomy)
+                           image, signed_image_url, unsigned_image_url, task_type, labels, taxonomy)
         # convert labels and initialize ground truth
         """dpoint.gt = [BoundingBox.from_remote(
             label["bbox2d"]) for label in labels]
@@ -131,7 +133,7 @@ class RedBrickApi(RedBrickApiBase):
 
         return dpoint
 
-    @staticmethod
+    @ staticmethod
     def _url_to_image(url: str) -> np.ndarray:
         """Get a cv2 image object from a url."""
         # Download the image, convert it to a NumPy array, and then read

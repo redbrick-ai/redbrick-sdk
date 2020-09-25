@@ -5,6 +5,7 @@ import copy
 from skimage import draw
 import matplotlib.pyplot as plt
 import json
+from .taxonomy import TaxonomyEntry
 
 
 class Segmentation:
@@ -13,23 +14,25 @@ class Segmentation:
     def __init__(self) -> None:
         """Construct a segmentation label object."""
         self._mask: np.ndarray
+        self._classes: TaxonomyEntry
+        self._url: str
 
     @classmethod
-    def from_remote(cls, obj: dict, taxonomy: dict) -> "Segmentation":
+    def from_remote(cls, obj: dict, taxonomy: Optional[TaxonomyEntry]) -> "Segmentation":
         """Convert return value from server into Segmentation mask entity."""
         this = cls()
 
-        class_id = 1
         # TODO: Check this code for scenario with no label
         imagesize = obj[0]['pixel']['imagesize']
         mask = np.zeros([imagesize[1], imagesize[0]])
-        neg_mask = np.zeros([imagesize[1], imagesize[0]])
 
         with open('debug.json', 'w+') as file:
             json.dump(obj, file, indent=2)
 
         for label_obj in obj:
             label = label_obj['pixel']
+            category_name = label_obj['category'][0][-1]
+            class_id = taxonomy[category_name]
             regions = copy.deepcopy(label['regions'])
             holes = copy.deepcopy(label['holes'])
             imagesize = label['imagesize']
@@ -48,9 +51,11 @@ class Segmentation:
                         [imagesize[1], imagesize[0]], region).astype(float)*class_id
 
                     # Add on new regions to root mask object
-                    mask += mask_
+                    class_id_indexes = np.where(mask_ == class_id)
+                    mask[class_id_indexes] = class_id
 
             # Iterate through the holes and create the negative mask
+            neg_mask = np.zeros([imagesize[1], imagesize[0]])
             if (holes and len(holes)):
                 for hole in holes:
                     if (len(np.array(hole).shape) == 1):
@@ -66,28 +71,29 @@ class Segmentation:
                     # Add on new holes to negative mask
                     neg_mask += neg_mask_
 
-            class_id += 1
+            mask -= neg_mask
 
         # Subtrack out the holes from the region mask
-        mask -= neg_mask
         this._mask = mask
+        this._classes = taxonomy
         return this
 
-    def color_mask(self, color_map, taxonomy, classes) -> np.ndarray:
+    def color_mask(self, color_map) -> np.ndarray:
         """Return a RGB colored mask."""
-        num_classes = int(np.max(self._mask))
+        mask_class_ids = np.unique(self._mask)
         color_mask = np.zeros([self._mask.shape[0], self._mask.shape[1], 3])
 
         # Loop through class range
-        class_index = 1
-        for idx in range(num_classes):
-            pixel_class_index = np.where(self._mask == class_index)
+        for id_ in mask_class_ids:
+            if (id_ == 0):
+                # Do not color class id 0 i.e. the background
+                continue
+
+            pixel_class_index = np.where(self._mask == id_)
 
             # generate colors
-            tax_class_id = taxonomy[classes[idx]]
             color_mask[pixel_class_index] = np.array(
-                color_map(tax_class_id)[0:3])*256
-            class_index += 1
+                color_map(int(id_))[0:3])*256
 
         color_mask /= 256
         return color_mask
