@@ -69,7 +69,6 @@ class DataPoint:
             fig, ax = plt.subplots(1)
             if show_gt and self.gt:
                 for ii, box in enumerate(self.gt._labels):
-                    print(box.get_class().keys())
                     object_ = box.as_array()
                     color = colors[ii % (len(colors) - 1)]
                     height = object_[3] * self.height

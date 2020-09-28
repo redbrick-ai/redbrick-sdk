@@ -80,7 +80,29 @@ class LabelsetLoader:
                 json.dump(dp.taxonomy, file, indent=2)
 
         if self.task_type == "BBOX":
-            pass
+            # Save JSON label info
+            output_file = []
+            for i in tqdm(range(len(self.dp_ids))):
+                dp = self.__getitem__(i)
+                dp_entry = {}
+                dp_entry["url"] = dp.image_url_not_signed
+                dp_entry["labels"] = []
+
+                # Iterate over BBOX GT
+                for label in dp.gt._labels:
+                    label_entry = {}
+                    label_entry["x"] = label._xnorm
+                    label_entry["y"] = label._ynorm
+                    label_entry["w"] = label._wnorm
+                    label_entry["h"] = label._hnorm
+                    label_entry["class"] = list(label._class.keys())[0]
+
+                    dp_entry["labels"].append(label_entry)
+
+                output_file.append(dp_entry)
+
+            with open(dir + '/labels.json', 'w+') as file:
+                json.dump(output_file, file, indent=2)
 
         print(colored('[INFO]', 'blue'), colored(
             'Export Completed.', 'green'), "stored in ./%s" % dir)
