@@ -29,6 +29,7 @@ setup(
             "pycodestyle==2.6.0",
             "twine==3.1.1",
             "wheel==0.35.1",
+            "mypy==0.782",
         ]
     },
 )

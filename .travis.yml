@@ -6,7 +6,11 @@ python:
 install:
   - pip install -e .[dev]
 script:
-  - pytest
+  - black redbrick --check
+  - pylint redbrick
+  - pydocstyle redbrick
+  - pycodestyle redbrick
+  - mypy redbrick --strict
 deploy:
   provider: pypi
   username: __token__
