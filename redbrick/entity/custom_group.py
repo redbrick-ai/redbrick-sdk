@@ -9,15 +9,15 @@ class CustomGroup:
         self.data_type = data_type
 
         tax_map = {}
-        self.trav_tax(taxonomy['categories'][0], tax_map)
+        self.trav_tax(taxonomy["categories"][0], tax_map)
         self.taxonomy = tax_map
 
     def trav_tax(self, taxonomy, tax_map) -> None:
         """Traverse the taxonomy tree structure, and fill the taxonomy mapper object."""
-        children = taxonomy['children']
+        children = taxonomy["children"]
         if len(children) == 0:
             return
 
         for child in children:
-            tax_map[child['name']] = child['classId']
+            tax_map[child["name"]] = child["classId"]
             self.trav_tax(child, tax_map)

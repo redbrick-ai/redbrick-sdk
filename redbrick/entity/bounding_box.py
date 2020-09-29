@@ -54,7 +54,9 @@ class BoundingBoxEntry:
         )
 
     @classmethod
-    def from_remote(cls, obj: Dict, taxonomy: Optional[TaxonomyEntry]) -> "BoundingBoxEntry":
+    def from_remote(
+        cls, obj: Dict, taxonomy: Optional[TaxonomyEntry]
+    ) -> "BoundingBoxEntry":
         """Convert return value from server into BoundingBox entity."""
         this = cls()
         this._xnorm = obj["bbox2d"]["xnorm"]

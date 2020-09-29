@@ -6,8 +6,7 @@ from redbrick.coco_classes import COCO_INSTANCE_CATEGORY_NAMES
 
 def get_prediction(img, threshold):
     """Get bounding box predictions on image."""
-    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(
-        pretrained=True)
+    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
     model.eval()
     transform = torchvision.transforms.Compose(
         [torchvision.transforms.ToTensor()]
