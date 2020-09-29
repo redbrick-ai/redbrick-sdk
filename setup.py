@@ -19,7 +19,7 @@ setup(
         "numpy==1.18.5",
         "matplotlib==3.2.1",
         "requests==2.23.0",
-        "tqdm===4.49.0",
+        "tqdm==4.50.0",
     ],
     extras_require={
         "dev": [
@@ -28,6 +28,7 @@ setup(
             "pydocstyle==5.0.2",
             "pycodestyle==2.6.0",
             "twine==3.1.1",
+            "wheel==0.35.1",
         ]
     },
 )
