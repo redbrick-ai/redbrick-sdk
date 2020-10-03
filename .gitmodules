@@ -1,0 +1,3 @@
+[submodule "datumaro"]
+	path = datumaro
+	url = https://github.com/shivam124081/datumaro.git

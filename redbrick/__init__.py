@@ -11,7 +11,7 @@ from typing import Optional
 # import redbrick.base
 import redbrick.client
 import redbrick.labelset
-
+import datumaro
 # from redbrick.remote_label import RemoteLabel
 # from redbrick.entity.remote_label import RemoteLabelTask
 

@@ -2,6 +2,7 @@
 
 from typing import Optional, List
 from random import randint
+import datumaro
 
 import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
@@ -49,7 +50,8 @@ class LabelsetLoader:
             self.data_type = custom_group.data_type
             self.taxonomy = custom_group.taxonomy
         print(
-            colored("[INFO]:", "blue"), "Number of Datapoints = %s" % len(self.dp_ids)
+            colored("[INFO]:", "blue"), "Number of Datapoints = %s" % len(
+                self.dp_ids)
         )
 
         # Update taxonomy mapper if segmentation
@@ -79,7 +81,8 @@ class LabelsetLoader:
             for i in tqdm(range(len(self.dp_ids))):
                 dp = self.__getitem__(i)
                 dp.gt._mask.dump(
-                    dir + "/" + str(dp.image_url_not_signed).replace("/", "_") + ".dat"
+                    dir + "/" +
+                    str(dp.image_url_not_signed).replace("/", "_") + ".dat"
                 )
 
             # Save the class-mapping (taxonomy) in json format in the folder
