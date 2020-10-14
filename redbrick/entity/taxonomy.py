@@ -1,6 +1,8 @@
 from typing import List
+from dataclasses import dataclass
 
 
+@dataclass
 class TaxonomyEntry:
     """A single entry to the taxonomy object."""
 

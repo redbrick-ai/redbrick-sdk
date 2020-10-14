@@ -3,12 +3,12 @@
 import redbrick
 import json
 from dataclasses import dataclass, asdict
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Union, Tuple
 import requests
 import numpy as np  # type: ignore
 import cv2  # type: ignore
 from .api_base import RedBrickApiBase
-from .entity import DataPoint, BoundingBox, CustomGroup
+from .entity import DataPoint, BoundingBox, CustomGroup, VideoDatapoint
 
 
 class RedBrickApi(RedBrickApiBase):
@@ -101,7 +101,7 @@ class RedBrickApi(RedBrickApiBase):
         dp_id: str,
         task_type: str,
         taxonomy: dict,
-    ) -> DataPoint:
+    ) -> Union[DataPoint, VideoDatapoint]:
         """Get all relevant information related to a datapoint."""
         temp = self.cache.get(org_id, {}).get(label_set_name, {}).get(dp_id)
         if temp:
@@ -114,45 +114,92 @@ class RedBrickApi(RedBrickApiBase):
                     dataPoint {
                         items:items(presigned:true)
                         items_not_signed:items(presigned:false)
+                        name
                     },
-                    taskType
+                    taskType,
+                    dataType, 
+                    labels {
+                      category,
+                      labelid, 
+                      frameclassify, 
+                      frameindex,
+                      trackid, 
+                      keyframe, 
+                      end,
+                      bbox2d {
+                          xnorm, 
+                          ynorm, 
+                          wnorm, 
+                          hnorm,
+                      }
+                    }
                 }
             }
         """
-        query_variables = {"orgId": org_id, "name": label_set_name, "dpId": dp_id}
+        query_variables = {"orgId": org_id,
+                           "name": label_set_name, "dpId": dp_id}
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
 
-        # parse result
-        signed_image_url = result["labelData"]["dataPoint"]["items"][0]
-        unsigned_image_url = result["labelData"]["dataPoint"]["items_not_signed"][0]
-        labels = json.loads(result["labelData"]["blob"])["items"][0]["labels"]
+        # IMAGE DATA
+        if result['labelData']['dataType'] == 'IMAGE':
+            # parse result
+            signed_image_url = result["labelData"]["dataPoint"]["items"][0]
+            unsigned_image_url = result["labelData"]["dataPoint"]["items_not_signed"][0]
+            labels = json.loads(result["labelData"]["blob"])[
+                "items"][0]["labels"]
 
-        # get image array
-        image = self._url_to_image(signed_image_url)
+            # Get image array
+            image = self._url_to_image(signed_image_url)
 
-        dpoint = DataPoint(
-            org_id,
-            label_set_name,
-            dp_id,
-            image,
-            signed_image_url,
-            unsigned_image_url,
-            task_type,
-            labels,
-            taxonomy,
-        )
-        # convert labels and initialize ground truth
-        """dpoint.gt = [BoundingBox.from_remote(
-            label["bbox2d"]) for label in labels]
-        dpoint.gt_classes = [label["category"][0][0] for label in labels]
+            dpoint = DataPoint(
+                org_id,
+                label_set_name,
+                dp_id,
+                image,
+                signed_image_url,
+                unsigned_image_url,
+                task_type,
+                labels,
+                taxonomy,
+            )
+            return dpoint
 
-        self.cache[org_id] = self.cache.get(org_id, {})
-        self.cache[org_id][label_set_name] = self.cache[org_id].get(
-            label_set_name, {})
-        self.cache[org_id][label_set_name][dp_id] = dpoint"""
+        # VIDEO DATA
+        else:
+            items = result['labelData']['dataPoint']['items']
+            items_not_signed = result['labelData']['dataPoint']['items_not_signed']
+            labels = result['labelData']['labels']
+            name = result['labelData']['dataPoint']['name']
+            dpoint_vid = VideoDatapoint(
+                org_id, label_set_name, items, items_not_signed, task_type, labels, name)
+            return dpoint_vid
 
-        return dpoint
+    def tasksToLabelRemote(self, orgId, projectId, stageName, numTasks):
+        """Get remote labeling tasks."""
+        query_string = """
+        query ($orgId:UUID!, $projectId:UUID!, $stageName:String!, $numTasks:Int!){
+            tasksToLabelRemote(orgId:$orgId, projectId:$projectId, stageName:$stageName, numTasks:$numTasks) {
+                stageName, 
+                taskId,
+                subName,
+                modelName,
+                createdAt, 
+                datapoint {
+                    items(presigned:false), 
+                    itemsPresigned
+                } 
+                taskData {
+                blob
+                }
+            }
+        }
+        """
+        query_variables = {"orgId": orgId, "projectId": projectId,
+                           "stageName": stageName, "numTasks": numTasks}
+        query = dict(query=query_string, variables=query_variables)
+        result = self._execute_query(query)
+        return result
 
     @staticmethod
     def _url_to_image(url: str) -> np.ndarray:
@@ -172,7 +219,12 @@ class RedBrickApi(RedBrickApiBase):
         headers = {"ApiKey": self.client.api_key}
         try:
             response = requests.post(self.url, headers=headers, json=query)
-            return response.json()["data"]
+            res = {}
+            if "data" in response.json():
+                res = response.json()["data"]
+            else:
+                res = response.json()
+            return res
         except ValueError:
             print(response.content)
             print(response.status_code)

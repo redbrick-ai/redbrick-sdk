@@ -1,6 +1,6 @@
 """A higher level abstraction."""
 
-from typing import Optional, List
+from typing import Optional, List, Union
 from random import randint
 import datumaro
 
@@ -18,6 +18,7 @@ import cv2
 from redbrick.api import RedBrickApi
 from redbrick.entity import DataPoint
 from redbrick.entity import Datum
+from redbrick.entity import VideoDatapoint
 
 
 class LabelsetLoader:
@@ -59,7 +60,7 @@ class LabelsetLoader:
         if self.task_type == "SEGMENTATION":
             self.taxonomy_update_segmentation()
 
-    def __getitem__(self, index: int) -> DataPoint:
+    def __getitem__(self, index: int) -> Union[DataPoint, VideoDatapoint]:
         """Get information needed for a single item."""
         dp = self.api_client.get_datapoint(
             self.org_id,
@@ -70,12 +71,10 @@ class LabelsetLoader:
         )
         return dp
 
-    def export(self):
+    def export(self, format="redbrick"):
         """Export."""
-        print(colored("[INFO]:", "blue"), "Exporting labels")
-
-        datum = Datum('coco', labelset=self)
-        datum.cache()
+        datum = Datum(labelset=self, label_format=format)
+        datum.export()
 
     def number_of_datapoints(self) -> int:
         """Get number of datapoints."""
@@ -83,6 +82,10 @@ class LabelsetLoader:
 
     def show_random_image(self) -> None:
         """Show a random image."""
+        if self.data_type == "VIDEO":
+            print(colored("[WARNING]:", "yellow"),
+                  "show_random_image function not supported for video labelset.")
+
         idx = randint(0, self.number_of_datapoints() - 1)
         self[idx].show_image(show_gt=True)
 

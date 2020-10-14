@@ -88,7 +88,8 @@ class DataPoint:
                     height = object_[3] * self.height
                     width = object_[2] * self.width
 
-                    bottom_left = (object_[0] * self.width, object_[1] * self.height)
+                    bottom_left = (object_[0] * self.width,
+                                   object_[1] * self.height)
                     rect = patches.Rectangle(
                         bottom_left,
                         width,
