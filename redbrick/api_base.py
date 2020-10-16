@@ -1,8 +1,8 @@
 """Abstract interface to RedBrick API."""
 
-from typing import List
+from typing import List, Union
 from abc import ABC, abstractmethod
-from redbrick.entity import DataPoint
+from redbrick.entity.datapoint import Image, Video
 
 
 class RedBrickApiBase(ABC):
@@ -13,8 +13,12 @@ class RedBrickApiBase(ABC):
         """Get a list of datapoint ids in labelset."""
 
     @abstractmethod
-    def get_datapoint(self, org_id: str, label_set_name: str, dp_id: str) -> DataPoint:
+    def get_datapoint(
+        self,
+        org_id: str,
+        label_set_name: str,
+        dp_id: str,
+        task_type: str,
+        taxonomy: dict,
+    ) -> Union[Image, Video]:
         """Get all relevant information related to a datapoint."""
-
-    # @abstractmethod
-    # def get_remote_labeling_tasks(self, org_id: str, project_id: str, stage_name: str, num_tasks: int) ->

@@ -1,5 +1,7 @@
 from typing import List, Optional
 import json
+from .taxonomy import TaxonomyEntry
+from typing import Dict
 
 
 class CustomGroup:
@@ -8,7 +10,7 @@ class CustomGroup:
         self.task_type = task_type
         self.data_type = data_type
 
-        tax_map = {}
+        tax_map: Dict[str, int] = {}
         self.trav_tax(taxonomy["categories"][0], tax_map)
         self.taxonomy = tax_map
 

@@ -9,6 +9,8 @@ import numpy as np  # type: ignore
 import cv2  # type: ignore
 from .api_base import RedBrickApiBase
 from .entity import DataPoint, BoundingBox, CustomGroup, VideoDatapoint
+from .entity.datapoint import Image
+from .entity.datapoint import Video
 
 
 class RedBrickApi(RedBrickApiBase):
@@ -72,28 +74,6 @@ class RedBrickApi(RedBrickApiBase):
         )
         return all_dp_ids, custom_group
 
-    def get_custom_group(self, org_id: str, label_set_name: str) -> CustomGroup:
-        """Get the details of a custom group object."""
-
-        query_string = """
-            query ($orgId:UUID!, $name:String!) {
-                customGroup(orgId: $orgId, name: $name) {
-                    taskType,
-                    dataType
-                }
-            }
-        """
-
-        query_variables = {"orgId": org_id, "name": label_set_name}
-        query = dict(query=query_string, variables=query_variables)
-
-        result = self._execute_query(query)
-
-        custom_group = CustomGroup(
-            result["customGroup"]["taskType"], result["customGroup"]["dataType"]
-        )
-        return custom_group
-
     def get_datapoint(
         self,
         org_id: str,
@@ -101,11 +81,8 @@ class RedBrickApi(RedBrickApiBase):
         dp_id: str,
         task_type: str,
         taxonomy: dict,
-    ) -> Union[DataPoint, VideoDatapoint]:
+    ) -> Union[Image, Video]:
         """Get all relevant information related to a datapoint."""
-        temp = self.cache.get(org_id, {}).get(label_set_name, {}).get(dp_id)
-        if temp:
-            return temp
 
         query_string = """
             query ($orgId: UUID!, $dpId: UUID!, $name:String!) {
@@ -136,43 +113,56 @@ class RedBrickApi(RedBrickApiBase):
                 }
             }
         """
-        query_variables = {"orgId": org_id,
-                           "name": label_set_name, "dpId": dp_id}
+        # EXECUTE THE QUERY
+        query_variables = {"orgId": org_id, "name": label_set_name, "dpId": dp_id}
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
 
         # IMAGE DATA
-        if result['labelData']['dataType'] == 'IMAGE':
-            # parse result
+        if result["labelData"]["dataType"] == "IMAGE":
+            # Parse result
             signed_image_url = result["labelData"]["dataPoint"]["items"][0]
             unsigned_image_url = result["labelData"]["dataPoint"]["items_not_signed"][0]
-            labels = json.loads(result["labelData"]["blob"])[
-                "items"][0]["labels"]
+            labels = json.loads(result["labelData"]["blob"])["items"][0]["labels"]
+            image_data = self._url_to_image(signed_image_url)  # Get image array
 
-            # Get image array
-            image = self._url_to_image(signed_image_url)
-
-            dpoint = DataPoint(
-                org_id,
-                label_set_name,
-                dp_id,
-                image,
-                signed_image_url,
-                unsigned_image_url,
-                task_type,
-                labels,
-                taxonomy,
+            dpoint = Image(
+                org_id=org_id,
+                label_set_name=label_set_name,
+                taxonomy=taxonomy,
+                remote_labels=labels,
+                dp_id=dp_id,
+                image_url=signed_image_url,
+                image_url_not_signed=unsigned_image_url,
+                image_data=image_data,
+                task_type=task_type,
             )
             return dpoint
 
         # VIDEO DATA
         else:
-            items = result['labelData']['dataPoint']['items']
-            items_not_signed = result['labelData']['dataPoint']['items_not_signed']
-            labels = result['labelData']['labels']
-            name = result['labelData']['dataPoint']['name']
-            dpoint_vid = VideoDatapoint(
-                org_id, label_set_name, items, items_not_signed, task_type, labels, name)
+            # Parse the result
+            items = result["labelData"]["dataPoint"]["items"]
+            items_not_signed = result["labelData"]["dataPoint"]["items_not_signed"]
+            labels = result["labelData"]["labels"]
+            with open("result.json", "w+") as file:
+                json.dump(result, file, indent=2)
+            name = result["labelData"]["dataPoint"]["name"]
+            dpoint_vid = Video(
+                org_id=org_id,
+                label_set_name=label_set_name,
+                taxonomy=taxonomy,
+                task_type=task_type,
+                remote_labels=labels,
+                dp_id=dp_id,
+                video_name=name,
+                items_list=items,
+                items_list_not_signed=items_not_signed,
+            )
+
+            """dpoint_vid = VideoDatapoint(
+                org_id, label_set_name, items, items_not_signed, task_type, labels, name
+            )"""
             return dpoint_vid
 
     def tasksToLabelRemote(self, orgId, projectId, stageName, numTasks):
@@ -195,8 +185,12 @@ class RedBrickApi(RedBrickApiBase):
             }
         }
         """
-        query_variables = {"orgId": orgId, "projectId": projectId,
-                           "stageName": stageName, "numTasks": numTasks}
+        query_variables = {
+            "orgId": orgId,
+            "projectId": projectId,
+            "stageName": stageName,
+            "numTasks": numTasks,
+        }
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
         return result
