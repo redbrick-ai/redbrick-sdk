@@ -19,7 +19,7 @@ from redbrick.labelset.labelset_base import LabelsetBase
 from redbrick.api import RedBrickApi
 from redbrick.entity import Datum
 from redbrick.entity.datapoint import Image, Video
-from redbrick.entity.export import ExportImage
+from redbrick.entity.export import ExportImage, ExportVideo
 
 
 class LabelsetLoader(LabelsetBase):
@@ -65,6 +65,14 @@ class LabelsetLoader(LabelsetBase):
         if self.data_type == "IMAGE":
             export = ExportImage(format=format, labelset=self)
             export.export()
+        elif self.data_type == "VIDEO":
+            export = ExportVideo(format=format, labelset=self)
+            export.export()
+        else:
+            raise ValueError(
+                "%s data type not supported! Please reach out to contact@redbrickai.com"
+                % self.data_type
+            )
 
     def number_of_datapoints(self) -> int:
         """Get number of datapoints."""
