@@ -1,4 +1,4 @@
-from .classify import Classify, ImageClassify, VideoClassify
+from .classify import ImageClassify, VideoClassify
 from .bbox import (
     ImageBoundingBox,
     VideoBoundingBox,

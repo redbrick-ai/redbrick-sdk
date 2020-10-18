@@ -43,18 +43,3 @@ class VideoClassify:
             entries.append(entry)
 
         self.labels = entries
-
-
-class Classify:
-    """Base class for classification labels."""
-
-    def __init__(self, data_type: str, labels) -> None:
-        """Constructor."""
-        self.labels: Union[ImageClassify, VideoClassify]
-
-        if data_type == "VIDEO":
-            # VIDEO DATA
-            self.labels = VideoClassify(labels)
-        else:
-            # IMAGE DATA
-            self.labels = ImageClassify(labels)

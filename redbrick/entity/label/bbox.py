@@ -4,10 +4,13 @@ Representation of a bounding box labels
 
 from dataclasses import dataclass
 from redbrick.entity.taxonomy import TaxonomyEntry
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Any
 import numpy as np
 import os
+import json
 from tqdm import tqdm
+import copy
+import uuid
 
 
 @dataclass
@@ -89,6 +92,27 @@ class ImageBoundingBox(BaseBoundingBox):
     def show(self, data: np.ndarray) -> None:
         """Show the image bbox."""
         raise NotImplementedError()
+
+    def __str__(self) -> str:
+        """String representation."""
+        labels = []
+        for label in self.labels:
+            entry = {}
+            entry["category"] = [["object", label.classname]]
+            entry["attributes"] = []
+            entry["labelid"] = str(uuid.uuid4())
+            entry["bbox2d"] = {
+                "xnorm": label.xnorm,
+                "ynorm": label.ynorm,
+                "hnorm": label.hnorm,
+                "wnorm": label.wnorm,
+            }
+
+            labels.append(entry)
+
+        output = {"items": [{"url": "throwaway", "labels": labels}]}
+
+        return json.dumps(output)
 
 
 class VideoBoundingBox(BaseBoundingBox):

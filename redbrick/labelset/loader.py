@@ -17,7 +17,6 @@ import cv2
 
 from redbrick.labelset.labelset_base import LabelsetBase
 from redbrick.api import RedBrickApi
-from redbrick.entity import Datum
 from redbrick.entity.datapoint import Image, Video
 from redbrick.entity.export import ExportImage, ExportVideo
 

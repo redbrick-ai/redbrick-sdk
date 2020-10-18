@@ -7,10 +7,12 @@ from typing import Dict, List, Any, Optional, Union, Tuple
 import requests
 import numpy as np  # type: ignore
 import cv2  # type: ignore
+from redbrick.utils import url_to_image
 from .api_base import RedBrickApiBase
-from .entity import DataPoint, BoundingBox, CustomGroup, VideoDatapoint
+from .entity.custom_group import CustomGroup
 from .entity.datapoint import Image
 from .entity.datapoint import Video
+from .entity.task import Task
 
 
 class RedBrickApi(RedBrickApiBase):
@@ -124,7 +126,7 @@ class RedBrickApi(RedBrickApiBase):
             signed_image_url = result["labelData"]["dataPoint"]["items"][0]
             unsigned_image_url = result["labelData"]["dataPoint"]["items_not_signed"][0]
             labels = json.loads(result["labelData"]["blob"])["items"][0]["labels"]
-            image_data = self._url_to_image(signed_image_url)  # Get image array
+            image_data = url_to_image(signed_image_url)  # Get image array
 
             dpoint = Image(
                 org_id=org_id,
@@ -159,13 +161,9 @@ class RedBrickApi(RedBrickApiBase):
                 items_list=items,
                 items_list_not_signed=items_not_signed,
             )
-
-            """dpoint_vid = VideoDatapoint(
-                org_id, label_set_name, items, items_not_signed, task_type, labels, name
-            )"""
             return dpoint_vid
 
-    def tasksToLabelRemote(self, orgId, projectId, stageName, numTasks):
+    def tasksToLabelRemote(self, orgId, projectId, stageName, numTasks) -> Task:
         """Get remote labeling tasks."""
         query_string = """
         query ($orgId:UUID!, $projectId:UUID!, $stageName:String!, $numTasks:Int!){
@@ -175,13 +173,30 @@ class RedBrickApi(RedBrickApiBase):
                 subName,
                 modelName,
                 createdAt, 
+                dpId, 
+                taxonomy {
+                    name, 
+                    version, 
+                    categories {
+                        name, 
+                        children {
+                            name, 
+                            classId,
+                            children {
+                                name, 
+                                classId,
+                                children {
+                                    name,
+                                    classId
+                                }
+                            }
+                        }
+                    }
+                }
                 datapoint {
                     items(presigned:false), 
-                    itemsPresigned
+                    itemsPresigned,                    
                 } 
-                taskData {
-                blob
-                }
             }
         }
         """
@@ -193,26 +208,82 @@ class RedBrickApi(RedBrickApiBase):
         }
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
+        print(result)
+        result = result["tasksToLabelRemote"][0]
+
+        # Create a task object and return
+        task = Task(
+            org_id=orgId,
+            project_id=projectId,
+            stage_name=stageName,
+            task_id=result["taskId"],
+            dp_id=result["dpId"],
+            sub_name=result["subName"],
+            taxonomy=result["taxonomy"],
+            items_list=result["datapoint"]["items"],
+            items_list_presigned=result["datapoint"]["itemsPresigned"],
+        )
+
+        return task
+
+    def putTaskData(
+        self,
+        org_id,
+        project_id,
+        dp_id,
+        stage_name,
+        sub_name,
+        task_data,
+        taxonomy_name,
+        taxonomy_version,
+        td_type,
+        augmentdata=None,
+    ):
+        """Put task data for a labeling task."""
+        query_string = """
+        mutation($orgId:UUID!, $dpId:UUID!, $projectId:UUID!, $stageName:String!, $subName:String!, $taskData:JSONString!, $taxonomyName: String!, $taxonomyVersion: Int!, $tdType: TaskDataType!) {
+            putTaskData(orgId:$orgId, dpId:$dpId, projectId: $projectId, stageName:$stageName, subName:$subName, taskData:$taskData, taxonomyName:$taxonomyName, taxonomyVersion: $taxonomyVersion, tdType:$tdType) {
+                ok
+            }
+        }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "dpId": dp_id,
+            "stageName": stage_name,
+            "subName": sub_name,
+            "taskData": task_data,
+            "taxonomyName": taxonomy_name,
+            "taxonomyVersion": taxonomy_version,
+            "tdType": td_type,
+        }
+        print("query vars", query_variables)
+        query = dict(query=query_string, variables=query_variables)
+        result = self._execute_query(query)
         return result
 
-    @staticmethod
-    def _url_to_image(url: str) -> np.ndarray:
-        """Get a cv2 image object from a url."""
-        # Download the image, convert it to a NumPy array, and then read
-        # it into OpenCV format
-        resp = requests.get(url, stream=True)
-        resp.raw.decode_content = True
-        image = np.asarray(bytearray(resp.raw.read()), dtype="uint8")
-        image = cv2.imdecode(image, cv2.IMREAD_COLOR)
-        # cv2 returns a BGR image, need to convert to RGB
-        # the copy operation makes the memory contiguous for tensorify-ing
-        return np.flip(image, axis=2).copy()
+    def putRemoteLabelingTask(self, finishedTask):
+        """Put remote labeling task to backend."""
+        query_string = """
+        mutation($finishedTask: RemoteLabelingTaskInput!) {
+            putRemoteLabelingTask(finishedTask: $finishedTask) {
+                ok
+            }
+        }
+        """
+
+        query_variables = {"finishedTask": finishedTask}
+        query = dict(query=query_string, variables=query_variables)
+        result = self._execute_query(query)
+        return result
 
     def _execute_query(self, query: Dict) -> Any:
         """Execute a graphql query."""
         headers = {"ApiKey": self.client.api_key}
         try:
             response = requests.post(self.url, headers=headers, json=query)
+            print(response, response.json())
             res = {}
             if "data" in response.json():
                 res = response.json()["data"]
