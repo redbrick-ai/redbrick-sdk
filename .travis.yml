@@ -3,8 +3,8 @@ python:
   - '3.8'
 install:
   - pip install -e .[dev]
-# script:
-#   - black redbrick --check
+script:
+  - black redbrick --check
 #   - pylint redbrick
 #   - pydocstyle redbrick
 #   - pycodestyle redbrick
