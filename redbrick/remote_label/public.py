@@ -20,6 +20,13 @@ class RemoteLabel:
         """Get the remote labeling task(s) and cache the data."""
         pass
 
+    def get_num_tasks(self):
+        """Get the number of tasks queued."""
+        num = self.api_client.get_num_remote_tasks(
+            org_id=self.org_id, project_id=self.project_id, stage_name=self.stage_name
+        )
+        return num
+
     def get_task(self, num_tasks: int) -> Task:
         """User facing function to get task."""
         task = self.__get_remote_labeling_task(num_tasks=num_tasks)
@@ -31,6 +38,14 @@ class RemoteLabel:
         """User facing funciton to submit a task."""
         new_subname = "remote-labeling"
 
+        # Check label type
+        if task.task_data_type == "IMAGE_BBOX":
+            if not isinstance(labels, ImageBoundingBox):
+                raise ValueError("Labels must be of type ImageBoundingBox!")
+        if task.task_data_type == "VIDEO_BBOX":
+            if not isinstance(labels, VideoBoundingBox):
+                raise ValueError("Labels must be of type VideoBoundingBox!")
+
         # Put task data
         self.__put_task_data(
             dp_id=task.dp_id,
@@ -38,7 +53,7 @@ class RemoteLabel:
             task_data=labels,
             taxonomy_name=task.taxonomy["name"],
             taxonomy_version=task.taxonomy["version"],
-            td_type="IMAGE_BBOX",
+            td_type=task.task_data_type,
         )
 
         # Put remote labeling task
@@ -52,6 +67,7 @@ class RemoteLabel:
             taxonomy=task.taxonomy,
             items_list=task.items_list,
             items_list_presigned=task.items_list_presigned,
+            task_data_type=task.task_data_type,
         )
         self.__put_remote_labeling_task(submit_task)
 

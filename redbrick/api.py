@@ -208,8 +208,10 @@ class RedBrickApi(RedBrickApiBase):
         }
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
-        print(result)
         result = result["tasksToLabelRemote"][0]
+
+        # Get stage information
+        stage_info = self.get_stage(orgId, projectId, stageName)
 
         # Create a task object and return
         task = Task(
@@ -222,6 +224,7 @@ class RedBrickApi(RedBrickApiBase):
             taxonomy=result["taxonomy"],
             items_list=result["datapoint"]["items"],
             items_list_presigned=result["datapoint"]["itemsPresigned"],
+            task_data_type=stage_info["outputType"],
         )
 
         return task
@@ -258,7 +261,6 @@ class RedBrickApi(RedBrickApiBase):
             "taxonomyVersion": taxonomy_version,
             "tdType": td_type,
         }
-        print("query vars", query_variables)
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
         return result
@@ -278,14 +280,52 @@ class RedBrickApi(RedBrickApiBase):
         result = self._execute_query(query)
         return result
 
+    def get_stage(self, org_id, project_id, stage_name):
+        """Get stage information."""
+        query_string = """
+            query($orgId: UUID!, $projectId: UUID!, $stageName: String!) {
+                stage(orgId: $orgId, projectId: $projectId, stageName: $stageName) {
+                    inputType
+                    outputType
+                }
+            }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+        }
+        query = dict(query=query_string, variables=query_variables)
+        result = self._execute_query(query)
+        return result["stage"]
+
+    def get_num_remote_tasks(self, org_id, project_id, stage_name):
+        """Get stage information."""
+        query_string = """
+        query($orgId: UUID!, $projectId: UUID!, $stageName: String!) {
+            stageStat(orgId: $orgId, projectId: $projectId, stageName: $stageName) {
+                currentTaskCount
+            }
+        }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+        }
+        query = dict(query=query_string, variables=query_variables)
+        result = self._execute_query(query)
+        return result["stageStat"]["currentTaskCount"]
+
     def _execute_query(self, query: Dict) -> Any:
         """Execute a graphql query."""
         headers = {"ApiKey": self.client.api_key}
         try:
             response = requests.post(self.url, headers=headers, json=query)
-            print(response, response.json())
             res = {}
-            if "data" in response.json():
+            if "errors" in response.json():
+                raise ValueError(response.json()["errors"][0]["message"])
+            elif "data" in response.json():
                 res = response.json()["data"]
             else:
                 res = response.json()
