@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 setup(
     name="redbrick-sdk",
     url="https://github.com/dereklukacs/redbrick-sdk",
-    version="0.2.3",
+    version="0.2.4",
     description="RedBrick platform python SDK!",
     py_modules=["redbrick"],
     packages=find_packages(),
@@ -22,6 +22,7 @@ setup(
         "tqdm==4.50.0",
         "scikit-image==0.17.1",
         "termcolor==1.1.0",
+        "tensorflow==2.3.1",
     ],
     extras_require={
         "dev": [
