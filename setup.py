@@ -21,7 +21,7 @@ setup(
         "requests==2.23.0",
         "tqdm==4.50.0",
         "scikit-image==0.17.1",
-        "termcolor==1.1.0"
+        "termcolor==1.1.0",
     ],
     extras_require={
         "dev": [

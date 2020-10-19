@@ -13,6 +13,7 @@ import redbrick.client
 import redbrick.labelset
 import redbrick.remote_label
 import datumaro
+
 # from redbrick.remote_label import RemoteLabel
 # from redbrick.entity.remote_label import RemoteLabelTask
 
