@@ -138,9 +138,7 @@ class ExportVideo(ExportBase):
                     )
 
             def interpolate(
-                start: VideoBBoxLabel,
-                frameindex: int,
-                end: Optional[VideoBBoxLabel],
+                start: VideoBBoxLabel, frameindex: int, end: Optional[VideoBBoxLabel],
             ) -> "VideoBBoxLabel":
                 if not end:
                     result = start.copy()
