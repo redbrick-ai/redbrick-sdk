@@ -13,6 +13,7 @@ from .entity.custom_group import CustomGroup
 from .entity.datapoint import Image
 from .entity.datapoint import Video
 from .entity.task import Task
+from .entity.taxonomy2 import Taxonomy2
 
 
 class RedBrickApi(RedBrickApiBase):
@@ -20,7 +21,6 @@ class RedBrickApi(RedBrickApiBase):
 
     def __init__(self, cache: bool = False, custom_url: Optional[str] = None) -> None:
         """Construct RedBrickApi."""
-        self.cache: Dict[str, Dict[str, Dict[str, DataPoint]]] = {}
         self.client = redbrick.client.RedBrickClient()
         if custom_url:
             self.url = custom_url
@@ -85,7 +85,6 @@ class RedBrickApi(RedBrickApiBase):
         taxonomy: dict,
     ) -> Union[Image, Video]:
         """Get all relevant information related to a datapoint."""
-
         query_string = """
             query ($orgId: UUID!, $dpId: UUID!, $name:String!) {
                 labelData(orgId: $orgId, dpId: $dpId, customGroupName: $name) {
@@ -163,7 +162,7 @@ class RedBrickApi(RedBrickApiBase):
             )
             return dpoint_vid
 
-    def tasksToLabelRemote(self, orgId, projectId, stageName, numTasks) -> Task:
+    def tasksToLabelRemote(self, orgId, projectId, stageName, numTasks) -> List[Task]:
         """Get remote labeling tasks."""
         query_string = """
         query ($orgId:UUID!, $projectId:UUID!, $stageName:String!, $numTasks:Int!){
@@ -208,26 +207,29 @@ class RedBrickApi(RedBrickApiBase):
         }
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
-        result = result["tasksToLabelRemote"][0]
+        result = result["tasksToLabelRemote"]
 
         # Get stage information
         stage_info = self.get_stage(orgId, projectId, stageName)
 
-        # Create a task object and return
-        task = Task(
-            org_id=orgId,
-            project_id=projectId,
-            stage_name=stageName,
-            task_id=result["taskId"],
-            dp_id=result["dpId"],
-            sub_name=result["subName"],
-            taxonomy=result["taxonomy"],
-            items_list=result["datapoint"]["items"],
-            items_list_presigned=result["datapoint"]["itemsPresigned"],
-            task_data_type=stage_info["outputType"],
-        )
+        tasks = []
+        for res in result:
+            # Create a task object and return
+            task = Task(
+                org_id=orgId,
+                project_id=projectId,
+                stage_name=stageName,
+                task_id=res["taskId"],
+                dp_id=res["dpId"],
+                sub_name=res["subName"],
+                taxonomy=res["taxonomy"],
+                items_list=res["datapoint"]["items"],
+                items_list_presigned=res["datapoint"]["itemsPresigned"],
+                task_data_type=stage_info["outputType"],
+            )
+            tasks.append(task)
 
-        return task
+        return tasks
 
     def putTaskData(
         self,
@@ -241,7 +243,7 @@ class RedBrickApi(RedBrickApiBase):
         taxonomy_version,
         td_type,
         augmentdata=None,
-    ):
+    ) -> None:
         """Put task data for a labeling task."""
         query_string = """
         mutation($orgId:UUID!, $dpId:UUID!, $projectId:UUID!, $stageName:String!, $subName:String!, $taskData:JSONString!, $taxonomyName: String!, $taxonomyVersion: Int!, $tdType: TaskDataType!) {
@@ -262,10 +264,9 @@ class RedBrickApi(RedBrickApiBase):
             "tdType": td_type,
         }
         query = dict(query=query_string, variables=query_variables)
-        result = self._execute_query(query)
-        return result
+        self._execute_query(query)
 
-    def putRemoteLabelingTask(self, finishedTask):
+    def putRemoteLabelingTask(self, finishedTask) -> None:
         """Put remote labeling task to backend."""
         query_string = """
         mutation($finishedTask: RemoteLabelingTaskInput!) {
@@ -277,16 +278,17 @@ class RedBrickApi(RedBrickApiBase):
 
         query_variables = {"finishedTask": finishedTask}
         query = dict(query=query_string, variables=query_variables)
-        result = self._execute_query(query)
-        return result
+        self._execute_query(query)
 
-    def get_stage(self, org_id, project_id, stage_name):
+    def get_stage(self, org_id, project_id, stage_name) -> Dict[Any, Any]:
         """Get stage information."""
         query_string = """
             query($orgId: UUID!, $projectId: UUID!, $stageName: String!) {
                 stage(orgId: $orgId, projectId: $projectId, stageName: $stageName) {
-                    inputType
-                    outputType
+                    inputType,
+                    outputType,
+                    outputTaxonomyName, 
+                    outputTaxonomyVersion
                 }
             }
         """
@@ -299,7 +301,7 @@ class RedBrickApi(RedBrickApiBase):
         result = self._execute_query(query)
         return result["stage"]
 
-    def get_num_remote_tasks(self, org_id, project_id, stage_name):
+    def get_num_remote_tasks(self, org_id, project_id, stage_name) -> int:
         """Get stage information."""
         query_string = """
         query($orgId: UUID!, $projectId: UUID!, $stageName: String!) {
@@ -315,7 +317,44 @@ class RedBrickApi(RedBrickApiBase):
         }
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
-        return result["stageStat"]["currentTaskCount"]
+        return int(result["stageStat"]["currentTaskCount"])
+
+    def get_taxonomy(self, orgId: str, name: str, version: int) -> Taxonomy2:
+        """Get a taxonomy info."""
+        query_string = """
+        query ($orgId: UUID!, $name: String!, $version: Int!) {
+            taxonomy(orgId: $orgId, name: $name, version: $version) {
+                name, 
+                version, 
+                categories {
+                    name, 
+                    children {
+                        name, 
+                        classId,
+                        children {
+                            name, 
+                            classId,
+                            children {
+                                name,
+                                classId
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        """
+
+        query_variables = {
+            "orgId": orgId,
+            "name": name,
+            "version": version,
+        }
+        query = dict(query=query_string, variables=query_variables)
+        result = self._execute_query(query)
+
+        Tax = Taxonomy2(remote_tax=result["taxonomy"])
+        return Tax
 
     def _execute_query(self, query: Dict) -> Any:
         """Execute a graphql query."""
@@ -333,3 +372,5 @@ class RedBrickApi(RedBrickApiBase):
         except ValueError:
             print(response.content)
             print(response.status_code)
+            raise ValueError
+

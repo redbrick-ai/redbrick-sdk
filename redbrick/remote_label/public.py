@@ -2,8 +2,10 @@
 from redbrick.api import RedBrickApi
 import json
 from redbrick.entity.task import Task
-from redbrick.entity.label import ImageBoundingBox, VideoBoundingBox
+from redbrick.entity.label import ImageBoundingBox, VideoBoundingBox, VideoClassify
+from redbrick.entity.taxonomy2 import Taxonomy2
 from typing import List, Union
+from termcolor import colored
 
 
 class RemoteLabel:
@@ -11,32 +13,57 @@ class RemoteLabel:
 
     def __init__(self, org_id: str, project_id: str, stage_name: str) -> None:
         """Construct RemoteLabel instance."""
+        print(colored("[INFO]:", "blue"), "Initializing remote-labeling module...")
         self.org_id = org_id
         self.project_id = project_id
         self.stage_name = stage_name
         self.api_client = RedBrickApi(cache=False)
 
-    def cache_tasks(self):
-        """Get the remote labeling task(s) and cache the data."""
-        pass
+        # Gather stage information and store
+        stage_info = self.api_client.get_stage(
+            org_id=org_id, project_id=project_id, stage_name=stage_name
+        )
+        taxonomy = self.api_client.get_taxonomy(
+            orgId=org_id,
+            name=stage_info["outputTaxonomyName"],
+            version=stage_info["outputTaxonomyVersion"],
+        )
+        self.taxonomy: Taxonomy2 = taxonomy
+        self.task_type = stage_info["outputType"]
 
-    def get_num_tasks(self):
+    def get_num_tasks(self) -> int:
         """Get the number of tasks queued."""
         num = self.api_client.get_num_remote_tasks(
             org_id=self.org_id, project_id=self.project_id, stage_name=self.stage_name
         )
         return num
 
-    def get_task(self, num_tasks: int) -> Task:
+    def get_task(self, num_tasks: int) -> List[Task]:
         """User facing function to get task."""
+        print(colored("[INFO]:", "blue"), "Retrieving task from backend...", end=" ")
         task = self.__get_remote_labeling_task(num_tasks=num_tasks)
+        if len(task) == 0:
+            print(colored("\n[WARNING]:", "yellow"), "No more tasks in this stage.")
+            return task
+        print(colored("Done.", "green"))
         return task
 
     def submit_task(
-        self, task: Task, labels: Union[ImageBoundingBox, VideoBoundingBox]
-    ):
+        self,
+        task: Task,
+        labels: Union[ImageBoundingBox, VideoBoundingBox, VideoClassify],
+    ) -> None:
         """User facing funciton to submit a task."""
+        print(colored("[INFO]", "blue"), "Submitting task to backend...", end=" ")
         new_subname = "remote-labeling"
+
+        # Check that label category matches taxonomy
+        check, classname = labels.compare_taxonomy(taxonomy=self.taxonomy)
+        if not check:
+            raise ValueError(
+                "%s is not a valid category for taxonomy %s"
+                % (classname, self.taxonomy.name)
+            )
 
         # Check label type
         if task.task_data_type == "IMAGE_BBOX":
@@ -71,19 +98,24 @@ class RemoteLabel:
         )
         self.__put_remote_labeling_task(submit_task)
 
+        print(colored("Done.", "green"))
+
     def __put_task_data(
         self,
         dp_id: str,
         sub_name: str,
-        task_data: Union[ImageBoundingBox, VideoBoundingBox],
+        task_data: Union[ImageBoundingBox, VideoBoundingBox, VideoClassify],
         taxonomy_name: str,
         taxonomy_version: str,
         td_type: str,
-    ):
+    ) -> None:
         """Read labels from local folder, and submit the labels."""
         task_datas = str(task_data)  # Stringify the json object
 
-        res = self.api_client.putTaskData(
+        with open("vid-remote.json", "w+") as file:
+            json.dump(json.loads(task_datas), file, indent=2)
+
+        self.api_client.putTaskData(
             org_id=self.org_id,
             project_id=self.project_id,
             dp_id=dp_id,
@@ -94,9 +126,8 @@ class RemoteLabel:
             taxonomy_version=taxonomy_version,
             td_type=td_type,
         )
-        return res
 
-    def __put_remote_labeling_task(self, task: Task):
+    def __put_remote_labeling_task(self, task: Task) -> None:
         """Put the remote labeling task to the backend."""
         finishedTask = {
             "orgId": task.org_id,
@@ -105,10 +136,9 @@ class RemoteLabel:
             "taskId": task.task_id,
             "newSubName": task.sub_name,
         }
-        res = self.api_client.putRemoteLabelingTask(finishedTask)
-        return res
+        self.api_client.putRemoteLabelingTask(finishedTask)
 
-    def __get_remote_labeling_task(self, num_tasks: int) -> Task:
+    def __get_remote_labeling_task(self, num_tasks: int) -> List[Task]:
         """Get the labeling tasks from API."""
         task = self.api_client.tasksToLabelRemote(
             orgId=self.org_id,

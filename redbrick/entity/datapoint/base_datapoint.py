@@ -2,7 +2,7 @@
 Base class for datapoints.
 """
 from dataclasses import dataclass, field
-from typing import List, Optional, Union, Dict
+from typing import List, Optional, Union, Dict, Any
 import datetime
 
 
@@ -14,8 +14,8 @@ class BaseDatapoint:
     label_set_name: str
     taxonomy: Dict[str, int]
     task_type: str
-    remote_labels: dict
+    remote_labels: List[Any]
 
-    def show_data(self, show_gt: bool = True):
+    def show_data(self, show_gt: bool = True, ax: Any = None) -> None:
         """Show the data with the ground truth."""
         raise NotImplementedError()

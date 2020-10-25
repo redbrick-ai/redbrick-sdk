@@ -3,22 +3,23 @@ Representation of a segmentation label.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict
-import numpy as np
+from typing import Dict, List, Any, Optional
+import numpy as np  # type: ignore
 import json
 import copy
-from skimage import draw
+from skimage import draw  # type: ignore
+import matplotlib.cm  # type: ignore
 
 
 @dataclass
 class ImageSegmentation:
     classes: Dict[str, int]
-    remote_labels: dict
+    remote_labels: List[Any]
 
     url: str = field(init=False)
     mask: np.ndarray = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """After init."""
         # TODO: Check this code for scenario with no label
         imagesize = self.remote_labels[0]["pixel"]["imagesize"]
@@ -82,7 +83,7 @@ class ImageSegmentation:
         # Subtrack out the holes from the region mask
         self.mask = mask
 
-    def color_mask(self, color_map):
+    def color_mask(self, color_map: Any) -> np.ndarray:
         """Return a RGB colored mask."""
         mask_class_ids = np.unique(self.mask)
         color_mask = np.zeros([self.mask.shape[0], self.mask.shape[1], 3])
@@ -100,3 +101,11 @@ class ImageSegmentation:
 
         color_mask /= 256
         return color_mask
+
+    def show(
+        self, ax: Any = None, width: Optional[int] = None, height: Optional[int] = None
+    ) -> None:
+        """Show the segment labels."""
+        cmap = matplotlib.cm.get_cmap("tab10")
+        mask = self.color_mask(color_map=cmap)
+        ax.imshow(mask, alpha=0.3)

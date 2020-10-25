@@ -17,7 +17,7 @@ class ExportBase:
     cache_dir: str = field(init=False)
     export_dir: str = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Run after init."""
         time = str(datetime.datetime.now())
         self.cache_dir = ".RB_Cache_%s_%s" % (self.format, time)

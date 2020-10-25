@@ -3,13 +3,13 @@ Class for controlling video exports.
 """
 from .export_base import ExportBase
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import os
-import cv2
+import cv2  # type: ignore
 import shutil
-import numpy as np
+import numpy as np  # type: ignore
 from termcolor import colored
-from tqdm import tqdm
+from tqdm import tqdm  # type: ignore
 from redbrick.entity.datapoint import Image
 from redbrick.utils import url_to_image
 
@@ -76,7 +76,7 @@ class ExportVideo(ExportBase):
             pbar = tqdm(total=len(dp.items_list))
 
             # Write labels for each frame here
-            temp = {}
+            temp: Dict[Any, Any] = {}
             for label in dp.labels:
                 if label.trackid in temp:
                     temp[label.trackid].append(label)
@@ -123,7 +123,7 @@ class ExportVideo(ExportBase):
                     )
 
                 @classmethod
-                def from_dict(cls, val) -> "VideoBBoxLabel":
+                def from_dict(cls, val: Any) -> "VideoBBoxLabel":
                     return cls(
                         labelid=val.labelid,
                         trackid=val.trackid,
@@ -133,7 +133,7 @@ class ExportVideo(ExportBase):
                         hnorm=val.hnorm,
                         frameindex=val.frameindex,
                         end=val.end,
-                        category=val.classname,
+                        category=val.classname[0][-1],
                         keyframe=val.keyframe,
                     )
 
@@ -288,7 +288,7 @@ class ExportVideo(ExportBase):
             start_idx = labels.labels[0].frameindex
             end_idx = len(dp.items_list)
             curr_idx = start_idx  # the current real frame index
-            frame_label = labels.labels[curr_idx].category
+            frame_label = labels.labels[curr_idx].category[0][-1]
             key_index = 0  # the current key frame index
             pbar = tqdm(total=end_idx)
             while curr_idx != end_idx:
@@ -297,7 +297,7 @@ class ExportVideo(ExportBase):
                     key_index < len(labels.labels)
                     and labels.labels[key_index].frameindex == curr_idx
                 ):
-                    frame_label = labels.labels[key_index].category
+                    frame_label = labels.labels[key_index].category[0][-1]
                     key_index += 1
 
                 # export the frame to the relvant folder

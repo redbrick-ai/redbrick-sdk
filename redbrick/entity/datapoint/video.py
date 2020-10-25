@@ -18,7 +18,7 @@ class Video(BaseDatapoint):
     items_list_not_signed: List[str]
     labels: Union[VideoBoundingBox, VideoClassify] = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Run after init."""
         if self.task_type == "BBOX":
             self.labels = VideoBoundingBox(labels=self.remote_labels)

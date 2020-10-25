@@ -3,7 +3,7 @@ Base labelset.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 
 
 @dataclass
@@ -15,6 +15,6 @@ class LabelsetBase:
     taxonomy: Dict[str, int]
     dp_ids: List[str] = field(init=False)
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> Any:
         """Get a single dp."""
         raise NotImplementedError()

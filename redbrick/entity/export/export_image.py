@@ -1,22 +1,22 @@
 """
 Class for controlling image exports.
 """
-from .export_base import ExportBase
+from redbrick.entity.export.export_base import ExportBase
 from dataclasses import dataclass
 from termcolor import colored
 import os
-import cv2
+import cv2  # type: ignore
 import json
-from tqdm import tqdm
-import numpy as np
+from tqdm import tqdm  # type: ignore
+import numpy as np  # type: ignore
 from redbrick.entity.datapoint import Image, Video
 
 # Datumaro
-from datumaro.components.project import Project, Dataset, Environment
-from datumaro.plugins.cvat_format.converter import CvatConverter
-from datumaro.plugins.yolo_format.converter import YoloConverter
-from datumaro.plugins.coco_format.converter import CocoConverter
-from datumaro.plugins.voc_format.converter import VocConverter
+from datumaro.components.project import Project, Dataset, Environment  # type: ignore
+from datumaro.plugins.cvat_format.converter import CvatConverter  # type: ignore
+from datumaro.plugins.yolo_format.converter import YoloConverter  # type: ignore
+from datumaro.plugins.coco_format.converter import CocoConverter  # type: ignore
+from datumaro.plugins.voc_format.converter import VocConverter  # type: ignore
 
 
 @dataclass
@@ -105,7 +105,7 @@ class ExportImage(ExportBase):
             # write labels to the txt file
             with open(label_filepath, "w+") as file:
                 for label in dp.labels:
-                    class_idx = taxonomy_mapper[label.classname]
+                    class_idx = taxonomy_mapper[label.classname[0][-1]]
                     file.write(
                         "%d %.6f %.6f %.6f %.6f \n"
                         % (
@@ -142,7 +142,7 @@ class ExportImage(ExportBase):
         """Cache image classification."""
         pass
 
-    def convert_bbox(self):
+    def convert_bbox(self) -> None:
         """Convert cached bbox labels to proper format."""
         env = Environment()
         dataset = env.make_importer("yolo")(self.cache_dir).make_dataset()

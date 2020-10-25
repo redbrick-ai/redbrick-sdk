@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages  # type: ignore
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -32,7 +32,7 @@ setup(
             "pycodestyle==2.6.0",
             "twine==3.1.1",
             "wheel==0.35.1",
-            "mypy==0.782",
+            "mypy==0.790",
         ]
     },
 )

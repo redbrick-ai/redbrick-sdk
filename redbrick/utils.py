@@ -3,8 +3,10 @@ Utility functions.
 """
 
 import requests
-import numpy as np
-import cv2
+import numpy as np  # type: ignore
+import cv2  # type: ignore
+from redbrick.entity.taxonomy2 import Taxonomy2
+from typing import List
 
 
 def url_to_image(url: str) -> np.ndarray:
@@ -18,3 +20,20 @@ def url_to_image(url: str) -> np.ndarray:
     # cv2 returns a BGR image, need to convert to RGB
     # the copy operation makes the memory contiguous for tensorify-ing
     return np.flip(image, axis=2).copy()
+
+
+def compare_taxonomy(category_path: List[List[str]], taxonomy: Taxonomy2) -> bool:
+    """Check if the category_path is valid for taxonomy."""
+    tax_obj = taxonomy.taxonomy["categories"]
+
+    for idx, cat in enumerate(category_path[0]):
+        # Iterate through the tax obj
+        for elem in tax_obj:
+            if cat == elem["name"]:
+                tax_obj = elem["children"]
+
+                # Make sure this is the last category in path, and last elem in tax tree
+                if len(tax_obj) == 0 and idx == len(category_path[0]) - 1:
+                    return True
+
+    return False

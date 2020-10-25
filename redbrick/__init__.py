@@ -12,10 +12,7 @@ from typing import Optional
 import redbrick.client
 import redbrick.labelset
 import redbrick.remote_label
-import datumaro
-
-# from redbrick.remote_label import RemoteLabel
-# from redbrick.entity.remote_label import RemoteLabelTask
+import datumaro  # type: ignore
 
 
 def init(api_key: str, url: Optional[str] = None) -> None:

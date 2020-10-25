@@ -4,13 +4,17 @@ Representation of a bounding box labels
 
 from dataclasses import dataclass
 from redbrick.entity.taxonomy import TaxonomyEntry
-from typing import List, Union, Dict, Any
-import numpy as np
+from redbrick.utils import compare_taxonomy
+from redbrick.entity.taxonomy2 import Taxonomy2
+from typing import List, Union, Dict, Any, Tuple
+import numpy as np  # type: ignore
 import os
 import json
-from tqdm import tqdm
+from tqdm import tqdm  # type: ignore
 import copy
 import uuid
+import matplotlib.patches as patches  # type: ignore
+from redbrick.sort import *  # type: ignore
 
 
 @dataclass
@@ -20,7 +24,7 @@ class ImageBoundingBoxEntry:
     ynorm: float
     wnorm: float
     hnorm: float
-    classname: TaxonomyEntry
+    classname: List[List[str]]
 
 
 @dataclass
@@ -30,7 +34,7 @@ class VideoBoundingBoxEntry:
     ynorm: float
     wnorm: float
     hnorm: float
-    classname: TaxonomyEntry
+    classname: List[List[str]]
     labelid: str
     trackid: str
     frameindex: int
@@ -42,8 +46,12 @@ class VideoBoundingBoxEntry:
 class BaseBoundingBox:
     labels: Union[List[ImageBoundingBoxEntry], List[VideoBoundingBoxEntry]]
 
-    def show(self, data) -> None:
+    def show(self, data: Any, width: int, height: int) -> None:
         """Show the label."""
+        raise NotImplementedError()
+
+    def compare_tax(self, taxonomy: Taxonomy2) -> Tuple[bool, List[List[str]]]:
+        """Compare the labels category to taxonomy."""
         raise NotImplementedError()
 
     def __getitem__(
@@ -52,12 +60,12 @@ class BaseBoundingBox:
         """Get item."""
         return self.labels[index]
 
-    def __iter__(self):
+    def __iter__(self) -> "BaseBoundingBox":
         """Label iterator."""
         self.it = 0
         return self
 
-    def __next__(self):
+    def __next__(self) -> Union[ImageBoundingBoxEntry, VideoBoundingBoxEntry]:
         """Next iterator."""
         if self.it < len(self.labels):
             val = self.labels[self.it]
@@ -70,35 +78,70 @@ class BaseBoundingBox:
 class ImageBoundingBox(BaseBoundingBox):
     """Bounding box for a single image."""
 
-    def __init__(self, labels: dict) -> None:
+    def __init__(self, labels: List[Any]) -> None:
         """Constructor."""
         self.labels: List[ImageBoundingBoxEntry]
 
         # Parse the remote labels, and save as entries
         entries = []
         for label in labels:
+
+            if "bbox2d" not in label:
+                raise ValueError(
+                    "Incorrect format for labels entry ImageBoundingBox. bbox2d field is missing!"
+                )
+
             label_ = label["bbox2d"]
             entry = ImageBoundingBoxEntry(
                 xnorm=label_["xnorm"],
                 ynorm=label_["ynorm"],
                 wnorm=label_["wnorm"],
                 hnorm=label_["hnorm"],
-                classname=label["category"][0][-1],
+                classname=label["category"],
             )
             entries.append(entry)
 
         self.labels = entries
 
-    def show(self, data: np.ndarray) -> None:
+    def compare_taxonomy(self, taxonomy: Taxonomy2) -> Tuple[bool, List[List[str]]]:
+        """Compare the label classes with the taxonomy."""
+        # Iterate over each label
+        for label in self.labels:
+            check_ = compare_taxonomy(label.classname, taxonomy)
+            if not check_:
+                return False, label.classname
+
+        return True, [["null", "null"]]
+
+    def show(self, ax: Any, width: int, height: int) -> None:
         """Show the image bbox."""
-        raise NotImplementedError()
+        for label in self.labels:
+            x = label.xnorm * width
+            y = label.ynorm * height
+            h = label.hnorm * height
+            w = label.wnorm * width
+            rect = patches.Rectangle(
+                xy=(x, y),
+                width=w,
+                height=h,
+                edgecolor=(5 / 256, 4 / 256, 170 / 256),
+                facecolor=(5 / 256, 4 / 256, 170 / 256, 0.3),
+            )
+            ax.add_patch(rect)
+            ax.text(
+                x,
+                y - 1,
+                label.classname[0][-1],
+                fontsize=10,
+                color=(5 / 256, 4 / 256, 170 / 256),
+            )
 
     def __str__(self) -> str:
         """String representation."""
         labels = []
         for label in self.labels:
-            entry = {}
-            entry["category"] = [["object", label.classname]]
+            entry: Dict[Any, Any] = {}
+            entry["category"] = label.classname
             entry["attributes"] = []
             entry["labelid"] = str(uuid.uuid4())
             entry["bbox2d"] = {
@@ -118,19 +161,30 @@ class ImageBoundingBox(BaseBoundingBox):
 class VideoBoundingBox(BaseBoundingBox):
     """Bounding box for a single video."""
 
-    def __init__(self, labels: dict) -> None:
+    def __init__(self, labels: List[Any]) -> None:
         """Constructor."""
         self.labels: List[VideoBoundingBoxEntry]
 
         # parse the remote labels, and store entries
         entries = []
         for label in labels:
+
+            # Fill out values if not provided
+            if not "trackid" in label:
+                label["trackid"] = str(uuid.uuid4())
+            if not "end" in label:
+                label["end"] = True
+            if not "keyframe" in label:
+                label["keyframe"] = True
+            if not "labelid" in label:
+                label["labelid"] = str(uuid.uuid4())
+
             entry = VideoBoundingBoxEntry(
                 xnorm=label["bbox2d"]["xnorm"],
                 ynorm=label["bbox2d"]["ynorm"],
                 wnorm=label["bbox2d"]["wnorm"],
                 hnorm=label["bbox2d"]["hnorm"],
-                classname=label["category"][0][-1],
+                classname=label["category"],
                 labelid=label["labelid"],
                 trackid=label["trackid"],
                 frameindex=label["frameindex"],
@@ -141,6 +195,112 @@ class VideoBoundingBox(BaseBoundingBox):
 
         self.labels = entries
 
-    def show(self, data: List[np.ndarray]) -> None:
+    def show(self, ax: Any, width: int, height: int) -> None:
         """Show the video bbox."""
         raise NotImplementedError()
+
+    def compare_taxonomy(self, taxonomy: Taxonomy2) -> Tuple[bool, List[List[str]]]:
+        """Ensure labels abide by taxonomy."""
+        # Iterate over each frame
+        for label in self.labels:
+            check = compare_taxonomy(category_path=label.classname, taxonomy=taxonomy)
+
+            if not check:
+                return check, label.classname
+
+        return True, [["null", "null"]]
+
+    def __str__(self) -> str:
+        """String representation of self."""
+        labels = []
+
+        for label in self.labels:
+            entry: Dict[Any, Any] = {}
+            entry["category"] = label.classname
+            entry["attributes"] = []
+            entry["labelid"] = label.labelid
+            entry["bbox2d"] = {
+                "xnorm": label.xnorm,
+                "ynorm": label.ynorm,
+                "hnorm": label.hnorm,
+                "wnorm": label.wnorm,
+            }
+            entry["frameindex"] = label.frameindex
+            entry["keyframe"] = label.keyframe
+            entry["trackid"] = label.trackid
+            entry["end"] = label.end
+            labels.append(entry)
+
+        output = {"labels": labels}
+        return json.dumps(output)
+
+    def __track(self, num_frames: int) -> None:
+        """Generate track id's for the video. INCOMPLETE."""
+        new_labels = []
+
+        # Iterate through labels and store map of labels
+        sorted_labels = {}
+        for label in self.labels:
+            if not label.frameindex in sorted_labels:
+                sorted_labels[label.frameindex] = [label]
+            else:
+                sorted_labels[label.frameindex] += [label]
+
+        # Iterate through frames and update tracks
+        tracker = Sort()  # type: ignore
+        label_tracks: Dict[Any, Any] = {}
+        for frame in range(num_frames):
+            detections = []
+            # Detections exist for this frame
+            if frame in sorted_labels:
+
+                # Iterate through each label for this frame
+                for label in sorted_labels[frame]:
+                    detections.append(
+                        [
+                            label.xnorm,
+                            label.ynorm,
+                            label.xnorm + label.wnorm,
+                            label.ynorm + label.hnorm,
+                            0.9,
+                        ]
+                    )
+                detections = np.array(detections)  # convert to numpy array
+
+            else:
+                detections = np.empty((0, 5))
+
+            tracks = tracker.update(dets=detections)
+            print(tracks)
+
+            # Iterate through the tracks
+            for idx, track in enumerate(tracks):
+                x1, y1, x2, y2, track_id = track
+                track_id = str(int(track_id))
+                labelid = str(uuid.uuid4())
+
+                track_uuid = None
+                keyframe = False
+                if track_id in label_tracks:
+                    track_uuid = label_tracks[track_id]
+                    print("here")
+                else:
+                    label_tracks[track_id] = str(uuid.uuid4())
+                    track_uuid = label_tracks[track_id]
+                    keyframe = True
+
+                entry = VideoBoundingBoxEntry(
+                    xnorm=np.max([x1, 0]),
+                    ynorm=np.max([y1, 0]),
+                    wnorm=np.min([x2 - x1, 1 - x1, 1]),
+                    hnorm=np.min([y2 - y1, 1 - y1, 1]),
+                    classname=sorted_labels[frame][idx].classname,
+                    labelid=labelid,
+                    trackid=track_uuid,
+                    frameindex=frame,
+                    keyframe=keyframe,
+                    end=False,
+                )
+                new_labels.append(entry)
+
+        self.labels = new_labels

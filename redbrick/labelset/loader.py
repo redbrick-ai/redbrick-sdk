@@ -2,18 +2,19 @@
 
 from typing import Optional, List, Union, Dict
 from random import randint
-import datumaro
+import datumaro  # type: ignore
 
 import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 from matplotlib import patches
 import os
 import datetime
-from tqdm import tqdm
+from tqdm import tqdm  # type: ignore
 import logging
 from termcolor import colored
 import json
-import cv2
+import cv2  # type: ignore
+import random
 
 from redbrick.labelset.labelset_base import LabelsetBase
 from redbrick.api import RedBrickApi
@@ -57,16 +58,15 @@ class LabelsetLoader(LabelsetBase):
         )
         return dp
 
-    def export(self, format="redbrick"):
+    def export(self, format: str = "redbrick") -> None:
         """Export."""
-        # datum = Datum(labelset=self, label_format=format)
-        # datum.export()
+
         if self.data_type == "IMAGE":
-            export = ExportImage(format=format, labelset=self)
-            export.export()
+            export_img: ExportImage = ExportImage(format=format, labelset=self)
+            export_img.export()
         elif self.data_type == "VIDEO":
-            export = ExportVideo(format=format, labelset=self)
-            export.export()
+            export_vid: ExportVideo = ExportVideo(format=format, labelset=self)
+            export_vid.export()
         else:
             raise ValueError(
                 "%s data type not supported! Please reach out to contact@redbrickai.com"
@@ -77,18 +77,38 @@ class LabelsetLoader(LabelsetBase):
         """Get number of datapoints."""
         return len(self.dp_ids)
 
-    def show_random_image(self) -> None:
-        """Show a random image."""
+    def show_data(self) -> None:
+        """Visualize the data."""
         if self.data_type == "VIDEO":
             print(
                 colored("[WARNING]:", "yellow"),
-                "show_random_image function not supported for video labelset.",
+                "show_data function not supported for video labelset.",
             )
+            return
 
-        idx = randint(0, self.number_of_datapoints() - 1)
-        self[idx].show_image(show_gt=True)
+        print(colored("[INFO]:", "blue"), "Visualizing data and labels...")
+        # idx = randint(0, self.number_of_datapoints() - 1)
+        # self[idx].show_data(show_gt=True)
 
-    def taxonomy_update_segmentation(self):
+        # Prepare figure
+        num_dps = self.number_of_datapoints()
+        cols = int(np.min([2, num_dps]))
+        rows = int(np.min([2, np.ceil(num_dps / cols)]))
+        fig = plt.figure()
+
+        # Generate random index list
+        list_len = np.min([rows * cols, num_dps])
+        indexes = random.sample(range(0, list_len), list_len)
+
+        # Iterate through axes
+        for i, idx in enumerate(indexes):
+            ax = fig.add_subplot(rows, cols, i + 1)
+            self[idx].show_data(show_gt=True, ax=ax)
+
+        plt.tight_layout()
+        plt.show()
+
+    def taxonomy_update_segmentation(self) -> None:
         """Fix the taxonomy mapper object to be 1-indexed for segmentation projects."""
         for key in self.taxonomy.keys():
             self.taxonomy[key] += 1
