@@ -271,7 +271,6 @@ class VideoBoundingBox(BaseBoundingBox):
                 detections = np.empty((0, 5))
 
             tracks = tracker.update(dets=detections)
-            print(tracks)
 
             # Iterate through the tracks
             for idx, track in enumerate(tracks):
@@ -282,18 +281,20 @@ class VideoBoundingBox(BaseBoundingBox):
                 track_uuid = None
                 keyframe = False
                 if track_id in label_tracks:
-                    track_uuid = label_tracks[track_id]
-                    print("here")
+                    track_uuid = label_tracks[track_id]["uuid"]
+                    keyframe = True
                 else:
-                    label_tracks[track_id] = str(uuid.uuid4())
-                    track_uuid = label_tracks[track_id]
+                    label_tracks[track_id] = {}
+                    label_tracks[track_id]["uuid"] = str(uuid.uuid4())
+                    label_tracks[track_id]["labels"] = []
+                    track_uuid = label_tracks[track_id]["uuid"]
                     keyframe = True
 
                 entry = VideoBoundingBoxEntry(
-                    xnorm=np.max([x1, 0]),
-                    ynorm=np.max([y1, 0]),
-                    wnorm=np.min([x2 - x1, 1 - x1, 1]),
-                    hnorm=np.min([y2 - y1, 1 - y1, 1]),
+                    xnorm=sorted_labels[frame][idx].xnorm,
+                    ynorm=sorted_labels[frame][idx].ynorm,
+                    wnorm=sorted_labels[frame][idx].wnorm,
+                    hnorm=sorted_labels[frame][idx].hnorm,
                     classname=sorted_labels[frame][idx].classname,
                     labelid=labelid,
                     trackid=track_uuid,
@@ -301,6 +302,11 @@ class VideoBoundingBox(BaseBoundingBox):
                     keyframe=keyframe,
                     end=False,
                 )
+                label_tracks[track_id]["labels"].append(entry)
                 new_labels.append(entry)
+
+        # Add end frame tags
+        for track in label_tracks:
+            label_tracks[track]["labels"][-1].end = True
 
         self.labels = new_labels

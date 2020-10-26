@@ -13,6 +13,12 @@ from tqdm import tqdm  # type: ignore
 from redbrick.entity.datapoint import Image
 from redbrick.utils import url_to_image
 
+from datumaro.components.project import Project, Dataset, Environment  # type: ignore
+from datumaro.plugins.cvat_format.converter import CvatConverter  # type: ignore
+from datumaro.plugins.yolo_format.converter import YoloConverter  # type: ignore
+from datumaro.plugins.coco_format.converter import CocoConverter  # type: ignore
+from datumaro.plugins.voc_format.converter import VocConverter  # type: ignore
+
 
 @dataclass
 class ExportVideo(ExportBase):
@@ -24,7 +30,7 @@ class ExportVideo(ExportBase):
         self.cache()
 
         if self.labelset.task_type == "BBOX":
-            shutil.copytree(self.cache_dir, self.export_dir)
+            self.convert_bbox()
         elif self.labelset.task_type == "CLASSIFY":
             shutil.copytree(self.cache_dir, self.export_dir)
 
@@ -319,3 +325,25 @@ class ExportVideo(ExportBase):
                 curr_idx += 1
                 pbar.update(1)
             pbar.close()
+
+    def convert_bbox(self) -> None:
+        """Convert cached bbox labels to proper format."""
+        env = Environment()
+        dataset = env.make_importer("yolo")(self.cache_dir).make_dataset()
+
+        if self.format == "coco":
+            CocoConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
+
+        elif self.format == "yolo" or self.format == "redbrick":
+            YoloConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
+
+        elif self.format == "cvat":
+            CvatConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
+        else:
+            print(
+                colored(
+                    "[WARNING]: Invalid format type '%s'. Exporting with YOLO format."
+                    % self.format
+                )
+            )
+            YoloConverter.convert(dataset, save_dir=self.export_dir, save_images=True)

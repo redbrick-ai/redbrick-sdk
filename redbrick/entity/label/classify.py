@@ -54,11 +54,12 @@ class VideoClassify:
     def __post_init__(self) -> None:
         """After init."""
         entries = []
+        trackid = str(uuid.uuid4())
         for label in self.remote_labels:
 
             # Fill out values if not provided
             if not "trackid" in label:
-                label["trackid"] = "my-track"
+                label["trackid"] = trackid
             if not "end" in label:
                 label["end"] = True
             if not "keyframe" in label:
