@@ -373,4 +373,3 @@ class RedBrickApi(RedBrickApiBase):
             print(response.content)
             print(response.status_code)
             raise ValueError
-

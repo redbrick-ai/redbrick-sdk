@@ -36,4 +36,3 @@ class Taxonomy2:
             self.class_id_map(elem["children"], class_id_map, id_class_map)
 
         return
-

@@ -119,4 +119,3 @@ def test_recursive() -> None:
     # Check maps
     assert Tax.taxonomy_id_class_map == TAXONOMY2_ID_CLASS
     assert Tax.taxonomy_class_id_map == TAXONOMY2_CLASS_ID
-

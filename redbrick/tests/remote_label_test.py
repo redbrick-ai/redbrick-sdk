@@ -22,4 +22,3 @@ def test_init() -> None:
 
     assert remote_label.taxonomy.name == "DEFAULT::YoloThings"
     assert remote_label.task_type == "IMAGE_BBOX"
-

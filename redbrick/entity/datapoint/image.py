@@ -57,4 +57,3 @@ class Image(BaseDatapoint):
 
         if ax is None:
             plt.show()
-
