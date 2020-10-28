@@ -5,6 +5,7 @@ from .export_base import ExportBase
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Any
 import os
+import json
 import cv2  # type: ignore
 import shutil
 import numpy as np  # type: ignore
@@ -279,6 +280,7 @@ class ExportVideo(ExportBase):
 
     def cache_classify(self) -> None:
         """Cache video classification."""
+        output = []
         for i in range(len(self.labelset.dp_ids)):
             print(
                 colored("[INFO]:", "blue"),
@@ -306,25 +308,43 @@ class ExportVideo(ExportBase):
                     frame_label = labels.labels[key_index].category[0][-1]
                     key_index += 1
 
-                # export the frame to the relvant folder
-                if not os.path.isdir(
-                    os.path.join(self.cache_dir, video_name, frame_label)
-                ):
-                    os.makedirs(os.path.join(self.cache_dir, video_name, frame_label))
+                # check export format type
+                if self.format == "redbrick-json":
+                    output.append(
+                        {
+                            "url": dp.items_list_not_signed[curr_idx],
+                            "class": frame_label,
+                            "name": video_name,
+                        }
+                    )
+                else:
+                    # export the frame to the relvant folder
+                    if not os.path.isdir(
+                        os.path.join(self.cache_dir, video_name, frame_label)
+                    ):
+                        os.makedirs(
+                            os.path.join(self.cache_dir, video_name, frame_label)
+                        )
 
-                frame_data = np.flip(url_to_image(dp.items_list[curr_idx]), axis=2)
-                frame_filename = dp.items_list_not_signed[curr_idx].replace("/", "_")
-                cv2.imwrite(
-                    os.path.join(
-                        self.cache_dir, video_name, frame_label, frame_filename
-                    ),
-                    frame_data,
-                )
+                    frame_data = np.flip(url_to_image(dp.items_list[curr_idx]), axis=2)
+                    frame_filename = dp.items_list_not_signed[curr_idx].replace(
+                        "/", "_"
+                    )
+                    cv2.imwrite(
+                        os.path.join(
+                            self.cache_dir, video_name, frame_label, frame_filename
+                        ),
+                        frame_data,
+                    )
 
                 # update the index
                 curr_idx += 1
                 pbar.update(1)
             pbar.close()
+
+            if self.format == "redbrick-json":
+                with open(os.path.join(self.cache_dir, "output.json"), "w+") as file:
+                    json.dump(output, file, indent=2)
 
     def convert_bbox(self) -> None:
         """Convert cached bbox labels to proper format."""
