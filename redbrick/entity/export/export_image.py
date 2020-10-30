@@ -155,6 +155,7 @@ class ExportImage(ExportBase):
 
         elif self.format == "cvat":
             CvatConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
+
         else:
             print(
                 colored(
