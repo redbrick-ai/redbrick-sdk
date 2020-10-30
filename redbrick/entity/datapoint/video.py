@@ -4,8 +4,11 @@ Representation for the video datapoint type.
 
 from dataclasses import dataclass, field
 from .base_datapoint import BaseDatapoint
-from typing import List, Union
+from typing import List, Union, Any
 from redbrick.entity.label import VideoClassify, VideoBoundingBox
+from redbrick.utils import url_to_image
+import matplotlib.pyplot as plt  # type: ignore
+import matplotlib.animation as animation  # type: ignore
 
 
 @dataclass
@@ -29,3 +32,15 @@ class Video(BaseDatapoint):
                 "%s task type not supported! Please reach out to contact@redbrickai.com."
                 % self.task_type
             )
+
+    def show_data(self) -> None:
+        """Show the video data."""
+        ims = []
+        fig = plt.figure()
+        for i in range(len(self.items_list)):
+            frame = url_to_image(url=self.items_list[i])
+            im = plt.imshow(frame, animated=True)
+            ims.append([im])
+        animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
+        plt.show()
+

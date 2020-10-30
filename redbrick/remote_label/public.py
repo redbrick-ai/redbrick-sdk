@@ -112,9 +112,6 @@ class RemoteLabel:
         """Read labels from local folder, and submit the labels."""
         task_datas = str(task_data)  # Stringify the json object
 
-        with open("vid-remote.json", "w+") as file:
-            json.dump(json.loads(task_datas), file, indent=2)
-
         self.api_client.putTaskData(
             org_id=self.org_id,
             project_id=self.project_id,

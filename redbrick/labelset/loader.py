@@ -84,11 +84,15 @@ class LabelsetLoader(LabelsetBase):
                 colored("[WARNING]:", "yellow"),
                 "show_data function not supported for video labelset.",
             )
-            return
+            num_dps = self.number_of_datapoints()
+            return  # TODO: return until feature is complete
+
+            # TODO
+            if isinstance(self[1], Image):
+                return
+            self[1].show_data()
 
         print(colored("[INFO]:", "blue"), "Visualizing data and labels...")
-        # idx = randint(0, self.number_of_datapoints() - 1)
-        # self[idx].show_data(show_gt=True)
 
         # Prepare figure
         num_dps = self.number_of_datapoints()

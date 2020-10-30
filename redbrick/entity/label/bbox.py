@@ -14,7 +14,7 @@ from tqdm import tqdm  # type: ignore
 import copy
 import uuid
 import matplotlib.patches as patches  # type: ignore
-from redbrick.sort import *  # type: ignore
+from redbrick.sort import Sort
 
 
 @dataclass
@@ -274,7 +274,7 @@ class VideoBoundingBox(BaseBoundingBox):
 
             # Iterate through the tracks
             for idx, track in enumerate(tracks):
-                x1, y1, x2, y2, track_id = track
+                _, _, _, _, track_id = track
                 track_id = str(int(track_id))
                 labelid = str(uuid.uuid4())
 
