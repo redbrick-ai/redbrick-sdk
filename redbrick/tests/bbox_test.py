@@ -1,6 +1,7 @@
 """
 Test the bounding box module.
 """
+import pytest
 from redbrick.entity.label import ImageBoundingBox, VideoBoundingBox
 from redbrick.entity.taxonomy2 import Taxonomy2
 from redbrick.tests.taxonomy2_test import TAXONOMY2, TAXONOMY1
@@ -149,38 +150,136 @@ def test_vid_bbox_str() -> None:
 
 t1 = str(uuid.uuid4())
 t2 = str(uuid.uuid4())
-VID_LABEL2 = [
-    {
+
+
+def test_interpolate_one_frame() -> None:
+    """Test interpolating only one frame."""
+    # arrange
+    label = {
+        "category": [["object", "person"]],
+        "bbox2d": {"xnorm": 0.1, "ynorm": 0.1, "hnorm": 0.1, "wnorm": 0.1,},
+        "frameindex": 0,
+        "trackid": t1,
+        "keyframe": True,
+        "end": True,
+    }
+    vid_bbox = VideoBoundingBox(labels=[label])
+    # assume
+    assert len(vid_bbox.labels) == 1
+
+    # action
+    result = vid_bbox.interpolate_labels(num_frames=1)
+
+    # assert
+    assert len(result) == 1
+    assert len(result[0]) == 1
+    result_label = result[0][0]
+    assert result_label.xnorm == 0.1
+    assert result_label.keyframe
+    assert result_label.end
+
+
+def test_interpolate_one_end_label_10_frames() -> None:
+    # arrange
+    label = {
+        "category": [["object", "person"]],
+        "bbox2d": {"xnorm": 0.1, "ynorm": 0.1, "hnorm": 0.1, "wnorm": 0.1,},
+        "frameindex": 0,
+        "trackid": t1,
+        "keyframe": True,
+        "end": True,
+    }
+    vid_bbox = VideoBoundingBox(labels=[label])
+    # assume
+    assert len(vid_bbox.labels) == 1
+
+    # action
+    result = vid_bbox.interpolate_labels(num_frames=10)
+
+    # assert
+    assert len(result) == 10
+    assert len(result[0]) == 1
+    assert len(result[1]) == 0
+    result_label = result[0][0]
+    assert result_label.xnorm == 0.1
+    assert result_label.keyframe
+    assert result_label.end
+
+
+def test_interpolate_one_label_10_frames() -> None:
+    # arrange
+    label = {
         "category": [["object", "person"]],
         "bbox2d": {"xnorm": 0.1, "ynorm": 0.1, "hnorm": 0.1, "wnorm": 0.1,},
         "frameindex": 0,
         "trackid": t1,
         "keyframe": True,
         "end": False,
-    },
-    {
-        "category": [["object", "person"]],
-        "bbox2d": {"xnorm": 0.5, "ynorm": 0.5, "hnorm": 0.1, "wnorm": 0.5,},
-        "frameindex": 3,
-        "trackid": t1,
-        "keyframe": True,
-        "end": True,
-    },
-]
+    }
+    vid_bbox = VideoBoundingBox(labels=[label])
+    # assume
+    assert len(vid_bbox.labels) == 1, vid_bbox.labels
+
+    # action
+    result = vid_bbox.interpolate_labels(num_frames=10)
+
+    # assert
+    assert len(result) == 10
+    assert len(result[0]) == 1
+    result_label = result[0][0]
+
+    assert result_label.xnorm == 0.1
+    assert result_label.keyframe
+    assert result_label.end == False
+    print("result", result)
+    last_label = result[-1][0]
+    assert last_label.xnorm == 0.1
+    assert last_label.end == False
+    assert last_label.keyframe == False
 
 
-def test_interpolate() -> None:
-    """Test video interpolation."""
+def test_interpolate_two_labels() -> None:
+    # arrange
+    VID_LABEL2 = [
+        {
+            "category": [["object", "person"]],
+            "bbox2d": {"xnorm": 0.1, "ynorm": 0.1, "hnorm": 0.1, "wnorm": 0.1,},
+            "frameindex": 1,
+            "trackid": t1,
+            "keyframe": True,
+            "end": False,
+        },
+        {
+            "category": [["object", "person"]],
+            "bbox2d": {"xnorm": 0.5, "ynorm": 0.5, "hnorm": 0.1, "wnorm": 0.5,},
+            "frameindex": 3,
+            "trackid": t1,
+            "keyframe": True,
+            "end": True,
+        },
+    ]
     vid_bbox = VideoBoundingBox(labels=VID_LABEL2)
-    frame_labels = vid_bbox.interpolate_labels(num_frames=11)
-    idx = 2
-    print(
-        "frame_labels",
-        frame_labels[idx],
-        len(frame_labels[idx]),
-        frame_labels[idx][0].xnorm,
-    )
-    assert True
+    # assume
+    assert len(vid_bbox.labels) == 2, vid_bbox.labels
+
+    # acction
+    result = vid_bbox.interpolate_labels(num_frames=10)
+
+    # assert
+    assert len(result) == 10
+    assert len(result[0]) == 0
+
+    assert len(result[1]) == 1
+    assert result[1][0].keyframe
+
+    assert len(result[2]) == 1
+    assert not result[2][0].keyframe
+    assert result[2][0].xnorm == 0.3
+
+    assert len(result[3]) == 1
+    assert result[3][0].keyframe
+
+    assert len(result[4]) == 0
 
 
 if __name__ == "__main__":
