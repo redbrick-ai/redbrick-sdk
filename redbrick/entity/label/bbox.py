@@ -328,8 +328,6 @@ class VideoBoundingBox(BaseBoundingBox):
         ) -> "Optional[VideoBBoxLabel]":
             # keyframes is a list where length = numFrames, keyframes[label.frameindex]=label
             # [ None, label, None, None, label]
-            print("keyframes", keyframes)
-            print("frameindex", frameindex)
             temp = keyframes[frameindex]
             if temp and temp.keyframe:
                 return keyframes[frameindex]
@@ -359,7 +357,7 @@ class VideoBoundingBox(BaseBoundingBox):
             keyframes: List[VideoBBoxLabel], num_frames: int
         ) -> List[Optional[VideoBBoxLabel]]:
             # create a sparse list of keyframe labels of same length as num_frames
-            mylist = [None] * num_frames
+            mylist: List[Optional[VideoBBoxLabel]] = [None] * num_frames
             for label in keyframes:
                 mylist[label.frameindex] = label
 
@@ -369,14 +367,13 @@ class VideoBoundingBox(BaseBoundingBox):
         for trackid, labellist in temp.items():
             temp45 = [VideoBBoxLabel.from_dict(label) for label in labellist]
             temp46 = expand_list_of_keyframes(temp45, num_frames)
-            output = [None] * num_frames
-            print(temp46)
+            output: List[Optional[VideoBBoxLabel]] = [None] * num_frames
+
             for index, _ in enumerate(output):
                 output[index] = interpolate2(temp46, index)
 
             temp2[trackid] = output
 
-        print("temp2", temp2)
         framelabels: List[List[VideoBBoxLabel]] = []
         for index in range(num_frames):
             current_frame_labels = []
