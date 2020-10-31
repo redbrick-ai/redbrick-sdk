@@ -153,7 +153,7 @@ VID_LABEL2 = [
     {
         "category": [["object", "person"]],
         "bbox2d": {"xnorm": 0.1, "ynorm": 0.1, "hnorm": 0.1, "wnorm": 0.1,},
-        "frameindex": 1,
+        "frameindex": 0,
         "trackid": t1,
         "keyframe": True,
         "end": False,
@@ -172,7 +172,7 @@ VID_LABEL2 = [
 def test_interpolate() -> None:
     """Test video interpolation."""
     vid_bbox = VideoBoundingBox(labels=VID_LABEL2)
-    frame_labels = vid_bbox.interpolate(num_frames=11)
+    frame_labels = vid_bbox.interpolate_labels(num_frames=11)
     idx = 2
     print(
         "frame_labels",

@@ -14,7 +14,6 @@ from tqdm import tqdm  # type: ignore
 import copy
 import uuid
 import matplotlib.patches as patches  # type: ignore
-from redbrick.sort import Sort
 import copy
 
 
@@ -235,7 +234,7 @@ class VideoBoundingBox(BaseBoundingBox):
         output = {"labels": labels}
         return json.dumps(output)
 
-    def interpolate(self, num_frames) -> None:
+    def interpolate_labels(self, num_frames) -> None:
         """Interpolate the frames and return interpolated object."""
         # Write labels for each frame here
         # Write labels for each frame here
