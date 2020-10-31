@@ -5,6 +5,7 @@ from redbrick.entity.label import ImageBoundingBox, VideoBoundingBox
 from redbrick.entity.taxonomy2 import Taxonomy2
 from redbrick.tests.taxonomy2_test import TAXONOMY2, TAXONOMY1
 import json
+import uuid
 
 #  ____    _  _____  _
 # |  _ \  / \|_   _|/ \
@@ -144,3 +145,43 @@ def test_vid_bbox_str() -> None:
     }
 
     assert json.loads(str(vid_bbox)) == output
+
+
+t1 = str(uuid.uuid4())
+t2 = str(uuid.uuid4())
+VID_LABEL2 = [
+    {
+        "category": [["object", "person"]],
+        "bbox2d": {"xnorm": 0.1, "ynorm": 0.1, "hnorm": 0.1, "wnorm": 0.1,},
+        "frameindex": 1,
+        "trackid": t1,
+        "keyframe": True,
+        "end": False,
+    },
+    {
+        "category": [["object", "person"]],
+        "bbox2d": {"xnorm": 0.5, "ynorm": 0.5, "hnorm": 0.1, "wnorm": 0.5,},
+        "frameindex": 3,
+        "trackid": t1,
+        "keyframe": True,
+        "end": True,
+    },
+]
+
+
+def test_interpolate() -> None:
+    """Test video interpolation."""
+    vid_bbox = VideoBoundingBox(labels=VID_LABEL2)
+    frame_labels = vid_bbox.interpolate(num_frames=11)
+    idx = 2
+    print(
+        "frame_labels",
+        frame_labels[idx],
+        len(frame_labels[idx]),
+        frame_labels[idx][0].xnorm,
+    )
+    assert True
+
+
+if __name__ == "__main__":
+    test_interpolate()

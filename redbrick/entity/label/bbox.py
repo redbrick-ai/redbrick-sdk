@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from redbrick.entity.taxonomy import TaxonomyEntry
 from redbrick.utils import compare_taxonomy
 from redbrick.entity.taxonomy2 import Taxonomy2
-from typing import List, Union, Dict, Any, Tuple
+from typing import List, Union, Dict, Any, Tuple, Optional
 import numpy as np  # type: ignore
 import os
 import json
@@ -15,6 +15,7 @@ import copy
 import uuid
 import matplotlib.patches as patches  # type: ignore
 from redbrick.sort import Sort
+import copy
 
 
 @dataclass
@@ -233,6 +234,154 @@ class VideoBoundingBox(BaseBoundingBox):
 
         output = {"labels": labels}
         return json.dumps(output)
+
+    def interpolate(self, num_frames) -> None:
+        """Interpolate the frames and return interpolated object."""
+        # Write labels for each frame here
+        # Write labels for each frame here
+        temp: Dict[Any, Any] = {}
+        for label in self.labels:
+            if label.trackid in temp:
+                temp[label.trackid].append(label)
+            else:
+                temp[label.trackid] = [label]
+
+        class VideoBBoxLabel:
+            def __init__(
+                self,
+                labelid: str,
+                trackid: str,
+                xnorm: float,
+                ynorm: float,
+                hnorm: float,
+                wnorm: float,
+                frameindex: int,
+                keyframe: bool,
+                end: bool,
+                category: List[List[str]],
+            ) -> None:
+                self.labelid = labelid
+                self.trackid = trackid
+                self.xnorm = xnorm
+                self.ynorm = ynorm
+                self.hnorm = hnorm
+                self.wnorm = wnorm
+                self.frameindex = frameindex
+                self.keyframe = keyframe
+                self.end = end
+                self.category = category
+
+            def copy(self) -> "VideoBBoxLabel":
+                return VideoBBoxLabel(
+                    self.labelid,
+                    self.trackid,
+                    self.xnorm,
+                    self.ynorm,
+                    self.hnorm,
+                    self.wnorm,
+                    self.frameindex,
+                    self.keyframe,
+                    self.end,
+                    self.category,
+                )
+
+            @classmethod
+            def from_dict(cls, val: Any) -> "VideoBBoxLabel":
+                return cls(
+                    labelid=val.labelid,
+                    trackid=val.trackid,
+                    xnorm=val.xnorm,
+                    ynorm=val.ynorm,
+                    wnorm=val.wnorm,
+                    hnorm=val.hnorm,
+                    frameindex=val.frameindex,
+                    end=val.end,
+                    category=val.classname[0][-1],
+                    keyframe=val.keyframe,
+                )
+
+        def interpolate(
+            start: VideoBBoxLabel, frameindex: int, end: Optional[VideoBBoxLabel],
+        ) -> "VideoBBoxLabel":
+            if not end:
+                result = start.copy()
+                result.keyframe = False
+                return result
+            assert frameindex > start.frameindex
+            assert frameindex < end.frameindex
+            before = frameindex - start.frameindex
+            after = end.frameindex - frameindex
+            total = end.frameindex - start.frameindex
+            temp_ = start.copy()
+            assert before > 0
+            assert after > 0
+            assert total > 0
+            temp_.xnorm = after / total * start.xnorm + before / total * end.xnorm
+            temp_.ynorm = after / total * start.ynorm + before / total * end.ynorm
+            temp_.hnorm = after / total * start.hnorm + before / total * end.hnorm
+            temp_.wnorm = after / total * start.wnorm + before / total * end.wnorm
+            temp_.keyframe = False
+            return temp_
+
+        def interpolate2(
+            keyframes: List[Optional[VideoBBoxLabel]], frameindex: int
+        ) -> "Optional[VideoBBoxLabel]":
+            # keyframes is a list where length = numFrames, keyframes[label.frameindex]=label
+            # [ None, label, None, None, label]
+            if keyframes[frameindex] and keyframes[frameindex].keyframe:
+                return keyframes[frameindex]
+            start: VideoBBoxLabel = None
+
+            for ii in range(frameindex, 0, -1):
+                label = keyframes[ii]
+                if label and label.keyframe:
+                    if label.end:
+                        return None
+                    start = label
+                    break
+
+            if not start:
+                return None
+
+            end: Optional[VideoBBoxLabel] = None
+            for ii in range(frameindex, len(keyframes), 1):
+                label = keyframes[ii]
+                if label and label.keyframe:
+                    end = label
+                    break
+
+            return interpolate(start, frameindex, end)
+
+        def expand_list_of_keyframes(
+            keyframes: List[VideoBBoxLabel], num_frames: int
+        ) -> List[Optional[VideoBBoxLabel]]:
+            # create a sparse list of keyframe labels of same length as num_frames
+            mylist = [None] * num_frames
+            for label in keyframes:
+                mylist[label.frameindex] = label
+
+            return mylist
+
+        temp2 = {}  # trackid -> full list of labels and keyframes (and None)
+        for trackid, labellist in temp.items():
+            temp45 = [VideoBBoxLabel.from_dict(label) for label in labellist]
+            temp46 = expand_list_of_keyframes(temp45, num_frames)
+            output = [None] * num_frames
+            for index, _ in enumerate(output):
+                output[index] = interpolate2(temp46, index)
+
+            temp2[trackid] = output
+
+        framelabels: List[List[VideoBBoxLabel]] = []
+        for index in range(num_frames):
+            current_frame_labels = []
+            for labellist in temp2.values():
+                templable = labellist[index]
+                if templable:
+                    current_frame_labels.append(templable)
+            framelabels.append(current_frame_labels)
+
+        return framelabels
 
     def __track(self, num_frames: int) -> None:
         """Generate track id's for the video. INCOMPLETE."""
