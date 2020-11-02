@@ -22,7 +22,6 @@ setup(
         "tqdm==4.50.0",
         "scikit-image==0.17.1",
         "termcolor==1.1.0",
-        "tensorflow==2.3.1",
     ],
     extras_require={
         "dev": [
