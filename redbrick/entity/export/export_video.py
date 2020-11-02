@@ -102,7 +102,6 @@ class ExportVideo(ExportBase):
                 )
 
                 frame_data = np.flip(url_to_image(item), axis=2)
-                print("IMAGE FILEPATH", image_filepath)
                 cv2.imwrite(image_filepath, frame_data)
 
                 # create the label file name
