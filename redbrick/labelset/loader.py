@@ -2,7 +2,6 @@
 
 from typing import Optional, List, Union, Dict
 from random import randint
-import datumaro  # type: ignore
 
 import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
