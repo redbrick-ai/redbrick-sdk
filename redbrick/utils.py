@@ -13,8 +13,19 @@ def url_to_image(url: str) -> np.ndarray:
     """Get image data from url."""
     # Download the image, convert it to a NumPy array, and then read
     # it into OpenCV format
-    resp = requests.get(url, stream=True)
-    resp.raw.decode_content = True
+
+    resp = None
+
+    try:
+        resp = requests.get(url, stream=True)
+        resp.raw.decode_content = True
+
+        # check for errors
+        if not resp.status_code == 200:
+            raise Exception("Not able to access data at %s url" % (url))
+    except Exception as err:
+        raise Exception("%s. Not able to access data at %s url" % (str(err), url))
+
     image = np.asarray(bytearray(resp.raw.read()), dtype="uint8")
     image = cv2.imdecode(image, cv2.IMREAD_COLOR)
     # cv2 returns a BGR image, need to convert to RGB

@@ -57,15 +57,17 @@ class LabelsetLoader(LabelsetBase):
         )
         return dp
 
-    def export(self, format: str = "redbrick") -> None:
+    def export(self, format: str = "redbrick") -> str:
         """Export."""
 
         if self.data_type == "IMAGE":
             export_img: ExportImage = ExportImage(format=format, labelset=self)
             export_img.export()
+            return export_img.cache_dir
         elif self.data_type == "VIDEO":
             export_vid: ExportVideo = ExportVideo(format=format, labelset=self)
             export_vid.export()
+            return export_vid.cache_dir
         else:
             raise ValueError(
                 "%s data type not supported! Please reach out to contact@redbrickai.com"
@@ -84,7 +86,7 @@ class LabelsetLoader(LabelsetBase):
 
             num_dps = self.number_of_datapoints()
 
-            self[1].show_data()
+            self[0].show_data()
             return
 
         # Image data type

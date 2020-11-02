@@ -21,7 +21,7 @@ class ExportBase:
     def __post_init__(self) -> None:
         """Run after init."""
         salt = uuid.uuid4()
-        self.cache_dir = ".RB_Cache_%s_%s" % (self.format, salt)
+        self.cache_dir = "RB_Export_%s_%s" % (self.format, salt)
         self.export_dir = "RB_Export_%s_%s" % (self.format, salt)
 
     def export(self) -> None:

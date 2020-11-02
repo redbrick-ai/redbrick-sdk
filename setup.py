@@ -32,6 +32,7 @@ setup(
             "twine==3.1.1",
             "wheel==0.35.1",
             "mypy==0.790",
+            "pytest-mock==3.3.1",
         ]
     },
 )

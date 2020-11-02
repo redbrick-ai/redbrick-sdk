@@ -22,15 +22,6 @@ class ExportImage(ExportBase):
         print(colored("[INFO]:", "blue"), "Cacheing labels, and data...")
         self.cache()
 
-        if self.labelset.task_type == "BBOX":
-            print(colored("[INFO]:", "blue"), "Exporting to %s format..." % self.format)
-            shutil.copytree(self.cache_dir, self.export_dir)
-
-        elif self.labelset.task_type == "SEGMENTATION":
-            pass
-
-        shutil.rmtree(self.cache_dir)
-
     def cache(self) -> None:
         """Cache the images and labels."""
         ExportBase.cache(self)

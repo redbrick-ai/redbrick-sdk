@@ -5,6 +5,10 @@ Test the utils functions.
 from redbrick.utils import compare_taxonomy
 from redbrick.tests.taxonomy2_test import TAXONOMY1, TAXONOMY2
 from redbrick.entity.taxonomy2 import Taxonomy2
+from redbrick.utils import url_to_image
+import cv2  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
+import numpy as np  # type: ignore
 
 
 def test_compare() -> None:
@@ -25,3 +29,44 @@ def test_compare() -> None:
 
     cat_path5 = [["object", "car", "not correct"]]
     assert not compare_taxonomy(cat_path5, Taxonomy1)
+
+
+def test_url_to_image() -> None:
+    """Test the conversion of a url to image data."""
+    url = "https://asia.olympus-imaging.com/content/000107506.jpg"
+    local = "redbrick/tests/000107506.jpg"
+
+    # get local image
+    img_local = cv2.imread(local)
+    img_local = np.flip(img_local, axis=2)
+
+    # get remote image
+    img_remote = url_to_image(url)
+
+    comparison = img_local == img_remote
+
+    assert comparison.all()
+
+
+def test_url_to_image_invalid() -> None:
+    """Test the utility function with invalid urls"""
+    url = "https://not-a-real-url.jpg"
+    url2 = "http://127.0.0.1:8080/not-real.jpg"
+
+    # first image
+    try:
+        url_to_image(url)
+        assert False
+    except:
+        assert True
+
+    # second image
+    try:
+        url_to_image(url2)
+        assert False
+    except:
+        assert True
+
+
+if __name__ == "__main__":
+    test_url_to_image_invalid()

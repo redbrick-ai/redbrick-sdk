@@ -24,14 +24,6 @@ class ExportVideo(ExportBase):
         print(colored("[INFO]:", "blue"), "Cacheing labels, and data...")
         self.cache()
 
-        if self.labelset.task_type == "BBOX":
-            shutil.copytree(self.cache_dir, self.export_dir)
-
-        elif self.labelset.task_type == "CLASSIFY":
-            shutil.copytree(self.cache_dir, self.export_dir)
-
-        shutil.rmtree(self.cache_dir)
-
     def cache(self) -> None:
         """Cache the video and labels."""
         ExportBase.cache(self)
