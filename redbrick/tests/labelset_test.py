@@ -15,6 +15,7 @@ from .datapoint_test import IMAGE, VIDEO, VIDEO_CLASSIFY
 import os
 import numpy as np
 import shutil
+import json
 import uuid
 
 
@@ -105,7 +106,7 @@ class Mock_Video_Classify:
         )
 
     def get_datapoint(self, orgid, labelsetname, dpid, tasktype, taxonomy):
-        VIDEO_CLASSIFY.video_name = str(uuid.uuid4())
+        VIDEO_CLASSIFY.video_name = dpid
         return VIDEO_CLASSIFY
 
 
@@ -144,4 +145,27 @@ def test_labelset_export_video_clasify(mock: Any, url_to_image: Any) -> None:
 
     files = os.listdir(cache_dir)
     assert len(files) == 2
+    assert files == ["1", "2"]
+    shutil.rmtree(cache_dir)
+
+
+@patch("redbrick.entity.export.export_video.url_to_image")
+@patch("redbrick.labelset.loader.RedBrickApi")
+def test_labelset_export_video_clasify_json(mock: Any, url_to_image: Any) -> None:
+    """Test labelset export for images."""
+    mock.return_value = Mock_Video_Classify()
+    url_to_image.return_value = np.zeros((10, 10, 3))
+
+    labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
+    cache_dir = labelset.export(format="redbrick-json")
+
+    assert os.path.isdir(cache_dir)
+
+    files = os.listdir(cache_dir)
+    assert len(files) == 1
+
+    # open the json file
+    with open(os.path.join(cache_dir, files[0]), "r") as file:
+        labels = json.load(file)
+
     shutil.rmtree(cache_dir)
