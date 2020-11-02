@@ -11,10 +11,11 @@ from typing import Any
 from unittest.mock import patch, MagicMock
 from redbrick.entity.custom_group import CustomGroup
 from redbrick.tests.taxonomy2_test import TAXONOMY1
-from .datapoint_test import IMAGE, VIDEO
+from .datapoint_test import IMAGE, VIDEO, VIDEO_CLASSIFY
 import os
 import numpy as np
 import shutil
+import uuid
 
 
 # d888888b .88b  d88.  .d8b.   d888b  d88888b
@@ -76,7 +77,7 @@ def test_labelset_export_image(mock: Any) -> None:
 
 
 class Mock_Video:
-    """Mocking RedBrickApi for images."""
+    """Mocking RedBrickApi for video."""
 
     def __init__(self):
         return
@@ -89,6 +90,23 @@ class Mock_Video:
 
     def get_datapoint(self, orgid, labelsetname, dpid, tasktype, taxonomy):
         return VIDEO
+
+
+class Mock_Video_Classify:
+    """Mocking RedBrickApi for video."""
+
+    def __init__(self):
+        return
+
+    def get_datapoint_ids(self, org_id, label_set_name):
+        return (
+            ["1", "2"],
+            CustomGroup("CLASSIFY", "VIDEO", TAXONOMY1["taxonomy"]),
+        )
+
+    def get_datapoint(self, orgid, labelsetname, dpid, tasktype, taxonomy):
+        VIDEO_CLASSIFY.video_name = str(uuid.uuid4())
+        return VIDEO_CLASSIFY
 
 
 @patch("redbrick.entity.export.export_video.url_to_image")
@@ -109,4 +127,21 @@ def test_labelset_export_image(mock: Any, url_to_image: Any) -> None:
         outdir += [(item[0:-4] + ".png").replace("/", "_").replace(":", "_")]
 
     assert os.listdir(os.path.join(cache_dir, "obj_train_data")).sort() == outdir.sort()
-    # shutil.rmtree(cache_dir)
+    shutil.rmtree(cache_dir)
+
+
+@patch("redbrick.entity.export.export_video.url_to_image")
+@patch("redbrick.labelset.loader.RedBrickApi")
+def test_labelset_export_video_clasify(mock: Any, url_to_image: Any) -> None:
+    """Test labelset export for images."""
+    mock.return_value = Mock_Video_Classify()
+    url_to_image.return_value = np.zeros((10, 10, 3))
+
+    labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
+    cache_dir = labelset.export(format="redbrick")
+
+    assert os.path.isdir(cache_dir)
+
+    files = os.listdir(cache_dir)
+    assert len(files) == 2
+    shutil.rmtree(cache_dir)
