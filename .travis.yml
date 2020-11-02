@@ -2,7 +2,7 @@ language: python
 python:
   - '3.8'
 install:
-  - pip install -e .[dev]; pip install -e datumaro/
+  - pip install -e .[dev]
 script:
   - black redbrick --check
 #   - pylint redbrick
