@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 import datetime
 import os
 from typing import Optional
+import uuid
 
 
 @dataclass
@@ -19,9 +20,9 @@ class ExportBase:
 
     def __post_init__(self) -> None:
         """Run after init."""
-        time = str(datetime.datetime.now())
-        self.cache_dir = ".RB_Cache_%s_%s" % (self.format, time)
-        self.export_dir = "RB_Export_%s_%s" % (self.format, time)
+        salt = uuid.uuid4()
+        self.cache_dir = ".RB_Cache_%s_%s" % (self.format, salt)
+        self.export_dir = "RB_Export_%s_%s" % (self.format, salt)
 
     def export(self) -> None:
         """Export the data and labels in the correct format."""

@@ -413,4 +413,3 @@ class VideoBoundingBox(BaseBoundingBox):
             framelabels.append(current_frame_labels)
 
         return framelabels
-

@@ -14,12 +14,6 @@ from tqdm import tqdm  # type: ignore
 from redbrick.entity.datapoint import Image
 from redbrick.utils import url_to_image
 
-from datumaro.components.project import Project, Dataset, Environment  # type: ignore
-from datumaro.plugins.cvat_format.converter import CvatConverter  # type: ignore
-from datumaro.plugins.yolo_format.converter import YoloConverter  # type: ignore
-from datumaro.plugins.coco_format.converter import CocoConverter  # type: ignore
-from datumaro.plugins.voc_format.converter import VocConverter  # type: ignore
-
 
 @dataclass
 class ExportVideo(ExportBase):
@@ -31,7 +25,8 @@ class ExportVideo(ExportBase):
         self.cache()
 
         if self.labelset.task_type == "BBOX":
-            self.convert_bbox()
+            shutil.copytree(self.cache_dir, self.export_dir)
+
         elif self.labelset.task_type == "CLASSIFY":
             shutil.copytree(self.cache_dir, self.export_dir)
 
@@ -97,12 +92,20 @@ class ExportVideo(ExportBase):
                 image_filepath = os.path.join(
                     self.cache_dir,
                     "obj_train_data",
-                    str(dp.items_list_not_signed[idx].replace("/", "_")),
+                    str(
+                        dp.items_list_not_signed[idx]
+                        .replace("/", "_")
+                        .replace(":", "_")
+                    ),
                 )
                 image_filepaths.append(
                     os.path.join(
                         "obj_train_data",
-                        str(dp.items_list_not_signed[idx].replace("/", "_")),
+                        str(
+                            dp.items_list_not_signed[idx]
+                            .replace("/", "_")
+                            .replace(":", "_")
+                        ),
                     )
                 )
 
@@ -188,8 +191,10 @@ class ExportVideo(ExportBase):
                         )
 
                     frame_data = np.flip(url_to_image(dp.items_list[curr_idx]), axis=2)
-                    frame_filename = dp.items_list_not_signed[curr_idx].replace(
-                        "/", "_"
+                    frame_filename = (
+                        dp.items_list_not_signed[curr_idx]
+                        .replace("/", "_")
+                        .replace(":", "_")
                     )
                     cv2.imwrite(
                         os.path.join(
@@ -206,25 +211,3 @@ class ExportVideo(ExportBase):
             if self.format == "redbrick-json":
                 with open(os.path.join(self.cache_dir, "output.json"), "w+") as file:
                     json.dump(output, file, indent=2)
-
-    def convert_bbox(self) -> None:
-        """Convert cached bbox labels to proper format."""
-        env = Environment()
-        dataset = env.make_importer("yolo")(self.cache_dir).make_dataset()
-
-        if self.format == "coco":
-            CocoConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
-
-        elif self.format == "yolo" or self.format == "redbrick":
-            YoloConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
-
-        elif self.format == "cvat":
-            CvatConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
-        else:
-            print(
-                colored(
-                    "[WARNING]: Invalid format type '%s'. Exporting with YOLO format."
-                    % self.format
-                )
-            )
-            YoloConverter.convert(dataset, save_dir=self.export_dir, save_images=True)

@@ -60,4 +60,3 @@ class Video(BaseDatapoint):
             fig, ims, interval=50, blit=True, repeat_delay=1000,
         )
         plt.show()
-

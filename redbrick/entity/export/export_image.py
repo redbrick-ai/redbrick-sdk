@@ -10,13 +10,7 @@ import json
 from tqdm import tqdm  # type: ignore
 import numpy as np  # type: ignore
 from redbrick.entity.datapoint import Image, Video
-
-# Datumaro
-from datumaro.components.project import Project, Dataset, Environment  # type: ignore
-from datumaro.plugins.cvat_format.converter import CvatConverter  # type: ignore
-from datumaro.plugins.yolo_format.converter import YoloConverter  # type: ignore
-from datumaro.plugins.coco_format.converter import CocoConverter  # type: ignore
-from datumaro.plugins.voc_format.converter import VocConverter  # type: ignore
+import shutil
 
 
 @dataclass
@@ -30,10 +24,12 @@ class ExportImage(ExportBase):
 
         if self.labelset.task_type == "BBOX":
             print(colored("[INFO]:", "blue"), "Exporting to %s format..." % self.format)
-            self.convert_bbox()
+            shutil.copytree(self.cache_dir, self.export_dir)
 
         elif self.labelset.task_type == "SEGMENTATION":
             pass
+
+        shutil.rmtree(self.cache_dir)
 
     def cache(self) -> None:
         """Cache the images and labels."""
@@ -141,26 +137,3 @@ class ExportImage(ExportBase):
     def cache_classify(self) -> None:
         """Cache image classification."""
         pass
-
-    def convert_bbox(self) -> None:
-        """Convert cached bbox labels to proper format."""
-        env = Environment()
-        dataset = env.make_importer("yolo")(self.cache_dir).make_dataset()
-
-        if self.format == "coco":
-            CocoConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
-
-        elif self.format == "yolo" or self.format == "redbrick":
-            YoloConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
-
-        elif self.format == "cvat":
-            CvatConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
-
-        else:
-            print(
-                colored(
-                    "[WARNING]: Invalid format type '%s'. Exporting with YOLO format."
-                    % self.format
-                )
-            )
-            YoloConverter.convert(dataset, save_dir=self.export_dir, save_images=True)
