@@ -101,10 +101,6 @@ class VideoBBoxLabel:
 class BaseBoundingBox:
     labels: Union[List[ImageBoundingBoxEntry], List[VideoBoundingBoxEntry]]
 
-    def show(self, data: Any, width: int, height: int) -> None:
-        """Show the label."""
-        raise NotImplementedError()
-
     def compare_tax(self, taxonomy: Taxonomy2) -> Tuple[bool, List[List[str]]]:
         """Compare the labels category to taxonomy."""
         raise NotImplementedError()
@@ -219,6 +215,7 @@ class VideoBoundingBox(BaseBoundingBox):
     def __init__(self, labels: List[Any]) -> None:
         """Constructor."""
         self.labels: List[VideoBoundingBoxEntry]
+        self.interpolated_labels: Optional[List[List[VideoBBoxLabel]]] = None
 
         # parse the remote labels, and store entries
         entries = []
@@ -250,9 +247,41 @@ class VideoBoundingBox(BaseBoundingBox):
 
         self.labels = entries
 
-    def show(self, ax: Any, width: int, height: int) -> None:
+    def show(
+        self, ax: Any, width: int, height: int, frameindex: int, num_frames: int
+    ) -> List[Any]:
         """Show the video bbox."""
-        raise NotImplementedError()
+        # interpolate labels if not already done
+        if not self.interpolated_labels:
+            frame_labels = self.interpolate_labels(num_frames=num_frames)
+            self.interpolated_labels = frame_labels
+
+        ims = []
+        for label in self.interpolated_labels[frameindex]:
+            x = label.xnorm * width
+            y = label.ynorm * height
+            h = label.hnorm * height
+            w = label.wnorm * width
+            rect = patches.Rectangle(
+                xy=(x, y),
+                width=w,
+                height=h,
+                edgecolor=(5 / 256, 4 / 256, 170 / 256),
+                facecolor=(5 / 256, 4 / 256, 170 / 256, 0.3),
+                animated=True,
+            )
+            im1 = ax.add_patch(rect)
+            im2 = ax.text(
+                x,
+                y - 1,
+                label.category[0][-1],
+                fontsize=10,
+                color=(5 / 256, 4 / 256, 170 / 256),
+                animated=True,
+            )
+            ims += [im1, im2]
+
+        return ims
 
     def compare_taxonomy(self, taxonomy: Taxonomy2) -> Tuple[bool, List[List[str]]]:
         """Ensure labels abide by taxonomy."""
@@ -384,3 +413,4 @@ class VideoBoundingBox(BaseBoundingBox):
             framelabels.append(current_frame_labels)
 
         return framelabels
+

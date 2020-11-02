@@ -79,19 +79,16 @@ class LabelsetLoader(LabelsetBase):
 
     def show_data(self) -> None:
         """Visualize the data."""
+
         if self.data_type == "VIDEO":
-            print(
-                colored("[WARNING]:", "yellow"),
-                "show_data function not supported for video labelset.",
-            )
+            print(colored("[INFO]:", "blue"), "Visualizing first 20 frames...")
+
             num_dps = self.number_of_datapoints()
-            return  # TODO: return until feature is complete
 
-            # TODO
-            if isinstance(self[1], Image):
-                return
             self[1].show_data()
+            return
 
+        # Image data type
         print(colored("[INFO]:", "blue"), "Visualizing data and labels...")
 
         # Prepare figure
@@ -106,8 +103,9 @@ class LabelsetLoader(LabelsetBase):
 
         # Iterate through axes
         for i, idx in enumerate(indexes):
+
             ax = fig.add_subplot(rows, cols, i + 1)
-            self[idx].show_data(show_gt=True, ax=ax)
+            self[idx].show_data(ax=ax)
 
         plt.tight_layout()
         plt.show()

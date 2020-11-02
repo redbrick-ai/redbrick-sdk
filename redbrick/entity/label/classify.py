@@ -45,6 +45,10 @@ class ImageClassify:
         else:
             return check, self.labels.category
 
+    def show(self, ax: Any, width: int, height: int) -> None:
+        """Show the image classify labels."""
+        raise NotImplementedError()
+
 
 @dataclass
 class VideoClassify:
@@ -108,3 +112,9 @@ class VideoClassify:
 
         output = {"labels": labels}
         return json.dumps(output)
+
+    def show(
+        self, ax: Any, width: int, height: int, frameindex: int, num_frames: int
+    ) -> List[Any]:
+        """show the labels."""
+        raise NotImplementedError()

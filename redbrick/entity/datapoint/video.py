@@ -4,11 +4,12 @@ Representation for the video datapoint type.
 
 from dataclasses import dataclass, field
 from .base_datapoint import BaseDatapoint
-from typing import List, Union, Any
+from typing import List, Union, Any, Optional
 from redbrick.entity.label import VideoClassify, VideoBoundingBox
 from redbrick.utils import url_to_image
 import matplotlib.pyplot as plt  # type: ignore
 import matplotlib.animation as animation  # type: ignore
+from tqdm import tqdm  # type: ignore
 
 
 @dataclass
@@ -33,14 +34,30 @@ class Video(BaseDatapoint):
                 % self.task_type
             )
 
-    def show_data(self) -> None:
+    def show_data(self, start: int = 0, end: int = 20) -> None:
         """Show the video data."""
         ims = []
-        fig = plt.figure()
-        for i in range(len(self.items_list)):
+        fig, ax = plt.subplots()
+        num_frames = len(self.items_list)
+
+        for i in tqdm(range(start, min(end, num_frames))):
             frame = url_to_image(url=self.items_list[i])
+            height, width, _ = frame.shape
             im = plt.imshow(frame, animated=True)
-            ims.append([im])
-        animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
+
+            ims_ = self.labels.show(
+                ax=ax,
+                width=width,
+                height=height,
+                frameindex=i,
+                num_frames=len(self.items_list),
+            )
+
+            ims_ = [im] + ims_  # the frame data im needs to be first
+            ims.append(ims_)
+
+        animation.ArtistAnimation(
+            fig, ims, interval=50, blit=True, repeat_delay=1000,
+        )
         plt.show()
 

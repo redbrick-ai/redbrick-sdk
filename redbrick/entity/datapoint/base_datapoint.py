@@ -15,7 +15,3 @@ class BaseDatapoint:
     taxonomy: Dict[str, int]
     task_type: str
     remote_labels: List[Any]
-
-    def show_data(self) -> None:
-        """Show the data with the ground truth."""
-        raise NotImplementedError()

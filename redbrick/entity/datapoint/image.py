@@ -37,7 +37,7 @@ class Image(BaseDatapoint):
                 % self.task_type
             )
 
-    def show_data(self, show_gt: bool = True, ax: Any = None) -> None:
+    def show_data(self, ax: Any = None) -> None:
         """Show the data with the ground truth."""
         if ax is None:
             _, ax = plt.subplots()

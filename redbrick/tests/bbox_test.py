@@ -8,11 +8,12 @@ from redbrick.tests.taxonomy2_test import TAXONOMY2, TAXONOMY1
 import json
 import uuid
 
-#  ____    _  _____  _
-# |  _ \  / \|_   _|/ \
-# | | | |/ _ \ | | / _ \
-# | |_| / ___ \| |/ ___ \
-# |____/_/   \_\_/_/   \_\
+# d888888b .88b  d88.  .d8b.   d888b  d88888b   d8888b.  .d8b.  d888888b  .d8b.
+#   `88'   88'YbdP`88 d8' `8b 88' Y8b 88'       88  `8D d8' `8b `~~88~~' d8' `8b
+#    88    88  88  88 88ooo88 88      88ooooo   88   88 88ooo88    88    88ooo88
+#    88    88  88  88 88~~~88 88  ooo 88~~~~~   88   88 88~~~88    88    88~~~88
+#   .88.   88  88  88 88   88 88. ~8~ 88.       88  .8D 88   88    88    88   88
+# Y888888P YP  YP  YP YP   YP  Y888P  Y88888P   Y8888D' YP   YP    YP    YP   YP
 
 LABEL1 = [
     {
@@ -70,11 +71,12 @@ def test_compare_tax_image_bbox() -> None:
     assert not image_bbox2.compare_taxonomy(taxonomy=taxonomy1)[0]
 
 
-# __     _____ ____  _____ ___    ____    _  _____  _
-# \ \   / /_ _|  _ \| ____/ _ \  |  _ \  / \|_   _|/ \
-#  \ \ / / | || | | |  _|| | | | | | | |/ _ \ | | / _ \
-#   \ V /  | || |_| | |__| |_| | | |_| / ___ \| |/ ___ \
-#    \_/  |___|____/|_____\___/  |____/_/   \_\_/_/   \_\
+# db    db d888888b d8888b. d88888b  .d88b.    d8888b.  .d8b.  d888888b  .d8b.
+# 88    88   `88'   88  `8D 88'     .8P  Y8.   88  `8D d8' `8b `~~88~~' d8' `8b
+# Y8    8P    88    88   88 88ooooo 88    88   88   88 88ooo88    88    88ooo88
+# `8b  d8'    88    88   88 88~~~~~ 88    88   88   88 88~~~88    88    88~~~88
+#  `8bd8'    .88.   88  .8D 88.     `8b  d8'   88  .8D 88   88    88    88   88
+#    YP    Y888888P Y8888D' Y88888P  `Y88P'    Y8888D' YP   YP    YP    YP   YP
 
 VID_LABEL1 = [
     {
@@ -231,7 +233,6 @@ def test_interpolate_one_label_10_frames() -> None:
     assert result_label.xnorm == 0.1
     assert result_label.keyframe
     assert result_label.end == False
-    print("result", result)
     last_label = result[-1][0]
     assert last_label.xnorm == 0.1
     assert last_label.end == False
@@ -280,7 +281,3 @@ def test_interpolate_two_labels() -> None:
     assert result[3][0].keyframe
 
     assert len(result[4]) == 0
-
-
-if __name__ == "__main__":
-    test_interpolate()
