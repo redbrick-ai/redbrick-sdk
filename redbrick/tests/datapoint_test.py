@@ -26,10 +26,18 @@ VIDEO = Video(
     taxonomy={"person": 0, "car": 1},
     task_type="BBOX",
     remote_labels=VID_LABEL1,
-    items_list=["firstadsfsadf.png", "secondasdfdasrqewpng", "thirdadsfqer.png"],
+    items_list=[
+        "http://127.0.0.1:8080/firstadsfsadf.png",
+        "http://127.0.0.1:8080/secondasdfdasrqew.png",
+        "http://127.0.0.1:8080/thirdadsfqer.png",
+    ],
     dp_id="sdfalsn",
     video_name="video name",
-    items_list_not_signed=["first.png", "second.png", "third.png"],
+    items_list_not_signed=[
+        "http://127.0.0.1:8080/firstadsfsadf.png",
+        "http://127.0.0.1:8080/secondasdfdasrqew.png",
+        "http://127.0.0.1:8080/thirdadsfqer.png",
+    ],
 )
 
 

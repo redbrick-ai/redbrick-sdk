@@ -105,8 +105,8 @@ def test_labelset_export_image(mock: Any, url_to_image: Any) -> None:
 
     outdir = []
     for item in VIDEO.items_list_not_signed:
-        outdir += [item[0:-4] + ".txt"]
-        outdir += [item[0:-4] + ".png"]
+        outdir += [(item[0:-4] + ".txt").replace("/", "_").replace(":", "_")]
+        outdir += [(item[0:-4] + ".png").replace("/", "_").replace(":", "_")]
 
     assert os.listdir(os.path.join(cache_dir, "obj_train_data")).sort() == outdir.sort()
-    shutil.rmtree(cache_dir)
+    # shutil.rmtree(cache_dir)
