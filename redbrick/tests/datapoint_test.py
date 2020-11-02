@@ -47,4 +47,3 @@ def test_video_init() -> None:
 
     assert len(video.labels.labels) == 3
     assert isinstance(video.labels, VideoBoundingBox)
-
