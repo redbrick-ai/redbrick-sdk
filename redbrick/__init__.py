@@ -6,6 +6,7 @@ Derek Lukacs, 2020
 
 from .client import RedBrickClient
 import redbrick.api
+import redbrick.logging
 from typing import Optional
 
 # import redbrick.base

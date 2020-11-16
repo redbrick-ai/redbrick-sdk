@@ -33,8 +33,8 @@ def test_compare() -> None:
 
 def test_url_to_image() -> None:
     """Test the conversion of a url to image data."""
-    url = "https://asia.olympus-imaging.com/content/000107506.jpg"
-    local = "redbrick/tests/000107506.jpg"
+    url = "https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg"
+    local = "redbrick/tests/Example.jpg"
 
     # get local image
     img_local = cv2.imread(local)

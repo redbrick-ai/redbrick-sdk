@@ -37,9 +37,10 @@ class Video(BaseDatapoint):
     def show_data(self, start: int = 0, end: int = 20) -> None:
         """Show the video data."""
         ims = []
-        fig, ax = plt.subplots()
-        num_frames = len(self.items_list)
 
+        fig, ax = plt.subplots()
+
+        num_frames = len(self.items_list)
         for i in tqdm(range(start, min(end, num_frames))):
             frame = url_to_image(url=self.items_list[i])
             height, width, _ = frame.shape

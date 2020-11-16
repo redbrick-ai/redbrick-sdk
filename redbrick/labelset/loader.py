@@ -2,7 +2,7 @@
 
 from typing import Optional, List, Union, Dict
 from random import randint
-
+import sys
 import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 from matplotlib import patches
@@ -19,28 +19,31 @@ from redbrick.labelset.labelset_base import LabelsetBase
 from redbrick.api import RedBrickApi
 from redbrick.entity.datapoint import Image, Video
 from redbrick.entity.export import ExportImage, ExportVideo
+from redbrick.logging import print_info, print_error
 
 
 class LabelsetLoader(LabelsetBase):
-    """A basic high level loader class."""
-
     def __init__(self, org_id: str, label_set_name: str) -> None:
         """Construct Loader."""
         self.org_id = org_id
         self.label_set_name = label_set_name
         self.api_client = RedBrickApi(cache=False)
 
-        print(colored("[INFO]:", "blue"), "Counting available datapoints...")
+        print_info("Counting available datapoint...")
+
         # All datapoints in labelset
-        self.dp_ids, custom_group = self.api_client.get_datapoint_ids(
-            self.org_id, self.label_set_name
-        )
+        try:
+            self.dp_ids, custom_group = self.api_client.get_datapoint_ids(
+                self.org_id, self.label_set_name
+            )
+        except Exception as err:
+            print_error(err)
+            return
+
         self.task_type = custom_group.task_type
         self.data_type = custom_group.data_type
         self.taxonomy: Dict[str, int] = custom_group.taxonomy
-        print(
-            colored("[INFO]:", "blue"), "Number of Datapoints = %s" % len(self.dp_ids)
-        )
+        print_info("Number of Datapoints = %s" % len(self.dp_ids))
 
         # Update taxonomy mapper if segmentation
         if self.task_type == "SEGMENTATION":
@@ -59,7 +62,6 @@ class LabelsetLoader(LabelsetBase):
 
     def export(self, format: str = "redbrick") -> str:
         """Export."""
-
         if self.data_type == "IMAGE":
             export_img: ExportImage = ExportImage(format=format, labelset=self)
             export_img.export()
@@ -69,10 +71,13 @@ class LabelsetLoader(LabelsetBase):
             export_vid.export()
             return export_vid.cache_dir
         else:
-            raise ValueError(
-                "%s data type not supported! Please reach out to contact@redbrickai.com"
+            err = ValueError(
+                "%s data type not supported! Please reach out to \
+                    contact@redbrickai.com"
                 % self.data_type
             )
+            print_error(err)
+            return ""
 
     def number_of_datapoints(self) -> int:
         """Get number of datapoints."""
@@ -82,15 +87,19 @@ class LabelsetLoader(LabelsetBase):
         """Visualize the data."""
 
         if self.data_type == "VIDEO":
-            print(colored("[INFO]:", "blue"), "Visualizing first 20 frames...")
+            print_info("Visualizing first 20 frames...")
 
             num_dps = self.number_of_datapoints()
+            if not num_dps:
+                return
 
-            self[0].show_data()
+            idx = random.randint(0, num_dps - 1)
+
+            self[idx].show_data()
             return
 
         # Image data type
-        print(colored("[INFO]:", "blue"), "Visualizing data and labels...")
+        print_info("Visualizing data and labels...")
 
         # Prepare figure
         num_dps = self.number_of_datapoints()
@@ -112,13 +121,16 @@ class LabelsetLoader(LabelsetBase):
         plt.show()
 
     def taxonomy_update_segmentation(self) -> None:
-        """Fix the taxonomy mapper object to be 1-indexed for segmentation projects."""
+        """
+        Fix the taxonomy mapper object to be 1-indexed for
+        segmentation projects.
+        """
         for key in self.taxonomy.keys():
             self.taxonomy[key] += 1
             if self.taxonomy[key] == 0:
-                print(
-                    colored("[ERROR]:", "red"),
-                    "Taxonomy class id's must be 0 indexed. Please contact contact@redbrickai.com for help.",
+                print_error(
+                    "Taxonomy class id's must be 0 indexed. \
+                        Please contact contact@redbrickai.com for help."
                 )
                 exit(1)
 

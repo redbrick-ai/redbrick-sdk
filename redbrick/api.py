@@ -356,7 +356,7 @@ class RedBrickApi(RedBrickApiBase):
         Tax = Taxonomy2(remote_tax=result["taxonomy"])
         return Tax
 
-    def _execute_query(self, query: Dict) -> Any:
+    def _execute_query(self, query: Dict[Any, Any]) -> Any:
         """Execute a graphql query."""
         headers = {"ApiKey": self.client.api_key}
         try:
@@ -370,6 +370,7 @@ class RedBrickApi(RedBrickApiBase):
                 res = response.json()
             return res
         except ValueError:
-            print(response.content)
-            print(response.status_code)
-            raise ValueError
+            # print(response.content)
+            # print(response.status_code)
+            raise
+

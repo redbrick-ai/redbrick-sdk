@@ -11,7 +11,8 @@ from typing import Any
 from unittest.mock import patch, MagicMock
 from redbrick.entity.custom_group import CustomGroup
 from redbrick.tests.taxonomy2_test import TAXONOMY1
-from .datapoint_test import IMAGE, VIDEO, VIDEO_CLASSIFY
+import matplotlib.pyplot as plt
+from .datapoint_test import IMAGE, VIDEO, VIDEO_CLASSIFY, VIDEO_BBOX_REAL
 import os
 import numpy as np
 import shutil
@@ -80,39 +81,26 @@ def test_labelset_export_image(mock: Any) -> None:
 class Mock_Video:
     """Mocking RedBrickApi for video."""
 
-    def __init__(self):
-        return
+    def __init__(self, data=VIDEO, tasktype="BBOX", num_pts=2):
+        self.data = data
+        self.task_type = tasktype
+        self.dps = [str(i) for i in range(num_pts)]
 
     def get_datapoint_ids(self, org_id, label_set_name):
         return (
-            ["1", "2"],
-            CustomGroup("BBOX", "VIDEO", TAXONOMY1["taxonomy"]),
+            self.dps,
+            CustomGroup(self.task_type, "VIDEO", TAXONOMY1["taxonomy"]),
         )
 
     def get_datapoint(self, orgid, labelsetname, dpid, tasktype, taxonomy):
-        return VIDEO
-
-
-class Mock_Video_Classify:
-    """Mocking RedBrickApi for video."""
-
-    def __init__(self):
-        return
-
-    def get_datapoint_ids(self, org_id, label_set_name):
-        return (
-            ["1", "2"],
-            CustomGroup("CLASSIFY", "VIDEO", TAXONOMY1["taxonomy"]),
-        )
-
-    def get_datapoint(self, orgid, labelsetname, dpid, tasktype, taxonomy):
-        VIDEO_CLASSIFY.video_name = dpid
-        return VIDEO_CLASSIFY
+        if tasktype == "CLASSIFY":
+            self.data.video_name = dpid
+        return self.data
 
 
 @patch("redbrick.entity.export.export_video.url_to_image")
 @patch("redbrick.labelset.loader.RedBrickApi")
-def test_labelset_export_image(mock: Any, url_to_image: Any) -> None:
+def test_labelset_export_video(mock: Any, url_to_image: Any) -> None:
     """Test labelset export for images."""
     mock.return_value = Mock_Video()
     url_to_image.return_value = np.zeros((10, 10, 3))
@@ -135,7 +123,7 @@ def test_labelset_export_image(mock: Any, url_to_image: Any) -> None:
 @patch("redbrick.labelset.loader.RedBrickApi")
 def test_labelset_export_video_clasify(mock: Any, url_to_image: Any) -> None:
     """Test labelset export for images."""
-    mock.return_value = Mock_Video_Classify()
+    mock.return_value = Mock_Video(data=VIDEO_CLASSIFY, tasktype="CLASSIFY")
     url_to_image.return_value = np.zeros((10, 10, 3))
 
     labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
@@ -145,7 +133,7 @@ def test_labelset_export_video_clasify(mock: Any, url_to_image: Any) -> None:
 
     files = os.listdir(cache_dir)
     assert len(files) == 2
-    assert files == ["1", "2"]
+    assert files == mock.return_value.dps
     shutil.rmtree(cache_dir)
 
 
@@ -153,7 +141,7 @@ def test_labelset_export_video_clasify(mock: Any, url_to_image: Any) -> None:
 @patch("redbrick.labelset.loader.RedBrickApi")
 def test_labelset_export_video_clasify_json(mock: Any, url_to_image: Any) -> None:
     """Test labelset export for images."""
-    mock.return_value = Mock_Video_Classify()
+    mock.return_value = Mock_Video(data=VIDEO_CLASSIFY, tasktype="CLASSIFY")
     url_to_image.return_value = np.zeros((10, 10, 3))
 
     labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
@@ -169,3 +157,17 @@ def test_labelset_export_video_clasify_json(mock: Any, url_to_image: Any) -> Non
         labels = json.load(file)
 
     shutil.rmtree(cache_dir)
+
+
+@patch("redbrick.entity.datapoint.video.url_to_image")
+@patch("redbrick.labelset.loader.RedBrickApi")
+def test_labelset_showdata_video(mock: Any, url_to_image: Any) -> None:
+    """Test labelset export for images."""
+    mock.return_value = Mock_Video(data=VIDEO_BBOX_REAL, num_pts=20)
+    url_to_image.return_value = np.ones((10, 10, 3)) * 0.5
+
+    labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
+
+    plt.ion()  # make plt.show non blocking
+    labelset.show_data()
+    plt.close()

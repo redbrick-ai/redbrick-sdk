@@ -61,6 +61,26 @@ VIDEO_CLASSIFY = Video(
     ],
 )
 
+VIDEO_BBOX_REAL = Video(
+    org_id="123",
+    label_set_name="abc",
+    taxonomy={"person": 0, "car": 1},
+    task_type="BBOX",
+    remote_labels=VID_LABEL1,
+    items_list=[
+        "https://upload.wikimedia.org/wikipedia/commons/e/ee/Sample_abc.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/e/ee/Sample_abc.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/e/ee/Sample_abc.jpg",
+    ],
+    dp_id="sdfalsn",
+    video_name="video name",
+    items_list_not_signed=[
+        "https://upload.wikimedia.org/wikipedia/commons/e/ee/Sample_abc.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/e/ee/Sample_abc.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/e/ee/Sample_abc.jpg",
+    ],
+)
+
 
 def test_image_init() -> None:
     """test init of image."""
