@@ -125,7 +125,9 @@ class RedBrickApi(RedBrickApiBase):
             signed_image_url = result["labelData"]["dataPoint"]["items"][0]
             unsigned_image_url = result["labelData"]["dataPoint"]["items_not_signed"][0]
             labels = json.loads(result["labelData"]["blob"])["items"][0]["labels"]
-            image_data = url_to_image(signed_image_url)  # Get image array
+            image_data = np.zeros(
+                [3, 3, 3]
+            )  # url_to_image(signed_image_url)  # Get image array
 
             dpoint = Image(
                 org_id=org_id,

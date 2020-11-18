@@ -6,7 +6,7 @@ from typing import Optional, Any
 class RedBrickClient:
     """Interface to RedBrick platform."""
 
-    class __RedBrickClient:
+    class RedBrickClientPrivate:
         """A private singleton for redbrick."""
 
         def __init__(self, api_key: str, custom_url: Optional[str] = None) -> None:
@@ -18,7 +18,7 @@ class RedBrickClient:
             """Get string representation."""
             return repr(self) + "***" + self.api_key[-4:-1]
 
-    instance: Optional[__RedBrickClient] = None
+    instance: Optional[RedBrickClientPrivate] = None
 
     def __init__(
         self, api_key: Optional[str] = None, url: Optional[str] = None
@@ -29,7 +29,7 @@ class RedBrickClient:
                 raise Exception("Must specify api_key")
             return
         if not RedBrickClient.instance:
-            RedBrickClient.instance = RedBrickClient.__RedBrickClient(api_key, url)
+            RedBrickClient.instance = RedBrickClient.RedBrickClientPrivate(api_key, url)
         else:
             RedBrickClient.instance.api_key = api_key
 

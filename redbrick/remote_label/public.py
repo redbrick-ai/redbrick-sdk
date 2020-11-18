@@ -1,11 +1,10 @@
 """Public interface to remote_label."""
+from typing import List, Union
+from termcolor import colored
 from redbrick.api import RedBrickApi
-import json
 from redbrick.entity.task import Task
 from redbrick.entity.label import ImageBoundingBox, VideoBoundingBox, VideoClassify
 from redbrick.entity.taxonomy2 import Taxonomy2
-from typing import List, Union
-from termcolor import colored
 
 
 class RemoteLabel:
@@ -126,14 +125,14 @@ class RemoteLabel:
 
     def __put_remote_labeling_task(self, task: Task) -> None:
         """Put the remote labeling task to the backend."""
-        finishedTask = {
+        finished_task = {
             "orgId": task.org_id,
             "projectId": task.project_id,
             "stageName": task.stage_name,
             "taskId": task.task_id,
             "newSubName": task.sub_name,
         }
-        self.api_client.putRemoteLabelingTask(finishedTask)
+        self.api_client.putRemoteLabelingTask(finished_task)
 
     def __get_remote_labeling_task(self, num_tasks: int) -> List[Task]:
         """Get the labeling tasks from API."""

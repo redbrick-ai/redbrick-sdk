@@ -16,9 +16,51 @@ import uuid
 import matplotlib.patches as patches  # type: ignore
 import copy
 
+# d88888b d8b   db d888888b d888888b d888888b d888888b d88888b .d8888.
+# 88'     888o  88 `~~88~~'   `88'   `~~88~~'   `88'   88'     88'  YP
+# 88ooooo 88V8o 88    88       88       88       88    88ooooo `8bo.
+# 88~~~~~ 88 V8o88    88       88       88       88    88~~~~~   `Y8b.
+# 88.     88  V888    88      .88.      88      .88.   88.     db   8D
+# Y88888P VP   V8P    YP    Y888888P    YP    Y888888P Y88888P `8888Y'
+
+
+@dataclass
+class Bbox2d:
+    """Representation of bbox2d field in remote label."""
+
+    xnorm: float
+    ynorm: float
+    hnorm: float
+    wnorm: float
+    labelid: str
+
+
+@dataclass
+class ImageBoundingBoxRemoteLabel:
+    """Image bounding box remote label object."""
+
+    category: List[List[str]]
+    attributes: List[Any]
+    bbox2d: Bbox2d
+
+    @classmethod
+    def from_dict(cls, obj: Dict[Any, Any]) -> "ImageBoundingBoxRemoteLabel":
+        """Create instance from dict object."""
+        bbox2d = Bbox2d(
+            xnorm=obj["bbox2d"]["xnorm"],
+            ynorm=obj["bbox2d"]["ynorm"],
+            hnorm=obj["bbox2d"]["hnorm"],
+            wnorm=obj["bbox2d"]["wnorm"],
+            labelid=obj["bbox2d"]["hnorm"],
+        )
+        return cls(
+            category=obj["category"], attributes=obj["attributes"], bbox2d=bbox2d
+        )
+
 
 @dataclass
 class ImageBoundingBoxEntry:
+    """Rerpresentation for a single image bbox entry."""
 
     xnorm: float
     ynorm: float
@@ -29,6 +71,7 @@ class ImageBoundingBoxEntry:
 
 @dataclass
 class VideoBoundingBoxEntry:
+    """Representation for a single video bbox entry."""
 
     xnorm: float
     ynorm: float
@@ -43,6 +86,12 @@ class VideoBoundingBoxEntry:
 
 
 class VideoBBoxLabel:
+    """
+    Temporary represetation for video bbox interpolation.
+
+    In the future, needs to be replaced with VideoBoundingBoxEntry
+    """
+
     def __init__(
         self,
         labelid: str,
@@ -99,6 +148,8 @@ class VideoBBoxLabel:
 
 @dataclass
 class BaseBoundingBox:
+    """Base bounding box representation."""
+
     labels: Union[List[ImageBoundingBoxEntry], List[VideoBoundingBoxEntry]]
 
     def compare_tax(self, taxonomy: Taxonomy2) -> Tuple[bool, List[List[str]]]:
@@ -126,10 +177,18 @@ class BaseBoundingBox:
             raise StopIteration
 
 
+# d888888b .88b  d88.  .d8b.   d888b  d88888b
+#   `88'   88'YbdP`88 d8' `8b 88' Y8b 88'
+#    88    88  88  88 88ooo88 88      88ooooo
+#    88    88  88  88 88~~~88 88  ooo 88~~~~~
+#   .88.   88  88  88 88   88 88. ~8~ 88.
+# Y888888P YP  YP  YP YP   YP  Y888P  Y88888P
+
+
 class ImageBoundingBox(BaseBoundingBox):
     """Bounding box for a single image."""
 
-    def __init__(self, labels: List[Any]) -> None:
+    def __init__(self, labels: List[ImageBoundingBoxRemoteLabel]) -> None:
         """Constructor."""
         self.labels: List[ImageBoundingBoxEntry]
 
@@ -137,18 +196,13 @@ class ImageBoundingBox(BaseBoundingBox):
         entries = []
         for label in labels:
 
-            if "bbox2d" not in label:
-                raise ValueError(
-                    "Incorrect format for labels entry ImageBoundingBox. bbox2d field is missing!"
-                )
-
-            label_ = label["bbox2d"]
+            label_ = label.bbox2d
             entry = ImageBoundingBoxEntry(
-                xnorm=label_["xnorm"],
-                ynorm=label_["ynorm"],
-                wnorm=label_["wnorm"],
-                hnorm=label_["hnorm"],
-                classname=label["category"],
+                xnorm=label_.xnorm,
+                ynorm=label_.ynorm,
+                wnorm=label_.wnorm,
+                hnorm=label_.hnorm,
+                classname=label.category,
             )
             entries.append(entry)
 
@@ -207,6 +261,14 @@ class ImageBoundingBox(BaseBoundingBox):
         output = {"items": [{"url": "throwaway", "labels": labels}]}
 
         return json.dumps(output)
+
+
+# db    db d888888b d8888b. d88888b  .d88b.
+# 88    88   `88'   88  `8D 88'     .8P  Y8.
+# Y8    8P    88    88   88 88ooooo 88    88
+# `8b  d8'    88    88   88 88~~~~~ 88    88
+#  `8bd8'    .88.   88  .8D 88.     `8b  d8'
+#    YP    Y888888P Y8888D' Y88888P  `Y88P'
 
 
 class VideoBoundingBox(BaseBoundingBox):
@@ -320,7 +382,6 @@ class VideoBoundingBox(BaseBoundingBox):
 
     def interpolate_labels(self, num_frames: int) -> List[List[VideoBBoxLabel]]:
         """Interpolate the frames and return interpolated object."""
-        # Write labels for each frame here
         # Write labels for each frame here
         temp: Dict[Any, Any] = {}
         for label in self.labels:

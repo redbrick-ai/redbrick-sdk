@@ -2,11 +2,11 @@
 Utility functions.
 """
 
+from typing import List
 import requests
 import numpy as np  # type: ignore
 import cv2  # type: ignore
 from redbrick.entity.taxonomy2 import Taxonomy2
-from typing import List
 
 
 def url_to_image(url: str) -> np.ndarray:
@@ -24,10 +24,14 @@ def url_to_image(url: str) -> np.ndarray:
         if not resp.status_code == 200:
             raise Exception("Not able to access data at %s url" % (url))
     except Exception as err:
-        raise Exception("%s. Not able to access data at %s url" % (str(err), url))
+        raise Exception(
+            "%s. Not able to access data at %s url" % (str(err), url)
+        ) from err
 
     image = np.asarray(bytearray(resp.raw.read()), dtype="uint8")
+    # pylint: disable=no-member
     image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+
     # cv2 returns a BGR image, need to convert to RGB
     # the copy operation makes the memory contiguous for tensorify-ing
     return np.flip(image, axis=2).copy()

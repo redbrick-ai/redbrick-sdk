@@ -1,16 +1,16 @@
 """
 Class for controlling image exports.
 """
-from redbrick.entity.export.export_base import ExportBase
 from dataclasses import dataclass
-from termcolor import colored
+from typing import Any
 import os
-import cv2  # type: ignore
 import json
+from termcolor import colored
+import cv2  # type: ignore
 from tqdm import tqdm  # type: ignore
 import numpy as np  # type: ignore
-from redbrick.entity.datapoint import Image, Video
-import shutil
+
+from .export_base import ExportBase
 
 
 @dataclass
@@ -60,27 +60,22 @@ class ExportImage(ExportBase):
 
         # IMAGE DATA
         for i in tqdm(range(len(self.labelset.dp_ids))):
-            dp = self.labelset.__getitem__(i)
-            if isinstance(dp, Video):
-                # Ensure the data type is Image
-                raise ValueError(
-                    "Oops, something went wrong! Please reach out to contact@redbrickai.com."
-                )
+            dp_ = self.labelset.__getitem__(i)
             dp_entry = {}
-            dp_entry["url"] = dp.image_url_not_signed
+            dp_entry["url"] = dp_.image_url_not_signed
             dp_entry["labels"] = []
 
             # write image data to file
             image_filepath = os.path.join(
                 self.cache_dir,
                 "obj_train_data",
-                str(dp.image_url_not_signed).replace("/", "_"),
+                str(dp_.image_url_not_signed).replace("/", "_"),
             )
             image_filepaths.append(
-                "obj_train_data/" + str(dp.image_url_not_signed).replace("/", "_")
+                "obj_train_data/" + str(dp_.image_url_not_signed).replace("/", "_")
             )
             cv2.imwrite(  # pylint: disable=no-member
-                image_filepath, np.flip(dp.image_data, axis=2)
+                image_filepath, np.flip(dp_.image_data, axis=2)
             )
 
             # create the label file name
@@ -91,7 +86,7 @@ class ExportImage(ExportBase):
 
             # write labels to the txt file
             with open(label_filepath, "w+") as file:
-                for label in dp.labels:
+                for label in dp_.labels:
                     class_idx = taxonomy_mapper[label.classname[0][-1]]
                     file.write(
                         "%d %.6f %.6f %.6f %.6f \n"
@@ -111,20 +106,50 @@ class ExportImage(ExportBase):
 
     def cache_segmentation(self) -> None:
         """Cache image segmentation."""
-        # Save masks
-        for i in tqdm(range(len(self.labelset.dp_ids))):
-            dp = self.labelset.__getitem__(i)
-            dp.labels.mask.dump(
-                self.cache_dir
-                + "/"
-                + str(dp.image_url_not_signed).replace("/", "_")
-                + ".dat"
-            )
+        if self.format == "redbrick":
+            # Save masks
+            for i in tqdm(range(len(self.labelset.dp_ids))):
+                dp_ = self.labelset.__getitem__(i)
+                dp_.labels.mask.dump(
+                    self.cache_dir
+                    + "/"
+                    + str(dp_.image_url_not_signed).replace("/", "_")
+                    + "__export.dat"
+                )
 
-        # Save the class-mapping (taxonomy) in json format in the folder
-        with open("%s/class-mapping.json" % self.cache_dir, "w+") as file:
-            json.dump(dp.taxonomy, file, indent=2)
+            # Save the class-mapping (taxonomy) in json format in the folder
+            with open("%s/class-mapping.json" % self.cache_dir, "w+") as file:
+                json.dump(dp_.taxonomy, file, indent=2)
+
+        elif self.format == "redbrick-png":
+            # iterate through all labels
+            if len(self.labelset.dp_ids) == 0:
+                return
+
+            color_map: Any = None
+            for i in tqdm(range(len(self.labelset.dp_ids))):
+                dp_ = self.labelset.__getitem__(i)
+                colored_mask = dp_.labels.color_mask()
+                color_map = dp_.labels.color_map
+                # cv2 expected BGR
+                # pylint: disable=no-member
+                export_url = str(dp_.image_url_not_signed).replace("/", "_")
+                cv2.imwrite(
+                    os.path.join(self.cache_dir, export_url + "__export.png"),
+                    np.flip(colored_mask, axis=2) * 256,
+                )
+
+            # Meta-data
+            label_info = {}
+            label_info["taxonomy"] = dp_.taxonomy
+            label_info["color_map"] = {}
+            for key in dp_.taxonomy:
+                color_map_ = color_map(dp_.taxonomy[key]).tolist()
+                label_info["color_map"][dp_.taxonomy[key]] = color_map_
+
+            # Save the class-mapping (taxonomy) in json format in the folder
+            with open("%s/class-mapping.json" % self.cache_dir, "w+") as file:
+                json.dump(label_info, file, indent=2)
 
     def cache_classify(self) -> None:
         """Cache image classification."""
-        pass

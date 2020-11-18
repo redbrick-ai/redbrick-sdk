@@ -1,12 +1,11 @@
 """
 Base class for export controller.
 """
-from redbrick.labelset.labelset_base import LabelsetBase
-from dataclasses import dataclass, field
-import datetime
 import os
-from typing import Optional
 import uuid
+from dataclasses import dataclass, field
+
+from redbrick.labelset.labelset_base import LabelsetBase
 
 
 @dataclass

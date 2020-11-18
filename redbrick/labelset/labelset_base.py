@@ -3,11 +3,13 @@ Base labelset.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 
 
 @dataclass
 class LabelsetBase:
+    """Base class for labelset."""
+
     org_id: str
     labelset_name: str
     task_type: str

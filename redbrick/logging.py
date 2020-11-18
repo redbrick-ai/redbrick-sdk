@@ -1,6 +1,6 @@
 """Logging functions."""
-from termcolor import colored
 from typing import Union
+from termcolor import colored
 
 
 def print_info(text: str) -> None:

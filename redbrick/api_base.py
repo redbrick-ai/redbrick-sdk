@@ -1,6 +1,6 @@
 """Abstract interface to RedBrick API."""
 
-from typing import List, Union
+from typing import List, Union, Dict, Any
 from abc import ABC, abstractmethod
 from redbrick.entity.datapoint import Image, Video
 
@@ -19,6 +19,6 @@ class RedBrickApiBase(ABC):
         label_set_name: str,
         dp_id: str,
         task_type: str,
-        taxonomy: dict,
+        taxonomy: Dict[Any, Any],
     ) -> Union[Image, Video]:
         """Get all relevant information related to a datapoint."""

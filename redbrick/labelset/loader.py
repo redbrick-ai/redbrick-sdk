@@ -1,28 +1,20 @@
 """A higher level abstraction."""
 
-from typing import Optional, List, Union, Dict
-from random import randint
-import sys
+from typing import Union, Dict
+import random
 import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
-from matplotlib import patches
-import os
-import datetime
-from tqdm import tqdm  # type: ignore
-import logging
-from termcolor import colored
-import json
-import cv2  # type: ignore
-import random
 
 from redbrick.labelset.labelset_base import LabelsetBase
 from redbrick.api import RedBrickApi
 from redbrick.entity.datapoint import Image, Video
-from redbrick.entity.export import ExportImage, ExportVideo
+from redbrick.export import ExportImage, ExportVideo
 from redbrick.logging import print_info, print_error
 
 
 class LabelsetLoader(LabelsetBase):
+    """Labelset loader class."""
+
     def __init__(self, org_id: str, label_set_name: str) -> None:
         """Construct Loader."""
         self.org_id = org_id
@@ -115,7 +107,7 @@ class LabelsetLoader(LabelsetBase):
         for i, idx in enumerate(indexes):
 
             ax = fig.add_subplot(rows, cols, i + 1)
-            self[idx].show_data(ax=ax)
+            self[idx].show_data(ax=ax)  # type: ignore
 
         plt.tight_layout()
         plt.show()
