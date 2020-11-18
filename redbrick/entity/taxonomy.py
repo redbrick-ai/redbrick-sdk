@@ -1,4 +1,4 @@
-from typing import List
+"""Taxonomy."""
 from dataclasses import dataclass
 
 
