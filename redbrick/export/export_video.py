@@ -1,18 +1,16 @@
 """
 Class for controlling video exports.
 """
-from .export_base import ExportBase
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
 import os
 import json
 import cv2  # type: ignore
-import shutil
 import numpy as np  # type: ignore
 from termcolor import colored
 from tqdm import tqdm  # type: ignore
-from redbrick.entity.datapoint import Image
+
 from redbrick.utils import url_to_image
+from .export_base import ExportBase
 
 
 @dataclass
