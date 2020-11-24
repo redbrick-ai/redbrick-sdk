@@ -123,5 +123,5 @@ def test_export_png(mock: Any) -> None:
     )
 
     # clean up
-    # shutil.rmtree(cache_dir)
+    shutil.rmtree(cache_dir)
     os.remove("temp_test.png")
