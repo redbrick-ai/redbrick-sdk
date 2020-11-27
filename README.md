@@ -48,7 +48,7 @@ You now all the images and their labels in memory. Now you just need to plug thi
 
 ### Pre-requisite
 
-- Python 3.8.6
+- Python 3.8.6 (Compatible with 3.7.0 as well)
 
 ### Setup
 
