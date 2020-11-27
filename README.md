@@ -1,13 +1,13 @@
 # Introduction
 
-This is an SDK to make integrating with the RedBrick platform as easy as possible. This includes uploading and downloading data
-as well as making your datasets easily available for training. Use this SDK to access your data and labls anywhere you run your code. Whether that is on the cloud, or locally with a Jupyter Notebook.
+This is an SDK to make integration with the RedBrick platform as easy as possible. This includes uploading and downloading data
+as well as making your datasets easily available for training. Use this SDK to access your data and labels anywhere you run your code, whether that is on the cloud, or locally with a Jupyter Notebook.
 
-This repository is far from feature complete and is under active development. Please feel free to submit issues on github or at <mailto:support@redbrickai.com> if you run into any problems or have suggestions.
+This repository is far from feature complete and is under active development. Please feel free to submit issues on github or at [support@redbrickai.com](mailto:support@redbrickai.com) if you run into any problems or have suggestions.
 
 ## Quickstart
 
-After creating an account on app.redbrickai.com,
+After creating an account on [app.redbrickai.com](https://app.redbrick.com),
 
 ```bash
 pip install --upgrade redbrick-sdk
@@ -42,7 +42,28 @@ example_item.gt_classes
 
 ```
 
-You now all of the images and their labels in memory. Now you just need to plug this data in to your machine learning framework.
+You now all the images and their labels in memory. Now you just need to plug this data in to your machine learning framework.
+
+## Local Development
+
+### Pre-requisite
+
+- Python 3.8.6
+
+### Setup
+
+- Create virtual environment
+
+```
+$ python3 -m venv venv
+```
+
+- Install dependencies
+
+```
+$ source venv/bin/activate
+$ pip install -r requirements.txt
+```
 
 ## Torch
 
