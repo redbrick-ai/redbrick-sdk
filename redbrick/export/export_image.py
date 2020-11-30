@@ -2,7 +2,7 @@
 Class for controlling image exports.
 """
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Dict
 import os
 import json
 from termcolor import colored
@@ -126,6 +126,8 @@ class ExportImage(ExportBase):
             if len(self.labelset.dp_ids) == 0:
                 return
 
+            label_info: Dict[Any, Any] = {}
+            label_info["labels"] = []
             color_map: Any = None
             for i in tqdm(range(len(self.labelset.dp_ids))):
                 dp_ = self.labelset.__getitem__(i)
@@ -138,9 +140,13 @@ class ExportImage(ExportBase):
                     os.path.join(self.cache_dir, export_url + "__export.png"),
                     np.flip(colored_mask, axis=2) * 256,
                 )
+                label_info_entry = {}
+                label_info_entry["url"] = dp_.image_url_not_signed
+                label_info_entry["createdBy"] = self.labelset.users[dp_.created_by]
+                label_info_entry["exportUrl"] = export_url + "__export.png"
+                label_info["labels"] += [label_info_entry]
 
             # Meta-data
-            label_info = {}
             label_info["taxonomy"] = dp_.taxonomy
             label_info["color_map"] = {}
             for key in dp_.taxonomy:

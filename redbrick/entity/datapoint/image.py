@@ -74,7 +74,6 @@ class Image(BaseDatapoint):
 
         # Render labels
         height, width, _ = self.image_data.shape
-        print("IMAGE DATA = ", self.image_data)
         self.labels.show(ax=ax, width=width, height=height)
         title = (
             "..." + self.image_url_not_signed[-10:]

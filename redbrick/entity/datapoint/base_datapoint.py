@@ -14,4 +14,5 @@ class BaseDatapoint:
     label_set_name: str
     taxonomy: Dict[str, int]
     task_type: str
+    created_by: str
     remote_labels: List[Any]

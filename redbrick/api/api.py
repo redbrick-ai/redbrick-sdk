@@ -94,6 +94,7 @@ class RedBrickApi(RedBrickApiBase):
                         items_not_signed:items(presigned:false)
                         name
                     },
+                    createdBy,
                     taskType,
                     dataType, 
                     labels {
@@ -125,9 +126,11 @@ class RedBrickApi(RedBrickApiBase):
             signed_image_url = result["labelData"]["dataPoint"]["items"][0]
             unsigned_image_url = result["labelData"]["dataPoint"]["items_not_signed"][0]
             labels = json.loads(result["labelData"]["blob"])["items"][0]["labels"]
+            created_by = result["labelData"]["createdBy"]
             image_data = url_to_image(signed_image_url)  # Get image array
 
             dpoint = Image(
+                created_by=created_by,
                 org_id=org_id,
                 label_set_name=label_set_name,
                 taxonomy=taxonomy,
@@ -355,6 +358,34 @@ class RedBrickApi(RedBrickApiBase):
 
         Tax = Taxonomy2(remote_tax=result["taxonomy"])
         return Tax
+
+    def get_members(self, org_id) -> Dict[Any, Any]:
+        """Return all members in the organization."""
+        query_string = """
+        query($orgId: UUID!) {
+            members(orgId: $orgId) {
+                userId, 
+                user {
+                    givenName, 
+                    familyName,
+                    email
+                }
+            }
+        }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+        }
+        query = dict(query=query_string, variables=query_variables)
+        result = self._execute_query(query)
+
+        # create a member map
+        member_map = {}
+        for member in result["members"]:
+            member_map[member["userId"]] = member["user"]["email"]
+
+        return member_map
 
     def _execute_query(self, query: Dict[Any, Any]) -> Any:
         """Execute a graphql query."""

@@ -16,6 +16,7 @@ class LabelsetBase:
     data_type: str
     taxonomy: Dict[str, int]
     dp_ids: List[str] = field(init=False)
+    users: Dict[Any, Any]
 
     def __getitem__(self, index: int) -> Any:
         """Get a single dp."""

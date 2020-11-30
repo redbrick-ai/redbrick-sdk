@@ -41,6 +41,13 @@ class LabelsetLoader(LabelsetBase):
         if self.task_type == "SEGMENTATION":
             self.taxonomy_update_segmentation()
 
+        # Get all users
+        try:
+            self.users = self.api_client.get_members(self.org_id)
+        except Exception as err:
+            print_error(err)
+            return
+
     def __getitem__(self, index: int) -> Union[Image, Video]:
         """Get information needed for a single item."""
         dp = self.api_client.get_datapoint(
