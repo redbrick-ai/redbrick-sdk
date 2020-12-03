@@ -40,7 +40,6 @@ class ImageBoundingBoxRemoteLabel:
     """Image bounding box remote label object."""
 
     category: List[List[str]]
-    attributes: List[Any]
     bbox2d: Bbox2d
 
     @classmethod
@@ -53,9 +52,7 @@ class ImageBoundingBoxRemoteLabel:
             wnorm=obj["bbox2d"]["wnorm"],
             labelid=obj["bbox2d"]["hnorm"],
         )
-        return cls(
-            category=obj["category"], attributes=obj["attributes"], bbox2d=bbox2d
-        )
+        return cls(category=obj["category"], bbox2d=bbox2d)
 
 
 @dataclass
@@ -247,7 +244,6 @@ class ImageBoundingBox(BaseBoundingBox):
         for label in self.labels:
             entry: Dict[Any, Any] = {}
             entry["category"] = label.classname
-            entry["attributes"] = []
             entry["labelid"] = str(uuid.uuid4())
             entry["bbox2d"] = {
                 "xnorm": label.xnorm,
@@ -363,7 +359,6 @@ class VideoBoundingBox(BaseBoundingBox):
         for label in self.labels:
             entry: Dict[Any, Any] = {}
             entry["category"] = label.classname
-            entry["attributes"] = []
             entry["labelid"] = label.labelid
             entry["bbox2d"] = {
                 "xnorm": label.xnorm,

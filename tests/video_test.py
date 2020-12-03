@@ -28,6 +28,7 @@ VIDEO = Video(
         "http://127.0.0.1:8080/secondasdfdasrqew.png",
         "http://127.0.0.1:8080/thirdadsfqer.png",
     ],
+    created_by="123",
 )
 
 VIDEO_CLASSIFY = Video(
@@ -48,6 +49,7 @@ VIDEO_CLASSIFY = Video(
         "http://127.0.0.1:8080/secondasdfdasrqew.png",
         "http://127.0.0.1:8080/thirdadsfqer.png",
     ],
+    created_by="123",
 )
 
 VIDEO_BBOX_REAL = Video(
@@ -68,6 +70,7 @@ VIDEO_BBOX_REAL = Video(
         "https://upload.wikimedia.org/wikipedia/commons/e/ee/Sample_abc.jpg",
         "https://upload.wikimedia.org/wikipedia/commons/e/ee/Sample_abc.jpg",
     ],
+    created_by="123",
 )
 
 

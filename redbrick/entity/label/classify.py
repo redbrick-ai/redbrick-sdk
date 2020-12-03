@@ -33,8 +33,7 @@ class ImageClassify:
 
     def __post_init__(self) -> None:
         """Run after init."""
-        # TODO
-        pass
+        self.labels = ImageClassifyEntry(self.remote_labels[0]["category"])
 
     def compare_taxonomy(self, taxonomy: Taxonomy2) -> Tuple[bool, List[List[str]]]:
         """Ensure self labels match taxonomy."""

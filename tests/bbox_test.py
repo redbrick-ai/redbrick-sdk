@@ -145,7 +145,6 @@ def test_vid_bbox_str() -> None:
         "labels": [
             {
                 "category": [["object", "person"]],
-                "attributes": [],
                 "bbox2d": {"xnorm": 0.1, "ynorm": 0.1, "hnorm": 0.1, "wnorm": 0.1,},
                 "frameindex": 0,
                 "labelid": vid_bbox.labels[0].labelid,
@@ -155,7 +154,6 @@ def test_vid_bbox_str() -> None:
             },
             {
                 "category": [["object", "car"]],
-                "attributes": [],
                 "bbox2d": {"xnorm": 0.1, "ynorm": 0.1, "hnorm": 0.1, "wnorm": 0.1,},
                 "frameindex": 0,
                 "labelid": vid_bbox.labels[1].labelid,
@@ -165,7 +163,6 @@ def test_vid_bbox_str() -> None:
             },
             {
                 "category": [["object", "car"]],
-                "attributes": [],
                 "bbox2d": {"xnorm": 0.1, "ynorm": 0.1, "hnorm": 0.1, "wnorm": 0.1,},
                 "frameindex": 1,
                 "labelid": vid_bbox.labels[2].labelid,

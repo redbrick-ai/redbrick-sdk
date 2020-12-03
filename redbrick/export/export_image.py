@@ -2,7 +2,7 @@
 Class for controlling image exports.
 """
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any, Dict, List
 import os
 import json
 from termcolor import colored
@@ -159,3 +159,14 @@ class ExportImage(ExportBase):
 
     def cache_classify(self) -> None:
         """Cache image classification."""
+        label_file: List[Any] = []
+        for i in tqdm(range(len(self.labelset.dp_ids))):
+            dp = self.labelset.__getitem__(i)
+            entry = {}
+            entry["url"] = dp.image_url_not_signed
+            entry["createdBy"] = self.labelset.users[dp.created_by]
+            entry["class"] = dp.labels.labels.category
+            label_file += [entry]
+
+        with open("%s/export.json" % self.cache_dir, "w+") as file:
+            json.dump(label_file, file, indent=2)

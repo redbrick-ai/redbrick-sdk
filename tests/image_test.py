@@ -25,6 +25,7 @@ IMAGE = Image(
     image_url="abc.png",
     image_url_not_signed="abc234.png",
     image_data=np.zeros((10, 10, 3)),
+    created_by="123",
 )
 
 IMAGE_SEGMENT = Image(
@@ -37,6 +38,7 @@ IMAGE_SEGMENT = Image(
     image_url="abc.png",
     image_url_not_signed="abc234.png",
     image_data=np.zeros((100, 100, 3)),
+    created_by="123",
 )
 
 

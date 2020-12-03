@@ -110,6 +110,11 @@ class RedBrickApi(RedBrickApiBase):
                           ynorm, 
                           wnorm, 
                           hnorm,
+                      },
+                      pixel {
+                          imagesize,
+                          regions,
+                          holes
                       }
                     }
                 }
@@ -123,9 +128,12 @@ class RedBrickApi(RedBrickApiBase):
         # IMAGE DATA
         if result["labelData"]["dataType"] == "IMAGE":
             # Parse result
+            # print("RESULT", result)
+            with open("temp.json", "w+") as file:
+                json.dump(result, file, indent=2)
             signed_image_url = result["labelData"]["dataPoint"]["items"][0]
             unsigned_image_url = result["labelData"]["dataPoint"]["items_not_signed"][0]
-            labels = json.loads(result["labelData"]["blob"])["items"][0]["labels"]
+            labels = result["labelData"]["labels"]
             created_by = result["labelData"]["createdBy"]
             image_data = url_to_image(signed_image_url)  # Get image array
 
@@ -384,7 +392,6 @@ class RedBrickApi(RedBrickApiBase):
         member_map = {}
         for member in result["members"]:
             member_map[member["userId"]] = member["user"]["email"]
-
         return member_map
 
     def _execute_query(self, query: Dict[Any, Any]) -> Any:

@@ -51,6 +51,7 @@ IMAGE = Image(
     image_url="abc.png",
     image_url_not_signed="abc234.png",
     image_data=np.zeros((100, 100, 3)),
+    created_by="123",
 )
 
 # Segmentation labelset mock
@@ -71,6 +72,11 @@ class MockImageSegmentation:
     def get_datapoint(self, orgid, labelsetname, dpid, tasktype, taxonomy) -> Any:
         """Get the actual datapoint."""
         return IMAGE
+
+    def get_members(self, org_id) -> Any:
+        """get the members in the org."""
+        x = {"123": "abc@def"}
+        return x
 
 
 @patch("redbrick.labelset.loader.RedBrickApi")
@@ -106,6 +112,10 @@ def test_export_png(mock: Any) -> None:
     mock.return_value = MockImageSegmentation()
     labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
 
+    print(
+        "asdlfknadslkfnasldkfnalksdnfalskdnflkasdnflkasdnflkasdnflkasndflknsadklfnasldknflasdknfklasdnfklsadnfa",
+        labelset.users,
+    )
     # action
     cache_dir = labelset.export(format="redbrick-png")
 

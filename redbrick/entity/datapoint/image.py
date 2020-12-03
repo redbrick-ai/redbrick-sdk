@@ -58,6 +58,10 @@ class Image(BaseDatapoint):
                 remote_labels=segment_remote_labels, classes=self.taxonomy
             )
 
+        elif self.task_type == "CLASSIFY":
+            # Read in remote labels
+            self.labels = ImageClassify(self.remote_labels)
+
         else:
             raise ValueError(
                 "%s task type is not supported. Please reach out to contact@redbrickai.com."

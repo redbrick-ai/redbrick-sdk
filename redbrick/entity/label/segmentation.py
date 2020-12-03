@@ -24,7 +24,6 @@ class ImageSegmentationRemoteLabel:
     """Single Remote label object for image segmentation."""
 
     category: List[List[str]]
-    attributes: List[Any]
     pixel: Pixel
     labelid: str
 
@@ -36,12 +35,7 @@ class ImageSegmentationRemoteLabel:
             regions=obj["pixel"]["regions"],
             holes=obj["pixel"]["holes"],
         )
-        return cls(
-            category=obj["category"],
-            attributes=obj["attributes"],
-            pixel=pixel,
-            labelid=obj["labelid"],
-        )
+        return cls(category=obj["category"], pixel=pixel, labelid=obj["labelid"],)
 
 
 @dataclass
