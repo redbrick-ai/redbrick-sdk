@@ -1,6 +1,3 @@
-from typing import List, Optional
-import json
-from .taxonomy import TaxonomyEntry
 from typing import Dict, Any
 
 

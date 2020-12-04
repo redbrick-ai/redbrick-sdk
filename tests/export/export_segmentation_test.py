@@ -13,7 +13,6 @@ import redbrick
 from redbrick.entity.taxonomy2 import Taxonomy2
 from tests.segmentation_test import remote_label5
 
-from redbrick.entity.custom_group import CustomGroup
 from redbrick.entity.datapoint import Image
 
 # d8888b.  .d8b.  d888888b  .d8b.

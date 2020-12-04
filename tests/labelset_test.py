@@ -14,7 +14,6 @@ import numpy as np
 
 import redbrick
 from redbrick.entity.taxonomy2 import Taxonomy2
-from redbrick.entity.custom_group import CustomGroup
 from .taxonomy2_test import TAXONOMY1
 from .video_test import VIDEO, VIDEO_CLASSIFY, VIDEO_BBOX_REAL
 from .image_test import IMAGE
