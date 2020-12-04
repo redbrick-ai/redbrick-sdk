@@ -5,6 +5,7 @@ install:
   - pip install -e .[dev]
 script:
   - black redbrick --check
+  - pytest -s
 #   - pylint redbrick
 #   - pydocstyle redbrick
 #   - pycodestyle redbrick
