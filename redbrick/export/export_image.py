@@ -56,8 +56,10 @@ class ExportImage(ExportBase):
         # obj_train_data/
         os.mkdir(os.path.join(self.cache_dir, "obj_train_data"))
         taxonomy_mapper = {
-            name: idx for idx, name in
-            enumerate(list(self.labelset.taxonomy.taxonomy_class_id_map))
+            name: idx
+            for idx, name in enumerate(
+                list(self.labelset.taxonomy.taxonomy_class_id_map)
+            )
         }
         image_filepaths = []
 
@@ -75,8 +77,7 @@ class ExportImage(ExportBase):
                 str(dp_.image_url_not_signed).replace("/", "_"),
             )
             image_filepaths.append(
-                "obj_train_data/" + str(
-                    dp_.image_url_not_signed).replace("/", "_")
+                "obj_train_data/" + str(dp_.image_url_not_signed).replace("/", "_")
             )
             cv2.imwrite(  # pylint: disable=no-member
                 image_filepath, np.flip(dp_.image_data, axis=2)
@@ -146,7 +147,8 @@ class ExportImage(ExportBase):
                 label_info_entry = dict(
                     url=dp_.image_url_not_signed,
                     createdBy=self.labelset.users[dp_.created_by],
-                    exportUrl=export_url + "__export.png")
+                    exportUrl=export_url + "__export.png",
+                )
                 label_info["labels"] += [label_info_entry]
 
             # Meta-data
