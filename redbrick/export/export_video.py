@@ -1,12 +1,14 @@
 """
 Class for controlling video exports.
 """
-from dataclasses import dataclass
+
 import os
 import json
 import cv2  # type: ignore
 import numpy as np  # type: ignore
+
 from termcolor import colored
+from dataclasses import dataclass
 from tqdm import tqdm  # type: ignore
 
 from redbrick.utils import url_to_image
@@ -19,7 +21,7 @@ class ExportVideo(ExportBase):
 
     def export(self) -> None:
         """Export the video and labels."""
-        print(colored("[INFO]:", "blue"), "Cacheing labels, and data...")
+        print(colored("[INFO]:", "blue"), "Caching labels, and data...")
         self.cache()
 
     def cache(self) -> None:
@@ -29,7 +31,7 @@ class ExportVideo(ExportBase):
     def cache_bbox(self) -> None:
         """Cache video bounding boxes."""
         # Create YOLO style meta data files
-        num_classes = len(list(self.labelset.taxonomy.keys()))
+        num_classes = len(list(self.labelset.taxonomy.taxonomy_class_id_map))
         train_file = "train.txt"
         names_file = "names.txt"
         data_file = "obj.data"
@@ -47,14 +49,15 @@ class ExportVideo(ExportBase):
 
         # names.txt
         with open(self.cache_dir + "/" + names_file, "w+") as file:
-            class_names = list(self.labelset.taxonomy.keys())
+            class_names = list(self.labelset.taxonomy.taxonomy_class_id_map)
             for name in class_names:
                 file.write(name + "\n")
 
         # obj_train_data/
         os.mkdir(os.path.join(self.cache_dir, "obj_train_data"))
         taxonomy_mapper = {
-            name: idx for idx, name in enumerate(list(self.labelset.taxonomy.keys()))
+            name: idx for idx, name in
+            enumerate(list(self.labelset.taxonomy.taxonomy_class_id_map))
         }
         image_filepaths = []
 
@@ -69,32 +72,29 @@ class ExportVideo(ExportBase):
             pbar = tqdm(total=len(dp.items_list))
 
             # Interpolate the video labels, and get per frame labels
-            framelabels = dp.labels.interpolate_labels(num_frames=len(dp.items_list))
+            framelabels = dp.labels.interpolate_labels(
+                num_frames=len(dp.items_list))
 
             # Iterate through video frames
             for idx, item in enumerate(dp.items_list):
                 pbar.update(1)
-                dp_entry = {}
-                dp_entry["url"] = dp.items_list_not_signed[idx]
-                dp_entry["labels"] = []
+                dp_entry = dict(url=dp.items_list_not_signed[idx], labels=[])
 
                 # write image data to file
                 image_filepath = os.path.join(
                     self.cache_dir,
                     "obj_train_data",
                     str(
-                        dp.items_list_not_signed[idx]
-                        .replace("/", "_")
-                        .replace(":", "_")
+                        dp.items_list_not_signed[idx].replace(
+                            "/", "_").replace(":", "_")
                     ),
                 )
                 image_filepaths.append(
                     os.path.join(
                         "obj_train_data",
                         str(
-                            dp.items_list_not_signed[idx]
-                            .replace("/", "_")
-                            .replace(":", "_")
+                            dp.items_list_not_signed[idx].replace(
+                                "/", "_").replace(":", "_")
                         ),
                     )
                 )
@@ -154,10 +154,11 @@ class ExportVideo(ExportBase):
             key_index = 0  # the current key frame index
             pbar = tqdm(total=end_idx)
             while curr_idx != end_idx:
-                # check if frame is key frame, if yes get the new labels, else keep old
+                # check if frame is key frame,
+                # if yes get the new labels, else keep old
                 if (
-                    key_index < len(labels.labels)
-                    and labels.labels[key_index].frameindex == curr_idx
+                        key_index < len(labels.labels)
+                        and labels.labels[key_index].frameindex == curr_idx
                 ):
                     frame_label = labels.labels[key_index].category[0][-1]
                     key_index += 1
@@ -174,21 +175,25 @@ class ExportVideo(ExportBase):
                 else:
                     # export the frame to the relvant folder
                     if not os.path.isdir(
-                        os.path.join(self.cache_dir, video_name, frame_label)
+                            os.path.join(self.cache_dir, video_name,
+                                         frame_label)
                     ):
                         os.makedirs(
-                            os.path.join(self.cache_dir, video_name, frame_label)
+                            os.path.join(self.cache_dir, video_name,
+                                         frame_label)
                         )
 
-                    frame_data = np.flip(url_to_image(dp.items_list[curr_idx]), axis=2)
+                    frame_data = np.flip(url_to_image(dp.items_list[curr_idx]),
+                                         axis=2)
                     frame_filename = (
                         dp.items_list_not_signed[curr_idx]
-                        .replace("/", "_")
-                        .replace(":", "_")
+                            .replace("/", "_")
+                            .replace(":", "_")
                     )
                     cv2.imwrite(
                         os.path.join(
-                            self.cache_dir, video_name, frame_label, frame_filename
+                            self.cache_dir, video_name, frame_label,
+                            frame_filename
                         ),
                         frame_data,
                     )
@@ -199,5 +204,6 @@ class ExportVideo(ExportBase):
             pbar.close()
 
             if self.format == "redbrick-json":
-                with open(os.path.join(self.cache_dir, "output.json"), "w+") as file:
+                with open(os.path.join(self.cache_dir, "output.json"),
+                          "w+") as file:
                     json.dump(output, file, indent=2)

@@ -1,25 +1,24 @@
 """Getting data from redbrick api."""
 
-import redbrick
 import json
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Any, Optional, Union, Tuple
 import requests
-import numpy as np  # type: ignore
-import cv2  # type: ignore
-from redbrick.utils import url_to_image
+import redbrick
+
+from typing import Dict, List, Any, Optional, Union, Tuple
+
 from .api_base import RedBrickApiBase
-from redbrick.entity.custom_group import CustomGroup
+from redbrick.entity.task import Task
+from redbrick.utils import url_to_image
 from redbrick.entity.datapoint import Image
 from redbrick.entity.datapoint import Video
-from redbrick.entity.task import Task
 from redbrick.entity.taxonomy2 import Taxonomy2
 
 
 class RedBrickApi(RedBrickApiBase):
     """Implement Abstract API."""
 
-    def __init__(self, cache: bool = False, custom_url: Optional[str] = None) -> None:
+    def __init__(self, cache: bool = False,
+                 custom_url: Optional[str] = None) -> None:
         """Construct RedBrickApi."""
         self.client = redbrick.client.RedBrickClient()
         if custom_url:
@@ -30,8 +29,8 @@ class RedBrickApi(RedBrickApiBase):
             self.url = "https://redbrick-prod-1.herokuapp.com/graphql/"
 
     def get_datapoint_ids(
-        self, org_id: str, label_set_name: str
-    ) -> Tuple[List[str], CustomGroup]:
+            self, org_id: str, label_set_name: str
+    ) -> Tuple[list, Taxonomy2, Dict[str, Any]]:
         """Get a list of datapoint ids in labelset."""
         query_string = """
             query ($orgId:UUID!, $name:String!) {
@@ -42,23 +41,23 @@ class RedBrickApi(RedBrickApiBase):
                     taskType,
                     dataType
                     taxonomy {
-                    name
-                    version
-                    categories {
                         name
-                        children {
-                        name
-                        classId
-                        children {
+                        version
+                        categories {
                             name
-                            classId
                             children {
-                            name
-                            classId
+                                name
+                                classId
+                                children {
+                                    name
+                                    classId
+                                    children {
+                                        name
+                                        classId
+                                    }
+                                }
                             }
                         }
-                        }
-                    }
                     }
                 }
             }
@@ -67,22 +66,23 @@ class RedBrickApi(RedBrickApiBase):
         query = dict(query=query_string, variables=query_variables)
 
         result = self._execute_query(query)
-
         all_dp_ids = [dp["dpId"] for dp in result["customGroup"]["datapoints"]]
-        custom_group = CustomGroup(
-            result["customGroup"]["taskType"],
-            result["customGroup"]["dataType"],
-            result["customGroup"]["taxonomy"],
-        )
-        return all_dp_ids, custom_group
+        tax = Taxonomy2(remote_tax=result["customGroup"]["taxonomy"])
+
+        cgroup = {
+            "data_type": result["customGroup"]["dataType"],
+            "task_type": result["customGroup"]["taskType"]
+        }
+
+        return all_dp_ids, tax, cgroup
 
     def get_datapoint(
-        self,
-        org_id: str,
-        label_set_name: str,
-        dp_id: str,
-        task_type: str,
-        taxonomy: dict,
+            self,
+            org_id: str,
+            label_set_name: str,
+            dp_id: str,
+            task_type: str,
+            taxonomy: dict,
     ) -> Union[Image, Video]:
         """Get all relevant information related to a datapoint."""
         query_string = """
@@ -116,7 +116,8 @@ class RedBrickApi(RedBrickApiBase):
             }
         """
         # EXECUTE THE QUERY
-        query_variables = {"orgId": org_id, "name": label_set_name, "dpId": dp_id}
+        query_variables = {"orgId": org_id, "name": label_set_name,
+                           "dpId": dp_id}
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
 
@@ -124,8 +125,10 @@ class RedBrickApi(RedBrickApiBase):
         if result["labelData"]["dataType"] == "IMAGE":
             # Parse result
             signed_image_url = result["labelData"]["dataPoint"]["items"][0]
-            unsigned_image_url = result["labelData"]["dataPoint"]["items_not_signed"][0]
-            labels = json.loads(result["labelData"]["blob"])["items"][0]["labels"]
+            unsigned_image_url = \
+            result["labelData"]["dataPoint"]["items_not_signed"][0]
+            labels = json.loads(result["labelData"]["blob"])["items"][0][
+                "labels"]
             created_by = result["labelData"]["createdBy"]
             image_data = url_to_image(signed_image_url)  # Get image array
 
@@ -147,7 +150,8 @@ class RedBrickApi(RedBrickApiBase):
         else:
             # Parse the result
             items = result["labelData"]["dataPoint"]["items"]
-            items_not_signed = result["labelData"]["dataPoint"]["items_not_signed"]
+            items_not_signed = result["labelData"]["dataPoint"][
+                "items_not_signed"]
             labels = result["labelData"]["labels"]
             with open("result.json", "w+") as file:
                 json.dump(result, file, indent=2)
@@ -165,7 +169,8 @@ class RedBrickApi(RedBrickApiBase):
             )
             return dpoint_vid
 
-    def tasksToLabelRemote(self, orgId, projectId, stageName, numTasks) -> List[Task]:
+    def tasksToLabelRemote(self, orgId, projectId, stageName, numTasks) -> List[
+        Task]:
         """Get remote labeling tasks."""
         query_string = """
         query ($orgId:UUID!, $projectId:UUID!, $stageName:String!, $numTasks:Int!){
@@ -235,17 +240,17 @@ class RedBrickApi(RedBrickApiBase):
         return tasks
 
     def putTaskData(
-        self,
-        org_id,
-        project_id,
-        dp_id,
-        stage_name,
-        sub_name,
-        task_data,
-        taxonomy_name,
-        taxonomy_version,
-        td_type,
-        augmentdata=None,
+            self,
+            org_id,
+            project_id,
+            dp_id,
+            stage_name,
+            sub_name,
+            task_data,
+            taxonomy_name,
+            taxonomy_version,
+            td_type,
+            augmentdata=None,
     ) -> None:
         """Put task data for a labeling task."""
         query_string = """
@@ -356,8 +361,8 @@ class RedBrickApi(RedBrickApiBase):
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
 
-        Tax = Taxonomy2(remote_tax=result["taxonomy"])
-        return Tax
+        tax = Taxonomy2(remote_tax=result["taxonomy"])
+        return tax
 
     def get_members(self, org_id) -> Dict[Any, Any]:
         """Return all members in the organization."""

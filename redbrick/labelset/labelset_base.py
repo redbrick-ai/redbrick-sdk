@@ -5,6 +5,8 @@ Base labelset.
 from dataclasses import dataclass, field
 from typing import List, Dict, Any
 
+from redbrick.entity.taxonomy2 import Taxonomy2
+
 
 @dataclass
 class LabelsetBase:
@@ -14,7 +16,7 @@ class LabelsetBase:
     labelset_name: str
     task_type: str
     data_type: str
-    taxonomy: Dict[str, int]
+    taxonomy: Taxonomy2
     dp_ids: List[str] = field(init=False)
     users: Dict[Any, Any]
 

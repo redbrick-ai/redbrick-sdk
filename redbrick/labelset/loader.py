@@ -1,15 +1,15 @@
 """A higher level abstraction."""
-
-from typing import Union, Dict
 import random
 import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 
-from redbrick.labelset.labelset_base import LabelsetBase
+from typing import Union, Dict
 from redbrick.api import RedBrickApi
+from redbrick.entity.taxonomy2 import Taxonomy2
 from redbrick.entity.datapoint import Image, Video
 from redbrick.export import ExportImage, ExportVideo
 from redbrick.logging import print_info, print_error
+from redbrick.labelset.labelset_base import LabelsetBase
 
 
 class LabelsetLoader(LabelsetBase):
@@ -25,16 +25,16 @@ class LabelsetLoader(LabelsetBase):
 
         # All datapoints in labelset
         try:
-            self.dp_ids, custom_group = self.api_client.get_datapoint_ids(
+            self.dp_ids, tax, custom_group = self.api_client.get_datapoint_ids(
                 self.org_id, self.label_set_name
             )
         except Exception as err:
             print_error(err)
             return
 
-        self.task_type = custom_group.task_type
-        self.data_type = custom_group.data_type
-        self.taxonomy: Dict[str, int] = custom_group.taxonomy
+        self.task_type = custom_group.get("task_type")
+        self.data_type = custom_group.get("data_type")
+        self.taxonomy: Taxonomy2 = tax
         print_info("Number of Datapoints = %s" % len(self.dp_ids))
 
         # Update taxonomy mapper if segmentation
@@ -55,7 +55,7 @@ class LabelsetLoader(LabelsetBase):
             self.label_set_name,
             self.dp_ids[index],
             self.task_type,
-            self.taxonomy,
+            self.taxonomy.taxonomy_class_id_map,
         )
         return dp
 
@@ -112,7 +112,6 @@ class LabelsetLoader(LabelsetBase):
 
         # Iterate through axes
         for i, idx in enumerate(indexes):
-
             ax = fig.add_subplot(rows, cols, i + 1)
             self[idx].show_data(ax=ax)  # type: ignore
 
@@ -124,9 +123,9 @@ class LabelsetLoader(LabelsetBase):
         Fix the taxonomy mapper object to be 1-indexed for
         segmentation projects.
         """
-        for key in self.taxonomy.keys():
-            self.taxonomy[key] += 1
-            if self.taxonomy[key] == 0:
+        for key in self.taxonomy.taxonomy_class_id_map:
+            self.taxonomy.taxonomy_class_id_map[key] += 1
+            if self.taxonomy.taxonomy_class_id_map[key] == 0:
                 print_error(
                     "Taxonomy class id's must be 0 indexed. \
                         Please contact contact@redbrickai.com for help."
@@ -134,4 +133,4 @@ class LabelsetLoader(LabelsetBase):
                 exit(1)
 
         # Add a background class for segmentation
-        self.taxonomy["background"] = 0
+        self.taxonomy.taxonomy_class_id_map["background"] = 0

@@ -1,7 +1,7 @@
 # mypy: ignore-errors
 """Test segmentation export functionality."""
 
-from typing import Any
+from typing import Any, Dict
 import filecmp
 from unittest.mock import patch
 import shutil
@@ -10,6 +10,7 @@ import numpy as np  # type: ignore
 import cv2
 
 import redbrick
+from redbrick.entity.taxonomy2 import Taxonomy2
 from tests.segmentation_test import remote_label5
 
 from redbrick.entity.custom_group import CustomGroup
@@ -47,6 +48,7 @@ IMAGE = Image(
     taxonomy={"person": 2, "car": 1, "background": 0},
     task_type="SEGMENTATION",
     remote_labels=remote_label5,
+    created_by="6232c49b-3b80-408c-a316-0970c3ea90e8",
     dp_id="123",
     image_url="abc.png",
     image_url_not_signed="abc234.png",
@@ -65,12 +67,20 @@ class MockImageSegmentation:
         """Get data points ids."""
         return (
             ["1"],
-            CustomGroup("SEGMENTATION", "IMAGE", TAX),
+            Taxonomy2(remote_tax=TAX),
+            {
+                "data_type": "IMAGE",
+                "task_type": "SEGMENTATION"
+            }
         )
 
     def get_datapoint(self, orgid, labelsetname, dpid, tasktype, taxonomy) -> Any:
         """Get the actual datapoint."""
         return IMAGE
+
+    def get_members(self, org_id) -> Dict[Any, Any]:
+        return {
+            '6232c49b-3b80-408c-a316-0970c3ea90e8': 'test_user@redbrick.com'}
 
 
 @patch("redbrick.labelset.loader.RedBrickApi")

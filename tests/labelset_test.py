@@ -4,7 +4,7 @@
 Test the labelset module.
 """
 
-from typing import Any
+from typing import Any, Dict
 from unittest.mock import patch
 import shutil
 import json
@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import redbrick
+from redbrick.entity.taxonomy2 import Taxonomy2
 from redbrick.entity.custom_group import CustomGroup
 from .taxonomy2_test import TAXONOMY1
 from .video_test import VIDEO, VIDEO_CLASSIFY, VIDEO_BBOX_REAL
@@ -34,11 +35,19 @@ class Mock_Image:
     def get_datapoint_ids(self, org_id, label_set_name):
         return (
             ["1", "2"],
-            CustomGroup("BBOX", "IMAGE", TAXONOMY1["taxonomy"]),
+            Taxonomy2(TAXONOMY1["taxonomy"]),
+            {
+                "task_type": "BBOX",
+                "data_type": "IMAGE"
+            }
         )
 
     def get_datapoint(self, orgid, labelsetname, dpid, tasktype, taxonomy):
         return IMAGE
+
+    def get_members(self, org_id) -> Dict[Any, Any]:
+        return {
+            '6232c49b-3b80-408c-a316-0970c3ea90e8': 'test_user@redbrick.com'}
 
 
 @patch("redbrick.labelset.loader.RedBrickApi")
@@ -46,7 +55,8 @@ def test_labelset_init(mock: Any) -> None:
     """Test init of labelset."""
 
     mock.return_value = Mock_Image()
-    labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
+    labelset = redbrick.labelset.LabelsetLoader(org_id="123",
+                                                label_set_name="abc")
     assert labelset.task_type == "BBOX"
     assert len(labelset.dp_ids) == 2
 
@@ -56,14 +66,15 @@ def test_labelset_export_image(mock: Any) -> None:
     """Test labelset export for images."""
     mock.return_value = Mock_Image()
 
-    labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
+    labelset = redbrick.labelset.LabelsetLoader(org_id="123",
+                                                label_set_name="abc")
     cache_dir = labelset.export(format="redbrick")
 
     assert os.path.isdir(cache_dir)
-    assert os.listdir(os.path.join(cache_dir, "obj_train_data")) == [
+    assert os.listdir(os.path.join(cache_dir, "obj_train_data")).sort() == [
         IMAGE.image_url_not_signed[0:-4] + ".png",
         IMAGE.image_url_not_signed[0:-4] + ".txt",
-    ]
+    ].sort()
     shutil.rmtree(cache_dir)
 
 
@@ -86,13 +97,21 @@ class Mock_Video:
     def get_datapoint_ids(self, org_id, label_set_name):
         return (
             self.dps,
-            CustomGroup(self.task_type, "VIDEO", TAXONOMY1["taxonomy"]),
+            Taxonomy2(TAXONOMY1["taxonomy"]),
+            {
+                "task_type": self.task_type,
+                "data_type": "VIDEO"
+            }
         )
 
     def get_datapoint(self, orgid, labelsetname, dpid, tasktype, taxonomy):
         if tasktype == "CLASSIFY":
             self.data.video_name = dpid
         return self.data
+
+    def get_members(self, org_id) -> Dict[Any, Any]:
+        return {
+            '6232c49b-3b80-408c-a316-0970c3ea90e8': 'test_user@redbrick.com'}
 
 
 @patch("redbrick.export.export_video.url_to_image")
@@ -102,7 +121,8 @@ def test_labelset_export_video(mock: Any, url_to_image: Any) -> None:
     mock.return_value = Mock_Video()
     url_to_image.return_value = np.zeros((10, 10, 3))
 
-    labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
+    labelset = redbrick.labelset.LabelsetLoader(org_id="123",
+                                                label_set_name="abc")
     cache_dir = labelset.export(format="redbrick")
 
     assert os.path.isdir(cache_dir)
@@ -112,7 +132,8 @@ def test_labelset_export_video(mock: Any, url_to_image: Any) -> None:
         outdir += [(item[0:-4] + ".txt").replace("/", "_").replace(":", "_")]
         outdir += [(item[0:-4] + ".png").replace("/", "_").replace(":", "_")]
 
-    assert os.listdir(os.path.join(cache_dir, "obj_train_data")).sort() == outdir.sort()
+    assert os.listdir(
+        os.path.join(cache_dir, "obj_train_data")).sort() == outdir.sort()
     shutil.rmtree(cache_dir)
 
 
@@ -123,25 +144,28 @@ def test_labelset_export_video_clasify(mock: Any, url_to_image: Any) -> None:
     mock.return_value = Mock_Video(data=VIDEO_CLASSIFY, tasktype="CLASSIFY")
     url_to_image.return_value = np.zeros((10, 10, 3))
 
-    labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
+    labelset = redbrick.labelset.LabelsetLoader(org_id="123",
+                                                label_set_name="abc")
     cache_dir = labelset.export(format="redbrick")
 
     assert os.path.isdir(cache_dir)
 
     files = os.listdir(cache_dir)
     assert len(files) == 2
-    assert files == mock.return_value.dps
+    assert files.sort() == mock.return_value.dps.sort()
     shutil.rmtree(cache_dir)
 
 
 @patch("redbrick.export.export_video.url_to_image")
 @patch("redbrick.labelset.loader.RedBrickApi")
-def test_labelset_export_video_clasify_json(mock: Any, url_to_image: Any) -> None:
+def test_labelset_export_video_clasify_json(mock: Any,
+                                            url_to_image: Any) -> None:
     """Test labelset export for images."""
     mock.return_value = Mock_Video(data=VIDEO_CLASSIFY, tasktype="CLASSIFY")
     url_to_image.return_value = np.zeros((10, 10, 3))
 
-    labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
+    labelset = redbrick.labelset.LabelsetLoader(org_id="123",
+                                                label_set_name="abc")
     cache_dir = labelset.export(format="redbrick-json")
 
     assert os.path.isdir(cache_dir)
@@ -163,7 +187,8 @@ def test_labelset_showdata_video(mock: Any, url_to_image: Any) -> None:
     mock.return_value = Mock_Video(data=VIDEO_BBOX_REAL, num_pts=20)
     url_to_image.return_value = np.ones((10, 10, 3)) * 0.5
 
-    labelset = redbrick.labelset.LabelsetLoader(org_id="123", label_set_name="abc")
+    labelset = redbrick.labelset.LabelsetLoader(org_id="123",
+                                                label_set_name="abc")
 
     plt.ion()  # make plt.show non blocking
     labelset.show_data()

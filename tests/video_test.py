@@ -16,6 +16,7 @@ VIDEO = Video(
     taxonomy={"person": 0, "car": 1},
     task_type="BBOX",
     remote_labels=VID_LABEL1,
+    created_by="6232c49b-3b80-408c-a316-0970c3ea90e8",
     items_list=[
         "http://127.0.0.1:8080/firstadsfsadf.png",
         "http://127.0.0.1:8080/secondasdfdasrqew.png",
@@ -36,6 +37,7 @@ VIDEO_CLASSIFY = Video(
     taxonomy={"person": 0, "car": 1},
     task_type="CLASSIFY",
     remote_labels=VID_CLASS_1,
+    created_by="6232c49b-3b80-408c-a316-0970c3ea90e8",
     items_list=[
         "http://127.0.0.1:8080/firstadsfsadf.png",
         "http://127.0.0.1:8080/secondasdfdasrqew.png",
@@ -56,6 +58,7 @@ VIDEO_BBOX_REAL = Video(
     taxonomy={"person": 0, "car": 1},
     task_type="BBOX",
     remote_labels=VID_LABEL1,
+    created_by="6232c49b-3b80-408c-a316-0970c3ea90e8",
     items_list=[
         "https://upload.wikimedia.org/wikipedia/commons/e/ee/Sample_abc.jpg",
         "https://upload.wikimedia.org/wikipedia/commons/e/ee/Sample_abc.jpg",
