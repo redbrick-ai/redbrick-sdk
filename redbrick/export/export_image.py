@@ -11,6 +11,7 @@ from tqdm import tqdm  # type: ignore
 import numpy as np  # type: ignore
 
 from .export_base import ExportBase
+from redbrick.logging import print_info
 
 
 @dataclass
@@ -19,8 +20,9 @@ class ExportImage(ExportBase):
 
     def export(self) -> None:
         """Export the images and labels."""
-        print(colored("[INFO]:", "blue"), "Cacheing labels, and data...")
+        print_info("Cacheing labels, and data...")
         self.cache()
+        print_info("Exported complete in %s" % self.cache_dir)
 
     def cache(self) -> None:
         """Cache the images and labels."""
