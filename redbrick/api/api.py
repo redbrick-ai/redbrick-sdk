@@ -27,7 +27,9 @@ class RedBrickApi(RedBrickApiBase):
         elif self.client.custom_url:
             self.url = self.client.custom_url
         else:
-            self.url = "https://redbrick-prod-1.herokuapp.com/graphql/"
+            self.url = (
+                "https://ck7r1z68k7.execute-api.us-east-1.amazonaws.com/prod/graphql/"
+            )
 
     def get_datapoint_ids(
         self, org_id: str, label_set_name: str
