@@ -8,6 +8,7 @@ import copy
 import numpy as np  # type: ignore
 from skimage import draw  # type: ignore
 import matplotlib.cm  # type: ignore
+import matplotlib.pyplot as plt
 
 
 @dataclass
@@ -89,8 +90,9 @@ class ImageSegmentation:
                     )
 
                     # Add on new regions to root mask object
-                    class_id_indexes = np.where(mask__ == class_id)
-                    mask_[class_id_indexes] = class_id
+                    # class_id_indexes = np.where(mask__ == class_id)
+                    # mask_[class_id_indexes] = class_id
+                    mask_ += mask__
 
             # Iterate through the holes and create the negative mask
             neg_mask = np.zeros([imagesize[1], imagesize[0]])
@@ -120,8 +122,13 @@ class ImageSegmentation:
             neg_idxs = np.where(mask_ < 0)
             mask_[neg_idxs] = 0
 
-            # Add on new regions to the main mask only where the new region is not == 0
-            class_idx_not_zero = np.where((mask_ > 0) | (mask_ < 0))
+            # overlapping regions would have gotten added together
+            # set the overlapped regions back to the classid.
+            overlap_indexes = np.where(mask_ > class_id)
+            mask_[overlap_indexes] = class_id
+
+            # Merge
+            class_idx_not_zero = np.where(mask_ != 0)
             mask[class_idx_not_zero] = mask_[class_idx_not_zero]
 
         # Subtrack out the holes from the region mask
