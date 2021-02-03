@@ -77,6 +77,12 @@ class ImageBoundingBoxEntry:
     classname: List[List[str]]
     attributes: List[LabelAttribute]
 
+    def __post_init__(self):
+        self.xnorm = float(np.max([self.xnorm, 0]))
+        self.ynorm = float(np.max([self.ynorm, 0]))
+        self.wnorm = float(np.max([float(np.min([self.wnorm, 1 - self.xnorm])), 0]))
+        self.hnorm = float(np.max([float(np.min([self.hnorm, 1 - self.ynorm])), 0]))
+
 
 @dataclass
 class VideoBoundingBoxEntry:
@@ -93,6 +99,11 @@ class VideoBoundingBoxEntry:
     keyframe: bool
     end: bool
 
+    def __post_init__(self):
+        self.xnorm = float(np.max([self.xnorm, 0]))
+        self.ynorm = float(np.max([self.ynorm, 0]))
+        self.wnorm = float(np.max([float(np.min([self.wnorm, 1 - self.xnorm])), 0]))
+        self.hnorm = float(np.max([float(np.min([self.hnorm, 1 - self.ynorm])), 0]))
 
 class VideoBBoxLabel:
     """
