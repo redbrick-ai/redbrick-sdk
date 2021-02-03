@@ -23,6 +23,7 @@ import copy
 # 88.     88  V888    88      .88.      88      .88.   88.     db   8D
 # Y88888P VP   V8P    YP    Y888888P    YP    Y888888P Y88888P `8888Y'
 
+
 @dataclass
 class LabelAttribute:
     """An attribute of a label, must correspond to taxonomy attributes."""
@@ -60,8 +61,9 @@ class ImageBoundingBoxRemoteLabel:
             wnorm=obj["bbox2d"]["wnorm"],
             labelid=obj["bbox2d"]["hnorm"],
         )
-        return cls(category=obj["category"], bbox2d=bbox2d,
-                   attributes=obj["attributes"])
+        return cls(
+            category=obj["category"], bbox2d=bbox2d, attributes=obj["attributes"]
+        )
 
 
 @dataclass
