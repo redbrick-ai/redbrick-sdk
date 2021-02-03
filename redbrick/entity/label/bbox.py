@@ -25,6 +25,14 @@ import copy
 
 
 @dataclass
+class LabelAttribute:
+    """An attribute of a label, must correspond to taxonomy attributes."""
+
+    name: str
+    value: Union[int, bool, str, float]
+
+
+@dataclass
 class Bbox2d:
     """Representation of bbox2d field in remote label."""
 
@@ -41,6 +49,7 @@ class ImageBoundingBoxRemoteLabel:
 
     category: List[List[str]]
     bbox2d: Bbox2d
+    attributes: List[LabelAttribute]
 
     @classmethod
     def from_dict(cls, obj: Dict[Any, Any]) -> "ImageBoundingBoxRemoteLabel":
@@ -52,7 +61,9 @@ class ImageBoundingBoxRemoteLabel:
             wnorm=obj["bbox2d"]["wnorm"],
             labelid=obj["bbox2d"]["hnorm"],
         )
-        return cls(category=obj["category"], bbox2d=bbox2d)
+        return cls(
+            category=obj["category"], bbox2d=bbox2d, attributes=obj["attributes"]
+        )
 
 
 @dataclass
@@ -64,6 +75,7 @@ class ImageBoundingBoxEntry:
     wnorm: float
     hnorm: float
     classname: List[List[str]]
+    attributes: List[LabelAttribute]
 
 
 @dataclass
@@ -200,6 +212,7 @@ class ImageBoundingBox(BaseBoundingBox):
                 wnorm=label_.wnorm,
                 hnorm=label_.hnorm,
                 classname=label.category,
+                attributes=label.attributes,
             )
             entries.append(entry)
 
@@ -244,6 +257,7 @@ class ImageBoundingBox(BaseBoundingBox):
         for label in self.labels:
             entry: Dict[Any, Any] = {}
             entry["category"] = label.classname
+            entry["attributes"] = label.attributes
             entry["labelid"] = str(uuid.uuid4())
             entry["bbox2d"] = {
                 "xnorm": label.xnorm,
