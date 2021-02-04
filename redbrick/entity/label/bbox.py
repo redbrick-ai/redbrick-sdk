@@ -92,6 +92,7 @@ class VideoBoundingBoxEntry:
     ynorm: float
     wnorm: float
     hnorm: float
+    attributes: List[LabelAttribute]
     classname: List[List[str]]
     labelid: str
     trackid: str
@@ -320,6 +321,7 @@ class VideoBoundingBox(BaseBoundingBox):
                 ynorm=label["bbox2d"]["ynorm"],
                 wnorm=label["bbox2d"]["wnorm"],
                 hnorm=label["bbox2d"]["hnorm"],
+                attributes=label["attributes"],
                 classname=label["category"],
                 labelid=label["labelid"],
                 trackid=label["trackid"],
@@ -385,6 +387,7 @@ class VideoBoundingBox(BaseBoundingBox):
         for label in self.labels:
             entry: Dict[Any, Any] = {}
             entry["category"] = label.classname
+            entry["attributes"] = label.attributes
             entry["labelid"] = label.labelid
             entry["bbox2d"] = {
                 "xnorm": label.xnorm,
