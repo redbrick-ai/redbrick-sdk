@@ -105,6 +105,7 @@ class VideoBoundingBoxEntry:
         self.wnorm = float(np.max([float(np.min([self.wnorm, 1 - self.xnorm])), 0]))
         self.hnorm = float(np.max([float(np.min([self.hnorm, 1 - self.ynorm])), 0]))
 
+
 class VideoBBoxLabel:
     """
     Temporary represetation for video bbox interpolation.
