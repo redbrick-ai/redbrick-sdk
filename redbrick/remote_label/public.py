@@ -1,4 +1,5 @@
 """Public interface to remote_label."""
+import json
 from typing import List, Union
 from termcolor import colored
 from redbrick.api import RedBrickApi
@@ -53,7 +54,7 @@ class RemoteLabel:
         labels: Union[ImageBoundingBox, VideoBoundingBox, VideoClassify],
     ) -> None:
         """User facing funciton to submit a task."""
-        print(colored("[INFO]", "blue"), "Submitting task to backend...", end=" ")
+        print(colored("[INFO]:", "blue"), "Submitting task to backend...", end=" ")
         new_subname = "remote-labeling"
 
         # Check that label category matches taxonomy
@@ -108,7 +109,7 @@ class RemoteLabel:
         td_type: str,
     ) -> None:
         """Read labels from local folder, and submit the labels."""
-        task_datas = str(task_data)  # Stringify the json object
+        task_datas = json.loads(str(task_data))  # Convert the object to a dictionary
 
         self.api_client.putLabels(
             org_id=self.org_id,

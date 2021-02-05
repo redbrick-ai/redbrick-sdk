@@ -98,19 +98,19 @@ class RedBrickApi(RedBrickApiBase):
                     },
                     createdBy,
                     taskType,
-                    dataType, 
+                    dataType,
                     labels {
                       category,
-                      labelid, 
-                      frameclassify, 
+                      labelid,
+                      frameclassify,
                       frameindex,
-                      trackid, 
-                      keyframe, 
+                      trackid,
+                      keyframe,
                       end,
                       bbox2d {
-                          xnorm, 
-                          ynorm, 
-                          wnorm, 
+                          xnorm,
+                          ynorm,
+                          wnorm,
                           hnorm,
                       },
                       pixel {
@@ -180,22 +180,22 @@ class RedBrickApi(RedBrickApiBase):
         query_string = """
         query ($orgId:UUID!, $projectId:UUID!, $stageName:String!, $numTasks:Int!){
             tasksToLabelRemote(orgId:$orgId, projectId:$projectId, stageName:$stageName, numTasks:$numTasks) {
-                stageName, 
+                stageName,
                 taskId,
                 subName,
                 modelName,
-                createdAt, 
-                dpId, 
+                createdAt,
+                dpId,
                 taxonomy {
-                    name, 
-                    version, 
+                    name,
+                    version,
                     categories {
-                        name, 
+                        name,
                         children {
-                            name, 
+                            name,
                             classId,
                             children {
-                                name, 
+                                name,
                                 classId,
                                 children {
                                     name,
@@ -206,9 +206,9 @@ class RedBrickApi(RedBrickApiBase):
                     }
                 }
                 datapoint {
-                    items(presigned:false), 
-                    itemsPresigned,                    
-                } 
+                    items(presigned:false),
+                    itemsPresigned,
+                }
             }
         }
         """
@@ -294,7 +294,7 @@ class RedBrickApi(RedBrickApiBase):
     ) -> None:
         """Put task data for a labeling task."""
         query_string = """
-        mutation($orgId:UUID!, $dpId:UUID!, $projectId:UUID!, $stageName:String!, $subName:String!, $labels:JSONString!, $taxonomyName: String!, $taxonomyVersion: Int!, $tdType: TaskDataType!) {
+        mutation($orgId:UUID!, $dpId:UUID!, $projectId:UUID!, $stageName:String!, $subName:String!, $labels:[LabelInput]!, $taxonomyName: String!, $taxonomyVersion: Int!, $tdType: TaskDataType!) {
             putLabels(orgId:$orgId, dpId:$dpId, projectId: $projectId, stageName:$stageName, subName:$subName, labels:$labels, taxonomyName:$taxonomyName, taxonomyVersion: $taxonomyVersion, tdType:$tdType) {
                 ok
             }
@@ -335,7 +335,7 @@ class RedBrickApi(RedBrickApiBase):
                 stage(orgId: $orgId, projectId: $projectId, stageName: $stageName) {
                     inputType,
                     outputType,
-                    outputTaxonomyName, 
+                    outputTaxonomyName,
                     outputTaxonomyVersion
                 }
             }
@@ -372,15 +372,15 @@ class RedBrickApi(RedBrickApiBase):
         query_string = """
         query ($orgId: UUID!, $name: String!, $version: Int!) {
             taxonomy(orgId: $orgId, name: $name, version: $version) {
-                name, 
-                version, 
+                name,
+                version,
                 categories {
-                    name, 
+                    name,
                     children {
-                        name, 
+                        name,
                         classId,
                         children {
-                            name, 
+                            name,
                             classId,
                             children {
                                 name,
@@ -409,9 +409,9 @@ class RedBrickApi(RedBrickApiBase):
         query_string = """
         query($orgId: UUID!) {
             members(orgId: $orgId) {
-                userId, 
+                userId,
                 user {
-                    givenName, 
+                    givenName,
                     familyName,
                     email
                 }
