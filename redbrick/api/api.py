@@ -279,6 +279,41 @@ class RedBrickApi(RedBrickApiBase):
         query = dict(query=query_string, variables=query_variables)
         self._execute_query(query)
 
+    def putLabels(
+        self,
+        org_id,
+        project_id,
+        dp_id,
+        stage_name,
+        sub_name,
+        labels,
+        taxonomy_name,
+        taxonomy_version,
+        td_type,
+        augmentdata=None,
+    ) -> None:
+        """Put task data for a labeling task."""
+        query_string = """
+        mutation($orgId:UUID!, $dpId:UUID!, $projectId:UUID!, $stageName:String!, $subName:String!, $labels:JSONString!, $taxonomyName: String!, $taxonomyVersion: Int!, $tdType: TaskDataType!) {
+            putLabels(orgId:$orgId, dpId:$dpId, projectId: $projectId, stageName:$stageName, subName:$subName, labels:$labels, taxonomyName:$taxonomyName, taxonomyVersion: $taxonomyVersion, tdType:$tdType) {
+                ok
+            }
+        }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "dpId": dp_id,
+            "stageName": stage_name,
+            "subName": sub_name,
+            "labels": labels,
+            "taxonomyName": taxonomy_name,
+            "taxonomyVersion": taxonomy_version,
+            "tdType": td_type,
+        }
+        query = dict(query=query_string, variables=query_variables)
+        self._execute_query(query)
+
     def putRemoteLabelingTask(self, finishedTask) -> None:
         """Put remote labeling task to backend."""
         query_string = """

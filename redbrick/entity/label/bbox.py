@@ -281,9 +281,7 @@ class ImageBoundingBox(BaseBoundingBox):
 
             labels.append(entry)
 
-        output = {"items": [{"url": "throwaway", "labels": labels}]}
-
-        return json.dumps(output)
+        return json.dumps(labels)
 
 
 # db    db d888888b d8888b. d88888b  .d88b.
@@ -401,8 +399,7 @@ class VideoBoundingBox(BaseBoundingBox):
             entry["end"] = label.end
             labels.append(entry)
 
-        output = {"labels": labels}
-        return json.dumps(output)
+        return json.dumps(labels)
 
     def interpolate_labels(self, num_frames: int) -> List[List[VideoBBoxLabel]]:
         """Interpolate the frames and return interpolated object."""
