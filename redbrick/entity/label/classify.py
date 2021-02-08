@@ -109,8 +109,7 @@ class VideoClassify:
 
             labels.append(entry)
 
-        output = {"labels": labels}
-        return json.dumps(output)
+        return json.dumps(labels)
 
     def show(
         self, ax: Any, width: int, height: int, frameindex: int, num_frames: int

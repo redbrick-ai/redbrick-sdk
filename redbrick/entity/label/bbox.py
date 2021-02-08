@@ -77,12 +77,6 @@ class ImageBoundingBoxEntry:
     classname: List[List[str]]
     attributes: List[LabelAttribute]
 
-    def __post_init__(self):
-        self.xnorm = float(np.max([self.xnorm, 0]))
-        self.ynorm = float(np.max([self.ynorm, 0]))
-        self.wnorm = float(np.max([float(np.min([self.wnorm, 1 - self.xnorm])), 0]))
-        self.hnorm = float(np.max([float(np.min([self.hnorm, 1 - self.ynorm])), 0]))
-
 
 @dataclass
 class VideoBoundingBoxEntry:
@@ -99,12 +93,6 @@ class VideoBoundingBoxEntry:
     frameindex: int
     keyframe: bool
     end: bool
-
-    def __post_init__(self):
-        self.xnorm = float(np.max([self.xnorm, 0]))
-        self.ynorm = float(np.max([self.ynorm, 0]))
-        self.wnorm = float(np.max([float(np.min([self.wnorm, 1 - self.xnorm])), 0]))
-        self.hnorm = float(np.max([float(np.min([self.hnorm, 1 - self.ynorm])), 0]))
 
 
 class VideoBBoxLabel:
@@ -281,9 +269,7 @@ class ImageBoundingBox(BaseBoundingBox):
 
             labels.append(entry)
 
-        output = {"items": [{"url": "throwaway", "labels": labels}]}
-
-        return json.dumps(output)
+        return json.dumps(labels)
 
 
 # db    db d888888b d8888b. d88888b  .d88b.
@@ -401,8 +387,7 @@ class VideoBoundingBox(BaseBoundingBox):
             entry["end"] = label.end
             labels.append(entry)
 
-        output = {"labels": labels}
-        return json.dumps(output)
+        return json.dumps(labels)
 
     def interpolate_labels(self, num_frames: int) -> List[List[VideoBBoxLabel]]:
         """Interpolate the frames and return interpolated object."""

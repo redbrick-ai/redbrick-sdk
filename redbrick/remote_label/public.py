@@ -1,4 +1,5 @@
 """Public interface to remote_label."""
+import json
 from typing import List, Union
 from termcolor import colored
 from redbrick.api import RedBrickApi
@@ -53,7 +54,7 @@ class RemoteLabel:
         labels: Union[ImageBoundingBox, VideoBoundingBox, VideoClassify],
     ) -> None:
         """User facing funciton to submit a task."""
-        print(colored("[INFO]", "blue"), "Submitting task to backend...", end=" ")
+        print(colored("[INFO]:", "blue"), "Submitting task to backend...", end=" ")
         new_subname = "remote-labeling"
 
         # Check that label category matches taxonomy
@@ -72,7 +73,6 @@ class RemoteLabel:
             if not isinstance(labels, VideoBoundingBox):
                 raise ValueError("Labels must be of type VideoBoundingBox!")
 
-        # Put task data
         self.__put_task_data(
             dp_id=task.dp_id,
             sub_name=new_subname,
@@ -109,15 +109,15 @@ class RemoteLabel:
         td_type: str,
     ) -> None:
         """Read labels from local folder, and submit the labels."""
-        task_datas = str(task_data)  # Stringify the json object
+        task_datas = json.loads(str(task_data))  # Convert the object to a dictionary
 
-        self.api_client.putTaskData(
+        self.api_client.putLabels(
             org_id=self.org_id,
             project_id=self.project_id,
             dp_id=dp_id,
             stage_name=self.stage_name,
             sub_name=sub_name,
-            task_data=task_datas,
+            labels=task_datas,
             taxonomy_name=taxonomy_name,
             taxonomy_version=taxonomy_version,
             td_type=td_type,
