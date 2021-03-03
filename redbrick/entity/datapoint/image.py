@@ -35,8 +35,9 @@ class Image(BaseDatapoint):
                     ImageBoundingBoxRemoteLabel.from_dict(label)
                     for label in self.remote_labels
                 ]
-            except Exception:
+            except Exception as error:
                 print_error("Parsing error. Please reach out to contact@redbrickai.com")
+                print(error)
 
             # Create label object
             self.labels = ImageBoundingBox(labels=bbox_remote_labels)

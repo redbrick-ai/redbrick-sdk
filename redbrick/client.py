@@ -32,6 +32,7 @@ class RedBrickClient:
             RedBrickClient.instance = RedBrickClient.RedBrickClientPrivate(api_key, url)
         else:
             RedBrickClient.instance.api_key = api_key
+            RedBrickClient.instance.custom_url = url
 
     def __getattr__(self, name: str) -> Any:
         """Get specified attribute from object."""
