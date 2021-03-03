@@ -21,7 +21,7 @@ class LabelsetLoader(LabelsetBase):
         self.label_set_name = label_set_name
         self.api_client = RedBrickApi(cache=False)
 
-        print_info("Counting available datapoint...")
+        print_info("Counting available datapoints...")
 
         # All datapoints in labelset
         try:
