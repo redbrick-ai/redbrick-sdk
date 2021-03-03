@@ -18,4 +18,6 @@ label_set = redbrick.labelset.LabelsetLoader(
 label_set.show_data()
 
 # %%
-label_set.export("redbrick")
+label_set.export(format="redbrick")
+
+# %%
