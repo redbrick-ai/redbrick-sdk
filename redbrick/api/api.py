@@ -101,6 +101,24 @@ class RedBrickApi(RedBrickApiBase):
                     dataType,
                     labels {
                       category,
+                      attributes {
+                        ... on LabelAttributeInt {
+                        name
+                        valint: value
+                        }
+                        ... on LabelAttributeBool {
+                        name
+                        valbool: value
+                        }
+                        ... on LabelAttributeFloat {
+                        name
+                        valfloat: value
+                        }
+                        ... on LabelAttributeString {
+                        name
+                        valstr: value
+                        }
+                      }
                       labelid,
                       frameclassify,
                       frameindex,
