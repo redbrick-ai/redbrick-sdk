@@ -18,6 +18,9 @@ class LabelsetLabelsIterator:
 
     def __next__(self) -> dict:
         """Get next labels / datapoint."""
+        # iterator over customGroup.datapointsPaged.entries
+
+        # trim down labels (remove any None fields)
 
 
 class ExportRedbrick:
@@ -28,8 +31,14 @@ class ExportRedbrick:
 
     def export(self) -> None:
         # dp_ids
-        for i in tqdm(range(len(self.labelset.dp_ids))):
+        iterator = LabelsetLabelsIterator(...)
+
+        for dpoint in tqdm(range(len(self.labelset.dp_ids))):
             dp_ = self.labelset.__getitem__(i)
+
+            # write entry to json with name "dpId.json"
+
+            # flatten labels and createdByEmail into the same level as dpId
 
 
 # LOW LEVEL: want an iterator that handles the loading of individual tasks / datapoints from a labelset
