@@ -193,6 +193,113 @@ class RedBrickApi(RedBrickApiBase):
             )
             return dpoint_vid
 
+    def get_datapoints_paged(
+        self, org_id: str, label_set_name: str, cursor: Optional[str] = None
+    ) -> dict:
+        """Get all relevant information related to a datapoint."""
+        query_string = """
+        query ($orgId: UUID!, $name: String!,$first: Int, $cursor: String){
+        customGroup(orgId: $orgId, name:$name){
+            orgId
+            name
+            dataType
+            taskType
+            taxonomy {
+            categories {
+                name
+                children{
+                name
+                children {
+                    name
+                    children {
+                    name
+                    }
+                }
+                }
+
+            }
+            }
+            datapointCount
+            datapointsPaged(first:$first, after:$cursor) {
+            entries {
+                dpId
+                itemsPresigned:items (presigned:true)
+                labelData(customGroupName: $name){
+                createdByEmail
+                labels {
+                    category
+                    attributes {
+                        ... on LabelAttributeInt {
+                        name
+                        valint: value
+                        }
+                        ... on LabelAttributeBool {
+                        name
+                        valbool: value
+                        }
+                        ... on LabelAttributeFloat {
+                        name
+                        valfloat: value
+                        }
+                        ... on LabelAttributeString {
+                        name
+                        valstr: value
+                        }
+                    }
+                    labelid
+                    frameindex
+                    trackid
+                    keyframe
+                    taskclassify
+                    frameclassify
+                    end
+                    bbox2d {
+                        xnorm
+                        ynorm
+                        wnorm
+                        hnorm
+                    }
+                    point {
+                        xnorm
+                        ynorm
+                    }
+                    polyline {
+                        xnorm
+                        ynorm
+                    }
+                    polygon {
+                        xnorm
+                        ynorm
+                    }
+                    pixel {
+                        imagesize
+                        regions
+                        holes
+                    }
+                    ellipse {
+                        xcenternorm
+                        ycenternorm
+                        xnorm
+                        ynorm
+                        rot
+                    }
+                    }
+                }
+
+
+            }
+            cursor
+            }
+        }
+        }
+
+        """
+        # EXECUTE THE QUERY
+        query_variables = {"orgId": org_id, "name": label_set_name, "cursor": cursor}
+        query = dict(query=query_string, variables=query_variables)
+        result = self._execute_query(query)
+        return result
+
     def tasksToLabelRemote(self, orgId, projectId, stageName, numTasks) -> List[Task]:
         """Get remote labeling tasks."""
         query_string = """
