@@ -194,7 +194,11 @@ class RedBrickApi(RedBrickApiBase):
             return dpoint_vid
 
     def get_datapoints_paged(
-        self, org_id: str, label_set_name: str, cursor: Optional[str] = None
+        self,
+        org_id: str,
+        label_set_name: str,
+        cursor: Optional[str] = None,
+        first: int = 50,
     ) -> dict:
         """Get all relevant information related to a datapoint."""
         query_string = """
@@ -224,6 +228,7 @@ class RedBrickApi(RedBrickApiBase):
             entries {
                 dpId
                 itemsPresigned:items (presigned:true)
+                items(presigned:false)
                 labelData(customGroupName: $name){
                 createdByEmail
                 labels {
@@ -295,7 +300,12 @@ class RedBrickApi(RedBrickApiBase):
 
         """
         # EXECUTE THE QUERY
-        query_variables = {"orgId": org_id, "name": label_set_name, "cursor": cursor}
+        query_variables = {
+            "orgId": org_id,
+            "name": label_set_name,
+            "cursor": cursor,
+            "first": first,
+        }
         query = dict(query=query_string, variables=query_variables)
         result = self._execute_query(query)
         return result
