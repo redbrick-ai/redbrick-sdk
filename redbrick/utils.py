@@ -8,6 +8,10 @@ import numpy as np  # type: ignore
 import cv2  # type: ignore
 from redbrick.entity.taxonomy2 import Taxonomy2
 
+def clear_url(url: str) -> str:
+    """Clears special characters from string"""
+    url = url.replace("&","AND").replace("/","SLASH").replace("?","QUESTION")
+    return url
 
 def url_to_image(url: str) -> np.ndarray:
     """Get image data from url."""

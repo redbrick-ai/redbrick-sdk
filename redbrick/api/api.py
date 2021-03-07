@@ -227,6 +227,7 @@ class RedBrickApi(RedBrickApiBase):
             datapointsPaged(first:$first, after:$cursor) {
             entries {
                 dpId
+                name
                 itemsPresigned:items (presigned:true)
                 items(presigned:false)
                 labelData(customGroupName: $name){
