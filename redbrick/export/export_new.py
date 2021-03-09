@@ -20,12 +20,13 @@ class LabelsetLabelsIterator:
         self.cursor = None
         self.datapointsBatch = None
         self.datapointsBatchIndex = None
-        self.datapointCount = self._get_datapoint_count()
+        self.customGroup = self._get_custom_group()
+        self.datapointCount = self.customGroup["datapointCount"]
 
-    def _get_datapoint_count(self) -> None:
+    def _get_custom_group(self) -> None:
         return self.api.get_datapoints_paged(
             org_id=self.org_id, label_set_name=self.label_set_name
-        )["customGroup"]["datapointCount"]
+        )["customGroup"]
 
     def _get_batch(self) -> None:
         print(self.api.get_datapoints_paged(self.org_id, self.label_set_name))
@@ -243,3 +244,16 @@ class ExportRedbrick:
             )
             with open(jsonPath, mode="w", encoding="utf-8") as f:
                 json.dump(dpoints_flat, f, indent=2)
+
+        #Saving summary.json file
+        org_id_summary = labelsetIter.customGroup["orgId"]
+        label_set_name_summary = labelsetIter.customGroup["name"]
+        taxonomy_summary = labelsetIter.customGroup["taxonomy"]
+        summary_json = {
+            "org_id": org_id_summary,
+            "label_set_name": label_set_name_summary,
+            "taxonomy": taxonomy_summary
+        }
+        summary_json_filepath = os.path.join(self.target_dir, "summary.json")
+        with open(summary_json_filepath, mode="w", encoding="utf-8") as f:
+                json.dump(summary_json, f, indent=2)
