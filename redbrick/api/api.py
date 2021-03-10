@@ -31,6 +31,31 @@ class RedBrickApi(RedBrickApiBase):
                 "https://ck7r1z68k7.execute-api.us-east-1.amazonaws.com/prod/graphql/"
             )
 
+    def get_datapointset(
+        self, org_id: str, data_set_name: str
+    ) -> Dict:
+        """Get dataset specified by org_id and dataset_name"""
+        query_string = """
+            query ($orgId:UUID!, $name:String!) {
+                dataPointSet(orgId: $orgId, name: $name){
+            orgId
+            name
+            dataType
+            datapointCount
+            desc
+            createdAt
+            createdBy
+            status
+        }
+        }
+        """
+        query_variables = {"orgId": org_id, "name": data_set_name}
+        query = dict(query=query_string, variables=query_variables)
+
+        result = self._execute_query(query)
+        return result
+
+
     def get_datapoint_ids(
         self, org_id: str, label_set_name: str
     ) -> Tuple[List[str], CustomGroup]:

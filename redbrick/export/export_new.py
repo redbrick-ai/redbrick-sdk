@@ -10,7 +10,6 @@ import json
 import numpy as np
 import cv2
 
-
 class LabelsetLabelsIterator:
     def __init__(self, org_id: str, label_set_name: str) -> None:
         """Construct LabelsetLabelsIterator."""
@@ -142,7 +141,7 @@ class ExportRedbrick:
                 dpoints_flat.append(dpoint_flat)
             else:
                 # Check if use_name is needed
-                if use_name and dpoint["name"] is not None and dpoint["name"] is not "":
+                if use_name and dpoint["name"] is not None and dpoint["name"] != "":
                     fname = dpoint["name"]
                     last_slash = fname.rfind("/")
                     fname = clear_url(fname[last_slash + 1 :])
