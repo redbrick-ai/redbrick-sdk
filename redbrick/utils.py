@@ -2,16 +2,31 @@
 Utility functions.
 """
 
-from typing import List
+from typing import List, Any
 import requests
 import numpy as np  # type: ignore
 import cv2  # type: ignore
 from redbrick.entity.taxonomy2 import Taxonomy2
+import colorsys
 
 def clear_url(url: str) -> str:
     """Clears special characters from string"""
     url = url.replace("&","AND").replace("/","SLASH").replace("?","QUESTION")
     return url
+
+def generate_colors(num_colors: int) -> List[Any]:
+    """Generates N different colors"""
+    colors=[]
+    c = 1
+    for i in np.arange(0., 360., 360. / num_colors):
+        hue = i/360.
+        lightness = (50 + (25*(c % 2)))/100.
+        saturation = (90 + (10*(c % 2)))/100.
+        #lightness = (50 + np.random.rand() * 10)/100.
+        #saturation = (90 + np.random.rand() * 10)/100.
+        colors.append(colorsys.hls_to_rgb(hue, lightness, saturation))
+        c += 1
+    return colors
 
 def url_to_image(url: str) -> np.ndarray:
     """Get image data from url."""

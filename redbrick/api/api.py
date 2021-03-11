@@ -238,10 +238,13 @@ class RedBrickApi(RedBrickApiBase):
                 name
                 children{
                 name
+                classId
                 children {
                     name
+                    classId
                     children {
                     name
+                    classId
                     }
                 }
                 }

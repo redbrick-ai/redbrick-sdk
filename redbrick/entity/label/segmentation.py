@@ -9,7 +9,7 @@ import numpy as np  # type: ignore
 from skimage import draw  # type: ignore
 import matplotlib.cm  # type: ignore
 import matplotlib.pyplot as plt
-
+from redbrick.utils import generate_colors
 
 @dataclass
 class Pixel:
@@ -53,6 +53,10 @@ class ImageSegmentation:
     # RGB 0-256 numpy array of int's
     color_map: Any = lambda idx: (
         np.array(matplotlib.cm.get_cmap("tab10")(idx))[0:3] * 256
+    ).astype(int)
+
+    color_map2: Any = lambda idx, N: (
+        np.array(generate_colors(N))[idx] * 256
     ).astype(int)
 
     def __post_init__(self) -> None:
@@ -139,6 +143,8 @@ class ImageSegmentation:
         mask_class_ids = np.unique(self.mask)
         color_mask = np.zeros([self.mask.shape[0], self.mask.shape[1], 3])
 
+        num_colors = max(list(self.classes.values())) #Ignore 0 for background
+
         # Loop through class range
         for id_ in mask_class_ids:
             if id_ == 0:
@@ -148,7 +154,7 @@ class ImageSegmentation:
             pixel_class_index = np.where(self.mask == id_)
 
             # generate colors
-            color_mask[pixel_class_index] = self.color_map(int(id_))
+            color_mask[pixel_class_index] = self.color_map2(int(id_-1), num_colors)
 
         color_mask /= 256
         return color_mask
