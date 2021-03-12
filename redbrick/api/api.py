@@ -38,16 +38,16 @@ class RedBrickApi(RedBrickApiBase):
         query_string = """
             query ($orgId:UUID!, $name:String!) {
                 dataPointSet(orgId: $orgId, name: $name){
-            orgId
-            name
-            dataType
-            datapointCount
-            desc
-            createdAt
-            createdBy
-            status
-        }
-        }
+                    orgId
+                    name
+                    dataType
+                    datapointCount
+                    desc
+                    createdAt
+                    createdBy
+                    status
+                }
+            }
         """
         query_variables = {"orgId": org_id, "name": data_set_name}
         query = dict(query=query_string, variables=query_variables)
@@ -55,6 +55,59 @@ class RedBrickApi(RedBrickApiBase):
         result = self._execute_query(query)
         return result
 
+    def get_itemListUploadPresign(
+        self, org_id: str, file_name: str
+        ) -> Dict:
+        """Get a presigned URL to upload files to."""
+        query_string = """
+            query ($orgId: UUID!, $name: String!){
+                itemListUploadPresign(orgId: $orgId, fileName: $name){
+                    presignedUrl
+                    filePath
+                    fileName
+                    uploadId
+                    createdAt
+                }
+            }
+        """
+
+        query_variables = {"orgId": org_id, "name": file_name}
+        query = dict(query=query_string, variables=query_variables)
+
+        result = self._execute_query(query)
+
+        return result
+    
+    def itemListUploadSuccess(
+        self, org_id: str, itemsListUploadSuccessInput: Dict,
+    ) -> Dict:
+        """Calls backend to process uploaded item list."""
+        query_string = """
+            mutation($orgId: UUID!, $payload: ItemsListUploadSuccessInput!){
+                itemListUploadSuccess(orgId: $orgId, payload: $payload){
+                    ok
+                    upload{
+                        orgId
+                        importId
+                        datapointCount
+                        dataType
+                        taskType
+                        filePath
+                        createdAt
+                        createdBy
+                        status
+                        statusMsg
+                    }
+                }
+            }
+        """
+
+        query_variables = {"orgId": org_id, "payload": itemsListUploadSuccessInput}
+        query = dict(query=query_string, variables=query_variables)
+
+        result = self._execute_query(query)
+
+        return result
 
     def get_datapoint_ids(
         self, org_id: str, label_set_name: str
