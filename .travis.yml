@@ -1,7 +1,7 @@
 language: python
 python:
-  - '3.8'
-  - '3.7'
+  - "3.8"
+  - "3.7"
 install:
   - pip install -e .[dev]
 script:
@@ -14,8 +14,8 @@ deploy:
   provider: pypi
   username: __token__
   password:
-    secure: QfLEvcLsLRr5zpT/sOBwwugzvARaGN+Ax7CCG/K/rmYokpf3QXFTXqahtcvl5LRuSGNF8ma4w8T1PQjyB62EYo2x2/9q9HAUyLXxFHze/cCNyghzQG8wUsowOOrloPcj84axjzcKQOYIu56x64L6UQXxjQDLE9lO4j1Bt7HkTLk0xOL6pEcJym4L5mnw9umKJMOTkxGDWeV650nvTU9bOr48Ra8QPTXlqpdizrohVu/OSCzfEbtiU0U0vWf9Vl7gUwqPLh9uAEkZSXiqCh7cqn3Dl9smGWhCWLfZWKIPa4JErQ+kJN7ogQ14TnNEWVeaNrrD1fDL1I2us6ycwDGr/KmmbvCwmaXrbD99HPhFN/gE/64uXQhF3alQUyIJn60ev1+WvRQJPyufS5VgIE0xU++ZwOG/ZkCcVsxmhGZGqflWT62lhpFtKSaExzlWG/0olpZdydIrbbwqvx2An4gtVU4X5xt7/9LfINorG63hciFGCqR77NqDzz5ir0YsGU+HpRvTlFFUvjjnsR+HZkmqRdPTcq8LwTIqNN49sXCbjLOCSg9w8bbxPlHsGifjoNGMuvu0667eEk9GZ3UXQY9l4XjUcu77fIcGkRdBUhn3FT/8z5LkEL3WQjkikHgt1h82j1b8DdqgG+hlDNKwv5/ln88xmEXmmmkCUhxf5c4khts=
+    secure: ${PYPI}
   on:
     tags: true
     branch: master
-  distributions: 'bdist_wheel sdist'
+  distributions: "bdist_wheel sdist"
