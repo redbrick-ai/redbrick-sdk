@@ -31,9 +31,7 @@ class RedBrickApi(RedBrickApiBase):
                 "https://ck7r1z68k7.execute-api.us-east-1.amazonaws.com/prod/graphql/"
             )
 
-    def get_datapointset(
-        self, org_id: str, data_set_name: str
-    ) -> Dict:
+    def get_datapointset(self, org_id: str, data_set_name: str) -> Dict:
         """Get dataset specified by org_id and dataset_name"""
         query_string = """
             query ($orgId:UUID!, $name:String!) {
@@ -55,9 +53,7 @@ class RedBrickApi(RedBrickApiBase):
         result = self._execute_query(query)
         return result
 
-    def get_itemListUploadPresign(
-        self, org_id: str, file_name: str
-        ) -> Dict:
+    def get_itemListUploadPresign(self, org_id: str, file_name: str) -> Dict:
         """Get a presigned URL to upload files to."""
         query_string = """
             query ($orgId: UUID!, $name: String!){
@@ -77,7 +73,7 @@ class RedBrickApi(RedBrickApiBase):
         result = self._execute_query(query)
 
         return result
-    
+
     def itemListUploadSuccess(
         self, org_id: str, itemsListUploadSuccessInput: Dict,
     ) -> Dict:

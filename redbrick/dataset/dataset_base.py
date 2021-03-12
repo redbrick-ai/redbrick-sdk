@@ -4,6 +4,7 @@ Base dataset.
 from dataclasses import dataclass
 from typing import List, Dict, Any
 
+
 @dataclass
 class DatasetBase:
     """Base class for dataset."""
