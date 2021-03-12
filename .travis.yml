@@ -14,7 +14,7 @@ deploy:
   provider: pypi
   username: __token__
   password:
-    secure: ${PYPI}
+    secure: $PYPI
   on:
     tags: false
     branch: master
