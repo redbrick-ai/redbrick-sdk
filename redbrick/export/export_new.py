@@ -71,9 +71,6 @@ class LabelsetLabelsIterator:
         tax_map["background"] = 0
         return tax_map
 
-    def _get_batch(self) -> None:
-        print(self.api.get_datapoints_paged(self.org_id, self.label_set_name))
-
     def _trim_labels(self, entry) -> Dict:
         """Trims None values from labels"""
         for label in entry["labelData"]["labels"]:
