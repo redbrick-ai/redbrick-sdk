@@ -16,6 +16,6 @@ deploy:
   password:
     secure: ${PYPI}
   on:
-    tags: true
+    tags: false
     branch: master
   distributions: "bdist_wheel sdist"
