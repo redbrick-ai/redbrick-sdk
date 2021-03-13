@@ -14,8 +14,9 @@ deploy:
   provider: pypi
   username: __token__
   password:
+    # encrypted token
     secure: v2MA6JYfX1br4G8vhCXyZs5ynR1PF+MgOS0bRKGDG9u5ct2Oq96xlowk7kh0b/zcQ2SVL28aAofxTNKZqCGWRgtmsTvSwF6w44lt1fX/3+sLi6v7woVBFZoWKuFxP+EbP571LGgQm5ks/EpzJQc2IP/ShVxT1OqudBArIS6iSPkrGR/f/E3s8JSFmV1uVd7YRD1sItYryDkYLlPhxitaMZosbXFLL23yPCRnMJc5JoKCsOVSlQoJZADyDo+SxzNB6ZmvDuEhWXpf3hpyF04K2KuLRvOHDzu9cmwMK112qzkIxhMjtQ+4uplSzzH2BxlgYJDuFtT2AoF23vIKeRwv2FN2Y0hSBMqFcdnrDHKQ97Xdyj/Q1j4ZFdqcxsbvE04zeogzKS7CoMRIXmljeCpvqGRTjM6R9vgGoyRB/J2V3vR4RL1Eze4N2Guz78Rci1nhZIjdxlsktdsi2ALZIfLf7FxBrPE/6gNxuCHJ5BvNjMDIbq+tCjdQAQMSR6YotGAAdFbdqVswqLtEibkgwJi24Gv/hLVo1bemrzJA0fkErthv6pByr83U4hF73P23xhnD+kggOaX6lGi/AC5Kfa0vNZYwdHwY+Gd02SXhZBCmBVUr4YwpdckLt60+J553Ezn40phLOen8+oBwwncwY/ZEqVALpGr7w9xkUYQqplfcp8w=
   on:
-    tags: false
+    tags: true
     branch: master
   distributions: "bdist_wheel sdist"
