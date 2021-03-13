@@ -9,6 +9,7 @@ from redbrick.dataset.dataset_base import DatasetBase
 from redbrick.api import RedBrickApi
 from redbrick.logging import print_info, print_error
 
+
 class DatasetLoader(DatasetBase):
     """Dataset loader class."""
 
@@ -22,9 +23,9 @@ class DatasetLoader(DatasetBase):
 
         # Dataset info
         try:
-            dataset = self.api_client.get_datapointset(
-                self.org_id, self.data_set_name
-            )["dataPointSet"]
+            dataset = self.api_client.get_datapointset(self.org_id, self.data_set_name)[
+                "dataPointSet"
+            ]
         except Exception as err:
             print_error(err)
             return
@@ -43,21 +44,23 @@ class DatasetLoader(DatasetBase):
     def upload_items(self, items: str, storage_id: str) -> None:
         """Upload a list of items to the backend."""
 
-        #Getting item list presign
-        itemsListUploadInfo_  = self.api_client.get_itemListUploadPresign(org_id=self.org_id, file_name="upload-sdk.json")["itemListUploadPresign"]
+        # Getting item list presign
+        itemsListUploadInfo_ = self.api_client.get_itemListUploadPresign(
+            org_id=self.org_id, file_name="upload-sdk.json"
+        )["itemListUploadPresign"]
         presignedUrl_ = itemsListUploadInfo_["presignedUrl"]
         filePath_ = itemsListUploadInfo_["filePath"]
         fileName_ = itemsListUploadInfo_["fileName"]
         uploadId_ = itemsListUploadInfo_["uploadId"]
         createdAt_ = itemsListUploadInfo_["createdAt"]
 
-        #Uploading items to presigned url
+        # Uploading items to presigned url
         print_info("Uploading file '{}'".format(items))
         with open(items, "rb") as f:
             json_payload = json.load(f)
             response = requests.put(presignedUrl_, json=json_payload)
-        
-        #Call item list upload success
+
+        # Call item list upload success
         if response.ok:
             itemsListUploadSuccessInput_ = {
                 "orgId": self.org_id,
@@ -69,9 +72,14 @@ class DatasetLoader(DatasetBase):
                 "storageId": storage_id,
                 "dpsName": self.data_set_name,
             }
-            uploadSuccessPayload_ = self.api_client.itemListUploadSuccess(org_id=self.org_id, itemsListUploadSuccessInput=itemsListUploadSuccessInput_)["itemListUploadSuccess"]
+            uploadSuccessPayload_ = self.api_client.itemListUploadSuccess(
+                org_id=self.org_id,
+                itemsListUploadSuccessInput=itemsListUploadSuccessInput_,
+            )["itemListUploadSuccess"]
             importId_ = uploadSuccessPayload_["upload"]["importId"]
-            print_info("Upload is processing, this is your importId: {}".format(importId_))
+            print_info(
+                "Upload is processing, this is your importId: {}".format(importId_)
+            )
         else:
             print_error("Something went wrong uploading your file {}.".format(items))
 
