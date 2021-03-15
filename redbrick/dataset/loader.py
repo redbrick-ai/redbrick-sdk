@@ -83,3 +83,47 @@ class DatasetLoader(DatasetBase):
         else:
             print_error("Something went wrong uploading your file {}.".format(items))
 
+    def upload_items_with_labels(
+        self, items: str, storage_id: str, label_set_name: str, task_type: str
+    ) -> None:
+        """Upload a list of items with labels to the backend."""
+
+        # Getting item list presign
+        itemsListUploadInfo_ = self.api_client.get_itemListUploadPresign(
+            org_id=self.org_id, file_name="upload-sdk.json"
+        )["itemListUploadPresign"]
+        presignedUrl_ = itemsListUploadInfo_["presignedUrl"]
+        filePath_ = itemsListUploadInfo_["filePath"]
+        fileName_ = itemsListUploadInfo_["fileName"]
+        uploadId_ = itemsListUploadInfo_["uploadId"]
+        createdAt_ = itemsListUploadInfo_["createdAt"]
+
+        # Uploading items to presigned url
+        print_info("Uploading file '{}'".format(items))
+        with open(items, "rb") as f:
+            json_payload = json.load(f)
+            response = requests.put(presignedUrl_, json=json_payload)
+
+        # Call item list upload success
+        if response.ok:
+            itemsListUploadSuccessInput_ = {
+                "orgId": self.org_id,
+                "filePath": filePath_,
+                "fileName": fileName_,
+                "uploadId": uploadId_,
+                "taskType": task_type,
+                "dataType": self.data_type,
+                "storageId": storage_id,
+                "dpsName": self.data_set_name,
+                "cstName": label_set_name,
+            }
+            uploadSuccessPayload_ = self.api_client.itemListUploadSuccess(
+                org_id=self.org_id,
+                itemsListUploadSuccessInput=itemsListUploadSuccessInput_,
+            )["itemListUploadSuccess"]
+            importId_ = uploadSuccessPayload_["upload"]["importId"]
+            print_info(
+                "Upload is processing, this is your importId: {}".format(importId_)
+            )
+        else:
+            print_error("Something went wrong uploading your file {}.".format(items))
