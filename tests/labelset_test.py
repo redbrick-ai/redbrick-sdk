@@ -60,10 +60,13 @@ def test_labelset_export_image(mock: Any) -> None:
     cache_dir = labelset.export(format="redbrick")
 
     assert os.path.isdir(cache_dir)
-    assert os.listdir(os.path.join(cache_dir, "obj_train_data")).sort() == [
-        IMAGE.image_url_not_signed[0:-4] + ".png",
-        IMAGE.image_url_not_signed[0:-4] + ".txt",
-    ].sort()
+    assert (
+        os.listdir(os.path.join(cache_dir, "obj_train_data")).sort()
+        == [
+            IMAGE.image_url_not_signed[0:-4] + ".png",
+            IMAGE.image_url_not_signed[0:-4] + ".txt",
+        ].sort()
+    )
     shutil.rmtree(cache_dir)
 
 

@@ -12,6 +12,7 @@ import json
 import numpy as np
 import cv2
 
+
 class LabelsetLabelsIterator:
     def __init__(self, org_id: str, label_set_name: str) -> None:
         """Construct LabelsetLabelsIterator."""
@@ -41,7 +42,7 @@ class LabelsetLabelsIterator:
         tax_map: Dict[str, int] = {}
         self._trav_tax(self.taxonomy["categories"][0], tax_map)
         return self._taxonomy_update_segmentation(tax_map)
-            
+
     def _trav_tax(self, taxonomy: Dict[Any, Any], tax_map: Dict[str, int]) -> None:
         """Traverse the taxonomy tree structure, and fill the taxonomy mapper object."""
         children = taxonomy["children"]
@@ -69,9 +70,6 @@ class LabelsetLabelsIterator:
         # Add a background class for segmentation
         tax_map["background"] = 0
         return tax_map
-
-    def _get_batch(self) -> None:
-        print(self.api.get_datapoints_paged(self.org_id, self.label_set_name))
 
     def _trim_labels(self, entry) -> Dict:
         """Trims None values from labels"""
@@ -131,7 +129,7 @@ class ExportRedbrick:
         self.label_set_name = label_set_name
         self.target_dir = target_dir
 
-    def _export_image(self, ):
+    def _export_image(self,):
         pass
 
     def export(
@@ -146,13 +144,19 @@ class ExportRedbrick:
             org_id=self.org_id, label_set_name=self.label_set_name
         )
 
-        #Validation of optional parameters
+        # Validation of optional parameters
         task_type = labelsetIter.customGroup["taskType"]
         if export_format not in ["redbrick", "png"]:
-            print_error('Export format "{}" not valid, please use "redbrick" or "png"'.format(export_format))
+            print_error(
+                'Export format "{}" not valid, please use "redbrick" or "png"'.format(
+                    export_format
+                )
+            )
             return
         if export_format == "png" and task_type != "SEGMENTATION":
-            print_error('Export format "png" is only valid for segmentation tasks. Please use "redbrick"')
+            print_error(
+                'Export format "png" is only valid for segmentation tasks. Please use "redbrick"'
+            )
             return
 
         # Create target_dir if it doesn't exists
@@ -165,27 +169,29 @@ class ExportRedbrick:
             if not os.path.exists(target_data_dir):
                 os.makedirs(target_data_dir)
 
-        #Create masks folder
+        # Create masks folder
         if export_format == "png" and task_type == "SEGMENTATION":
             target_masks_dir = os.path.join(self.target_dir, "masks")
             if not os.path.exists(target_masks_dir):
                 os.makedirs(target_masks_dir)
 
-        #Saving summary.json file
+        # Saving summary.json file
         org_id_summary = labelsetIter.customGroup["orgId"]
         label_set_name_summary = labelsetIter.customGroup["name"]
         taxonomy_summary = labelsetIter.customGroup["taxonomy"]
         summary_json = {
             "org_id": org_id_summary,
             "label_set_name": label_set_name_summary,
-            "taxonomy": taxonomy_summary
+            "taxonomy": taxonomy_summary,
         }
         summary_json_filepath = os.path.join(self.target_dir, "summary.json")
         with open(summary_json_filepath, mode="w", encoding="utf-8") as f:
-                json.dump(summary_json, f, indent=2)
+            json.dump(summary_json, f, indent=2)
 
         if download_data:
-            print_info("Exporting datapoints and data to dir: {}".format(self.target_dir))
+            print_info(
+                "Exporting datapoints and data to dir: {}".format(self.target_dir)
+            )
         else:
             print_info("Exporting datapoints to dir: {}".format(self.target_dir))
 
@@ -199,7 +205,7 @@ class ExportRedbrick:
             # This is a video
             IS_VIDEO = True
 
-        #Variables required to save png masks
+        # Variables required to save png masks
         if export_format == "png" and task_type == "SEGMENTATION":
             label_info_segm: Dict[Any, Any] = {}
             label_info_segm["labels"] = []
@@ -215,8 +221,12 @@ class ExportRedbrick:
                 "labels": dpoint["labelData"]["labels"],
             }
 
-            #Save segmentation PNG masks if required
-            if export_format == "png" and task_type == "SEGMENTATION" and len(dpoint["labelData"]["labels"]) > 0:
+            # Save segmentation PNG masks if required
+            if (
+                export_format == "png"
+                and task_type == "SEGMENTATION"
+                and len(dpoint["labelData"]["labels"]) > 0
+            ):
                 dpoint_segm = Image(
                     created_by=dpoint["labelData"]["createdByEmail"],
                     org_id=labelsetIter.customGroup["orgId"],
@@ -248,16 +258,12 @@ class ExportRedbrick:
                 if file_ext.lower() in [".jpg", ".png", ".bmp"]:
                     # If image name already has an image extension
                     mask_filepath = os.path.join(
-                        target_masks_dir, 
-                        mask_name.replace(file_ext.lower() + ".png")
+                        target_masks_dir, mask_name.replace(file_ext.lower() + ".png")
                     )
                 else:
-                    mask_filepath = os.path.join(
-                        target_masks_dir, mask_name + ".png"
-                    )
+                    mask_filepath = os.path.join(target_masks_dir, mask_name + ".png")
                 cv2.imwrite(
-                    mask_filepath,
-                    np.flip(colored_mask, axis=2) * 255,
+                    mask_filepath, np.flip(colored_mask, axis=2) * 255,
                 )
                 label_info_entry = {}
                 label_info_entry["url"] = dpoint_segm.image_url_not_signed
@@ -364,24 +370,28 @@ class ExportRedbrick:
                             image_filepath, np.flip(image_np, axis=2)
                         )
 
-        #Finishing png masks export
+        # Finishing png masks export
         if export_format == "png" and task_type == "SEGMENTATION":
             # Meta-data
             label_info_segm["taxonomy"] = labelsetIter.taxonomy_segm
             label_info_segm["color_map"] = {}
             for key in labelsetIter.taxonomy_segm.keys():
                 if key == "background":
-                    color_map_ = [0,0,0]
+                    color_map_ = [0, 0, 0]
                 else:
-                    color_map_ = list(color_map(labelsetIter.taxonomy_segm[key]-1,max(labelsetIter.taxonomy_segm.values())))
+                    color_map_ = list(
+                        color_map(
+                            labelsetIter.taxonomy_segm[key] - 1,
+                            max(labelsetIter.taxonomy_segm.values()),
+                        )
+                    )
                     color_map_ = [int(c) for c in color_map_]
-                label_info_segm["color_map"][labelsetIter.taxonomy_segm[key]] = color_map_
+                label_info_segm["color_map"][
+                    labelsetIter.taxonomy_segm[key]
+                ] = color_map_
 
             # Save the class-mapping (taxonomy) in json format in the folder
-            segm_json = os.path.join(
-                target_masks_dir,
-                "class-mapping.json",
-            )
+            segm_json = os.path.join(target_masks_dir, "class-mapping.json",)
             with open(segm_json, "w+") as file:
                 json.dump(label_info_segm, file, indent=2)
 
@@ -393,5 +403,3 @@ class ExportRedbrick:
             )
             with open(jsonPath, mode="w", encoding="utf-8") as f:
                 json.dump(dpoints_flat, f, indent=2)
-
-

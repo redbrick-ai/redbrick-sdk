@@ -61,4 +61,3 @@ def test_init_segmentation() -> None:
     # assert
     assert isinstance(image.labels, ImageSegmentation)
     assert len(image.remote_labels) == 2
-
