@@ -105,6 +105,61 @@ class RedBrickApi(RedBrickApiBase):
 
         return result
 
+    def createDatapoint(
+        self,
+        org_id: str,
+        items: List[str],
+        name: str,
+        data_set_name: str,
+        storage_id: str,
+        label_set_name: str = None,
+        labels: List[Dict] = None,
+    ) -> Dict:
+        """Calls backend to create a datapoint."""
+        query_string = """
+            mutation(
+                $orgId: UUID!
+                $items: [String!]!
+                $name: String!
+                $dsetName: String!
+                $storageId: UUID!
+                $lsetName: String
+                $labels: [LabelInput!]
+            ) {
+                createDatapoint(
+                    orgId: $orgId
+                    items: $items
+                    name: $name
+                    dsetName: $dsetName
+                    storageId: $storageId
+                    lsetName: $lsetName
+                    labels: $labels
+                ) {
+                    dpId
+                }
+            }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "items": items,
+            "name": name,
+            "dsetName": data_set_name,
+            "storageId": storage_id,
+            "lsetName": label_set_name,
+            "labels": labels,
+        }
+
+        if label_set_name is not None:
+            query_variables["lsetName"] = label_set_name
+            query_variables["labels"] = labels
+
+        query = dict(query=query_string, variables=query_variables)
+
+        result = self._execute_query(query)
+
+        return result
+
     def get_datapoint_ids(
         self, org_id: str, label_set_name: str
     ) -> Tuple[List[str], CustomGroup]:
