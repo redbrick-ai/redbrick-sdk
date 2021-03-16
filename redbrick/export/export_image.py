@@ -67,27 +67,26 @@ class ExportImage(ExportBase):
             dp_entry["url"] = str(dp_.image_url_not_signed)
             dp_entry["labels"] = []
 
-            #Replace forbidden characters in URL
-            dp_entry["url"] = dp_entry["url"].replace("/", "SLASH").replace(":","COLON").replace("&","AND").replace("?","QUESTION")
+            # Replace forbidden characters in URL
+            dp_entry["url"] = (
+                dp_entry["url"]
+                .replace("/", "SLASH")
+                .replace(":", "COLON")
+                .replace("&", "AND")
+                .replace("?", "QUESTION")
+            )
 
-            #Extract possible file extension from URL
+            # Extract possible file extension from URL
             possibleFileExtension = dp_entry["url"][-4:]
             if possibleFileExtension.lower() not in [".jpg", ".png", ".bmp"]:
-                #If not a valid image file extension was found, we fallback to jpg
+                # If not a valid image file extension was found, we fallback to jpg
                 dp_entry["url"] = dp_entry["url"] + ".jpg"
 
             # write image data to file
             image_filepath = os.path.join(
-                self.cache_dir,
-                "obj_train_data",
-                dp_entry["url"]
+                self.cache_dir, "obj_train_data", dp_entry["url"]
             )
-            image_filepaths.append(
-                os.path.join(
-                    "obj_train_data",
-                    dp_entry["url"]
-                )  
-            )
+            image_filepaths.append(os.path.join("obj_train_data", dp_entry["url"]))
             cv2.imwrite(  # pylint: disable=no-member
                 image_filepath, np.flip(dp_.image_data, axis=2)
             )
