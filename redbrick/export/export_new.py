@@ -13,9 +13,9 @@ import numpy as np
 import cv2
 
 
-class LabelsetLabelsIterator:
+class LabelsetIterator:
     def __init__(self, org_id: str, label_set_name: str) -> None:
-        """Construct LabelsetLabelsIterator."""
+        """Construct LabelsetIterator."""
         self.api = RedBrickApi()
         self.label_set_name = label_set_name
         self.org_id = org_id
@@ -122,15 +122,12 @@ class LabelsetLabelsIterator:
         return self._trim_labels(entry)
 
 
-class ExportRedbrick:
+class Export:
     def __init__(self, org_id: str, label_set_name: str, target_dir: str) -> None:
-        """Construct ExportRedbrick."""
+        """Construct Export."""
         self.org_id = org_id
         self.label_set_name = label_set_name
         self.target_dir = target_dir
-
-    def _export_image(self,):
-        pass
 
     def export(
         self,
@@ -139,8 +136,8 @@ class ExportRedbrick:
         use_name: bool = False,
         export_format: str = "redbrick",
     ) -> None:
-        # Create LabelsetLabelsIterator
-        labelsetIter = LabelsetLabelsIterator(
+        # Create LabelsetIterator
+        labelsetIter = LabelsetIterator(
             org_id=self.org_id, label_set_name=self.label_set_name
         )
 
