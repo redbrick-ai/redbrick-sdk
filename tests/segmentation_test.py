@@ -186,4 +186,3 @@ def test_init_reg_inside_hole() -> None:
     assert (image_segment.mask[18:20, 10:20] == 1).all()  # outer region
     assert (image_segment.mask[10:20, 10:12] == 1).all()  # outer region
     assert (image_segment.mask[10:20, 18:20] == 1).all()  # outer region
-

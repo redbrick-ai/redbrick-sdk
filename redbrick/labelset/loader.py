@@ -1,8 +1,9 @@
 """A higher level abstraction."""
-
+import math
 from typing import Union, Dict
 import random
-import numpy as np  # type: ignore
+
+# import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 
 from redbrick.labelset.labelset_base import LabelsetBase
@@ -102,8 +103,8 @@ class LabelsetLoader(LabelsetBase):
 
         # Prepare figure
         num_dps = self.number_of_datapoints()
-        cols = int(np.min([2, num_dps]))
-        rows = int(np.min([2, np.ceil(num_dps / cols)]))
+        cols = int(min(2, num_dps))
+        rows = int(min(2, math.ceil(num_dps / cols)))
         fig = plt.figure()
 
         # Generate random index list

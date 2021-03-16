@@ -31,6 +31,135 @@ class RedBrickApi(RedBrickApiBase):
                 "https://ck7r1z68k7.execute-api.us-east-1.amazonaws.com/prod/graphql/"
             )
 
+    def get_datapointset(self, org_id: str, data_set_name: str) -> Dict:
+        """Get dataset specified by org_id and dataset_name"""
+        query_string = """
+            query ($orgId:UUID!, $name:String!) {
+                dataPointSet(orgId: $orgId, name: $name){
+                    orgId
+                    name
+                    dataType
+                    datapointCount
+                    desc
+                    createdAt
+                    createdBy
+                    status
+                }
+            }
+        """
+        query_variables = {"orgId": org_id, "name": data_set_name}
+        query = dict(query=query_string, variables=query_variables)
+
+        result = self._execute_query(query)
+        return result
+
+    def get_itemListUploadPresign(self, org_id: str, file_name: str) -> Dict:
+        """Get a presigned URL to upload files to."""
+        query_string = """
+            query ($orgId: UUID!, $name: String!){
+                itemListUploadPresign(orgId: $orgId, fileName: $name){
+                    presignedUrl
+                    filePath
+                    fileName
+                    uploadId
+                    createdAt
+                }
+            }
+        """
+
+        query_variables = {"orgId": org_id, "name": file_name}
+        query = dict(query=query_string, variables=query_variables)
+
+        result = self._execute_query(query)
+
+        return result
+
+    def itemListUploadSuccess(
+        self, org_id: str, itemsListUploadSuccessInput: Dict,
+    ) -> Dict:
+        """Calls backend to process uploaded item list."""
+        query_string = """
+            mutation($orgId: UUID!, $payload: ItemsListUploadSuccessInput!){
+                itemListUploadSuccess(orgId: $orgId, payload: $payload){
+                    ok
+                    upload{
+                        orgId
+                        importId
+                        datapointCount
+                        dataType
+                        taskType
+                        filePath
+                        createdAt
+                        createdBy
+                        status
+                        statusMsg
+                    }
+                }
+            }
+        """
+
+        query_variables = {"orgId": org_id, "payload": itemsListUploadSuccessInput}
+        query = dict(query=query_string, variables=query_variables)
+
+        result = self._execute_query(query)
+
+        return result
+
+    def createDatapoint(
+        self,
+        org_id: str,
+        items: List[str],
+        name: str,
+        data_set_name: str,
+        storage_id: str,
+        label_set_name: str = None,
+        labels: List[Dict] = None,
+    ) -> Dict:
+        """Calls backend to create a datapoint."""
+        query_string = """
+            mutation(
+                $orgId: UUID!
+                $items: [String!]!
+                $name: String!
+                $dsetName: String!
+                $storageId: UUID!
+                $lsetName: String
+                $labels: [LabelInput!]
+            ) {
+                createDatapoint(
+                    orgId: $orgId
+                    items: $items
+                    name: $name
+                    dsetName: $dsetName
+                    storageId: $storageId
+                    lsetName: $lsetName
+                    labels: $labels
+                ) {
+                    dpId
+                }
+            }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "items": items,
+            "name": name,
+            "dsetName": data_set_name,
+            "storageId": storage_id,
+            "lsetName": label_set_name,
+            "labels": labels,
+        }
+
+        if label_set_name is not None:
+            query_variables["lsetName"] = label_set_name
+            query_variables["labels"] = labels
+
+        query = dict(query=query_string, variables=query_variables)
+
+        result = self._execute_query(query)
+
+        return result
+
     def get_datapoint_ids(
         self, org_id: str, label_set_name: str
     ) -> Tuple[List[str], CustomGroup]:
@@ -192,6 +321,127 @@ class RedBrickApi(RedBrickApiBase):
                 items_list_not_signed=items_not_signed,
             )
             return dpoint_vid
+
+    def get_datapoints_paged(
+        self,
+        org_id: str,
+        label_set_name: str,
+        cursor: Optional[str] = None,
+        first: int = 50,
+    ) -> dict:
+        """Get all relevant information related to a datapoint."""
+        query_string = """
+        query ($orgId: UUID!, $name: String!,$first: Int, $cursor: String){
+        customGroup(orgId: $orgId, name:$name){
+            orgId
+            name
+            dataType
+            taskType
+            taxonomy {
+            categories {
+                name
+                children{
+                name
+                classId
+                children {
+                    name
+                    classId
+                    children {
+                    name
+                    classId
+                    }
+                }
+                }
+
+            }
+            }
+            datapointCount
+            datapointsPaged(first:$first, after:$cursor) {
+            entries {
+                dpId
+                name
+                itemsPresigned:items (presigned:true)
+                items(presigned:false)
+                labelData(customGroupName: $name){
+                createdByEmail
+                labels {
+                    category
+                    attributes {
+                        ... on LabelAttributeInt {
+                        name
+                        valint: value
+                        }
+                        ... on LabelAttributeBool {
+                        name
+                        valbool: value
+                        }
+                        ... on LabelAttributeFloat {
+                        name
+                        valfloat: value
+                        }
+                        ... on LabelAttributeString {
+                        name
+                        valstr: value
+                        }
+                    }
+                    labelid
+                    frameindex
+                    trackid
+                    keyframe
+                    taskclassify
+                    frameclassify
+                    end
+                    bbox2d {
+                        xnorm
+                        ynorm
+                        wnorm
+                        hnorm
+                    }
+                    point {
+                        xnorm
+                        ynorm
+                    }
+                    polyline {
+                        xnorm
+                        ynorm
+                    }
+                    polygon {
+                        xnorm
+                        ynorm
+                    }
+                    pixel {
+                        imagesize
+                        regions
+                        holes
+                    }
+                    ellipse {
+                        xcenternorm
+                        ycenternorm
+                        xnorm
+                        ynorm
+                        rot
+                    }
+                    }
+                }
+
+
+            }
+            cursor
+            }
+        }
+        }
+
+        """
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "name": label_set_name,
+            "cursor": cursor,
+            "first": first,
+        }
+        query = dict(query=query_string, variables=query_variables)
+        result = self._execute_query(query)
+        return result
 
     def tasksToLabelRemote(self, orgId, projectId, stageName, numTasks) -> List[Task]:
         """Get remote labeling tasks."""
