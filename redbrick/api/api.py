@@ -596,6 +596,31 @@ class RedBrickApi(RedBrickApiBase):
         query = dict(query=query_string, variables=query_variables)
         self._execute_query(query)
 
+    def putRemoteLabelingTasksAndLabels(
+        self, org_id, project_id, stage_name, finished_tasks
+    ) -> None:
+        """Put remote labeling tasks and labels to backend."""
+        query_string = """
+            mutation($orgId: UUID!, $projectId: UUID!, $stageName: String!, $finishedTasks: [RemoteLabelingTaskWithLabelsInput!]!) {
+                putRemoteLabelingTasksAndLabels(
+                    orgId: $orgId
+                    projectId: $projectId
+                    stageName: $stageName
+                    finishedTasks: $finishedTasks
+                ){
+                    ok
+                }
+            }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+            "finishedTasks": finished_tasks,
+        }
+        query = dict(query=query_string, variables=query_variables)
+        self._execute_query(query)
+
     def get_stage(self, org_id, project_id, stage_name) -> Dict[Any, Any]:
         """Get stage information."""
         query_string = """

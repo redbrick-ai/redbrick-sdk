@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages  # type: ignore
+import redbrick
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -7,8 +8,8 @@ with open("README.md", "r") as fh:
 setup(
     name="redbrick-sdk",
     url="https://github.com/dereklukacs/redbrick-sdk",
-    version="0.3.5",
-    description="RedBrick platform python SDK!",
+    version=redbrick.__version__,
+    description="RedBrick platform Python SDK!",
     py_modules=["redbrick"],
     packages=find_packages(),
     # package_dir={"": "redbrick"},
@@ -22,6 +23,7 @@ setup(
         "tqdm==4.50.0",
         "scikit-image==0.17.1",
         "termcolor==1.1.0",
+        "dataclasses==0.6",
     ],
     extras_require={
         "dev": [

@@ -23,27 +23,23 @@ class DatapointCreator:
 
     def create_datapoint(
         self, name: str, items: List[str], labels: List[Dict] = None
-    ) -> None:
+    ) -> Dict:
         """Create a datapoint in the backend"""
 
-        try:
-            datapoint_ = self.api_client.createDatapoint(
-                org_id=self.org_id,
-                items=items,
-                name=name,
-                data_set_name=self.data_set_name,
-                storage_id=self.storage_id,
-                label_set_name=self.label_set_name,
-                labels=labels,
-            )
-        except:
-            print_error(
-                "Could not create datapoint. Make sure your datapoint name is not repeated."
-            )
-            return
+        datapoint_ = self.api_client.createDatapoint(
+            org_id=self.org_id,
+            items=items,
+            name=name,
+            data_set_name=self.data_set_name,
+            storage_id=self.storage_id,
+            label_set_name=self.label_set_name,
+            labels=labels,
+        )
 
         print_info(
             "Datapoint successfully created. Datapoint id: {}".format(
                 datapoint_["createDatapoint"]["dpId"]
             )
         )
+
+        return datapoint_["createDatapoint"]

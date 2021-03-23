@@ -14,8 +14,16 @@ import redbrick.client
 import redbrick.labelset
 import redbrick.remote_label
 import redbrick.export
+import redbrick.utils
+import redbrick.dataset
+
+# Current version of package
+__version__ = "0.3.6"
 
 
 def init(api_key: str, url: Optional[str] = None) -> None:
     """Initialize package state."""
     RedBrickClient(api_key, url)
+
+
+redbrick.utils.version_check(__version__)

@@ -8,6 +8,29 @@ import numpy as np  # type: ignore
 import cv2  # type: ignore
 from redbrick.entity.taxonomy2 import Taxonomy2
 import colorsys
+import json
+from distutils.version import StrictVersion
+import subprocess
+from redbrick.logging import print_warning
+import redbrick
+
+
+def version_check(curr_version) -> None:
+    """Checks if current installed version of the SDK is up to date with latest pypi release."""
+    # Getting latest version on pypi
+    url = "https://pypi.org/pypi/{}/json".format("redbrick-sdk")
+    data = requests.get(url).json()
+    versions = list(data["releases"].keys())
+    versions.sort(key=StrictVersion)
+    latest_version = versions[-1]
+    # Comparing with current installed version
+    if curr_version != latest_version:
+        warn = (
+            "You are using version '{}' of the SDK. However, version '{}' is available!\n"
+            + "Please update as soon as possible to get the latest features and bug fixes.\n"
+            + "You can use 'python -m pip install --upgrade redbrick-sdk' to get the latest version."
+        )
+        print_warning(warn.format(curr_version, latest_version))
 
 
 def clear_url(url: str) -> str:

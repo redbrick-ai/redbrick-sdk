@@ -1,6 +1,6 @@
 """Public interface to remote_label."""
 import json
-from typing import List, Union
+from typing import List, Union, Dict
 from termcolor import colored
 from redbrick.api import RedBrickApi
 from redbrick.entity.task import Task
@@ -97,6 +97,22 @@ class RemoteLabel:
         )
         self.__put_remote_labeling_task(submit_task)
 
+        print(colored("Done.", "green"))
+
+    def put_finished_tasks(self, labels_for_tasks: List[Dict]) -> None:
+        """Uploads tasks and labels batches to the backend"""
+        assert len(labels_for_tasks) > 0
+        print(
+            colored("[INFO]:", "blue"),
+            "Submitting batch of tasks to backend...",
+            end=" ",
+        )
+        self.api_client.putRemoteLabelingTasksAndLabels(
+            org_id=self.org_id,
+            project_id=self.project_id,
+            stage_name=self.stage_name,
+            finished_tasks=labels_for_tasks,
+        )
         print(colored("Done.", "green"))
 
     def __put_task_data(

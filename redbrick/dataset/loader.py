@@ -41,7 +41,7 @@ class DatasetLoader(DatasetBase):
         self.createdBy = dataset["createdBy"]
         self.status = dataset["status"]
 
-    def upload_items(self, items: str, storage_id: str) -> None:
+    def upload_items(self, items: str, storage_id: str) -> Union[Dict, None]:
         """Upload a list of items to the backend."""
 
         # Getting item list presign
@@ -80,12 +80,14 @@ class DatasetLoader(DatasetBase):
             print_info(
                 "Upload is processing, this is your importId: {}".format(importId_)
             )
+            return uploadSuccessPayload_
         else:
             print_error("Something went wrong uploading your file {}.".format(items))
+            return None
 
     def upload_items_with_labels(
         self, items: str, storage_id: str, label_set_name: str, task_type: str
-    ) -> None:
+    ) -> Union[Dict, None]:
         """Upload a list of items with labels to the backend."""
 
         # Getting item list presign
@@ -125,5 +127,7 @@ class DatasetLoader(DatasetBase):
             print_info(
                 "Upload is processing, this is your importId: {}".format(importId_)
             )
+            return uploadSuccessPayload_
         else:
             print_error("Something went wrong uploading your file {}.".format(items))
+            return None
