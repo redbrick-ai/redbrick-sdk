@@ -13,9 +13,10 @@ from distutils.version import StrictVersion
 import subprocess
 from redbrick.logging import print_warning
 import redbrick
+import os
 
 
-def version_check(curr_version) -> None:
+def version_check() -> None:
     """Checks if current installed version of the SDK is up to date with latest pypi release."""
     # Getting latest version on pypi
     url = "https://pypi.org/pypi/{}/json".format("redbrick-sdk")
@@ -24,6 +25,12 @@ def version_check(curr_version) -> None:
     versions.sort(key=StrictVersion)
     latest_version = versions[-1]
     # Comparing with current installed version
+    with open(
+        os.path.join(os.path.dirname(redbrick.__file__), "VERSION"),
+        "r",
+        encoding="utf-8",
+    ) as f:
+        curr_version = f.read().strip()
     if curr_version != latest_version:
         warn = (
             "You are using version '{}' of the SDK. However, version '{}' is available!\n"

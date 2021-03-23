@@ -1,14 +1,20 @@
 from setuptools import setup, find_packages  # type: ignore
-import redbrick
+import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), "redbrick", "VERSION"),
+    "r",
+    encoding="utf-8",
+) as f:
+    version = f.read().strip()
 
 setup(
     name="redbrick-sdk",
     url="https://github.com/dereklukacs/redbrick-sdk",
-    version=redbrick.__version__,
+    version=version,
     description="RedBrick platform Python SDK!",
     py_modules=["redbrick"],
     packages=find_packages(),
