@@ -24,6 +24,7 @@ setup(
         "scikit-image==0.17.1",
         "termcolor==1.1.0",
         "dataclasses==0.6",
+        "requests==2.23.0",
     ],
     extras_require={
         "dev": [
