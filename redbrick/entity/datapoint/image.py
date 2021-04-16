@@ -103,7 +103,7 @@ class Image(BaseDatapoint):
 
     def __get_image_size(self) -> Tuple[int, int]:
         """Return the size of the image from url"""
-        img_data = requests.get(self.image_url).content
+        img_data = requests.get(self.image_url_not_signed).content
         im = PILimage.open(BytesIO(img_data))
         return im.size
 
