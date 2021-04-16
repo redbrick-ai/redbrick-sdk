@@ -381,7 +381,7 @@ class Export:
                     dpoint_name = dpoint["dpId"]
                 last_slash = dpoint_name.rfind("/")
                 # Replacing special characters on file path
-                mask_name = clear_url(dpoint_name[last_slash + 1:])
+                mask_name = clear_url(dpoint_name[last_slash + 1 :])
                 file_ext = mask_name[-4:]
                 if file_ext.lower() in [".jpg", ".png", ".bmp"]:
                     # If image name already has an image extension
@@ -485,7 +485,7 @@ class Export:
                 color_map_ = list(
                     color_map(
                         labelsetIter.taxonomy_segm[key] - 1,
-                        max(labelsetIter.taxonomy_segm.values())
+                        max(labelsetIter.taxonomy_segm.values()),
                     )
                 )
                 color_map_ = [int(c) for c in color_map_]

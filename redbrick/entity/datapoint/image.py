@@ -11,8 +11,7 @@ import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 from PIL import Image as PILimage
 
-from redbrick.entity.label import ImageBoundingBox, ImageClassify, \
-    ImageSegmentation
+from redbrick.entity.label import ImageBoundingBox, ImageClassify, ImageSegmentation
 from redbrick.entity.label.segmentation import ImageSegmentationRemoteLabel
 from redbrick.entity.label.bbox import ImageBoundingBoxRemoteLabel
 from redbrick.logging import print_error
@@ -42,8 +41,7 @@ class Image(BaseDatapoint):
                     for label in self.remote_labels
                 ]
             except Exception as error:
-                print_error(
-                    "Parsing error. Please reach out to contact@redbrickai.com")
+                print_error("Parsing error. Please reach out to contact@redbrickai.com")
                 print(error)
 
             # Create label object
@@ -69,12 +67,14 @@ class Image(BaseDatapoint):
         elif self.task_type == "POLYGON":
             for label in self.remote_labels:
                 width, height = self.__get_image_size()
-                regions = [(floor((i["ynorm"] * height)), floor(i["xnorm"] * width))
-                           for i in label["polygon"]]
+                regions = [
+                    (floor((i["ynorm"] * height)), floor(i["xnorm"] * width))
+                    for i in label["polygon"]
+                ]
                 pixel = {
                     "regions": [[regions]],
                     "holes": None,
-                    "imagesize": [width, height]
+                    "imagesize": [width, height],
                 }
                 label["pixel"] = pixel
             try:
