@@ -1,10 +1,15 @@
 """
 Representation for the image datapoint type.
 """
-from typing import Union, Any, List
+from io import BytesIO
+from math import floor
+from typing import Union, Any, List, Tuple
+
+import requests
 from dataclasses import dataclass, field
 import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
+from PIL import Image as PILimage
 
 from redbrick.entity.label import ImageBoundingBox, ImageClassify, ImageSegmentation
 from redbrick.entity.label.segmentation import ImageSegmentationRemoteLabel
@@ -59,6 +64,33 @@ class Image(BaseDatapoint):
                 remote_labels=segment_remote_labels, classes=self.taxonomy
             )
 
+        elif self.task_type == "POLYGON":
+            for label in self.remote_labels:
+                width, height = self.__get_image_size()
+                regions = [
+                    (floor((i["ynorm"] * height)), floor(i["xnorm"] * width))
+                    for i in label["polygon"]
+                ]
+                pixel = {
+                    "regions": [[regions]],
+                    "holes": None,
+                    "imagesize": [width, height],
+                }
+                label["pixel"] = pixel
+            try:
+                segment_remote_labels = [
+                    ImageSegmentationRemoteLabel.from_dict(label)
+                    for label in self.remote_labels
+                ]
+            except Exception as err:
+                print_error(err)
+                return
+
+            # Create label object
+            self.labels = ImageSegmentation(
+                remote_labels=segment_remote_labels, classes=self.taxonomy
+            )
+
         elif self.task_type == "CLASSIFY":
             # Read in remote labels
             self.labels = ImageClassify(self.remote_labels)
@@ -68,6 +100,12 @@ class Image(BaseDatapoint):
                 "%s task type is not supported. Please reach out to contact@redbrickai.com."
                 % self.task_type
             )
+
+    def __get_image_size(self) -> Tuple[int, int]:
+        """Return the size of the image from url"""
+        img_data = requests.get(self.image_url_not_signed).content
+        im = PILimage.open(BytesIO(img_data))
+        return im.size
 
     def show_data(self, ax: Any = None) -> None:
         """Show the data with the ground truth."""

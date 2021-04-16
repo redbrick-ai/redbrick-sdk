@@ -33,7 +33,7 @@ class LabelsetIterator:
         )["customGroup"]
 
     def _get_taxonomy_segmentation(self) -> Dict[Any, Any]:
-        if self.customGroup["taskType"] != "SEGMENTATION":
+        if self.customGroup["taskType"] not in ["SEGMENTATION", "POLYGON"]:
             return None
         else:
             return self._create_taxonomy_segmentation()
@@ -335,11 +335,11 @@ class Export:
         use_name: bool,
         export_format: str,
     ):
-        label_info_segm: Dict[Any, Any] = {}
-        label_info_segm["labels"] = []
+        label_info_segm: Dict[Any, Any] = {"labels": []}
         color_map: Any = None
         target_data_dir = os.path.join(self.target_dir, "data")
         target_masks_dir = os.path.join(self.target_dir, "masks")
+
         # If single json file
         if single_json:
             dpoints_flat = []
@@ -540,9 +540,10 @@ class Export:
                 )
             )
             return
-        if export_format == "png" and task_type != "SEGMENTATION":
+        print(task_type)
+        if export_format == "png" and task_type not in ["SEGMENTATION", "POLYGON"]:
             print_error(
-                'Export format "png" is only valid for segmentation tasks. Please use "redbrick"'
+                'Export format "png" is only valid for segmentation and polygon tasks. Please use "redbrick"'
             )
             return
 
@@ -557,7 +558,7 @@ class Export:
                 os.makedirs(target_data_dir)
 
         # Create masks folder
-        if export_format == "png" and task_type == "SEGMENTATION":
+        if export_format == "png" and task_type in ["SEGMENTATION", "POLYGON"]:
             target_masks_dir = os.path.join(self.target_dir, "masks")
             if not os.path.exists(target_masks_dir):
                 os.makedirs(target_masks_dir)
@@ -573,7 +574,7 @@ class Export:
             print_info("Exporting datapoints to dir: {}".format(self.target_dir))
 
         # If we are exporting image segmentation
-        if export_format == "png" and task_type == "SEGMENTATION":
+        if export_format == "png" and task_type in ["SEGMENTATION", "POLYGON"]:
             self._export_image_segmentation(
                 labelsetIter, download_data, single_json, use_name, export_format
             )

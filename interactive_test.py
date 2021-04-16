@@ -11,11 +11,11 @@ org_id = "1e734f01-7c7c-44f6-a7ca-c1e1ac564466"
 label_set_name = "Labelset Demo"
 
 label_set = redbrick.labelset.LabelsetLoader(
-    org_id = org_id, label_set_name = label_set_name
+    org_id=org_id, label_set_name=label_set_name
 )
 
 # %%
-#label_set.show_data()
+# label_set.show_data()
 
 # %%
 label_set.export(format="redbrick")
