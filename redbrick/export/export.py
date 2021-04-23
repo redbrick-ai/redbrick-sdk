@@ -1,5 +1,7 @@
 """Export to standard RedBrick format."""
-from typing import Iterable, Dict, Any
+from typing import Iterable, Dict, Any, List
+
+from .coco_utils import coco_categories_format, coco_image_format, coco_labels_format
 from redbrick.api import RedBrickApi
 from redbrick.logging import print_info, print_error
 from redbrick.utils import url_to_image, clear_url
@@ -340,9 +342,7 @@ class Export:
         target_data_dir = os.path.join(self.target_dir, "data")
         target_masks_dir = os.path.join(self.target_dir, "masks")
 
-        # If single json file
-        if single_json:
-            dpoints_flat = []
+        dpoints_flat = []
         for dpoint in tqdm(labelsetIter, total=labelsetIter.datapointCount):
             # saving datapoint to json
             dpoint_flat = {
@@ -399,8 +399,6 @@ class Export:
                 label_info_entry["exportUrl"] = mask_filepath
                 label_info_segm["labels"] += [label_info_entry]
 
-            # If single json is required, append current datapoint to list
-            if single_json:
                 dpoints_flat.append(dpoint_flat)
             else:
                 # Check if use_name is needed
@@ -473,6 +471,8 @@ class Export:
                     cv2.imwrite(  # pylint: disable=no-member
                         image_filepath, np.flip(image_np, axis=2)
                     )
+        if export_format == "coco":
+            self._export_to_coco_format(dpoints_flat, labelsetIter)
 
         # Finishing png masks export
         # Meta-data
@@ -505,6 +505,37 @@ class Export:
             with open(jsonPath, mode="w", encoding="utf-8") as f:
                 json.dump(dpoints_flat, f, indent=2)
 
+    def _export_to_coco_format(self, dpoints: List, labelsetIter: LabelsetIterator):
+        """Export the Polygon/Segmentation labels to COCO format."""
+        taxonomy: dict = labelsetIter.customGroup["taxonomy"]
+        coco_format = {
+            "categories": coco_categories_format(taxonomy),
+        }
+        images: List = []
+        annotations: List = []
+        for dp in dpoints:
+            # Continue when the datapoint has no labels
+            if not dp.get("labels"):
+                continue
+            img_width = dp.get("labels")[0]["pixel"]["imagesize"][0]
+            img_height = dp.get("labels")[0]["pixel"]["imagesize"][1]
+            file_name = dp.get("items")[0]
+            image = coco_image_format(img_width, img_height, file_name, dp.get("dpId"))
+
+            # Generate annotation for each label
+            for label in dp.get("labels"):
+                annotation = coco_labels_format(label, taxonomy, dp.get("dpId"))
+                annotations.append(annotation)
+
+            images.append(image)
+
+        coco_format["images"] = images
+        coco_format["annotations"] = annotations
+
+        # Write the COCO Label format to file
+        with open(f"{self.target_dir}/coco.json", "w") as f:
+            f.write(json.dumps(coco_format))
+
     def _save_summary_json(self, labelsetIter: LabelsetIterator) -> None:
         """Saves summary json file of current labelset export"""
         org_id_summary = labelsetIter.customGroup["orgId"]
@@ -533,17 +564,20 @@ class Export:
 
         # Validation of optional parameters
         task_type = labelsetIter.customGroup["taskType"]
-        if export_format not in ["redbrick", "png"]:
+        if export_format not in ["redbrick", "png", "coco"]:
             print_error(
-                'Export format "{}" not valid, please use "redbrick" or "png"'.format(
+                'Export format "{}" not valid, please use "redbrick", "coco" or "png"'.format(
                     export_format
                 )
             )
             return
         print(task_type)
-        if export_format == "png" and task_type not in ["SEGMENTATION", "POLYGON"]:
+        if export_format in ["png", "coco"] and task_type not in [
+            "SEGMENTATION",
+            "POLYGON",
+        ]:
             print_error(
-                'Export format "png" is only valid for segmentation and polygon tasks. Please use "redbrick"'
+                'Export format "png" and "coco" is only valid for segmentation and polygon tasks. Please use "redbrick"'
             )
             return
 
@@ -558,7 +592,10 @@ class Export:
                 os.makedirs(target_data_dir)
 
         # Create masks folder
-        if export_format == "png" and task_type in ["SEGMENTATION", "POLYGON"]:
+        if export_format in ["png", "coco"] and task_type in [
+            "SEGMENTATION",
+            "POLYGON",
+        ]:
             target_masks_dir = os.path.join(self.target_dir, "masks")
             if not os.path.exists(target_masks_dir):
                 os.makedirs(target_masks_dir)
@@ -574,7 +611,10 @@ class Export:
             print_info("Exporting datapoints to dir: {}".format(self.target_dir))
 
         # If we are exporting image segmentation
-        if export_format == "png" and task_type in ["SEGMENTATION", "POLYGON"]:
+        if export_format in ["png", "coco"] and task_type in [
+            "SEGMENTATION",
+            "POLYGON",
+        ]:
             self._export_image_segmentation(
                 labelsetIter, download_data, single_json, use_name, export_format
             )
