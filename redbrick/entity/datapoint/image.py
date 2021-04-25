@@ -30,78 +30,85 @@ class Image(BaseDatapoint):
         init=False
     )
 
+    def _create_bbox_labels(self, labels: List) -> ImageBoundingBox:
+        """Create Bbox type labels."""
+        bbox_remote_labels: List[ImageBoundingBoxRemoteLabel] = []
+        try:
+            bbox_remote_labels = [
+                ImageBoundingBoxRemoteLabel.from_dict(label)
+                for label in labels
+            ]
+        except Exception as err:
+            print(err)
+            print_error("Parsing error. Please reach out to contact@redbrickai.com")
+
+        # Create label object
+        return ImageBoundingBox(labels=bbox_remote_labels)
+
+    def _create_segmentation_labels(self, labels: List) -> ImageSegmentation:
+        """Create Segmentations labels."""
+        segment_remote_labels: List[ImageSegmentationRemoteLabel] = []
+        try:
+            segment_remote_labels = [
+                ImageSegmentationRemoteLabel.from_dict(label)
+                for label in labels
+            ]
+        except Exception as err:
+            print_error(err)
+
+        # Create label object
+        return ImageSegmentation(
+            remote_labels=segment_remote_labels, classes=self.taxonomy
+        )
+
+    def _create_polygon_labels(self, labels: List) -> ImageSegmentation:
+        """Create Polygon type labels."""
+        for label in labels:
+            width, height = self._get_image_size()
+            regions = [
+                (floor((i["ynorm"] * height)), floor(i["xnorm"] * width))
+                for i in label["polygon"]
+            ]
+            pixel = {
+                "regions": [[regions]],
+                "holes": None,
+                "imagesize": [width, height],
+            }
+            label["pixel"] = pixel
+
+        # Using segmentation label type for polygon labels.
+        return self._create_segmentation_labels(labels)
+
+    def _create_classify_labels(self, labels: List) -> ImageClassify:
+        """Create Classify type labels."""
+        return ImageClassify(self.remote_labels)
+
     def __post_init__(self) -> None:
         """Run after init."""
         if self.task_type == "BBOX":
-            # Read in remote labels
-            bbox_remote_labels: List[ImageBoundingBoxRemoteLabel] = []
-            try:
-                bbox_remote_labels = [
-                    ImageBoundingBoxRemoteLabel.from_dict(label)
-                    for label in self.remote_labels
-                ]
-            except Exception as error:
-                print_error("Parsing error. Please reach out to contact@redbrickai.com")
-                print(error)
-
-            # Create label object
-            self.labels = ImageBoundingBox(labels=bbox_remote_labels)
+            self.labels = self._create_bbox_labels(self.remote_labels)
 
         elif self.task_type == "SEGMENTATION":
-            # Read in remote labels
-            segment_remote_labels: List[ImageSegmentationRemoteLabel] = []
-            try:
-                segment_remote_labels = [
-                    ImageSegmentationRemoteLabel.from_dict(label)
-                    for label in self.remote_labels
-                ]
-            except Exception as err:
-                print_error(err)
-                return
-
-            # Create label object
-            self.labels = ImageSegmentation(
-                remote_labels=segment_remote_labels, classes=self.taxonomy
-            )
+            self.labels = self._create_segmentation_labels(self.remote_labels)
 
         elif self.task_type == "POLYGON":
-            for label in self.remote_labels:
-                width, height = self.__get_image_size()
-                regions = [
-                    (floor((i["ynorm"] * height)), floor(i["xnorm"] * width))
-                    for i in label["polygon"]
-                ]
-                pixel = {
-                    "regions": [[regions]],
-                    "holes": None,
-                    "imagesize": [width, height],
-                }
-                label["pixel"] = pixel
-            try:
-                segment_remote_labels = [
-                    ImageSegmentationRemoteLabel.from_dict(label)
-                    for label in self.remote_labels
-                ]
-            except Exception as err:
-                print_error(err)
-                return
-
-            # Create label object
-            self.labels = ImageSegmentation(
-                remote_labels=segment_remote_labels, classes=self.taxonomy
-            )
+            self.labels = self._create_polygon_labels(self.remote_labels)
 
         elif self.task_type == "CLASSIFY":
-            # Read in remote labels
-            self.labels = ImageClassify(self.remote_labels)
+            self.labels = self._create_classify_labels(self.remote_labels)
+
+        elif self.task_type == "MULTI":
+            for labels in self.remote_labels:
+                if labels.get("bbox"):
+                    self.labels = self._create_bbox_labels([labels])
+                elif labels.get("polygon"):
+                    self.labels = self._create_polygon_labels([labels])
 
         else:
-            raise ValueError(
-                "%s task type is not supported. Please reach out to contact@redbrickai.com."
-                % self.task_type
-            )
+            raise ValueError(f"{self.task_type} task type is not supported. "
+                             f"Please reach out to contact@redbrickai.com.")
 
-    def __get_image_size(self) -> Tuple[int, int]:
+    def _get_image_size(self) -> Tuple[int, int]:
         """Return the size of the image from url"""
         img_data = requests.get(self.image_url_not_signed).content
         im = PILimage.open(BytesIO(img_data))

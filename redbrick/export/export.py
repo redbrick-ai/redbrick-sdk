@@ -1,13 +1,13 @@
 """Export to standard RedBrick format."""
+
 from typing import Iterable, Dict, Any, List
 
-from .coco_utils import coco_categories_format, coco_image_format, coco_labels_format
+from .coco_utils import coco_categories_format, coco_image_format, \
+    coco_labels_format
 from redbrick.api import RedBrickApi
 from redbrick.logging import print_info, print_error
 from redbrick.utils import url_to_image, clear_url
 from redbrick.entity.datapoint import Image
-from redbrick.entity.custom_group import CustomGroup
-import redbrick
 from tqdm import tqdm
 import os
 import json
@@ -35,7 +35,8 @@ class LabelsetIterator:
         )["customGroup"]
 
     def _get_taxonomy_segmentation(self) -> Dict[Any, Any]:
-        if self.customGroup["taskType"] not in ["SEGMENTATION", "POLYGON"]:
+        if self.customGroup["taskType"] not in ["SEGMENTATION", "POLYGON",
+                                                "MULTI"]:
             return None
         else:
             return self._create_taxonomy_segmentation()
@@ -45,7 +46,8 @@ class LabelsetIterator:
         self._trav_tax(self.taxonomy["categories"][0], tax_map)
         return self._taxonomy_update_segmentation(tax_map)
 
-    def _trav_tax(self, taxonomy: Dict[Any, Any], tax_map: Dict[str, int]) -> None:
+    def _trav_tax(self, taxonomy: Dict[Any, Any],
+                  tax_map: Dict[str, int]) -> None:
         """Traverse the taxonomy tree structure, and fill the taxonomy mapper object."""
         children = taxonomy["children"]
         if len(children) == 0:
@@ -55,7 +57,8 @@ class LabelsetIterator:
             tax_map[child["name"]] = child["classId"]
             self._trav_tax(child, tax_map)
 
-    def _taxonomy_update_segmentation(self, tax_map: Dict[str, int]) -> Dict[str, int]:
+    def _taxonomy_update_segmentation(self, tax_map: Dict[str, int]) -> Dict[
+        str, int]:
         """
         Fix the taxonomy mapper object to be 1-indexed for
         segmentation projects.
@@ -89,16 +92,16 @@ class LabelsetIterator:
 
         # If cursor is None and current datapointsBatch has been processed
         if (
-            self.datapointsBatchIndex is not None
-            and self.cursor is None
-            and len(self.datapointsBatch) == self.datapointsBatchIndex
+                self.datapointsBatchIndex is not None
+                and self.cursor is None
+                and len(self.datapointsBatch) == self.datapointsBatchIndex
         ):
             raise StopIteration
 
         # If current datapointsBatch is None or we have finished processing current datapointsBatch
         if (
-            self.datapointsBatch is None
-            or len(self.datapointsBatch) == self.datapointsBatchIndex
+                self.datapointsBatch is None
+                or len(self.datapointsBatch) == self.datapointsBatchIndex
         ):
             if self.cursor is None:
                 customGroup = self.api.get_datapoints_paged(
@@ -110,8 +113,10 @@ class LabelsetIterator:
                     label_set_name=self.label_set_name,
                     cursor=self.cursor,
                 )
-            self.cursor = customGroup["customGroup"]["datapointsPaged"]["cursor"]
-            self.datapointsBatch = customGroup["customGroup"]["datapointsPaged"][
+            self.cursor = customGroup["customGroup"]["datapointsPaged"][
+                "cursor"]
+            self.datapointsBatch = \
+            customGroup["customGroup"]["datapointsPaged"][
                 "entries"
             ]
             self.datapointsBatchIndex = 0
@@ -125,19 +130,20 @@ class LabelsetIterator:
 
 
 class Export:
-    def __init__(self, org_id: str, label_set_name: str, target_dir: str) -> None:
+    def __init__(self, org_id: str, label_set_name: str,
+                 target_dir: str) -> None:
         """Construct Export."""
         self.org_id = org_id
         self.label_set_name = label_set_name
         self.target_dir = target_dir
 
     def _export_video(
-        self,
-        labelsetIter: LabelsetIterator,
-        download_data: bool,
-        single_json: bool,
-        use_name: bool,
-        export_format: str,
+            self,
+            labelsetIter: LabelsetIterator,
+            download_data: bool,
+            single_json: bool,
+            use_name: bool,
+            export_format: str,
     ):
         # If single json file
         if single_json:
@@ -158,10 +164,11 @@ class Export:
                 dpoints_flat.append(dpoint_flat)
             else:
                 # Check if use_name is needed
-                if use_name and dpoint["name"] is not None and dpoint["name"] != "":
+                if use_name and dpoint["name"] is not None and dpoint[
+                    "name"] != "":
                     fname = dpoint["name"]
                     last_slash = fname.rfind("/")
-                    fname = clear_url(fname[last_slash + 1 :])
+                    fname = clear_url(fname[last_slash + 1:])
                     file_ext = fname[-4:]
                     if file_ext.lower() in [".jpg", ".png", ".bmp"]:
                         # If image name already has an image extension
@@ -191,7 +198,8 @@ class Export:
                 # Video name
                 video_name = dpoint["name"]
                 # Create folder to store frames
-                target_data_video_dir = os.path.join(target_data_dir, video_name)
+                target_data_video_dir = os.path.join(target_data_dir,
+                                                     video_name)
                 if not os.path.exists(target_data_video_dir):
                     os.makedirs(target_data_video_dir)
                 # Store frames
@@ -205,7 +213,8 @@ class Export:
                     else:
                         image_name = str(idx).zfill(6) + ".jpg"
                     idx += 1
-                    image_filepath = os.path.join(target_data_video_dir, image_name)
+                    image_filepath = os.path.join(target_data_video_dir,
+                                                  image_name)
                     # Saving image to specified path if it doesn't exists
                     if not os.path.exists(image_filepath):
                         # Downloading image from url as numpy array
@@ -218,18 +227,19 @@ class Export:
         if single_json:
             jsonPath = os.path.join(
                 self.target_dir,
-                "{}_{}.json".format(self.org_id, self.label_set_name.replace(" ", "-")),
+                "{}_{}.json".format(self.org_id,
+                                    self.label_set_name.replace(" ", "-")),
             )
             with open(jsonPath, mode="w", encoding="utf-8") as f:
                 json.dump(dpoints_flat, f, indent=2)
 
     def _export_image(
-        self,
-        labelsetIter: LabelsetIterator,
-        download_data: bool,
-        single_json: bool,
-        use_name: bool,
-        export_format: str,
+            self,
+            labelsetIter: LabelsetIterator,
+            download_data: bool,
+            single_json: bool,
+            use_name: bool,
+            export_format: str,
     ):
         # If single json file
         if single_json:
@@ -250,10 +260,11 @@ class Export:
                 dpoints_flat.append(dpoint_flat)
             else:
                 # Check if use_name is needed
-                if use_name and dpoint["name"] is not None and dpoint["name"] != "":
+                if use_name and dpoint["name"] is not None and dpoint[
+                    "name"] != "":
                     fname = dpoint["name"]
                     last_slash = fname.rfind("/")
-                    fname = clear_url(fname[last_slash + 1 :])
+                    fname = clear_url(fname[last_slash + 1:])
                     file_ext = fname[-4:]
                     if file_ext.lower() in [".jpg", ".png", ".bmp"]:
                         # If image name already has an image extension
@@ -261,7 +272,8 @@ class Export:
                 else:
                     fname = dpoint["dpId"]
                 # Json path to store current datapoint
-                jsonPath = os.path.join(self.target_dir, "{}.json".format(fname))
+                jsonPath = os.path.join(self.target_dir,
+                                        "{}.json".format(fname))
 
                 if use_name:
                     # Check for collisions
@@ -288,13 +300,14 @@ class Export:
                     dpoint_name = dpoint["dpId"]
                 last_slash = dpoint_name.rfind("/")
                 # Replacing special characters on file path
-                image_name = clear_url(dpoint_name[last_slash + 1 :])
+                image_name = clear_url(dpoint_name[last_slash + 1:])
                 file_ext = image_name[-4:]
                 if file_ext.lower() in [".jpg", ".png", ".bmp"]:
                     # If image name already has an image extension
                     image_filepath = os.path.join(target_data_dir, image_name)
                 else:
-                    image_filepath = os.path.join(target_data_dir, image_name + ".jpg")
+                    image_filepath = os.path.join(target_data_dir,
+                                                  image_name + ".jpg")
                 # Check for collisions
                 if use_name:
                     idx = 1
@@ -305,11 +318,13 @@ class Export:
                             # If image name already has an image extension
                             image_filepath = os.path.join(
                                 target_data_dir,
-                                image_name[:-4] + "({})".format(idx) + image_name[-4:],
+                                image_name[:-4] + "({})".format(
+                                    idx) + image_name[-4:],
                             )
                         else:
                             image_filepath = os.path.join(
-                                target_data_dir, image_name + "({}).jpg".format(idx)
+                                target_data_dir,
+                                image_name + "({}).jpg".format(idx)
                             )
                         idx += 1
                 # Saving image to specified path if it doesn't exists
@@ -324,18 +339,19 @@ class Export:
         if single_json:
             jsonPath = os.path.join(
                 self.target_dir,
-                "{}_{}.json".format(self.org_id, self.label_set_name.replace(" ", "-")),
+                "{}_{}.json".format(self.org_id,
+                                    self.label_set_name.replace(" ", "-")),
             )
             with open(jsonPath, mode="w", encoding="utf-8") as f:
                 json.dump(dpoints_flat, f, indent=2)
 
     def _export_image_segmentation(
-        self,
-        labelsetIter: LabelsetIterator,
-        download_data: bool,
-        single_json: bool,
-        use_name: bool,
-        export_format: str,
+            self,
+            labelsetIter: LabelsetIterator,
+            download_data: bool,
+            single_json: bool,
+            use_name: bool,
+            export_format: str,
     ):
         label_info_segm: Dict[Any, Any] = {"labels": []}
         color_map: Any = None
@@ -381,15 +397,17 @@ class Export:
                     dpoint_name = dpoint["dpId"]
                 last_slash = dpoint_name.rfind("/")
                 # Replacing special characters on file path
-                mask_name = clear_url(dpoint_name[last_slash + 1 :])
+                mask_name = clear_url(dpoint_name[last_slash + 1:])
                 file_ext = mask_name[-4:]
                 if file_ext.lower() in [".jpg", ".png", ".bmp"]:
                     # If image name already has an image extension
                     mask_filepath = os.path.join(
-                        target_masks_dir, mask_name.replace(file_ext.lower() + ".png")
+                        target_masks_dir,
+                        mask_name.replace(file_ext.lower() + ".png")
                     )
                 else:
-                    mask_filepath = os.path.join(target_masks_dir, mask_name + ".png")
+                    mask_filepath = os.path.join(target_masks_dir,
+                                                 mask_name + ".png")
                 cv2.imwrite(
                     mask_filepath, np.flip(colored_mask, axis=2) * 255,
                 )
@@ -402,10 +420,11 @@ class Export:
                 dpoints_flat.append(dpoint_flat)
             else:
                 # Check if use_name is needed
-                if use_name and dpoint["name"] is not None and dpoint["name"] != "":
+                if use_name and dpoint["name"] is not None and dpoint[
+                    "name"] != "":
                     fname = dpoint["name"]
                     last_slash = fname.rfind("/")
-                    fname = clear_url(fname[last_slash + 1 :])
+                    fname = clear_url(fname[last_slash + 1:])
                     file_ext = fname[-4:]
                     if file_ext.lower() in [".jpg", ".png", ".bmp"]:
                         # If image name already has an image extension
@@ -413,7 +432,8 @@ class Export:
                 else:
                     fname = dpoint["dpId"]
                 # Json path to store current datapoint
-                jsonPath = os.path.join(self.target_dir, "{}.json".format(fname))
+                jsonPath = os.path.join(self.target_dir,
+                                        "{}.json".format(fname))
 
                 if use_name:
                     # Check for collisions
@@ -440,13 +460,14 @@ class Export:
                     dpoint_name = dpoint["dpId"]
                 last_slash = dpoint_name.rfind("/")
                 # Replacing special characters on file path
-                image_name = clear_url(dpoint_name[last_slash + 1 :])
+                image_name = clear_url(dpoint_name[last_slash + 1:])
                 file_ext = image_name[-4:]
                 if file_ext.lower() in [".jpg", ".png", ".bmp"]:
                     # If image name already has an image extension
                     image_filepath = os.path.join(target_data_dir, image_name)
                 else:
-                    image_filepath = os.path.join(target_data_dir, image_name + ".jpg")
+                    image_filepath = os.path.join(target_data_dir,
+                                                  image_name + ".jpg")
                 # Check for collisions
                 if use_name:
                     idx = 1
@@ -457,11 +478,13 @@ class Export:
                             # If image name already has an image extension
                             image_filepath = os.path.join(
                                 target_data_dir,
-                                image_name[:-4] + "({})".format(idx) + image_name[-4:],
+                                image_name[:-4] + "({})".format(
+                                    idx) + image_name[-4:],
                             )
                         else:
                             image_filepath = os.path.join(
-                                target_data_dir, image_name + "({}).jpg".format(idx)
+                                target_data_dir,
+                                image_name + "({}).jpg".format(idx)
                             )
                         idx += 1
                 # Saving image to specified path if it doesn't exists
@@ -489,10 +512,11 @@ class Export:
                     )
                 )
                 color_map_ = [int(c) for c in color_map_]
-            label_info_segm["color_map"][labelsetIter.taxonomy_segm[key]] = color_map_
+            label_info_segm["color_map"][
+                labelsetIter.taxonomy_segm[key]] = color_map_
 
         # Save the class-mapping (taxonomy) in json format in the folder
-        segm_json = os.path.join(target_masks_dir, "class-mapping.json",)
+        segm_json = os.path.join(target_masks_dir, "class-mapping.json", )
         with open(segm_json, "w+") as file:
             json.dump(label_info_segm, file, indent=2)
 
@@ -500,12 +524,14 @@ class Export:
         if single_json:
             jsonPath = os.path.join(
                 self.target_dir,
-                "{}_{}.json".format(self.org_id, self.label_set_name.replace(" ", "-")),
+                "{}_{}.json".format(self.org_id,
+                                    self.label_set_name.replace(" ", "-")),
             )
             with open(jsonPath, mode="w", encoding="utf-8") as f:
                 json.dump(dpoints_flat, f, indent=2)
 
-    def _export_to_coco_format(self, dpoints: List, labelsetIter: LabelsetIterator):
+    def _export_to_coco_format(self, dpoints: List,
+                               labelsetIter: LabelsetIterator):
         """Export the Polygon/Segmentation labels to COCO format."""
         taxonomy: dict = labelsetIter.customGroup["taxonomy"]
         coco_format = {
@@ -520,7 +546,8 @@ class Export:
             img_width = dp.get("labels")[0]["pixel"]["imagesize"][0]
             img_height = dp.get("labels")[0]["pixel"]["imagesize"][1]
             file_name = dp.get("items")[0]
-            image = coco_image_format(img_width, img_height, file_name, dp.get("dpId"))
+            image = coco_image_format(img_width, img_height, file_name,
+                                      dp.get("dpId"))
 
             # Generate annotation for each label
             for label in dp.get("labels"):
@@ -551,11 +578,11 @@ class Export:
             json.dump(summary_json, f, indent=2)
 
     def export(
-        self,
-        download_data: bool = False,
-        single_json: bool = False,
-        use_name: bool = False,
-        export_format: str = "redbrick",
+            self,
+            download_data: bool = False,
+            single_json: bool = False,
+            use_name: bool = False,
+            export_format: str = "redbrick",
     ) -> None:
         # Create LabelsetIterator
         labelsetIter = LabelsetIterator(
@@ -571,10 +598,9 @@ class Export:
                 )
             )
             return
-        print(task_type)
+
         if export_format in ["png", "coco"] and task_type not in [
-            "SEGMENTATION",
-            "POLYGON",
+            "SEGMENTATION", "MULTI", "POLYGON",
         ]:
             print_error(
                 'Export format "png" and "coco" is only valid for segmentation and polygon tasks. Please use "redbrick"'
@@ -593,9 +619,7 @@ class Export:
 
         # Create masks folder
         if export_format in ["png", "coco"] and task_type in [
-            "SEGMENTATION",
-            "POLYGON",
-        ]:
+            "SEGMENTATION", "MULTI", "POLYGON"]:
             target_masks_dir = os.path.join(self.target_dir, "masks")
             if not os.path.exists(target_masks_dir):
                 os.makedirs(target_masks_dir)
@@ -605,24 +629,26 @@ class Export:
 
         if download_data:
             print_info(
-                "Exporting datapoints and data to dir: {}".format(self.target_dir)
+                "Exporting datapoints and data to dir: {}".format(
+                    self.target_dir)
             )
         else:
             print_info("Exporting datapoints to dir: {}".format(self.target_dir))
 
         # If we are exporting image segmentation
         if export_format in ["png", "coco"] and task_type in [
-            "SEGMENTATION",
-            "POLYGON",
-        ]:
+            "SEGMENTATION", "MULTI", "POLYGON"]:
             self._export_image_segmentation(
-                labelsetIter, download_data, single_json, use_name, export_format
+                labelsetIter, download_data, single_json, use_name,
+                export_format
             )
         elif labelsetIter.customGroup["dataType"] == "VIDEO":
             self._export_video(
-                labelsetIter, download_data, single_json, use_name, export_format
+                labelsetIter, download_data, single_json, use_name,
+                export_format
             )
         else:
             self._export_image(
-                labelsetIter, download_data, single_json, use_name, export_format
+                labelsetIter, download_data, single_json, use_name,
+                export_format
             )
