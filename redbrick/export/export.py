@@ -320,7 +320,8 @@ class Export:
         images: List = []
         annotations: List = []
 
-        for idx, dp in enumerate(dpoints):
+        labels = [dp for dp in dpoints if dp.get("labels")]
+        for idx, dp in enumerate(labels):
             # Continue when the datapoints has no labels
             if not dp.get("labels"):
                 continue
@@ -378,6 +379,7 @@ class Export:
             dpoint_flat = self._flatten_datapoint(dpoint)
             dpoints_flat.append(dpoint_flat)
 
+
             # Save segmentation PNG masks if required
             if dpoint["labelData"]["labels"]:
                 dpoint_segm = self._get_image(dpoint, labelsetIter)
@@ -402,6 +404,7 @@ class Export:
                 }
 
                 label_info_segm["labels"] += [label_info_entry]
+
 
             jsonPath = self._get_datapoint_filepath(dpoint, use_name)
 
