@@ -35,8 +35,7 @@ class Image(BaseDatapoint):
         bbox_remote_labels: List[ImageBoundingBoxRemoteLabel] = []
         try:
             bbox_remote_labels = [
-                ImageBoundingBoxRemoteLabel.from_dict(label)
-                for label in labels
+                ImageBoundingBoxRemoteLabel.from_dict(label) for label in labels
             ]
         except Exception as err:
             print(err)
@@ -50,8 +49,7 @@ class Image(BaseDatapoint):
         segment_remote_labels: List[ImageSegmentationRemoteLabel] = []
         try:
             segment_remote_labels = [
-                ImageSegmentationRemoteLabel.from_dict(label)
-                for label in labels
+                ImageSegmentationRemoteLabel.from_dict(label) for label in labels
             ]
         except Exception as err:
             print_error(err)
@@ -100,15 +98,18 @@ class Image(BaseDatapoint):
         elif self.task_type == "MULTI":
             for labels in self.remote_labels:
                 if labels.get("bbox"):
-                    self.labels = self._create_bbox_labels([labels])
+                    # self.labels = self._create_bbox_labels([labels])
+                    print("do nothing for bbox2d")
                 elif labels.get("polygon"):
                     self.labels = self._create_polygon_labels([labels])
 
         else:
-            raise ValueError(f"{self.task_type} task type is not supported. "
-                             f"Please reach out to contact@redbrickai.com.")
+            raise ValueError(
+                f"{self.task_type} task type is not supported. "
+                f"Please reach out to contact@redbrickai.com."
+            )
 
-    def _get_image_size(self) -> Tuple[int, int]:
+    def _get_image_size(self) -> List:
         """Return the size of the image from url"""
         img_data = requests.get(self.image_url_not_signed).content
         im = PILimage.open(BytesIO(img_data))

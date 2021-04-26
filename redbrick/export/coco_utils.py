@@ -50,7 +50,44 @@ def _get_label_class_id(label_category: List[str], taxonomy: dict) -> int:
         raise Exception("Couldn't find class")
 
 
-def coco_labels_format(label: dict, taxonomy: dict, dp_id: str,) -> dict:
+def _convert_coco_to_normalized_bbox(bbox: List, width: int, height: int) -> dict:
+    # Current output is already normalized.
+    xnorm = bbox[0]  # / (width - 1)
+    ynorm = bbox[1]  # / (height - 1)
+    wnorm = bbox[2]  # / (width - 1)
+    hnorm = bbox[3]  # / (height - 1)
+
+    if xnorm < 0:
+        xnorm = 0
+    if ynorm < 0:
+        ynorm = 0
+    if xnorm + wnorm > 1:
+        wnorm = 1 - xnorm
+    if ynorm + hnorm > 1:
+        hnorm = 1 - ynorm
+
+    return {
+        "xnorm": xnorm,
+        "ynorm": ynorm,
+        "wnorm": wnorm,
+        "hnorm": hnorm,
+    }
+
+
+def _convert_normalized_bbox_to_coco(
+    bbox_norm: dict, width: int, height: int
+) -> List[float]:
+    return [
+        bbox_norm["xnorm"] * (width - 1),
+        bbox_norm["ynorm"] * (height - 1),
+        bbox_norm["wnorm"] * (width - 1),
+        bbox_norm["hnorm"] * (height - 1),
+    ]
+
+
+def coco_labels_format(
+    label: dict, img_width: int, img_height: int, taxonomy: dict, dp_id: str,
+) -> dict:
     """Convert internal rb format to ms coco format."""
     category = label["category"]
     class_id = _get_label_class_id(category[0], taxonomy)
@@ -60,8 +97,17 @@ def coco_labels_format(label: dict, taxonomy: dict, dp_id: str,) -> dict:
         "area": 0,
         "bbox": [],
         "iscrowd": 0,
-        "segmentation": [list(sum(label["pixel"]["regions"][0][0], ()))],
     }
+    if label.get("bbox2d"):
+        new_bbox = _convert_normalized_bbox_to_coco(
+            label["bbox2d"], img_width, img_height
+        )
+        _label.update({"bbox": new_bbox})
+
+    elif label.get("polygon"):
+        seg = [list(sum(label["pixel"]["regions"][0][0], ()))]
+        _label.update({"segmentation": seg})
+
     return _label
 
 
