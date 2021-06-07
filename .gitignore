@@ -179,3 +179,10 @@ Temporary Items
 .history
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocodeLOCAL.md
+
+### Intellij IDE
+.idea/
+
+# Others
+venv370/
+venv386/

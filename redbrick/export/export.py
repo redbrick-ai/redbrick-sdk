@@ -1,487 +1,149 @@
 """Export to standard RedBrick format."""
-from typing import Iterable, Dict, Any
-from redbrick.api import RedBrickApi
+
+import os
+import cv2
+import json
+import numpy as np
+
+from typing import Dict, Any, List
+
+from tqdm import tqdm
+
 from redbrick.logging import print_info, print_error
 from redbrick.utils import url_to_image, clear_url
 from redbrick.entity.datapoint import Image
-from redbrick.entity.custom_group import CustomGroup
-import redbrick
-from tqdm import tqdm
-import os
-import json
-import numpy as np
-import cv2
-
-
-class LabelsetIterator:
-    def __init__(self, org_id: str, label_set_name: str) -> None:
-        """Construct LabelsetIterator."""
-        self.api = RedBrickApi()
-        self.label_set_name = label_set_name
-        self.org_id = org_id
-        self.cursor = None
-        self.datapointsBatch = None
-        self.datapointsBatchIndex = None
-        self.customGroup = self._get_custom_group()
-        self.datapointCount = self.customGroup["datapointCount"]
-        self.taxonomy = self.customGroup["taxonomy"]
-        self.taxonomy_segm = self._get_taxonomy_segmentation()
-
-    def _get_custom_group(self) -> None:
-        return self.api.get_datapoints_paged(
-            org_id=self.org_id, label_set_name=self.label_set_name
-        )["customGroup"]
-
-    def _get_taxonomy_segmentation(self) -> Dict[Any, Any]:
-        if self.customGroup["taskType"] not in ["SEGMENTATION", "POLYGON"]:
-            return None
-        else:
-            return self._create_taxonomy_segmentation()
-
-    def _create_taxonomy_segmentation(self):
-        tax_map: Dict[str, int] = {}
-        self._trav_tax(self.taxonomy["categories"][0], tax_map)
-        return self._taxonomy_update_segmentation(tax_map)
-
-    def _trav_tax(self, taxonomy: Dict[Any, Any], tax_map: Dict[str, int]) -> None:
-        """Traverse the taxonomy tree structure, and fill the taxonomy mapper object."""
-        children = taxonomy["children"]
-        if len(children) == 0:
-            return
-
-        for child in children:
-            tax_map[child["name"]] = child["classId"]
-            self._trav_tax(child, tax_map)
-
-    def _taxonomy_update_segmentation(self, tax_map: Dict[str, int]) -> Dict[str, int]:
-        """
-        Fix the taxonomy mapper object to be 1-indexed for
-        segmentation projects.
-        """
-        for key in tax_map.keys():
-            tax_map[key] += 1
-            if tax_map[key] == 0:
-                print_error(
-                    "Taxonomy class id's must be 0 indexed. \
-                        Please contact contact@redbrickai.com for help."
-                )
-                exit(1)
-
-        # Add a background class for segmentation
-        tax_map["background"] = 0
-        return tax_map
-
-    def _trim_labels(self, entry) -> Dict:
-        """Trims None values from labels"""
-        for label in entry["labelData"]["labels"]:
-            for k, v in label.copy().items():
-                if v is None:
-                    del label[k]
-        return entry
-
-    def __iter__(self) -> Iterable[Dict]:
-        return self
-
-    def __next__(self) -> dict:
-        """Get next labels / datapoint."""
-
-        # If cursor is None and current datapointsBatch has been processed
-        if (
-            self.datapointsBatchIndex is not None
-            and self.cursor is None
-            and len(self.datapointsBatch) == self.datapointsBatchIndex
-        ):
-            raise StopIteration
-
-        # If current datapointsBatch is None or we have finished processing current datapointsBatch
-        if (
-            self.datapointsBatch is None
-            or len(self.datapointsBatch) == self.datapointsBatchIndex
-        ):
-            if self.cursor is None:
-                customGroup = self.api.get_datapoints_paged(
-                    org_id=self.org_id, label_set_name=self.label_set_name
-                )
-            else:
-                customGroup = self.api.get_datapoints_paged(
-                    org_id=self.org_id,
-                    label_set_name=self.label_set_name,
-                    cursor=self.cursor,
-                )
-            self.cursor = customGroup["customGroup"]["datapointsPaged"]["cursor"]
-            self.datapointsBatch = customGroup["customGroup"]["datapointsPaged"][
-                "entries"
-            ]
-            self.datapointsBatchIndex = 0
-
-        # Current entry to return
-        entry = self.datapointsBatch[self.datapointsBatchIndex]
-
-        self.datapointsBatchIndex += 1
-
-        return self._trim_labels(entry)
+from .labelset_iter import LabelsetIterator
+from .coco_utils import coco_categories_format, coco_image_format, coco_labels_format
 
 
 class Export:
-    def __init__(self, org_id: str, label_set_name: str, target_dir: str) -> None:
-        """Construct Export."""
+    """Construct Export."""
+
+    def __init__(self, org_id: str, label_set_name: str, target_dir: str):
         self.org_id = org_id
-        self.label_set_name = label_set_name
         self.target_dir = target_dir
+        self.label_set_name = label_set_name
 
-    def _export_video(
-        self,
-        labelsetIter: LabelsetIterator,
-        download_data: bool,
-        single_json: bool,
-        use_name: bool,
-        export_format: str,
-    ):
-        # If single json file
-        if single_json:
-            dpoints_flat = []
-        target_data_dir = os.path.join(self.target_dir, "data")
-        for dpoint in tqdm(labelsetIter, total=labelsetIter.datapointCount):
-            # saving datapoint to json
-            dpoint_flat = {
-                "dpId": dpoint["dpId"],
-                "items": dpoint["items"],
-                "name": dpoint["name"],
-                "createdByEmail": dpoint["labelData"]["createdByEmail"],
-                "labels": dpoint["labelData"]["labels"],
-            }
+    def _save_all_datapoints(self, dpoints: List, lset_name: str) -> None:
+        """Save all export data in single JSON file."""
+        filepath = os.path.join(
+            self.target_dir, "{}_{}.json".format(self.org_id, lset_name)
+        )
+        with open(filepath, mode="w", encoding="utf-8") as f:
+            json.dump(dpoints, f, indent=2)
 
-            # If single json is required, append current datapoint to list
-            if single_json:
-                dpoints_flat.append(dpoint_flat)
-            else:
-                # Check if use_name is needed
-                if use_name and dpoint["name"] is not None and dpoint["name"] != "":
-                    fname = dpoint["name"]
-                    last_slash = fname.rfind("/")
-                    fname = clear_url(fname[last_slash + 1 :])
-                    file_ext = fname[-4:]
-                    if file_ext.lower() in [".jpg", ".png", ".bmp"]:
-                        # If image name already has an image extension
-                        fname = fname.replace(file_ext.lower(), "")
-                else:
-                    fname = dpoint["dpId"]
-                # Json path to store current datapoint
-                jsonPath = os.path.join(self.target_dir, "{}.json".format(fname))
+    def _save_datapoint(self, dpoint: dict, filepath: str) -> None:
+        """Save single datapoint in a file"""
+        with open(filepath, mode="w", encoding="utf-8") as f:
+            json.dump(dpoint, f, indent=2)
 
-                if use_name:
-                    # Check for collisions
-                    idx = 1
-                    while True:
-                        if not os.path.exists(jsonPath):
-                            break
-                        jsonPath = os.path.join(
-                            self.target_dir, "{}({}).json".format(fname, idx)
-                        )
-                        idx += 1
-
-                # Save current datapoint to json file
-                with open(jsonPath, mode="w", encoding="utf-8") as f:
-                    json.dump(dpoint_flat, f, indent=2)
-
-            # Saving datapoint image/video data
-            if download_data:
-                # Video name
-                video_name = dpoint["name"]
-                # Create folder to store frames
-                target_data_video_dir = os.path.join(target_data_dir, video_name)
-                if not os.path.exists(target_data_video_dir):
-                    os.makedirs(target_data_video_dir)
-                # Store frames
-                idx = 1
-                for i in range(len(dpoint["items"])):
-                    dpoint_item = dpoint["items"][i]
-                    file_ext = dpoint_item[-4:]
-                    if file_ext.lower() in [".jpg", ".png", ".bmp"]:
-                        # If image name already has an image extension
-                        image_name = str(idx).zfill(6) + file_ext.lower()
-                    else:
-                        image_name = str(idx).zfill(6) + ".jpg"
-                    idx += 1
-                    image_filepath = os.path.join(target_data_video_dir, image_name)
-                    # Saving image to specified path if it doesn't exists
-                    if not os.path.exists(image_filepath):
-                        # Downloading image from url as numpy array
-                        image_np = url_to_image(dpoint_item)
-                        cv2.imwrite(  # pylint: disable=no-member
-                            image_filepath, np.flip(image_np, axis=2)
-                        )
-
-        # Saving all json data in a single file
-        if single_json:
-            jsonPath = os.path.join(
-                self.target_dir,
-                "{}_{}.json".format(self.org_id, self.label_set_name.replace(" ", "-")),
+    def _save_image(self, dpoint: str, img_filepath: str) -> None:
+        """Save image to filesystem."""
+        if not os.path.exists(img_filepath):
+            # Downloading image from url as numpy array
+            image_np = url_to_image(dpoint)
+            cv2.imwrite(  # pylint: disable=no-member
+                img_filepath, np.flip(image_np, axis=2)
             )
-            with open(jsonPath, mode="w", encoding="utf-8") as f:
-                json.dump(dpoints_flat, f, indent=2)
 
-    def _export_image(
+    def _get_non_existent_filename(self, filepath: str) -> str:
+        """Return a new filepath if the file with same name exists."""
+        if not os.path.exists(filepath):
+            return filepath
+        idx = 1
+        while True:
+            path = f"({idx})".join(os.path.splitext(filepath))
+            if not os.path.exists(path):
+                return path
+            idx += 1
+
+    def _write_mask(
+        self, dpoint_name: str, target_masks_dir: str, color_mask: np.ndarray
+    ) -> str:
+        """Write mask image to filesystem."""
+        basename = os.path.basename(dpoint_name)
+        mask_name, ext = os.path.splitext(clear_url(basename))
+        if not ext:
+            ext = ".png"  # default extension
+        mask_filepath = os.path.join(target_masks_dir, mask_name + ext)
+        cv2.imwrite(
+            mask_filepath, np.flip(color_mask, axis=2) * 255,
+        )
+        return mask_filepath
+
+    def _get_image(self, dpoint: dict, labelsetIter: LabelsetIterator) -> Image:
+        """Return Image object."""
+        return Image(
+            created_by=dpoint["labelData"]["createdByEmail"],
+            org_id=labelsetIter.customGroup["orgId"],
+            label_set_name=labelsetIter.customGroup["name"],
+            taxonomy=labelsetIter.taxonomy_segm,
+            remote_labels=dpoint["labelData"]["labels"],
+            dp_id=dpoint["dpId"],
+            image_url=dpoint["items"][0],
+            image_url_not_signed=dpoint["itemsPresigned"][0],
+            image_data=None,
+            task_type=labelsetIter.customGroup["taskType"],
+        )
+
+    def _download_image_data(self, dpoint: dict, use_name, dir: str) -> None:
+        """Download Image data."""
+
+        # Handling of image filepath
+        dpoint_item = dpoint["itemsPresigned"][0]
+        dpoint_name = dpoint["dpId"]
+        if use_name:
+            dpoint_name = dpoint["name"]
+        basename = os.path.basename(dpoint_name)
+        img_name, ext = os.path.splitext(clear_url(basename))
+        if not ext:
+            ext = ".jpg"
+        image_filepath = os.path.join(dir, img_name + ext)
+
+        # Check for collisions
+        if use_name:
+            image_filepath = self._get_non_existent_filename(image_filepath)
+
+        # Saving image to specified path if it doesn't exists
+        self._save_image(dpoint_item, image_filepath)
+
+    def _download_video_data(self, dpoint: dict, dir: str) -> None:
+        """Download Video dataset."""
+        # Video name
+        video_name = dpoint["name"]
+        # Create folder to store frames
+        target_data_video_dir = os.path.join(dir, video_name)
+        if not os.path.exists(target_data_video_dir):
+            os.makedirs(target_data_video_dir)
+        # Store frames
+        for idx in range(len(dpoint["items"])):
+            dpoint_item = dpoint["items"][idx]
+            basename = os.path.basename(dpoint_item)
+            _, ext = os.path.splitext(basename)
+            if not ext:
+                ext = ".jpg"
+
+            image_name = str(idx + 1).zfill(6) + ext
+            image_filepath = os.path.join(target_data_video_dir, image_name)
+
+            # Saving image to specified path if it doesn't exists
+            self._save_image(dpoint_item, image_filepath)
+
+    def _save_class_mappings(
         self,
+        label_info_segm: dict,
+        dir: str,
+        color_map: Any,
         labelsetIter: LabelsetIterator,
-        download_data: bool,
-        single_json: bool,
-        use_name: bool,
-        export_format: str,
-    ):
-        # If single json file
-        if single_json:
-            dpoints_flat = []
-        target_data_dir = os.path.join(self.target_dir, "data")
-        for dpoint in tqdm(labelsetIter, total=labelsetIter.datapointCount):
-            # saving datapoint to json
-            dpoint_flat = {
-                "dpId": dpoint["dpId"],
-                "items": dpoint["items"],
-                "name": dpoint["name"],
-                "createdByEmail": dpoint["labelData"]["createdByEmail"],
-                "labels": dpoint["labelData"]["labels"],
-            }
+    ) -> None:
+        """Save class mappings to filesystem."""
 
-            # If single json is required, append current datapoint to list
-            if single_json:
-                dpoints_flat.append(dpoint_flat)
-            else:
-                # Check if use_name is needed
-                if use_name and dpoint["name"] is not None and dpoint["name"] != "":
-                    fname = dpoint["name"]
-                    last_slash = fname.rfind("/")
-                    fname = clear_url(fname[last_slash + 1 :])
-                    file_ext = fname[-4:]
-                    if file_ext.lower() in [".jpg", ".png", ".bmp"]:
-                        # If image name already has an image extension
-                        fname = fname.replace(file_ext.lower(), "")
-                else:
-                    fname = dpoint["dpId"]
-                # Json path to store current datapoint
-                jsonPath = os.path.join(self.target_dir, "{}.json".format(fname))
-
-                if use_name:
-                    # Check for collisions
-                    idx = 1
-                    while True:
-                        if not os.path.exists(jsonPath):
-                            break
-                        jsonPath = os.path.join(
-                            self.target_dir, "{}({}).json".format(fname, idx)
-                        )
-                        idx += 1
-
-                # Save current datapoint to json file
-                with open(jsonPath, mode="w", encoding="utf-8") as f:
-                    json.dump(dpoint_flat, f, indent=2)
-
-            # Saving datapoint image/video data
-            if download_data:
-                # Handling of image filepath
-                dpoint_item = dpoint["itemsPresigned"][0]
-                if use_name:
-                    dpoint_name = dpoint["name"]
-                else:
-                    dpoint_name = dpoint["dpId"]
-                last_slash = dpoint_name.rfind("/")
-                # Replacing special characters on file path
-                image_name = clear_url(dpoint_name[last_slash + 1 :])
-                file_ext = image_name[-4:]
-                if file_ext.lower() in [".jpg", ".png", ".bmp"]:
-                    # If image name already has an image extension
-                    image_filepath = os.path.join(target_data_dir, image_name)
-                else:
-                    image_filepath = os.path.join(target_data_dir, image_name + ".jpg")
-                # Check for collisions
-                if use_name:
-                    idx = 1
-                    while True:
-                        if not os.path.exists(image_filepath):
-                            break
-                        if file_ext.lower() in [".jpg", ".png", ".bmp"]:
-                            # If image name already has an image extension
-                            image_filepath = os.path.join(
-                                target_data_dir,
-                                image_name[:-4] + "({})".format(idx) + image_name[-4:],
-                            )
-                        else:
-                            image_filepath = os.path.join(
-                                target_data_dir, image_name + "({}).jpg".format(idx)
-                            )
-                        idx += 1
-                # Saving image to specified path if it doesn't exists
-                if not os.path.exists(image_filepath):
-                    # Downloading image from url as numpy array
-                    image_np = url_to_image(dpoint_item)
-                    cv2.imwrite(  # pylint: disable=no-member
-                        image_filepath, np.flip(image_np, axis=2)
-                    )
-
-        # Saving all json data in a single file
-        if single_json:
-            jsonPath = os.path.join(
-                self.target_dir,
-                "{}_{}.json".format(self.org_id, self.label_set_name.replace(" ", "-")),
-            )
-            with open(jsonPath, mode="w", encoding="utf-8") as f:
-                json.dump(dpoints_flat, f, indent=2)
-
-    def _export_image_segmentation(
-        self,
-        labelsetIter: LabelsetIterator,
-        download_data: bool,
-        single_json: bool,
-        use_name: bool,
-        export_format: str,
-    ):
-        label_info_segm: Dict[Any, Any] = {"labels": []}
-        color_map: Any = None
-        target_data_dir = os.path.join(self.target_dir, "data")
-        target_masks_dir = os.path.join(self.target_dir, "masks")
-
-        # If single json file
-        if single_json:
-            dpoints_flat = []
-        for dpoint in tqdm(labelsetIter, total=labelsetIter.datapointCount):
-            # saving datapoint to json
-            dpoint_flat = {
-                "dpId": dpoint["dpId"],
-                "items": dpoint["items"],
-                "name": dpoint["name"],
-                "createdByEmail": dpoint["labelData"]["createdByEmail"],
-                "labels": dpoint["labelData"]["labels"],
-            }
-
-            # Save segmentation PNG masks if required
-            if len(dpoint["labelData"]["labels"]) > 0:
-                dpoint_segm = Image(
-                    created_by=dpoint["labelData"]["createdByEmail"],
-                    org_id=labelsetIter.customGroup["orgId"],
-                    label_set_name=labelsetIter.customGroup["name"],
-                    taxonomy=labelsetIter.taxonomy_segm,
-                    remote_labels=dpoint["labelData"]["labels"],
-                    dp_id=dpoint["dpId"],
-                    image_url=dpoint["items"][0],
-                    image_url_not_signed=dpoint["itemsPresigned"][0],
-                    image_data=None,
-                    task_type=labelsetIter.customGroup["taskType"],
-                )
-
-                colored_mask = dpoint_segm.labels.color_mask()
-                color_map = dpoint_segm.labels.color_map2
-
-                # cv2 expected BGR
-                # pylint: disable=no-member
-                # Handling of image filepath
-                mask_name = dpoint["itemsPresigned"][0]
-                if use_name:
-                    dpoint_name = dpoint["name"]
-                else:
-                    dpoint_name = dpoint["dpId"]
-                last_slash = dpoint_name.rfind("/")
-                # Replacing special characters on file path
-                mask_name = clear_url(dpoint_name[last_slash + 1 :])
-                file_ext = mask_name[-4:]
-                if file_ext.lower() in [".jpg", ".png", ".bmp"]:
-                    # If image name already has an image extension
-                    mask_filepath = os.path.join(
-                        target_masks_dir, mask_name.replace(file_ext.lower() + ".png")
-                    )
-                else:
-                    mask_filepath = os.path.join(target_masks_dir, mask_name + ".png")
-                cv2.imwrite(
-                    mask_filepath, np.flip(colored_mask, axis=2) * 255,
-                )
-                label_info_entry = {}
-                label_info_entry["url"] = dpoint_segm.image_url_not_signed
-                label_info_entry["createdBy"] = dpoint_segm.created_by
-                label_info_entry["exportUrl"] = mask_filepath
-                label_info_segm["labels"] += [label_info_entry]
-
-            # If single json is required, append current datapoint to list
-            if single_json:
-                dpoints_flat.append(dpoint_flat)
-            else:
-                # Check if use_name is needed
-                if use_name and dpoint["name"] is not None and dpoint["name"] != "":
-                    fname = dpoint["name"]
-                    last_slash = fname.rfind("/")
-                    fname = clear_url(fname[last_slash + 1 :])
-                    file_ext = fname[-4:]
-                    if file_ext.lower() in [".jpg", ".png", ".bmp"]:
-                        # If image name already has an image extension
-                        fname = fname.replace(file_ext.lower(), "")
-                else:
-                    fname = dpoint["dpId"]
-                # Json path to store current datapoint
-                jsonPath = os.path.join(self.target_dir, "{}.json".format(fname))
-
-                if use_name:
-                    # Check for collisions
-                    idx = 1
-                    while True:
-                        if not os.path.exists(jsonPath):
-                            break
-                        jsonPath = os.path.join(
-                            self.target_dir, "{}({}).json".format(fname, idx)
-                        )
-                        idx += 1
-
-                # Save current datapoint to json file
-                with open(jsonPath, mode="w", encoding="utf-8") as f:
-                    json.dump(dpoint_flat, f, indent=2)
-
-            # Saving datapoint image/video data
-            if download_data:
-                # Handling of image filepath
-                dpoint_item = dpoint["itemsPresigned"][0]
-                if use_name:
-                    dpoint_name = dpoint["name"]
-                else:
-                    dpoint_name = dpoint["dpId"]
-                last_slash = dpoint_name.rfind("/")
-                # Replacing special characters on file path
-                image_name = clear_url(dpoint_name[last_slash + 1 :])
-                file_ext = image_name[-4:]
-                if file_ext.lower() in [".jpg", ".png", ".bmp"]:
-                    # If image name already has an image extension
-                    image_filepath = os.path.join(target_data_dir, image_name)
-                else:
-                    image_filepath = os.path.join(target_data_dir, image_name + ".jpg")
-                # Check for collisions
-                if use_name:
-                    idx = 1
-                    while True:
-                        if not os.path.exists(image_filepath):
-                            break
-                        if file_ext.lower() in [".jpg", ".png", ".bmp"]:
-                            # If image name already has an image extension
-                            image_filepath = os.path.join(
-                                target_data_dir,
-                                image_name[:-4] + "({})".format(idx) + image_name[-4:],
-                            )
-                        else:
-                            image_filepath = os.path.join(
-                                target_data_dir, image_name + "({}).jpg".format(idx)
-                            )
-                        idx += 1
-                # Saving image to specified path if it doesn't exists
-                if not os.path.exists(image_filepath):
-                    # Downloading image from url as numpy array
-                    image_np = url_to_image(dpoint_item)
-                    cv2.imwrite(  # pylint: disable=no-member
-                        image_filepath, np.flip(image_np, axis=2)
-                    )
-
-        # Finishing png masks export
-        # Meta-data
-        label_info_segm["taxonomy"] = labelsetIter.taxonomy_segm
         label_info_segm["color_map"] = {}
+        label_info_segm["taxonomy"] = labelsetIter.taxonomy_segm
+
         for key in labelsetIter.taxonomy_segm.keys():
-            if key == "background":
-                color_map_ = [0, 0, 0]
-            else:
+            color_map_ = [0, 0, 0]
+            if key != "background":
                 color_map_ = list(
                     color_map(
                         labelsetIter.taxonomy_segm[key] - 1,
@@ -492,18 +154,197 @@ class Export:
             label_info_segm["color_map"][labelsetIter.taxonomy_segm[key]] = color_map_
 
         # Save the class-mapping (taxonomy) in json format in the folder
-        segm_json = os.path.join(target_masks_dir, "class-mapping.json",)
+        segm_json = os.path.join(dir, "class-mapping.json",)
         with open(segm_json, "w+") as file:
             json.dump(label_info_segm, file, indent=2)
 
+    def _flatten_datapoint(self, dpoint: dict) -> dict:
+        """Return dict simplifying the datapoint."""
+        return {
+            "dpId": dpoint["dpId"],
+            "items": dpoint["items"],
+            "name": dpoint["name"],
+            "createdByEmail": dpoint["labelData"]["createdByEmail"],
+            "labels": dpoint["labelData"]["labels"],
+        }
+
+    def _get_datapoint_filepath(self, dpoint: dict, use_name: bool) -> str:
+        """Return filepath for saving label data."""
+        fname = dpoint["dpId"]
+        if use_name and dpoint["name"]:
+            basename = os.path.basename(dpoint["name"])
+            fname, ext = os.path.splitext(clear_url(basename))
+
+        filepath = os.path.join(self.target_dir, "{}.json".format(fname))
+
+        if use_name:
+            filepath = self._get_non_existent_filename(filepath)
+
+        return filepath
+
+    def _export_video(
+        self,
+        labelsetIter: LabelsetIterator,
+        download_data: bool,
+        single_json: bool,
+        use_name: bool,
+        export_format: str,
+    ):
+        dpoints_flat = []
+        target_data_dir = os.path.join(self.target_dir, "data")
+
+        for dpoint in tqdm(labelsetIter, total=labelsetIter.datapointCount):
+            dpoint_flat = self._flatten_datapoint(dpoint)
+            dpoints_flat.append(dpoint_flat)
+
+            jsonPath = self._get_datapoint_filepath(dpoint, use_name)
+
+            if not single_json:
+                self._save_datapoint(dpoint_flat, jsonPath)
+
+            # Saving datapoint image/video data
+            if download_data:
+                self._download_video_data(dpoint, target_data_dir)
+
+        if single_json:
+            self._save_all_datapoints(
+                dpoints_flat, self.label_set_name.replace(" ", "-")
+            )
+
+    def _export_image(
+        self,
+        labelsetIter: LabelsetIterator,
+        download_data: bool,
+        single_json: bool,
+        use_name: bool,
+        export_format: str,
+    ):
+        dpoints_flat = []
+        target_data_dir = os.path.join(self.target_dir, "data")
+
+        for dpoint in tqdm(labelsetIter, total=labelsetIter.datapointCount):
+            dpoint_flat = self._flatten_datapoint(dpoint)
+            dpoints_flat.append(dpoint_flat)
+
+            jsonPath = self._get_datapoint_filepath(dpoint, use_name)
+
+            if not single_json:
+                # Save current datapoint to json file
+                self._save_datapoint(dpoint_flat, jsonPath)
+
+            # Saving datapoint image/video data
+            if download_data:
+                self._download_image_data(dpoint, use_name, target_data_dir)
+
         # Saving all json data in a single file
         if single_json:
-            jsonPath = os.path.join(
-                self.target_dir,
-                "{}_{}.json".format(self.org_id, self.label_set_name.replace(" ", "-")),
+            self._save_all_datapoints(
+                dpoints_flat, self.label_set_name.replace(" ", "-")
             )
-            with open(jsonPath, mode="w", encoding="utf-8") as f:
-                json.dump(dpoints_flat, f, indent=2)
+
+    def _export_image_segmentation(
+        self,
+        labelsetIter: LabelsetIterator,
+        download_data: bool,
+        single_json: bool,
+        use_name: bool,
+        export_format: str,
+    ):
+        color_map: Any = None
+        label_info_segm: Dict[Any, Any] = {"labels": []}
+        target_data_dir = os.path.join(self.target_dir, "data")
+        target_masks_dir = os.path.join(self.target_dir, "masks")
+
+        dpoints_flat = []
+        for dpoint in tqdm(labelsetIter, total=labelsetIter.datapointCount):
+            dpoint_flat = self._flatten_datapoint(dpoint)
+            dpoints_flat.append(dpoint_flat)
+
+            # Save segmentation PNG masks if required
+            if dpoint["labelData"]["labels"]:
+                dpoint_segm = self._get_image(dpoint, labelsetIter)
+
+                colored_mask = dpoint_segm.labels.color_mask()
+                color_map = dpoint_segm.labels.color_map2
+
+                dpoint_name = dpoint["dpId"]
+                if use_name:
+                    dpoint_name = dpoint["name"]
+
+                mask_filepath = self._write_mask(
+                    dpoint_name, target_masks_dir, colored_mask
+                )
+
+                width, height = dpoint_segm._get_image_size()
+                label_info_entry = {
+                    "url": dpoint_segm.image_url_not_signed,
+                    "createdBy": dpoint_segm.created_by,
+                    "exportUrl": mask_filepath,
+                    "img_size": [width, height],
+                }
+
+                label_info_segm["labels"] += [label_info_entry]
+
+                jsonPath = self._get_datapoint_filepath(dpoint, use_name)
+                if not single_json:
+                    # Save current datapoint to json file
+                    with open(jsonPath, mode="w", encoding="utf-8") as f:
+                        json.dump(dpoint_flat, f, indent=2)
+
+            # Saving datapoint image/video data
+            if download_data:
+                self._download_image_data(dpoint, use_name, target_data_dir)
+
+        # Finishing png masks export
+        self._save_class_mappings(
+            label_info_segm, target_masks_dir, color_map, labelsetIter
+        )
+
+        # Saving all json data in a single file
+        if single_json:
+            self._save_all_datapoints(
+                dpoints_flat, self.label_set_name.replace(" ", "-")
+            )
+
+        if export_format == "coco":
+            self._export_to_coco_format(dpoints_flat, labelsetIter, label_info_segm)
+
+    def _export_to_coco_format(
+        self, dpoints: List, labelsetIter: LabelsetIterator, labels_info: List
+    ):
+        """Export the Polygon/Segmentation labels to COCO format."""
+        taxonomy: dict = labelsetIter.customGroup["taxonomy"]
+        coco_format = {
+            "categories": coco_categories_format(taxonomy),
+        }
+        images: List = []
+        annotations: List = []
+
+        labels = [dp for dp in dpoints if dp.get("labels")]
+        for idx, dp in enumerate(labels):
+            # Continue when the datapoints has no labels
+            if not dp.get("labels"):
+                continue
+
+            img_width, img_height = labels_info["labels"][idx]["img_size"]
+            file_name = dp.get("items")[0]
+            image = coco_image_format(img_width, img_height, file_name, dp.get("dpId"))
+
+            # Generate annotation for each label
+            for label in dp.get("labels"):
+                annotation = coco_labels_format(
+                    label, img_width, img_height, taxonomy, dp.get("dpId")
+                )
+                annotations.append(annotation)
+
+            images.append(image)
+
+        coco_format["images"] = images
+        coco_format["annotations"] = annotations
+
+        # Write the COCO Label format to file
+        with open(f"{self.target_dir}/coco.json", "w") as f:
+            f.write(json.dumps(coco_format))
 
     def _save_summary_json(self, labelsetIter: LabelsetIterator) -> None:
         """Saves summary json file of current labelset export"""
@@ -519,6 +360,74 @@ class Export:
         with open(summary_json_filepath, mode="w", encoding="utf-8") as f:
             json.dump(summary_json, f, indent=2)
 
+    def _export_multi(
+        self,
+        labelsetIter: LabelsetIterator,
+        download_data: bool,
+        single_json: bool,
+        use_name: bool,
+        export_format: str,
+    ):
+        """Export MULTI type labels. Supporting only Polygon and Bbox now."""
+        color_map: Any = None
+        dpoints_flat: List = []
+        label_info_segm: Dict[Any, Any] = {"labels": []}
+        target_data_dir = os.path.join(self.target_dir, "data")
+        target_masks_dir = os.path.join(self.target_dir, "masks")
+
+        for dpoint in tqdm(labelsetIter, total=labelsetIter.datapointCount):
+            dpoint_flat = self._flatten_datapoint(dpoint)
+            dpoints_flat.append(dpoint_flat)
+
+            # Save segmentation PNG masks if required
+            if dpoint["labelData"]["labels"]:
+                dpoint_segm = self._get_image(dpoint, labelsetIter)
+
+                colored_mask = dpoint_segm.labels.color_mask()
+                color_map = dpoint_segm.labels.color_map2
+
+                dpoint_name = dpoint["dpId"]
+                if use_name:
+                    dpoint_name = dpoint["name"]
+
+                mask_filepath = self._write_mask(
+                    dpoint_name, target_masks_dir, colored_mask
+                )
+
+                width, height = dpoint_segm._get_image_size()
+                label_info_entry = {
+                    "url": dpoint_segm.image_url_not_signed,
+                    "createdBy": dpoint_segm.created_by,
+                    "exportUrl": mask_filepath,
+                    "img_size": [width, height],
+                }
+
+                label_info_segm["labels"] += [label_info_entry]
+
+            jsonPath = self._get_datapoint_filepath(dpoint, use_name)
+
+            if not single_json:
+                # Save current datapoint to json file
+                self._save_datapoint(dpoint_flat, jsonPath)
+
+            # Saving datapoint image/video data
+            if download_data:
+                self._download_image_data(dpoint, use_name, target_data_dir)
+
+        # Finishing png masks export
+        self._save_class_mappings(
+            label_info_segm, target_masks_dir, color_map, labelsetIter
+        )
+
+        # Saving all json data in a single file
+        if single_json:
+            self._save_all_datapoints(
+                dpoints_flat, self.label_set_name.replace(" ", "-")
+            )
+
+        if export_format == "coco":
+            self._export_to_coco_format(dpoints_flat, labelsetIter, label_info_segm)
+
     def export(
         self,
         download_data: bool = False,
@@ -533,17 +442,21 @@ class Export:
 
         # Validation of optional parameters
         task_type = labelsetIter.customGroup["taskType"]
-        if export_format not in ["redbrick", "png"]:
+        if export_format not in ["redbrick", "png", "coco"]:
             print_error(
-                'Export format "{}" not valid, please use "redbrick" or "png"'.format(
-                    export_format
-                )
+                f'Export format "{export_format}" not valid, please use '
+                f'"redbrick", "coco" or "png"'
             )
             return
-        print(task_type)
-        if export_format == "png" and task_type not in ["SEGMENTATION", "POLYGON"]:
+
+        if export_format in ["png", "coco"] and task_type not in [
+            "SEGMENTATION",
+            "MULTI",
+            "POLYGON",
+        ]:
             print_error(
-                'Export format "png" is only valid for segmentation and polygon tasks. Please use "redbrick"'
+                'Export format "png" and "coco" is only valid for segmentation '
+                'and polygon tasks. Please use "redbrick"'
             )
             return
 
@@ -558,7 +471,11 @@ class Export:
                 os.makedirs(target_data_dir)
 
         # Create masks folder
-        if export_format == "png" and task_type in ["SEGMENTATION", "POLYGON"]:
+        if export_format in ["png", "coco"] and task_type in [
+            "SEGMENTATION",
+            "MULTI",
+            "POLYGON",
+        ]:
             target_masks_dir = os.path.join(self.target_dir, "masks")
             if not os.path.exists(target_masks_dir):
                 os.makedirs(target_masks_dir)
@@ -574,10 +491,15 @@ class Export:
             print_info("Exporting datapoints to dir: {}".format(self.target_dir))
 
         # If we are exporting image segmentation
-        if export_format == "png" and task_type in ["SEGMENTATION", "POLYGON"]:
-            self._export_image_segmentation(
-                labelsetIter, download_data, single_json, use_name, export_format
-            )
+        if export_format in ["png", "coco"]:
+            if task_type in ["SEGMENTATION", "POLYGON"]:
+                self._export_image_segmentation(
+                    labelsetIter, download_data, single_json, use_name, export_format
+                )
+            else:
+                self._export_multi(
+                    labelsetIter, download_data, single_json, use_name, export_format
+                )
         elif labelsetIter.customGroup["dataType"] == "VIDEO":
             self._export_video(
                 labelsetIter, download_data, single_json, use_name, export_format
