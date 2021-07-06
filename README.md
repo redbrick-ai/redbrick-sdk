@@ -91,12 +91,15 @@ Each cycle of active learning involves three steps:
    - Send the scores and optional labels to update your project
 
 ```python
+# 1. Get data
 data = project.learning.get_learning_info()
 
+# 2. perform your processing
 training(data["labeled"], data["taxonomy"])
 
 results = inference_and_sort(data["unlabeled"], data["taxonomy"])
 
+# 3. Update your project
 project.learning.update_tasks(results)
 
 ```
