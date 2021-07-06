@@ -1,0 +1,63 @@
+{
+  "dpId": "277dd8bd-2478-4dfa-9495-81933c91d98e",
+  "items": [
+    "https://images.unsplash.com/photo-1554728667-662368ae729a?ixid=MXwxMjA3fDB8MHxzZWFyY2h8NDJ8fHNvY2NlcnxlbnwwfHwwfA%3D%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60"
+  ],
+  "name": "https://images.unsplash.com/photo-1554728667-662368ae729a?ixid=MXwxMjA3fDB8MHxzZWFyY2h8NDJ8fHNvY2NlcnxlbnwwfHwwfA%3D%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60",
+  "createdByEmail": "giovani.rodriguez@toptal.com",
+  "labels": [
+    {
+      "category": [
+        [
+          "object",
+          "bus"
+        ]
+      ],
+      "attributes": [],
+      "labelid": "9700c917-a1ee-4dcc-8e87-ade3e51ce96a",
+      "pixel": {
+        "imagesize": [
+          800,
+          533
+        ],
+        "regions": [
+          [
+            [
+              118,
+              78
+            ],
+            [
+              117,
+              78
+            ],
+            [
+              117,
+              77
+            ],
+            [
+              117,
+              76
+            ],
+            [
+              118,
+              76
+            ],
+            [
+              118,
+              76
+            ],
+            [
+              119,
+              77
+            ],
+            [
+              118,
+              78
+            ]
+          ]
+        ],
+        "holes": null
+      }
+    }
+  ]
+}

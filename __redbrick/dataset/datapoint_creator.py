@@ -25,7 +25,6 @@ class DatapointCreator:
         self, name: str, items: List[str], labels: List[Dict] = None
     ) -> Dict:
         """Create a datapoint in the backend"""
-
         datapoint_ = self.api_client.createDatapoint(
             org_id=self.org_id,
             items=items,

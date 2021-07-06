@@ -1,0 +1,41 @@
+{
+  "labelData": {
+    "blob": "{\"items\": [{\"url\": \"unknown\", \"labels\": [{\"category\": [[\"object\", \"car\"]], \"attributes\": [], \"bbox2d\": {\"xnorm\": 0.21022727272727273, \"ynorm\": 0.16230366492146597, \"hnorm\": 0.7198952879581152, \"wnorm\": 0.5795454545454546}, \"labelid\": \"b5ad5fea-d7fc-4987-b737-466bf6d28cec\"}]}]}",
+    "dataPoint": {
+      "items": [
+        "https://redbrick-data.s3.amazonaws.com/cars/07868.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210219%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210219T234502Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=db5b3bb92332b36d071a5b67df3870e53ac783369578bc8d2b8519047bed9c44"
+      ],
+      "items_not_signed": [
+        "cars/07868.jpg"
+      ],
+      "name": "cars/07868.jpg"
+    },
+    "createdBy": "66215dd8-b359-4d8b-a489-1e679c65da76",
+    "taskType": "BBOX",
+    "dataType": "IMAGE",
+    "labels": [
+      {
+        "category": [
+          [
+            "object",
+            "car"
+          ]
+        ],
+        "attributes": [],
+        "labelid": "b5ad5fea-d7fc-4987-b737-466bf6d28cec",
+        "frameclassify": null,
+        "frameindex": null,
+        "trackid": null,
+        "keyframe": null,
+        "end": null,
+        "bbox2d": {
+          "xnorm": 0.21022727272727273,
+          "ynorm": 0.16230366492146597,
+          "wnorm": 0.5795454545454546,
+          "hnorm": 0.7198952879581152
+        },
+        "pixel": null
+      }
+    ]
+  }
+}

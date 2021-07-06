@@ -1,0 +1,94 @@
+{
+  "labels": [
+    {
+      "url": "https://i.pinimg.com/564x/ac/7a/05/ac7a05d93cfdabb1c32beedb58ee3242.jpg",
+      "createdBy": "giovani.rodriguez@toptal.com",
+      "exportUrl": "exportrb/masks/26f1e519-2c2f-4cef-aeb6-ae766e11a813.png"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1554728667-662368ae729a?ixid=MXwxMjA3fDB8MHxzZWFyY2h8NDJ8fHNvY2NlcnxlbnwwfHwwfA%3D%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60",
+      "createdBy": "giovani.rodriguez@toptal.com",
+      "exportUrl": "exportrb/masks/277dd8bd-2478-4dfa-9495-81933c91d98e.png"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1600679472829-3044539ce8ed?ixid=MXwxMjA3fDB8MHxzZWFyY2h8MjR8fHNvY2NlcnxlbnwwfHwwfA%3D%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60",
+      "createdBy": "giovani.rodriguez@toptal.com",
+      "exportUrl": "exportrb/masks/9951c3f5-1c2a-4743-916d-d239d1c347f8.png"
+    },
+    {
+      "url": "https://i.pinimg.com/564x/0c/35/ed/0c35edfaf504be44ef5f15d579cd4be9.jpg",
+      "createdBy": "giovani.rodriguez@toptal.com",
+      "exportUrl": "exportrb/masks/cdb44714-7514-424d-8d45-53c0d7599a70.png"
+    }
+  ],
+  "taxonomy": {
+    "bus": 1,
+    "traffic light": 2,
+    "traffic sign": 3,
+    "person": 4,
+    "bike": 5,
+    "truck": 6,
+    "motor": 7,
+    "car": 8,
+    "train": 9,
+    "rider": 10,
+    "background": 0
+  },
+  "color_map": {
+    "1": [
+      256,
+      128,
+      128
+    ],
+    "2": [
+      243,
+      151,
+      12
+    ],
+    "3": [
+      230,
+      256,
+      128
+    ],
+    "4": [
+      58,
+      243,
+      12
+    ],
+    "5": [
+      128,
+      256,
+      179
+    ],
+    "6": [
+      12,
+      243,
+      243
+    ],
+    "7": [
+      128,
+      179,
+      256
+    ],
+    "8": [
+      58,
+      12,
+      243
+    ],
+    "9": [
+      230,
+      128,
+      256
+    ],
+    "10": [
+      243,
+      12,
+      151
+    ],
+    "0": [
+      0,
+      0,
+      0
+    ]
+  }
+}

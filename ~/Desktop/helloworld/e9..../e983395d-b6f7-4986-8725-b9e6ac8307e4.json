@@ -1,0 +1,422 @@
+{
+  "dpId": "e983395d-b6f7-4986-8725-b9e6ac8307e4",
+  "items": [
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png",
+    "https://icatcare.org/app/uploads/2018/07/Helping-your-new-cat-or-kitten-settle-in-1.png"
+  ],
+  "createdByEmail": "derek+030@redbrickai.com",
+  "labels": [
+    {
+      "category": [
+        [
+          "object",
+          "bus"
+        ]
+      ],
+      "attributes": [],
+      "labelid": "e8afd310-0c82-4245-9458-2ffdac6ad6f0",
+      "frameindex": 0,
+      "trackid": "29edab68-d744-4b6f-9c51-ed1dd9fd447f",
+      "keyframe": true,
+      "end": false,
+      "polygon": [
+        {
+          "xnorm": 0.2966666666666667,
+          "ynorm": 0.4266666666666667
+        },
+        {
+          "xnorm": 0.2504166666666667,
+          "ynorm": 0.5691666666666667
+        },
+        {
+          "xnorm": 0.46958333333333335,
+          "ynorm": 0.7208333333333333
+        },
+        {
+          "xnorm": 0.66125,
+          "ynorm": 0.4583333333333333
+        },
+        {
+          "xnorm": 0.5870833333333333,
+          "ynorm": 0.2275
+        },
+        {
+          "xnorm": 0.5845833333333333,
+          "ynorm": 0.22416666666666665
+        },
+        {
+          "xnorm": 0.58,
+          "ynorm": 0.22083333333333333
+        },
+        {
+          "xnorm": 0.4575,
+          "ynorm": 0.16666666666666666
+        },
+        {
+          "xnorm": 0.45208333333333334,
+          "ynorm": 0.16583333333333333
+        },
+        {
+          "xnorm": 0.44958333333333333,
+          "ynorm": 0.16583333333333333
+        },
+        {
+          "xnorm": 0.32,
+          "ynorm": 0.17416666666666666
+        },
+        {
+          "xnorm": 0.22916666666666666,
+          "ynorm": 0.21166666666666667
+        },
+        {
+          "xnorm": 0.16916666666666666,
+          "ynorm": 0.26166666666666666
+        },
+        {
+          "xnorm": 0.15541666666666668,
+          "ynorm": 0.2758333333333333
+        },
+        {
+          "xnorm": 0.13375,
+          "ynorm": 0.30583333333333335
+        },
+        {
+          "xnorm": 0.10875,
+          "ynorm": 0.3516666666666667
+        },
+        {
+          "xnorm": 0.09416666666666666,
+          "ynorm": 0.39166666666666666
+        },
+        {
+          "xnorm": 0.08166666666666667,
+          "ynorm": 0.45
+        },
+        {
+          "xnorm": 0.07916666666666666,
+          "ynorm": 0.5158333333333334
+        },
+        {
+          "xnorm": 0.08166666666666667,
+          "ynorm": 0.595
+        },
+        {
+          "xnorm": 0.08916666666666667,
+          "ynorm": 0.6591666666666667
+        },
+        {
+          "xnorm": 0.10416666666666667,
+          "ynorm": 0.72
+        },
+        {
+          "xnorm": 0.115,
+          "ynorm": 0.7416666666666667
+        },
+        {
+          "xnorm": 0.13208333333333333,
+          "ynorm": 0.76
+        },
+        {
+          "xnorm": 0.17291666666666666,
+          "ynorm": 0.7833333333333333
+        },
+        {
+          "xnorm": 0.23166666666666666,
+          "ynorm": 0.7975
+        },
+        {
+          "xnorm": 0.30083333333333334,
+          "ynorm": 0.8016666666666666
+        },
+        {
+          "xnorm": 0.35041666666666665,
+          "ynorm": 0.8016666666666666
+        },
+        {
+          "xnorm": 0.36333333333333334,
+          "ynorm": 0.8016666666666666
+        }
+      ]
+    },
+    {
+      "category": [
+        [
+          "object",
+          "bus"
+        ]
+      ],
+      "attributes": [],
+      "labelid": "a08d9af3-7c79-4db5-9902-9c0411318bd6",
+      "frameindex": 7,
+      "trackid": "29edab68-d744-4b6f-9c51-ed1dd9fd447f",
+      "keyframe": true,
+      "end": false,
+      "polygon": [
+        {
+          "xnorm": 0.5683333333333334,
+          "ynorm": 0.3908333333333333
+        },
+        {
+          "xnorm": 0.5220833333333333,
+          "ynorm": 0.5333333333333333
+        },
+        {
+          "xnorm": 0.74125,
+          "ynorm": 0.685
+        },
+        {
+          "xnorm": 0.9329166666666666,
+          "ynorm": 0.4225
+        },
+        {
+          "xnorm": 0.85875,
+          "ynorm": 0.19166666666666668
+        },
+        {
+          "xnorm": 0.85625,
+          "ynorm": 0.18833333333333332
+        },
+        {
+          "xnorm": 0.8516666666666667,
+          "ynorm": 0.185
+        },
+        {
+          "xnorm": 0.7291666666666666,
+          "ynorm": 0.13083333333333333
+        },
+        {
+          "xnorm": 0.72375,
+          "ynorm": 0.13
+        },
+        {
+          "xnorm": 0.72125,
+          "ynorm": 0.13
+        },
+        {
+          "xnorm": 0.5916666666666667,
+          "ynorm": 0.13833333333333334
+        },
+        {
+          "xnorm": 0.5008333333333334,
+          "ynorm": 0.17583333333333334
+        },
+        {
+          "xnorm": 0.44083333333333335,
+          "ynorm": 0.22583333333333333
+        },
+        {
+          "xnorm": 0.4270833333333333,
+          "ynorm": 0.24
+        },
+        {
+          "xnorm": 0.40541666666666665,
+          "ynorm": 0.27
+        },
+        {
+          "xnorm": 0.3804166666666667,
+          "ynorm": 0.31583333333333335
+        },
+        {
+          "xnorm": 0.36583333333333334,
+          "ynorm": 0.35583333333333333
+        },
+        {
+          "xnorm": 0.35333333333333333,
+          "ynorm": 0.4141666666666667
+        },
+        {
+          "xnorm": 0.35083333333333333,
+          "ynorm": 0.48
+        },
+        {
+          "xnorm": 0.35333333333333333,
+          "ynorm": 0.5591666666666667
+        },
+        {
+          "xnorm": 0.36083333333333334,
+          "ynorm": 0.6233333333333333
+        },
+        {
+          "xnorm": 0.37583333333333335,
+          "ynorm": 0.6841666666666667
+        },
+        {
+          "xnorm": 0.38666666666666666,
+          "ynorm": 0.7058333333333333
+        },
+        {
+          "xnorm": 0.40375,
+          "ynorm": 0.7241666666666666
+        },
+        {
+          "xnorm": 0.44458333333333333,
+          "ynorm": 0.7475
+        },
+        {
+          "xnorm": 0.5033333333333333,
+          "ynorm": 0.7616666666666667
+        },
+        {
+          "xnorm": 0.5725,
+          "ynorm": 0.7658333333333334
+        },
+        {
+          "xnorm": 0.6220833333333333,
+          "ynorm": 0.7658333333333334
+        },
+        {
+          "xnorm": 0.635,
+          "ynorm": 0.7658333333333334
+        }
+      ]
+    },
+    {
+      "category": [
+        [
+          "object",
+          "bus"
+        ]
+      ],
+      "attributes": [],
+      "labelid": "81b80191-cfc2-4baa-a7b8-615027553129",
+      "frameindex": 16,
+      "trackid": "29edab68-d744-4b6f-9c51-ed1dd9fd447f",
+      "keyframe": true,
+      "end": false,
+      "polygon": [
+        {
+          "xnorm": 0.4791666666666667,
+          "ynorm": 0.45
+        },
+        {
+          "xnorm": 0.43291666666666667,
+          "ynorm": 0.5925
+        },
+        {
+          "xnorm": 0.6520833333333333,
+          "ynorm": 0.7441666666666666
+        },
+        {
+          "xnorm": 0.84375,
+          "ynorm": 0.4816666666666667
+        },
+        {
+          "xnorm": 0.5045833333333334,
+          "ynorm": 0.5066666666666667
+        },
+        {
+          "xnorm": 0.7670833333333333,
+          "ynorm": 0.2475
+        },
+        {
+          "xnorm": 0.7625,
+          "ynorm": 0.24416666666666667
+        },
+        {
+          "xnorm": 0.6404166666666666,
+          "ynorm": 0.1925
+        },
+        {
+          "xnorm": 0.6345833333333334,
+          "ynorm": 0.18916666666666668
+        },
+        {
+          "xnorm": 0.6320833333333333,
+          "ynorm": 0.18916666666666668
+        },
+        {
+          "xnorm": 0.5145833333333333,
+          "ynorm": 0.2941666666666667
+        },
+        {
+          "xnorm": 0.41,
+          "ynorm": 0.20666666666666667
+        },
+        {
+          "xnorm": 0.3516666666666667,
+          "ynorm": 0.285
+        },
+        {
+          "xnorm": 0.33791666666666664,
+          "ynorm": 0.2991666666666667
+        },
+        {
+          "xnorm": 0.31625,
+          "ynorm": 0.32916666666666666
+        },
+        {
+          "xnorm": 0.29125,
+          "ynorm": 0.375
+        },
+        {
+          "xnorm": 0.27666666666666667,
+          "ynorm": 0.415
+        },
+        {
+          "xnorm": 0.26416666666666666,
+          "ynorm": 0.47333333333333333
+        },
+        {
+          "xnorm": 0.26166666666666666,
+          "ynorm": 0.5391666666666667
+        },
+        {
+          "xnorm": 0.26416666666666666,
+          "ynorm": 0.6183333333333333
+        },
+        {
+          "xnorm": 0.27166666666666667,
+          "ynorm": 0.6825
+        },
+        {
+          "xnorm": 0.2866666666666667,
+          "ynorm": 0.7433333333333333
+        },
+        {
+          "xnorm": 0.2975,
+          "ynorm": 0.765
+        },
+        {
+          "xnorm": 0.3145833333333333,
+          "ynorm": 0.7833333333333333
+        },
+        {
+          "xnorm": 0.35541666666666666,
+          "ynorm": 0.8066666666666666
+        },
+        {
+          "xnorm": 0.4141666666666667,
+          "ynorm": 0.8208333333333333
+        },
+        {
+          "xnorm": 0.48333333333333334,
+          "ynorm": 0.825
+        },
+        {
+          "xnorm": 0.5329166666666667,
+          "ynorm": 0.825
+        },
+        {
+          "xnorm": 0.5458333333333333,
+          "ynorm": 0.825
+        }
+      ]
+    }
+  ]
+}
