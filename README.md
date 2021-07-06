@@ -16,7 +16,7 @@ pip install --upgrade redbrick-sdk
 You'll need to get your API key before you can utilize the SDK.
 
 ```python
-"""redbrick-sdk quickstart, framework agnostic."""
+"""redbrick quickstart."""
 import redbrick
 
 api_key = "<>"
@@ -50,29 +50,55 @@ datapoints = [
 failed_to_create = project.upload.create_datapoints(storage_id, datapoints)
 
 
-# OR with labels
-storage_id = "11111111-1111-1111-1111-111111111111"
+# Datapoint object definition
+{
+    # REQUIRED: must be unique within a project
+    "name": "my first upload",
+    # List of urls or item paths, depending on your storage method
+    "items": [
+        "http://datasets.redbrickai.com/car-vids/car-1/frame20.png"
+    ],
+    # List of RedBrick Label objects
+    "labels":  [<Label object>]
 
-datapoints = [
-    {
-        "name": "my first upload",
-        "items": [
-            "http://datasets.redbrickai.com/car-vids/car-1/frame20.png"
-        ],
-        "labels":  [<Label object>]
+}
 
-    }
-]
-failed_to_create = project.upload.create_datapoints(storage_id, datapoints)
 
 ```
 
 ## Exporting data from your project
 
 ```python
+import json
+
 result = project.export.redbrick_format()
 
+with open("export.json", "w+") as file_:
+    json.dump(file_, result, indent=2)
 ```
+
+### COCO Format
+
+Coco format is supported for bounding box and polygon image projects. All other label types will be ignored.
+
+To export into this format, use the following code snippet:
+
+```python
+coco_data = project.export.coco_format()
+
+```
+
+### Image masks
+
+In order export into image masks for image segmentation projects, use the following:
+
+```python
+import os
+
+project.export.png_masks(os.path("."))
+```
+
+This will produce a directory named "redbrick_masks" inside of the directory you specified.
 
 ## Active Learning
 
