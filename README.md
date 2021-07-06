@@ -19,10 +19,10 @@ You'll need to get your API key before you can utilize the SDK.
 """redbrick-sdk quickstart, framework agnostic."""
 import redbrick
 
-api_key = "sHfLb_EMp14ByFTJj_ZjJBolzZgCKhZToPXWMbfVnyM"
+api_key = "<>"
 url = "https://api.redbrickai.com"
-org_id = "fa670d97-0a74-4c35-aeea-bfb9b2c4d517"
-project_id = "10dec73f-9f8b-4771-af21-f7e7a41b93df"
+org_id = "<>"
+project_id = "<>"
 project = redbrick.get_project(api_key, url, org_id, project_id)
 
 
@@ -47,6 +47,56 @@ datapoints = [
         ]
     }
 ]
-project.upload.create_datapoints(storage_id, datapoints)
+failed_to_create = project.upload.create_datapoints(storage_id, datapoints)
+
+
+# OR with labels
+storage_id = "11111111-1111-1111-1111-111111111111"
+
+datapoints = [
+    {
+        "name": "my first upload",
+        "items": [
+            "http://datasets.redbrickai.com/car-vids/car-1/frame20.png"
+        ],
+        "labels":  [<Label object>]
+
+    }
+]
+failed_to_create = project.upload.create_datapoints(storage_id, datapoints)
+
+```
+
+## Exporting data from your project
+
+```python
+result = project.export.redbrick_format()
+
+```
+
+## Active Learning
+
+Each cycle of active learning involves three steps:
+
+1. Data Export:
+
+   - Get the unlabeled data, the labeled data, and the categories
+
+2. Training, inference, and prioritization:
+
+   - Using the labeled and unlabeled data, perform an algorithmic process to generate a score for each unlabeled datapoint float[0, 1].
+   - Optionally generate labels to use as prelabels in the labeling process.
+
+3. Upload results to RedBrick
+   - Send the scores and optional labels to update your project
+
+```python
+data = project.learning.get_learning_info()
+
+training(data["labeled"], data["taxonomy"])
+
+results = inference_and_sort(data["unlabeled"], data["taxonomy"])
+
+project.learning.update_tasks(results)
 
 ```
