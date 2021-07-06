@@ -13,7 +13,7 @@ with open(
 
 setup(
     name="redbrick-sdk",
-    url="https://github.com/dereklukacs/redbrick-sdk",
+    url="https://github.com/redbrick-ai/redbrick-sdk",
     version=version,
     description="RedBrick platform Python SDK!",
     py_modules=["src"],
