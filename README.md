@@ -1,9 +1,9 @@
 # Introduction
 
 This is an SDK to make integration with the RedBrick platform as easy as possible. This includes uploading and downloading data
-as well as making your datasets easily available for training. Use this SDK to access your data and labels anywhere you run your code, whether that is on the cloud, or locally with a Jupyter Notebook.
+as well as making your datasets easily available for training. Use this SDK to access your data and labels anywhere you run your code, whether that is on the cloud or locally with a Jupyter Notebook.
 
-This repository is far from feature complete and is under active development. Please feel free to submit issues on github or at [support@redbrickai.com](mailto:support@redbrickai.com) if you run into any problems or have suggestions.
+Please feel free to submit issues on github or at [support@redbrickai.com](mailto:support@redbrickai.com) if you run into any problems or have suggestions.
 
 ## Quickstart
 
@@ -16,92 +16,116 @@ pip install --upgrade redbrick-sdk
 You'll need to get your API key before you can utilize the SDK.
 
 ```python
-"""redbrick-sdk quickstart, framework agnostic."""
+"""redbrick quickstart."""
 import redbrick
 
-redbrick.init(api_key="YOUR_API_KEY_HERE")
+api_key = "<>"
+url = "https://api.redbrickai.com"
+org_id = "<>"
+project_id = "<>"
+project = redbrick.get_project(api_key, url, org_id, project_id)
 
-label_set = redbrick.labelset.LabelsetLoader(org_id="ORG_ID_HERE", label_set_name="NAME")
-
-label_set.show_random_image()
-
-# load all images and labels into memory (not recommended for large labelsets)
-all_items = []
-for ii in range(label_set.number_of_datapoints()):
-    item = label_set[ii]
-    all_items.append(item)
-
-# Showing some properties of the items returned by label_set
-example_item = all_items[-1]
-example_item.show_image()
-example_item.image.shape
-example_item.height
-example_item.width
-example_item.gt
-example_item.gt_classes
 
 ```
 
-You now all the images and their labels in memory. Now you just need to plug this data in to your machine learning framework.
+## Importing data
 
-## Local Development
+There is a single way to import data into your project through the sdk. This is done using the create datapoint api.
 
-### Pre-requisite
-
-- Python 3.8 (Compatible with 3.7 and 3.6 as well)
-
-### Setup
-
-- Create virtual environment
-
-```
-$ python3 -m venv venv
-```
-
-- Install dependencies
-
-```
-$ source venv/bin/activate
-$ pip install -r requirements-dev.txt
-```
-
-## Torch
-
-PyTorch has a Dataset class that can be subclassed. This can be used to connect the data in your RedBrick labelset
-to your model for training or inference.
-
-[https://pytorch.org/tutorials/beginner/data_loading_tutorial.html](https://pytorch.org/tutorials/beginner/data_loading_tutorial.html)
+An example using a "Public" storage method is given below
 
 ```python
-from torch.utils.data import Dataset
+
+# default public storage method
+storage_id = "11111111-1111-1111-1111-111111111111"
+
+datapoints = [
+    {
+        "name": "my first upload",
+        "items": [
+            "http://datasets.redbrickai.com/car-vids/car-1/frame20.png"
+        ]
+    }
+]
+failed_to_create = project.upload.create_datapoints(storage_id, datapoints)
 
 
-class ExampleRedbrickTorchDataset(Dataset):
-    """A convenient way to train with pytorch using your data hosted on redbrick."""
+# Datapoint object definition
+{
+    # REQUIRED: must be unique within a project
+    "name": "my first upload",
+    # List of urls or item paths, depending on your storage method
+    "items": [
+        "http://datasets.redbrickai.com/car-vids/car-1/frame20.png"
+    ],
+    # List of RedBrick Label objects
+    "labels":  [<Label object>]
 
-    def __init__(self, rb_loader, transforms=None) -> None:
-        """Construct RedbrickTorchDataset."""
-        self.loader = rb_loader
-        self.transforms = transforms
+}
 
-    def __len__(self):
-        """Get the number of datapoints available."""
-        return self.loader.number_of_datapoints()
-
-    def __getitem__(self, idx):
-        """Get a specific item."""
-        item = self.loader[idx]
-        if self.transforms:
-            item = self.transforms(item)
-        return item
 
 ```
 
-This dataset can then be used with a PyTorch DataLoader for batching.
+## Exporting data from your project
 
-Note: Proper transformations will need to be implemented in order to convert data from the redbrick-sdk DataPoint format
-to whatever format your model expects.
+```python
+import json
 
-## TensorFlow
+result = project.export.redbrick_format()
 
-TODO: reference implementation of `tf.data`
+with open("export.json", "w+") as file_:
+    json.dump(file_, result, indent=2)
+```
+
+### COCO Format
+
+Coco format is supported for bounding box and polygon image projects. All other label types will be ignored.
+
+To export into this format, use the following code snippet:
+
+```python
+coco_data = project.export.coco_format()
+
+```
+
+### Image masks
+
+In order export into image masks for image segmentation projects, use the following:
+
+```python
+import os
+
+project.export.png_masks(os.path("."))
+```
+
+This will produce a directory named "redbrick_masks" inside of the directory you specified.
+
+## Active Learning
+
+Each cycle of active learning involves three steps:
+
+1. Data Export:
+
+   - Get the unlabeled data, the labeled data, and the categories
+
+2. Training, inference, and prioritization:
+
+   - Using the labeled and unlabeled data, perform an algorithmic process to generate a score for each unlabeled datapoint float[0, 1].
+   - Optionally generate labels to use as prelabels in the labeling process.
+
+3. Upload results to RedBrick
+   - Send the scores and optional labels to update your project
+
+```python
+# 1. Get data
+data = project.learning.get_learning_info()
+
+# 2. perform your processing
+training(data["labeled"], data["taxonomy"])
+
+results = inference_and_sort(data["unlabeled"], data["taxonomy"])
+
+# 3. Update your project
+project.learning.update_tasks(results)
+
+```

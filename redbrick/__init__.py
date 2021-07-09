@@ -1,26 +1,32 @@
 """
-Initialize RedBrick package.
+RedBrick SDK to enable powerful use cases.
 
-Derek Lukacs, 2020
+- To begin use: redbrick.get_project(api_key, org_id, project_id)
+- Start at https://app.redbrickai.com to create a project.
+- Learn more at https://docs.redbrickai.com
+
+
 """
 
-from .client import RedBrickClient
-import redbrick.api
-import redbrick.logging
-from typing import Optional
+from redbrick.common.context import RBContext
+from redbrick.project import RBProject
 
-# import redbrick.base
-import redbrick.client
-import redbrick.labelset
-import redbrick.remote_label
-import redbrick.export
-import redbrick.utils
-import redbrick.dataset
+from redbrick.repo import (
+    ExportRepo,
+    LabelingRepo,
+    LearningRepo,
+    UploadRepo,
+    ProjectRepo,
+)
 
 
-def init(api_key: str, url: Optional[str] = None) -> None:
-    """Initialize package state."""
-    RedBrickClient(api_key, url)
+def get_project(api_key: str, url: str, org_id: str, project_id: str) -> RBProject:
+    """Get project object."""
+    context = RBContext(api_key, url)
+    context.export = ExportRepo(context.client)
+    context.labeling = LabelingRepo(context.client)
+    context.learning = LearningRepo(context.client)
+    context.upload = UploadRepo(context.client)
+    context.project = ProjectRepo(context.client)
 
-
-redbrick.utils.version_check()
+    return RBProject(context, org_id, project_id)

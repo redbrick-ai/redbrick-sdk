@@ -1,0 +1,284 @@
+"""
+
+
+"""
+
+
+from typing import List, Optional, Dict, Tuple
+
+from .image_size import get_image_size
+
+
+def rb2coco_categories(taxonomy: dict) -> List[dict]:
+    """Convert to coco categories format."""
+    root = taxonomy["categories"][0]
+
+    output: List[dict] = []
+
+    def recurse(cat: dict) -> None:
+        """Recurse and add child entries to output."""
+        for child in cat.get("children", []):
+            temp = {
+                "name": child["name"],
+                "id": child["classId"] + 1,
+                "supercategory": cat["name"],
+            }
+
+            output.append(temp)
+            recurse(child)
+
+    recurse(root)
+
+    return output
+
+
+def _get_label_class_id(label_category: List[str], taxonomy: Dict) -> int:
+    """Get map of taxonomy categories."""
+    categories = taxonomy["categories"]
+    assert len(categories) == 1
+
+    def find_name_in_categories(
+        temp_categories: List[dict], name: str
+    ) -> Optional[dict]:
+        for cat in temp_categories:
+            if cat["name"] == name:
+
+                return cat
+        return None
+
+    for cat in label_category:
+        new_root = find_name_in_categories(categories, cat)
+        if new_root:
+            categories = new_root.get("children")
+
+    if new_root:
+        class_id: int = new_root["class_id"]
+        return class_id
+    else:
+        raise Exception("Couldn't find class")
+
+
+async def rb2coco_single_image(entry: Dict, taxonomy: Dict, image_id: int) -> Dict:
+    """Convert single image to MS Coco format."""
+    labels = entry["labels"]
+    url = entry["itemsPresigned"][0]
+
+    type_, width, height = get_image_size(url)
+
+    image_field = {
+        "id": image_id,
+        "license": 1,
+        "file_name": entry["dpId"],
+        "redbrick_url"
+
+    }
+    for label in labels:
+        class_id = _get_label_class_id(label["category"][0], taxonomy)
+
+
+
+def rb2coco_images_labels(rb_entries: List[Dict]) -> Tuple[str, List[Dict], List[Dict]]:
+    """Convert rb objects to coco images and items list."""
+
+
+# type: ignore
+"""
+Exports the latest version of labels in a particular project.
+Fill out the details in ./config.json before running this script.
+pip install -r requirements.txt to install all dependencies.
+"""
+
+import requests
+import json
+from tqdm import tqdm
+import json
+import numpy as np
+import redbrick
+
+# cfg = {}
+# with open("./config.json", "r") as file:
+#     cfg = json.load(file)
+
+# redbrick.init(cfg["apiKey"])
+# client = redbrick.api.RedBrickApi()
+
+
+def create_bbox(annotation):
+    """Creates a bounding box entry in a single COCO annotation field."""
+    x_pos = []
+    y_pos = []
+
+    for idx, coord in enumerate(annotation["segmentation"][0]):
+        if idx % 2 == 0:
+            x_pos += [coord]
+        else:
+            y_pos += [coord]
+
+    x_min = min(x_pos)
+    y_min = min(y_pos)
+    x_max = max(x_pos)
+    y_max = max(y_pos)
+
+    width = x_max - x_min
+    height = y_max - y_min
+
+    annotation["bbox"] = [x_min, y_min, width, height]
+
+
+def calculate_area(annotation):
+    """Calculates area of the polygon annotation."""
+
+    def PolyArea(x, y):
+        """Calculate polygon area."""
+        return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
+
+    x_pos = []
+    y_pos = []
+
+    for idx, coord in enumerate(annotation["segmentation"][0]):
+        if idx % 2 == 0:
+            x_pos += [coord]
+        else:
+            y_pos += [coord]
+
+    area = PolyArea(x_pos, y_pos)
+    print(area)
+    annotation["area"] = area
+
+
+def latest(org_id, project_id, stage_name, sub_name):
+    """Obtain the latest labels for export."""
+
+    images = []
+    annotations = []
+
+    # categories definition
+    categories = [
+        {"name": "crop", "id": 1, "supercategory": ""},
+        {"name": "weed", "id": 2, "supercategory": ""},
+    ]
+    category_map = {"crop": 1, "weed": 2}
+    category_idx = 0
+
+    info = {"projectId": project_id, "orgId": org_id}
+    licenses = []
+
+    cursor = None
+    first = True
+    image_id = 0
+    label_id = 0
+    while cursor != None or first:
+        first = False
+        output = pipeline_group(
+            org_id, project_id, stage_name, sub_name, cursor, first=cfg["first"]
+        )
+
+        tasks = output["pipelineGroup"]["tasks"]
+        cursor = tasks["cursor"]
+        for task in tqdm(tasks["entries"]):
+            obj = task["history"][-1]
+            task_data = obj["taskData"]
+            labels = task_data["labels"]
+            image_url = task_data["dataPoint"]["itemsPresigned"][0]
+            file_name = task_data["dataPoint"]["items"][0].split("/")[-1]
+            image_id += 1
+
+            # Get the image dimensions
+            height, width, depth = (1, 1, 1)
+            if not cfg["normalized"]:
+                image = redbrick.utils.url_to_image(image_url)
+                height, width, depth = image.shape
+
+            # images
+            images += [
+                {
+                    "file_name": file_name,
+                    "id": image_id,
+                    "coco_url": image_id,
+                    "height": height,
+                    "width": width,
+                }
+            ]
+
+            # annotations
+            if len(labels) == 0:
+                print("UNLABELED IMAGE = ", task)
+            for label in labels:
+                annotation_entry = {
+                    "id": label_id,
+                    "image_id": image_id,
+                    "file_name": file_name,
+                    "segmentation": [[]],
+                    "bbox": [],
+                    "area": None,
+                    "iscrowd": 0,
+                }
+                label_id += 1
+
+                # categories
+                if label["category"][0][-1] not in category_map:
+                    category_map[label["category"][0][-1]] = category_idx
+                    categories += [
+                        {
+                            "name": label["category"][0][-1],
+                            "id": category_idx,
+                            "supercategory": "",
+                        }
+                    ]
+                    category_idx += 1
+                annotation_entry["category_id"] = category_map[label["category"][0][-1]]
+
+                for point in label["polygon"]:
+                    annotation_entry["segmentation"][0] += [
+                        point["xnorm"] * width,
+                        point["ynorm"] * height,
+                    ]
+
+                annotations += [annotation_entry]
+
+                # generate bbox entry
+                create_bbox(annotation_entry)
+
+                # calculate polygon area
+                calculate_area(annotation_entry)
+
+    return {
+        "info": info,
+        "licenses": licenses,
+        "images": images,
+        "annotations": annotations,
+        "categories": categories,
+    }
+
+
+if __name__ == "__main__":
+
+    # output = latest(
+    #     cfg["orgId"], cfg["projectId"], cfg["labelStage"], sub_name="OUTPUT"
+    # )
+    # with open(cfg["outputFile"], "w+") as file:
+    #     json.dump(output, file, indent=2)
+    width = 3000
+    height = 3000
+    print(
+        calculate_area(
+            {
+                "segmentation": [
+                    [
+                        0.5 * width,
+                        0.5 * height,
+                        0.3 * width,
+                        0.6 * height,
+                        0.35 * width,
+                        0.65 * height,
+                        0.6 * width,
+                        0.65 * height,
+                        0.7 * width,
+                        0.45 * height,
+                        0.6 * width,
+                        0.4 * height,
+                    ]
+                ]
+            }
+        )
+    )
