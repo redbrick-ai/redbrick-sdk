@@ -28,7 +28,7 @@ setup(
         "termcolor==1.1.0",
         "dataclasses==0.6",
         "requests==2.23.0",
-        "Pillow==8.0.1",
+        "Pillow==8.2.0",
     ],
     extras_require={
         "dev": [
