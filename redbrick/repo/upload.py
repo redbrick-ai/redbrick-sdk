@@ -54,7 +54,7 @@ class UploadRepo(UploadControllerInterface):
                 $name: String!
                 $dsetName: String!
                 $storageId: UUID!
-                $lsetName: String
+                $lsetName: String!
                 $labels: [LabelInput!]
             ) {
                 createDatapoint(
@@ -78,7 +78,7 @@ class UploadRepo(UploadControllerInterface):
             "dsetName": project_id,
             "storageId": storage_id,
             "lsetName": project_id + "-input",
-            "labels": labels,
+            "labels": labels or [],
         }
 
         await self.client.execute_query_async(aio_client, query_string, query_variables)

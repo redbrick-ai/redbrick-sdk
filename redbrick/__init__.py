@@ -1,7 +1,7 @@
 """
 RedBrick SDK to enable powerful use cases.
 
-- To begin using, call redbrick.get_project(api_key, url, org_id, project_id)
+- To begin use: redbrick.get_project(api_key, org_id, project_id)
 - Start at https://app.redbrickai.com to create a project.
 - Learn more at https://docs.redbrickai.com
 

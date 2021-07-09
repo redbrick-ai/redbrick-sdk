@@ -12,16 +12,18 @@ class RBClient:
     def __init__(self, api_key: str, url: str, retry_count: int = 5,) -> None:
         """Construct RBClient."""
         self.api_key = api_key
-        self.url = url.rstrip("/") + "/graphql"
+        self.url = url.rstrip("/") + "/graphql/"
 
     def execute_query(self, query: str, variables: Dict[str, Any]) -> Any:
         """Execute a graphql query."""
         headers = {"ApiKey": self.api_key}
+
         try:
             response = requests.post(
                 self.url, headers=headers, json={"query": query, "variables": variables}
             )
             res = {}
+
             if "errors" in response.json():
                 raise ValueError(response.json()["errors"][0]["message"])
             elif "data" in response.json():

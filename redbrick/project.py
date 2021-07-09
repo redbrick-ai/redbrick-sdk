@@ -6,6 +6,7 @@ from redbrick.common.context import RBContext
 from redbrick.export import Export
 from redbrick.upload import Upload
 from redbrick.learning import Learning
+from redbrick.labeling import Labeling
 
 
 class RBProject:
@@ -25,7 +26,7 @@ class RBProject:
 
         self.export = Export(context, org_id, project_id)
 
-        # self.labeling = Labeling(context)
+        self.labeling = Labeling(context, org_id, project_id)
         self.upload = Upload(context, org_id, project_id)
 
     @property

@@ -6,6 +6,8 @@ import aiohttp
 
 
 class LabelingControllerInterface(ABC):
+    """Abstract interface to Labeling APIs."""
+
     @abstractmethod
     def get_labeling_tasks(
         self, org_id: str, project_id: str, stage_name: str, count: int = 5
@@ -13,8 +15,9 @@ class LabelingControllerInterface(ABC):
         """Get labeling tasks."""
 
     @abstractmethod
-    def put_labeling_results(
+    async def put_labeling_results(
         self,
+        session: aiohttp.ClientSession,
         org_id: str,
         project_id: str,
         stage_name: str,

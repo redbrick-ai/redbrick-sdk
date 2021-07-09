@@ -48,7 +48,7 @@ class Upload:
                 self._create_datapoint(session, storage_id, point) for point in points
             ]
 
-            temp = await gather_with_concurrency(10, *coros)
+            temp = await gather_with_concurrency(50, coros, "Creating datapoints")
             failed = []
             for val in temp:
                 if val:
