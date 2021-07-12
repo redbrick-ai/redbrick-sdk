@@ -16,7 +16,7 @@ setup(
     url="https://github.com/redbrick-ai/redbrick-sdk",
     version=version,
     description="RedBrick platform Python SDK!",
-    py_modules=["src"],
+    py_modules=["redbrick"],
     packages=find_packages(),
     # package_dir={"": "redbrick"},
     long_description=long_description,
@@ -26,9 +26,11 @@ setup(
         "requests==2.23.0",
         "tqdm==4.50.0",
         "termcolor==1.1.0",
-        "dataclasses==0.6",
         "requests==2.23.0",
         "Pillow==8.0.1",
+        "aiohttp==3.7.4.post0",
+        "cchardet==2.1.7",
+        "aiodns==3.0.0",
     ],
     extras_require={
         "dev": [
