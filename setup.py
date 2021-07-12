@@ -1,3 +1,5 @@
+"""Setup the python module."""
+
 from setuptools import setup, find_packages  # type: ignore
 import os
 

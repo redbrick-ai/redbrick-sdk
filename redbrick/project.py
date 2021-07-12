@@ -27,6 +27,7 @@ class RBProject:
         self.export = Export(context, org_id, project_id)
 
         self.labeling = Labeling(context, org_id, project_id)
+        self.review = Labeling(context, org_id, project_id, review=True)
         self.upload = Upload(context, org_id, project_id)
 
     @property

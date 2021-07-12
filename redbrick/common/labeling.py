@@ -27,8 +27,9 @@ class LabelingControllerInterface(ABC):
         """Put Labeling results."""
 
     @abstractmethod
-    def put_review_task_result(
+    async def put_review_task_result(
         self,
+        session: aiohttp.ClientSession,
         org_id: str,
         project_id: str,
         stage_name: str,
@@ -36,5 +37,3 @@ class LabelingControllerInterface(ABC):
         review_val: bool,
     ) -> None:
         """Put review result for task."""
-
-    # TODO: ADD remote labeling APIS here
