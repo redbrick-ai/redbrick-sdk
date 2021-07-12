@@ -114,7 +114,7 @@ class Learning:
     async def _update_tasks(self, cycle: int, tasks: List[Dict]) -> List[Dict]:
         async with aiohttp.ClientSession() as session:
             coros = [self._update_task(session, cycle, task) for task in tasks]
-            temp = await gather_with_concurrency(10, *coros)
+            temp = await gather_with_concurrency(10, coros)
             failed = []
             for val in temp:
                 if val:
@@ -127,4 +127,10 @@ class Learning:
 
         Return any tasks that experienced issues.
         """
-        return asyncio.run(self._update_tasks(cycle, tasks))
+        temp = asyncio.run(self._update_tasks(cycle, tasks))
+
+        # update cycle
+        self.context.learning.set_cycle_status(
+            self.org_id, self.project_id, self.stage_name, cycle, "DONE"
+        )
+        return temp

@@ -64,3 +64,14 @@ class LearningControllerInterface(ABC):
         tasks: List[Dict],
     ) -> None:
         """Perform send_batch_learning_results with asyncio."""
+
+    @abstractmethod
+    def set_cycle_status(
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
+        cycle: int,
+        cycle_status: str,
+    ) -> None:
+        """Set status of current training cycle."""

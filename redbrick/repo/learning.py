@@ -242,3 +242,41 @@ class LearningRepo(LearningControllerInterface):
             "tasks": tasks,
         }
         await self.client.execute_query_async(aio_client, query, variables)
+
+    def set_cycle_status(
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
+        cycle: int,
+        cycle_status: str,
+    ) -> None:
+        """Set status of current training cycle."""
+        query = """
+        mutation(
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String!
+            $cycle: Int!,
+            $status: CycleStatus!
+        ) {
+            updateAlCycleStatus(
+                orgId: $orgId
+                projectId: $projectId
+                stageName: $stageName
+                cycle: $cycle
+                cycleStatus: $status
+            ) {
+                ok
+            }
+        }
+        """
+
+        variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+            "cycle": cycle,
+            "status": cycle_status,
+        }
+        self.client.execute_query(query, variables)
