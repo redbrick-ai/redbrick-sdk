@@ -39,8 +39,6 @@ class PaginationIterator:
             self.datapointsBatch, self.cursor = self.func(self.cursor)
             self.datapointsBatchIndex = 0
 
-        print("hello world")
-        print(self.datapointsBatch)
         # Current entry to return
         if self.datapointsBatch and self.datapointsBatchIndex is not None:
             entry = self.datapointsBatch[self.datapointsBatchIndex]
@@ -48,4 +46,4 @@ class PaginationIterator:
 
             return entry
 
-        raise Exception("Error")
+        raise StopIteration
