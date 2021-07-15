@@ -36,7 +36,7 @@ class LearningRepo(LearningControllerInterface):
             "stageName": stage_name,
         }
         result = self.client.execute_query(query, variables)
-        print(result)
+
         if result.get("activeLearningClientSummary", {}).get("availableJob"):
             return int(result["activeLearningClientSummary"]["availableJob"]["cycle"])
 

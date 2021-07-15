@@ -16,8 +16,13 @@ class PaginationIterator:
 
         self.func = func
 
+        self.total = 0
+
     def __iter__(self) -> Any:
         return self
+
+    def __len__(self) -> int:
+        return self.total
 
     def __next__(self) -> Dict:
         """Get next batch of labels / datapoint."""
@@ -38,6 +43,8 @@ class PaginationIterator:
 
             self.datapointsBatch, self.cursor = self.func(self.cursor)
             self.datapointsBatchIndex = 0
+
+            self.total += len(self.datapointsBatch)
 
         # Current entry to return
         if self.datapointsBatch and self.datapointsBatchIndex is not None:

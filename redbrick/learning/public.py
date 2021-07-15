@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 from functools import partial
 from copy import deepcopy
 import aiohttp
+import tqdm
 
 from redbrick.common.context import RBContext
 from redbrick.utils.pagination import PaginationIterator
@@ -46,7 +47,7 @@ class Learning:
                 self.org_id,
                 self.project_id,
                 self.stage_name,
-                50,
+                100,
             )
         )
         taxonomy = self.context.learning.get_taxonomy_and_type(
@@ -58,10 +59,12 @@ class Learning:
             name = item["datapoint"]["name"]
             items = item["datapoint"]["items"]
             dp_id = item["datapoint"]["dpId"]
+            task_id = item["taskId"]
             labels = [clean_rb_label(label) for label in item["groundTruth"]["labels"]]
 
             return {
                 "dpId": dp_id,
+                "taskId": task_id,
                 "items": items,
                 "itemsPresigned": items_presigned,
                 "name": name,
@@ -73,7 +76,9 @@ class Learning:
             name = item["datapoint"]["name"]
             items = item["datapoint"]["items"]
             dp_id = item["datapoint"]["dpId"]
+            task_id = item["taskId"]
             return {
+                "taskId": task_id,
                 "dpId": dp_id,
                 "items": items,
                 "itemsPresigned": items_presigned,
@@ -83,7 +88,9 @@ class Learning:
         labeled: List[Dict] = []
         unlabeled: List[Dict] = []
 
-        for entry in my_iter:
+        print("Downloading tasks for active learning")
+        for entry in tqdm.tqdm(my_iter, unit=" tasks"):
+            # print(entry)
             if entry.get("groundTruth"):
                 labeled.append(_parse_labeled_entry(entry))
             else:
@@ -114,7 +121,9 @@ class Learning:
     async def _update_tasks(self, cycle: int, tasks: List[Dict]) -> List[Dict]:
         async with aiohttp.ClientSession() as session:
             coros = [self._update_task(session, cycle, task) for task in tasks]
-            temp = await gather_with_concurrency(10, coros)
+            temp = await gather_with_concurrency(
+                10, coros, "Updating tasks with priorities"
+            )
             failed = []
             for val in temp:
                 if val:

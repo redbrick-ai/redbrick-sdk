@@ -11,7 +11,7 @@ def rb2coco_categories_format(taxonomy: Dict) -> List[Dict]:
     def recurse(cat: Dict) -> None:
         """Recurse and add child entries to output."""
         for child in cat.get("children", []):
-            print(child)
+
             temp = {
                 "name": child["name"],
                 "id": child["classId"],

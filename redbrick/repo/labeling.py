@@ -126,7 +126,7 @@ class LabelingRepo(LabelingControllerInterface):
             }
         }
         """
-        print(query)
+
         response = self.client.execute_query(
             query,
             {
@@ -136,7 +136,6 @@ class LabelingRepo(LabelingControllerInterface):
                 "count": count,
             },
         )
-        print(response)
         tasks: List[Dict] = response["assignLabelingTasks"]
         return tasks
 

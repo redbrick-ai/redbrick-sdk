@@ -31,7 +31,7 @@ class ProjectRepo(ProjectRepoInterface):
         if response.get("project", {}).get("name"):
             name: str = response["project"]["name"]
             return name
-        print(response)
+
         raise Exception("Project does not exist")
 
     def get_stages(self, org_id: str, project_id: str) -> List[Dict]:
