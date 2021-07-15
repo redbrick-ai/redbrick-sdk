@@ -3,11 +3,9 @@ from typing import Dict, List
 
 def clean_rb_label(label: Dict) -> Dict:
     """Clean any None fields."""
-    print(label)
     for k, v in label.copy().items():
         if v is None:
             del label[k]
-    print(label)
     return label
 
 
