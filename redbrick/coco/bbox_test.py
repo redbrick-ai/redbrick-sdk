@@ -14,11 +14,12 @@ def test_rb2coco_bbox() -> None:
     }
 
     # action
-    result = rb2coco_bbox(label, 1, 2, 100, 100)
+    result = rb2coco_bbox(label, 1, 1, 2, 100, 100)
     result2 = coco2rb_bbox(result, [["object", "bux"]], 100, 100)
-    result3 = rb2coco_bbox(result2, 1, 2, 100, 100)
+    result3 = rb2coco_bbox(result2, 1, 1, 2, 100, 100)
     # assert
     assert result == {
+        "id": 1,
         "image_id": 1,
         "category_id": 2,
         "bbox": [0, 0, 100, 100],

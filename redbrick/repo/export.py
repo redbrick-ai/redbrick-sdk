@@ -21,6 +21,49 @@ class ExportRepo(ExportControllerInterface):
         """Get datapoints that were uploaded to the project."""
         raise NotImplementedError()
 
+    def get_output_info(self, org_id: str, project_id: str) -> Dict:
+        """Get info about the output labelset and taxonomy."""
+        query_string = """
+        query ($orgId: UUID!, $name: String!){
+            customGroup(orgId: $orgId, name:$name){
+                dataType
+                taskType
+                datapointCount
+                taxonomy {
+                    name
+                    version
+                    categories {
+                        name
+                        children {
+                            name
+                            classId
+                            children {
+                                name
+                                classId
+                                children {
+                                    name
+                                    classId
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+        """
+
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "name": project_id + "-output",
+        }
+
+        result = self.client.execute_query(query_string, query_variables)
+
+        temp: Dict = result["customGroup"]
+        return temp
+
     def get_datapoints_output(
         self,
         org_id: str,
@@ -33,29 +76,6 @@ class ExportRepo(ExportControllerInterface):
         query_string = """
         query ($orgId: UUID!, $name: String!,$first: Int, $cursor: String){
         customGroup(orgId: $orgId, name:$name){
-            orgId
-            name
-            dataType
-            taskType
-            taxonomy {
-            categories {
-                name
-                children{
-                name
-                classId
-                children {
-                    name
-                    classId
-                    children {
-                    name
-                    classId
-                    }
-                }
-                }
-
-            }
-            }
-
             datapointsPaged(first:$first, after:$cursor) {
             entries {
                 dpId

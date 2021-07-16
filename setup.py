@@ -33,6 +33,7 @@ setup(
         "cchardet==2.1.7",
         "aiodns==3.0.0",
         "Pillow==8.2.0",
+        "shapely==1.7.1",
     ],
     extras_require={
         "dev": [

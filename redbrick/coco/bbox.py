@@ -4,7 +4,12 @@ from typing import Dict, List
 
 
 def rb2coco_bbox(
-    rb_label: Dict, image_id: int, category_id: int, width: int, height: int
+    rb_label: Dict,
+    label_id: int,
+    image_id: int,
+    category_id: int,
+    width: int,
+    height: int,
 ) -> Dict:
     """Convert rb bbox to coco bbox."""
     assert rb_label["bbox2d"]
@@ -14,6 +19,7 @@ def rb2coco_bbox(
     wnorm = rb_label["bbox2d"]["wnorm"]
     hnorm = rb_label["bbox2d"]["hnorm"]
     return {
+        "id": label_id,
         "image_id": image_id,
         "category_id": category_id,
         "bbox": [xnorm * width, ynorm * height, wnorm * width, hnorm * height],

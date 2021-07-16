@@ -17,6 +17,10 @@ class ExportControllerInterface(ABC):
         """Get datapoints that were uploaded to the project."""
 
     @abstractmethod
+    def get_output_info(self, org_id: str, project_id: str,) -> Dict:
+        """Get info about the output labelset and taxonomy."""
+
+    @abstractmethod
     def get_datapoints_output(
         self,
         org_id: str,
