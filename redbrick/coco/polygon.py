@@ -66,7 +66,7 @@ def rb2coco_polygon(
         "category_id": category_id,
         "bbox": bbox,
         "iscrowd": 0,
-        "area": polygon.area,
+        "area": int(polygon.area),
         "segmentation": [segmentation],
     }
 

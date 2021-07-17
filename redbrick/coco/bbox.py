@@ -22,9 +22,14 @@ def rb2coco_bbox(
         "id": label_id,
         "image_id": image_id,
         "category_id": category_id,
-        "bbox": [xnorm * width, ynorm * height, wnorm * width, hnorm * height],
+        "bbox": [
+            int(xnorm * width),
+            int(ynorm * height),
+            int(wnorm * width),
+            int(hnorm * height),
+        ],
         "iscrowd": 0,
-        "area": wnorm * hnorm * width * height,
+        "area": int(wnorm * hnorm * width * height),
         "segmentation": [],
     }
 

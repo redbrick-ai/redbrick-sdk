@@ -39,7 +39,7 @@ def coco_converter(datapoints: List[Dict], taxonomy: Dict) -> Dict:
     images: List[Dict] = []
     annotations: List[Dict] = []
     for data in datapoints:
-        file_name = data["items"][0]
+        file_name = data["name"]
         dp_id = data["dpId"]
         name = data["name"]
         labels = data["labels"]
@@ -50,6 +50,9 @@ def coco_converter(datapoints: List[Dict], taxonomy: Dict) -> Dict:
         image_entry = {
             "id": current_image_id,
             "file_name": file_name,
+            "raw_url": data["items"][0],
+            "signed_url": data["itemsPresigned"][0],
+            "dp_id": data["dpId"],
             "height": height,
             "width": width,
         }
@@ -57,13 +60,13 @@ def coco_converter(datapoints: List[Dict], taxonomy: Dict) -> Dict:
         for label in labels:
             annotation_index = len(annotations)
             if label.get("bbox2d"):
-                class_id = rb_get_class_id(label["category"], taxonomy)
+                class_id = rb_get_class_id(label["category"][0], taxonomy)
                 coco_label = rb2coco_bbox(
                     label, annotation_index, current_image_id, class_id, width, height
                 )
                 annotations.append(coco_label)
             elif label.get("polygon"):
-                class_id = rb_get_class_id(label["category"], taxonomy)
+                class_id = rb_get_class_id(label["category"][0], taxonomy)
                 coco_label = rb2coco_polygon(
                     label, annotation_index, current_image_id, class_id, width, height
                 )
