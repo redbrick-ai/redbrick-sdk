@@ -18,10 +18,8 @@ class Export:
         self.org_id = org_id
         self.project_id = project_id
 
-    def _get_raw_data(self, only_ground_truth: bool = True) -> Tuple[List[Dict], Dict]:
+    def _get_raw_data_ground_truth(self) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_output
-        if not only_ground_truth:
-            raise NotImplementedError()
 
         my_iter = PaginationIterator(
             partial(temp, self.org_id, self.project_id, 50, True)
@@ -52,13 +50,55 @@ class Export:
             general_info["taxonomy"],
         )
 
+    def _get_raw_data_latest(self) -> Tuple[List[Dict], Dict]:
+        temp = self.context.export.get_datapoints_latest
+
+        my_iter = PaginationIterator(
+            partial(temp, self.org_id, self.project_id, 50, True)
+        )
+
+        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
+
+        def _parse_entry(item: Dict) -> Dict:
+            history_obj = item["history"][0]
+            datapoint = history_obj["taskData"]["dataPoint"]
+            items_presigned = datapoint["itemsPresigned"]
+            items = datapoint["items"]
+            name = datapoint["name"]
+            dp_id = datapoint["dpId"]
+            created_by = history_obj["taskData"]["createdByEmail"]
+            labels = [
+                clean_rb_label(label) for label in history_obj["taskData"]["labels"]
+            ]
+
+            return flat_rb_format(
+                labels, items, items_presigned, name, dp_id, created_by
+            )
+
+        print("Downloading datapoints")
+        return (
+            [
+                _parse_entry(val)
+                for val in tqdm.tqdm(
+                    my_iter, unit=" datapoints", total=general_info["datapointCount"]
+                )
+            ],
+            general_info["taxonomy"],
+        )
+
     def redbrick_format(self, only_ground_truth: bool = True,) -> List[Dict]:
         """Export data into redbrick format."""
-        datapoints, taxonomy = self._get_raw_data(only_ground_truth)
+        if only_ground_truth:
+            datapoints, taxonomy = self._get_raw_data_ground_truth()
+        else:
+            datapoints, taxonomy = self._get_raw_data_latest()
+
         return datapoints
 
     def coco_format(self, only_ground_truth: bool = True) -> Dict:
         """Export project into coco format."""
-        datapoints, taxonomy = self._get_raw_data(only_ground_truth)
-
+        if only_ground_truth:
+            datapoints, taxonomy = self._get_raw_data_ground_truth()
+        else:
+            datapoints, taxonomy = self._get_raw_data_latest()
         return coco_converter(datapoints, taxonomy)

@@ -176,4 +176,102 @@ class ExportRepo(ExportControllerInterface):
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get the latest datapoints."""
-        raise NotImplementedError()
+        query_string = """
+        query($orgId: UUID!, $projectId: UUID!, $first: Int, $cursor: String) {
+            tasksPaged(
+                orgId: $orgId
+                projectId: $projectId
+                first: $first
+                after: $cursor
+            ) {
+                entries {
+                history(latest: true) {
+                    taskData {
+                    dataPoint {
+                        dpId
+                        name
+                        itemsPresigned: items(presigned: true)
+                        items(presigned: false)
+                    }
+                    createdByEmail
+                    labels {
+                        category
+                        attributes {
+                        ... on LabelAttributeInt {
+                            name
+                            valint: value
+                        }
+                        ... on LabelAttributeBool {
+                            name
+                            valbool: value
+                        }
+                        ... on LabelAttributeFloat {
+                            name
+                            valfloat: value
+                        }
+                        ... on LabelAttributeString {
+                            name
+                            valstr: value
+                        }
+                        }
+                        labelid
+                        frameindex
+                        trackid
+                        keyframe
+                        taskclassify
+                        frameclassify
+                        end
+                        bbox2d {
+                        xnorm
+                        ynorm
+                        wnorm
+                        hnorm
+                        }
+                        point {
+                        xnorm
+                        ynorm
+                        }
+                        polyline {
+                        xnorm
+                        ynorm
+                        }
+                        polygon {
+                        xnorm
+                        ynorm
+                        }
+                        pixel {
+                        imagesize
+                        regions
+                        holes
+                        }
+                        ellipse {
+                        xcenternorm
+                        ycenternorm
+                        xnorm
+                        ynorm
+                        rot
+                        }
+                    }
+                    }
+                }
+                }
+                cursor
+            }
+            }
+
+
+        """
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "cursor": cursor,
+            "first": first,
+        }
+
+        result = self.client.execute_query(query_string, query_variables)
+
+        return (
+            result["tasksPaged"]["entries"],
+            result["tasksPaged"]["cursor"],
+        )
