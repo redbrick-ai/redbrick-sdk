@@ -40,7 +40,6 @@ def rb_get_class_id(label_category: List[str], taxonomy: dict) -> int:
                 return cat
         return None
 
-    print(label_category, taxonomy)
     for cat in label_category:
         new_root = find_name_in_categories(categories, cat)
         if new_root:
