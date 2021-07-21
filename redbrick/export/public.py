@@ -54,7 +54,7 @@ class Export:
         temp = self.context.export.get_datapoints_latest
 
         my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, 50, True)
+            partial(temp, self.org_id, self.project_id, 10, True)
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)

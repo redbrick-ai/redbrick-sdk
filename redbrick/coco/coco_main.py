@@ -5,7 +5,7 @@ from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils import aioimgspy
 from redbrick.utils.logging import print_error
 import aiohttp
-
+from yarl import URL
 from .polygon import rb2coco_polygon
 from .bbox import rb2coco_bbox
 from .categories import rb_get_class_id, rb2coco_categories_format
@@ -19,7 +19,10 @@ async def _get_image_dimension_map(
     async def _get_size(
         session: aiohttp.ClientSession, datapoint: Dict
     ) -> Tuple[int, int, str]:
-        async with session.get(datapoint["itemsPresigned"][0]) as response:
+        async with session.get(
+            # encode with yarl so that aiohttp doesn't encode again.
+            URL(datapoint["itemsPresigned"][0], encoded=True)
+        ) as response:
             temp = await aioimgspy.probe(response.content)  # type: ignore
             return (temp["width"], temp["height"], datapoint["dpId"])
 
