@@ -58,6 +58,9 @@ class Export:
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
+        datapoint_count = self.context.export.datapoints_in_project(
+            self.org_id, self.project_id
+        )
 
         def _parse_entry(item: Dict) -> Dict:
             history_obj = item["history"][0]
@@ -79,9 +82,7 @@ class Export:
         return (
             [
                 _parse_entry(val)
-                for val in tqdm.tqdm(
-                    my_iter, unit=" datapoints", total=general_info["datapointCount"]
-                )
+                for val in tqdm.tqdm(my_iter, unit=" datapoints", total=datapoint_count)
             ],
             general_info["taxonomy"],
         )

@@ -167,6 +167,28 @@ class ExportRepo(ExportControllerInterface):
             result["customGroup"]["datapointsPaged"]["cursor"],
         )
 
+    def datapoints_in_project(self, org_id: str, project_id: str) -> int:
+        """Get number of datapoints in project."""
+        query_string = """
+        query($orgId: UUID!, $projectId: UUID!) {
+            tasksPaged(
+                orgId: $orgId
+                projectId: $projectId
+            ) {
+                count
+            }
+        }
+        """
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+        }
+
+        result = self.client.execute_query(query_string, query_variables)
+
+        return int(result["tasksPaged"]["count"])
+
     def get_datapoints_latest(
         self,
         org_id: str,
