@@ -55,14 +55,14 @@ import struct
 async def probe(stream):
     """Probe for img dimensions."""
     w, h = None, None
-    chunk = await stream.read(26)
+    chunk = await stream.readexactly(26)
 
     if chunk.startswith(b"\x89PNG\r\n\x1a\n"):
         if chunk[12:16] == b"IHDR":
             w, h = struct.unpack(">LL", chunk[16:24])
         elif chunk[12:16] == b"CgBI":
             # fried png http://www.jongware.com/pngdefry.html
-            chunk += await stream.read(40 - len(chunk))
+            chunk += await stream.readexactly(40 - len(chunk))
             w, h = struct.unpack(">LL", chunk[32:40])
         else:
             w, h = struct.unpack(">LL", chunk[8:16])
@@ -80,7 +80,7 @@ async def probe(stream):
                 h, w = struct.unpack(">HH", data[start + 5 : start + 9])
                 return {"type": "jpg", "width": w, "height": h}
             (segment_size,) = struct.unpack(">H", data[start + 2 : start + 4])
-            data += await stream.read(segment_size + 9)
+            data += await stream.readexactly(segment_size + 9)
             start = start + segment_size + 2
     elif chunk.startswith(b"\x00\x00\x01\x00") or chunk.startswith(b"\x00\x00\x02\x00"):
         img_type = "ico" if chunk[2:3] == b"\x01" else "cur"
@@ -103,13 +103,13 @@ async def probe(stream):
 
         endian = ">" if chunk[0:2] == b"MM" else "<"
         offset = struct.unpack(endian + "I", chunk[4:8])[0]
-        chunk += await stream.read(offset - len(chunk) + 2)
+        chunk += await stream.readexactly(offset - len(chunk) + 2)
 
         tag_count = struct.unpack(endian + "H", chunk[offset : offset + 2])[0]
         offset += 2
         for i in range(tag_count):
             if len(chunk) - offset < 12:
-                chunk += stream.read(12)
+                chunk += stream.readexactly(12)
             type = struct.unpack(endian + "H", chunk[offset : offset + 2])[0]
             data = struct.unpack(endian + "H", chunk[offset + 8 : offset + 10])[0]
             offset += 12
@@ -128,7 +128,7 @@ async def probe(stream):
     elif chunk[:4] == b"RIFF" and chunk[8:15] == b"WEBPVP8":
         w, h = None, None
         type = chunk[15:16]
-        chunk += await stream.read(30 - len(chunk))
+        chunk += await stream.readexactly(30 - len(chunk))
         if type == b" ":
             w, h = struct.unpack("<HH", chunk[26:30])
             w, h = w & 0x3FFF, h & 0x3FFF
