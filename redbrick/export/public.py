@@ -18,11 +18,11 @@ class Export:
         self.org_id = org_id
         self.project_id = project_id
 
-    def _get_raw_data_ground_truth(self) -> Tuple[List[Dict], Dict]:
+    def _get_raw_data_ground_truth(self, concurrency: int) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_output
 
         my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, 10, True)
+            partial(temp, self.org_id, self.project_id, concurrency, True)
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
@@ -50,11 +50,11 @@ class Export:
             general_info["taxonomy"],
         )
 
-    def _get_raw_data_latest(self) -> Tuple[List[Dict], Dict]:
+    def _get_raw_data_latest(self, concurrency: int) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_latest
 
         my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, 10, True)
+            partial(temp, self.org_id, self.project_id, concurrency, True)
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
@@ -87,19 +87,23 @@ class Export:
             general_info["taxonomy"],
         )
 
-    def redbrick_format(self, only_ground_truth: bool = True,) -> List[Dict]:
+    def redbrick_format(
+        self, only_ground_truth: bool = True, concurrency: int = 10
+    ) -> List[Dict]:
         """Export data into redbrick format."""
         if only_ground_truth:
-            datapoints, taxonomy = self._get_raw_data_ground_truth()
+            datapoints, taxonomy = self._get_raw_data_ground_truth(concurrency)
         else:
-            datapoints, taxonomy = self._get_raw_data_latest()
+            datapoints, taxonomy = self._get_raw_data_latest(concurrency)
 
         return datapoints
 
-    def coco_format(self, only_ground_truth: bool = True) -> Dict:
+    def coco_format(
+        self, only_ground_truth: bool = True, concurrency: int = 10
+    ) -> Dict:
         """Export project into coco format."""
         if only_ground_truth:
-            datapoints, taxonomy = self._get_raw_data_ground_truth()
+            datapoints, taxonomy = self._get_raw_data_ground_truth(concurrency)
         else:
-            datapoints, taxonomy = self._get_raw_data_latest()
+            datapoints, taxonomy = self._get_raw_data_latest(concurrency)
         return coco_converter(datapoints, taxonomy)
