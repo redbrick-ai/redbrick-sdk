@@ -50,7 +50,7 @@ class Learning:
                 100,
             )
         )
-        taxonomy = self.context.learning.get_taxonomy_and_type(
+        taxonomy, td_type = self.context.learning.get_taxonomy_and_type(
             self.org_id, self.project_id, self.stage_name
         )
 
@@ -101,6 +101,7 @@ class Learning:
             "unlabeled": unlabeled,
             "taxonomy": taxonomy,
             "cycle": cycle,
+            "type": td_type,
         }
 
     async def _update_task(
