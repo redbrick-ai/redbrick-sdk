@@ -29,7 +29,7 @@ setup(
         "tqdm==4.50.0",
         "termcolor==1.1.0",
         "requests==2.23.0",
-        "aiohttp==3.7.4.post0",
+        "aiohttp==3.7.4",
         "cchardet==2.1.7",
         "aiodns==3.0.0",
         "Pillow==8.2.0",
