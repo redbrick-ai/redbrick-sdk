@@ -12,7 +12,7 @@ from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
 from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
-
+from redbrick.utils import version_check
 from redbrick.repo import (
     ExportRepo,
     LabelingRepo,
@@ -20,6 +20,8 @@ from redbrick.repo import (
     UploadRepo,
     ProjectRepo,
 )
+
+version_check.version_check()
 
 
 def _populate_context(context: RBContext) -> RBContext:
