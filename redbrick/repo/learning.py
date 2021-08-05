@@ -8,6 +8,8 @@ import aiohttp
 from redbrick.common.client import RBClient
 from redbrick.common.learning import LearningControllerInterface
 
+from .shards import LABEL_SHARD
+
 
 class LearningRepo(LearningControllerInterface):
     """Abstract interface to Active Learning APIs."""
@@ -51,7 +53,8 @@ class LearningRepo(LearningControllerInterface):
         cursor: Optional[str] = None,
     ) -> Tuple[List[dict], Optional[str]]:
         """Get batch of tasks, paginated."""
-        query = """
+        query = (
+            """
         query  ($orgId:UUID!, $projectId:UUID!, $stageName: String!, $first: Int!, $cursor: String){
             activeLearningClientSummary(orgId:$orgId, projectId:$projectId, stageName: $stageName){
                 tdType
@@ -67,62 +70,7 @@ class LearningRepo(LearningControllerInterface):
                         }
                         groundTruth {
                             labels {
-                                category
-                                attributes {
-                                    ... on LabelAttributeInt {
-                                    name
-                                    valint: value
-                                    }
-                                    ... on LabelAttributeBool {
-                                    name
-                                    valbool: value
-                                    }
-                                    ... on LabelAttributeFloat {
-                                    name
-                                    valfloat: value
-                                    }
-                                    ... on LabelAttributeString {
-                                    name
-                                    valstr: value
-                                    }
-                                }
-                                labelid
-                                frameindex
-                                trackid
-                                keyframe
-                                taskclassify
-                                frameclassify
-                                end
-                                bbox2d {
-                                    xnorm
-                                    ynorm
-                                    wnorm
-                                    hnorm
-                                }
-                                point {
-                                    xnorm
-                                    ynorm
-                                }
-                                polyline {
-                                    xnorm
-                                    ynorm
-                                }
-                                polygon {
-                                    xnorm
-                                    ynorm
-                                }
-                                pixel {
-                                    imagesize
-                                    regions
-                                    holes
-                                }
-                                ellipse {
-                                    xcenternorm
-                                    ycenternorm
-                                    xnorm
-                                    ynorm
-                                    rot
-                                }
+                                %s
                             }
                         }
                     }
@@ -130,6 +78,8 @@ class LearningRepo(LearningControllerInterface):
             }
         }
         """
+            % LABEL_SHARD
+        )
         variables = {
             "cursor": cursor,
             "orgId": org_id,

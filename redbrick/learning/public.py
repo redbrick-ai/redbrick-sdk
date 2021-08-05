@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 from functools import partial
 from copy import deepcopy
 import aiohttp
-import tqdm
+import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.utils.pagination import PaginationIterator

@@ -27,4 +27,3 @@ def test_url_to_image() -> None:
 
     # assert
     assert result.size
-    assert False, result

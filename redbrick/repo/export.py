@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict, Tuple
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
+from .shards import LABEL_SHARD
 
 
 class ExportRepo(ExportControllerInterface):
@@ -73,7 +74,8 @@ class ExportRepo(ExportControllerInterface):
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get datapoints that have made it to the output of the project."""
-        query_string = """
+        query_string = (
+            """
         query ($orgId: UUID!, $name: String!,$first: Int, $cursor: String){
         customGroup(orgId: $orgId, name:$name){
             datapointsPaged(first:$first, after:$cursor) {
@@ -85,62 +87,7 @@ class ExportRepo(ExportControllerInterface):
                 labelData(customGroupName: $name){
                 createdByEmail
                 labels {
-                    category
-                    attributes {
-                        ... on LabelAttributeInt {
-                        name
-                        valint: value
-                        }
-                        ... on LabelAttributeBool {
-                        name
-                        valbool: value
-                        }
-                        ... on LabelAttributeFloat {
-                        name
-                        valfloat: value
-                        }
-                        ... on LabelAttributeString {
-                        name
-                        valstr: value
-                        }
-                    }
-                    labelid
-                    frameindex
-                    trackid
-                    keyframe
-                    taskclassify
-                    frameclassify
-                    end
-                    bbox2d {
-                        xnorm
-                        ynorm
-                        wnorm
-                        hnorm
-                    }
-                    point {
-                        xnorm
-                        ynorm
-                    }
-                    polyline {
-                        xnorm
-                        ynorm
-                    }
-                    polygon {
-                        xnorm
-                        ynorm
-                    }
-                    pixel {
-                        imagesize
-                        regions
-                        holes
-                    }
-                    ellipse {
-                        xcenternorm
-                        ycenternorm
-                        xnorm
-                        ynorm
-                        rot
-                    }
+                    %s
                     }
                 }
 
@@ -152,6 +99,8 @@ class ExportRepo(ExportControllerInterface):
         }
 
         """
+            % LABEL_SHARD
+        )
         # EXECUTE THE QUERY
         query_variables = {
             "orgId": org_id,
@@ -198,7 +147,8 @@ class ExportRepo(ExportControllerInterface):
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get the latest datapoints."""
-        query_string = """
+        query_string = (
+            """
         query($orgId: UUID!, $projectId: UUID!, $first: Int, $cursor: String) {
             tasksPaged(
                 orgId: $orgId
@@ -217,62 +167,7 @@ class ExportRepo(ExportControllerInterface):
                     }
                     createdByEmail
                     labels {
-                        category
-                        attributes {
-                        ... on LabelAttributeInt {
-                            name
-                            valint: value
-                        }
-                        ... on LabelAttributeBool {
-                            name
-                            valbool: value
-                        }
-                        ... on LabelAttributeFloat {
-                            name
-                            valfloat: value
-                        }
-                        ... on LabelAttributeString {
-                            name
-                            valstr: value
-                        }
-                        }
-                        labelid
-                        frameindex
-                        trackid
-                        keyframe
-                        taskclassify
-                        frameclassify
-                        end
-                        bbox2d {
-                        xnorm
-                        ynorm
-                        wnorm
-                        hnorm
-                        }
-                        point {
-                        xnorm
-                        ynorm
-                        }
-                        polyline {
-                        xnorm
-                        ynorm
-                        }
-                        polygon {
-                        xnorm
-                        ynorm
-                        }
-                        pixel {
-                        imagesize
-                        regions
-                        holes
-                        }
-                        ellipse {
-                        xcenternorm
-                        ycenternorm
-                        xnorm
-                        ynorm
-                        rot
-                        }
+                        %s
                     }
                     }
                 }
@@ -283,6 +178,8 @@ class ExportRepo(ExportControllerInterface):
 
 
         """
+            % LABEL_SHARD
+        )
         # EXECUTE THE QUERY
         query_variables = {
             "orgId": org_id,

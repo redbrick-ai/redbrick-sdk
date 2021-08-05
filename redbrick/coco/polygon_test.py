@@ -34,7 +34,7 @@ def test_rb2coco_polygon_simple_square() -> None:
 
 
 def test_rb2coco_polygon_diamond() -> None:
-    """Test converting polygon rb label to coco label when the polygon is just a square."""
+    """Test converting polygon rb label to coco label when the polygon is a diamond."""
     # arrange
     label = {
         "label_id": "1234",
@@ -60,6 +60,41 @@ def test_rb2coco_polygon_diamond() -> None:
         "area": 5000,
         "iscrowd": 0,
         "segmentation": [[50, 0, 100, 50, 50, 100, 0, 50]],
+    }
+    # assert result == result3, "Conversion is not consistent/symmetric"
+    assert is_coco_polygon(result)
+
+
+def test_rb2coco_polygon_diamond_reverse_order() -> None:
+    """
+    Test converting polygon rb label to coco label with diamond shape.
+
+    Reverse the direction to ensure area computation is consistent.
+    """
+    # arrange
+    label = {
+        "label_id": "1234",
+        "category": [["object", "bus"]],
+        "polygon": [
+            {"xnorm": 0, "ynorm": 0.5},
+            {"xnorm": 0.5, "ynorm": 1},
+            {"xnorm": 1, "ynorm": 0.5},
+            {"xnorm": 0.5, "ynorm": 0},
+        ],
+    }
+
+    # action
+    result = rb2coco_polygon(label, 1, 1, 2, 100, 100)
+
+    # assert
+    assert result == {
+        "id": 1,
+        "image_id": 1,
+        "category_id": 2,
+        "bbox": [0, 0, 100, 100],
+        "area": 5000,
+        "iscrowd": 0,
+        "segmentation": [[0, 50, 50, 100, 100, 50, 50, 0]],
     }
     # assert result == result3, "Conversion is not consistent/symmetric"
     assert is_coco_polygon(result)
