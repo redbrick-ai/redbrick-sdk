@@ -86,7 +86,7 @@ class ExportRepo(ExportControllerInterface):
                 items(presigned:false)
                 labelData(customGroupName: $name){
                 createdByEmail
-                labels {
+                labels(interpolate: true) {
                     %s
                     }
                 }
@@ -166,7 +166,7 @@ class ExportRepo(ExportControllerInterface):
                         items(presigned: false)
                     }
                     createdByEmail
-                    labels {
+                    labels(interpolate: true) {
                         %s
                     }
                     }

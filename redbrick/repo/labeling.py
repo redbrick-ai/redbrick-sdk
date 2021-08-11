@@ -5,11 +5,7 @@ import aiohttp
 
 from redbrick.common.client import RBClient
 from redbrick.common.labeling import LabelingControllerInterface
-
-
-LABEL_SHARD = """
-
-"""
+from .shards import LABEL_SHARD
 
 
 class LabelingRepo(LabelingControllerInterface):
@@ -64,68 +60,15 @@ class LabelingRepo(LabelingControllerInterface):
                         taskType
                         createdAt
                         createdBy
-                        labels {
-                            category
-                            attributes {
-                            ... on LabelAttributeInt {
-                                name
-                                valint: value
-                            }
-                            ... on LabelAttributeBool {
-                                name
-                                valbool: value
-                            }
-                            ... on LabelAttributeFloat {
-                                name
-                                valfloat: value
-                            }
-                            ... on LabelAttributeString {
-                                name
-                                valstr: value
-                            }
-                            }
-                            labelid
-                            frameindex
-                            trackid
-                            keyframe
-                            taskclassify
-                            frameclassify
-                            end
-                            bbox2d {
-                            xnorm
-                            ynorm
-                            wnorm
-                            hnorm
-                            }
-                            point {
-                            xnorm
-                            ynorm
-                            }
-                            polyline {
-                            xnorm
-                            ynorm
-                            }
-                            polygon {
-                            xnorm
-                            ynorm
-                            }
-                            pixel {
-                            imagesize
-                            regions
-                            holes
-                            }
-                            ellipse {
-                                xcenternorm
-                                ycenternorm
-                                xnorm
-                                ynorm
-                                rot
-                            }
+                        labels(interpolate: true) {
+                            %s
                         }
                 }
             }
         }
-        """
+        """ % (
+            LABEL_SHARD
+        )
 
         response = self.client.execute_query(
             query,

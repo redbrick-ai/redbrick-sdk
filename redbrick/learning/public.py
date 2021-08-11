@@ -123,7 +123,7 @@ class Learning:
         async with aiohttp.ClientSession() as session:
             coros = [self._update_task(session, cycle, task) for task in tasks]
             temp = await gather_with_concurrency(
-                10, coros, "Updating tasks with priorities"
+                100, coros, "Updating tasks with priorities"
             )
             failed = []
             for val in temp:

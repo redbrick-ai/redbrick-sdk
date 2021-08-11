@@ -69,7 +69,7 @@ class LearningRepo(LearningControllerInterface):
                             items(presigned:false)
                         }
                         groundTruth {
-                            labels {
+                            labels(interpolate: true) {
                                 %s
                             }
                         }
