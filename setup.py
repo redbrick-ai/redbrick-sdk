@@ -32,7 +32,7 @@ setup(
         "aiohttp==3.7.4",
         "cchardet==2.1.7",
         "aiodns==3.0.0",
-        "Pillow==8.2.0",
+        "Pillow==8.3.2",
         "shapely==1.7.1",
     ],
     extras_require={
