@@ -1,4 +1,5 @@
 """Partial queries to prevent duplication."""
+
 LABEL_SHARD = """
 category
 attributes {
@@ -43,4 +44,5 @@ ellipse {
     ynorm
     rot
 }
+ocrvalue
 """
