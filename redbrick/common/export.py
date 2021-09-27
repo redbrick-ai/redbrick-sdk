@@ -45,3 +45,7 @@ class ExportControllerInterface(ABC):
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get the latest datapoints."""
+
+    @abstractmethod
+    def get_datapoint_latest(self, org_id: str, project_id: str, task_id: str) -> Dict:
+        """Get the latest labels for a single datapoint."""

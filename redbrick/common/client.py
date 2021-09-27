@@ -11,6 +11,9 @@ class RBClient:
 
     def __init__(self, api_key: str, url: str, retry_count: int = 5,) -> None:
         """Construct RBClient."""
+        assert (
+            len(api_key) == 43
+        ), "Invalid Api Key length, make sure you've copied it correctly"
         self.api_key = api_key
         self.url = url.rstrip("/") + "/graphql/"
 

@@ -4,6 +4,25 @@ from redbrick.common.client import RBClient
 from .shards import LABEL_SHARD
 
 
+LATEST_HISTORY_SHARD = (
+    """history(latest: true) {
+                    taskData {
+                    dataPoint {
+                        dpId
+                        name
+                        itemsPresigned: items(presigned: true)
+                        items(presigned: false)
+                    }
+                    createdByEmail
+                    labels(interpolate: true) {
+                        %s
+                    }
+                    }
+                }"""
+    % LABEL_SHARD
+)
+
+
 class ExportRepo(ExportControllerInterface):
     """Handle API requests to get export data."""
 
@@ -157,28 +176,13 @@ class ExportRepo(ExportControllerInterface):
                 after: $cursor
             ) {
                 entries {
-                history(latest: true) {
-                    taskData {
-                    dataPoint {
-                        dpId
-                        name
-                        itemsPresigned: items(presigned: true)
-                        items(presigned: false)
-                    }
-                    createdByEmail
-                    labels(interpolate: true) {
-                        %s
-                    }
-                    }
-                }
+                    %s
                 }
                 cursor
             }
             }
-
-
         """
-            % LABEL_SHARD
+            % LATEST_HISTORY_SHARD
         )
         # EXECUTE THE QUERY
         query_variables = {
@@ -194,3 +198,33 @@ class ExportRepo(ExportControllerInterface):
             result["tasksPaged"]["entries"],
             result["tasksPaged"]["cursor"],
         )
+
+    def get_datapoint_latest(self, org_id: str, project_id: str, task_id: str) -> Dict:
+        """Get the latest labels for a single datapoint."""
+        query_string = (
+            """
+        query($orgId: UUID!, $projectId: UUID!, $taskId: UUID!) {
+            task(
+                orgId: $orgId
+                projectId: $projectId
+                taskId: $taskId
+
+            ) {
+                %s
+            }
+            }
+        """
+            % LATEST_HISTORY_SHARD
+        )
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "taskId": task_id,
+        }
+
+        result: Dict[str, Dict] = self.client.execute_query(
+            query_string, query_variables
+        )
+
+        return result["task"]
