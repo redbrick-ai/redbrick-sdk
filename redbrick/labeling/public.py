@@ -90,3 +90,9 @@ class Labeling:
     def put_tasks(self, stage_name: str, tasks: List[Dict]) -> List[Dict]:
         """Put tasks, return tasks that failed."""
         return asyncio.run(self._put_tasks(stage_name, tasks))
+
+    def assign_task(self, stage_name: str, task_id: str, email: str) -> None:
+        """Assign task to specified email."""
+        self.context.labeling.assign_task(
+            self.org_id, self.project_id, stage_name, task_id, email
+        )

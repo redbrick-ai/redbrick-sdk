@@ -37,3 +37,9 @@ class LabelingControllerInterface(ABC):
         review_val: bool,
     ) -> None:
         """Put review result for task."""
+
+    @abstractmethod
+    def assign_task(
+        self, org_id: str, project_id: str, stage_name: str, task_id: str, email: str
+    ) -> None:
+        """Assign task to specified email."""

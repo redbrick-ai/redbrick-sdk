@@ -169,3 +169,40 @@ class LabelingRepo(LabelingControllerInterface):
         }
 
         result = await self.client.execute_query_async(session, query, variables)
+
+    def assign_task(
+        self, org_id: str, project_id: str, stage_name: str, task_id: str, email: str
+    ) -> None:
+        """Assign task to specified email."""
+        query_string = """
+        mutation assignTaskByEmailSDK(
+            $orgId: UUID!,
+            $projectId: UUID!,
+            $stageName: String!,
+            $taskId: UUID!,
+            $email: String!
+        ){
+            assignTask(
+                orgId: $orgId
+                projectId: $projectId
+                stageName: $stageName
+                taskId: $taskId
+                email: $email
+            ) {
+                task {
+                    taskId
+                }
+            }
+        }
+        """
+
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+            "taskId": task_id,
+            "email": email,
+        }
+
+        self.client.execute_query(query_string, query_variables)
