@@ -1,12 +1,12 @@
 """Organization class."""
 
-from typing import List
+from typing import List, Optional, Dict
 from tqdm import tqdm  # type: ignore
 
 from redbrick.common.enums import LabelType
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
-from .basic_project import get_basic_project
+from .basic_project import get_active_learning_project, get_basic_project
 
 
 class RBOrganization:
@@ -57,10 +57,20 @@ class RBOrganization:
         return str(self)
 
     def create_project(
-        self, name: str, label_type: LabelType, taxonomy_name: str, reviews: int = 0
+        self,
+        name: str,
+        label_type: LabelType,
+        taxonomy_name: str,
+        reviews: int = 0,
+        active_learning: Optional[Dict] = None,
     ) -> RBProject:
         """Create a project, similar to quickstart through the UI."""
-        stages = get_basic_project(reviews)
+        if active_learning:
+            batch_size = active_learning.get("batch_size", 20)
+            cycle_size = active_learning.get("cycle_size", 1)
+            stages = get_active_learning_project(reviews, batch_size, cycle_size)
+        else:
+            stages = get_basic_project(reviews)
 
         project_data = self.context.project.create_project(
             self.org_id, name, stages, label_type.value, taxonomy_name

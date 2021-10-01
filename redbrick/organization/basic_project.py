@@ -4,6 +4,7 @@ from typing import List, Dict, Tuple
 
 OUTPUT_NAME = "Output"
 LABEL_NAME = "Label"
+ACTIVE_LEARNING_ENTRY = "Finalized_Tasks"
 MIN_REVIEW = 0
 MAX_REVIEW = 6
 
@@ -43,6 +44,43 @@ def _get_middle_stages(reviews: int, passed_name: str) -> Tuple[List[Dict], str]
     return stages, LABEL_NAME
 
 
+def _get_active_learning_config(
+    middle_stages: List[Dict], entryPoint: str, batch_size: int, cycle_size: int
+) -> List[Dict]:
+
+    return (
+        [
+            {
+                "brickName": "labelset-input",
+                "routing": {"nextStageName": "Active_Learning",},
+                "stageName": "Input",
+                "stageConfig": {},
+            },
+            {
+                "brickName": "active-learning",
+                "routing": {"passed": OUTPUT_NAME, "failed": entryPoint,},
+                "stageName": "Active_Learning",
+                "stageConfig": {"batchSize": batch_size, "cycleSize": cycle_size,},
+            },
+            {
+                "brickName": "labelset-output",
+                "stageName": OUTPUT_NAME,
+                "routing": {"nextStageName": "END",},
+                "stageConfig": {},
+            },
+        ]
+        + middle_stages
+        + [
+            {
+                "brickName": "feedback",
+                "stageName": ACTIVE_LEARNING_ENTRY,
+                "routing": {"feedbackStageName": "Active_Learning",},
+                "stageConfig": {},
+            },
+        ]
+    )
+
+
 def get_basic_project(reviews: int = 0) -> List[Dict]:
     """Get basic project config with reviews."""
     if reviews < MIN_REVIEW:
@@ -68,3 +106,14 @@ def get_basic_project(reviews: int = 0) -> List[Dict]:
     temp = [input_stage] + middle_stages + [output_stage]
 
     return temp
+
+
+def get_active_learning_project(
+    reviews: int, batch_size: int, cycle_size: int
+) -> List[Dict]:
+    """Get active learning project."""
+    middle_stages, entry_point = _get_middle_stages(reviews, ACTIVE_LEARNING_ENTRY)
+
+    return _get_active_learning_config(
+        middle_stages, entry_point, batch_size, cycle_size
+    )
