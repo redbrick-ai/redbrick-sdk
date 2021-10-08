@@ -116,6 +116,9 @@ class Labeling:
                 "taskId": item["taskId"],
                 "assignedTo": (item.get("assignedTo") or {}).get("email"),
                 "status": item["state"],
+                "items": item["datapoint"]["items"],
+                "itemsPresigned": item["datapoint"]["itemsPresigned"],
+                "name": item["datapoint"]["name"],
             }
 
         print("Downloading tasks in stage")

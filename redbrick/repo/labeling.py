@@ -239,6 +239,12 @@ class LabelingRepo(LabelingControllerInterface):
                             email
                             userId
                         }
+                        datapoint {
+                            itemsPresigned: items(presigned: true)
+                            items(presigned: false)
+                            dataType
+                            name
+                    }
                     }
                 }
             }
