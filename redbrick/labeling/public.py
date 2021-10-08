@@ -3,9 +3,12 @@
 import asyncio
 from typing import List, Dict, Optional
 from copy import deepcopy
+from functools import partial
 import aiohttp
+import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
+from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.rb_label_utils import clean_rb_label
 
@@ -39,7 +42,7 @@ class Labeling:
 
             return {
                 "taskId": task_id,
-                "labels": labels,
+                "labels": labels_cleaned,
                 "items": items,
                 "itemsPresigned": items_presigned,
                 "name": name,
@@ -96,3 +99,27 @@ class Labeling:
         self.context.labeling.assign_task(
             self.org_id, self.project_id, stage_name, task_id, email
         )
+
+    def get_task_queue(self, stage_name: str, concurrency: int = 200) -> List[Dict]:
+        """Get all tasks in queue."""
+        temp = self.context.labeling.get_tasks_queue
+        my_iter = PaginationIterator(
+            partial(temp, self.org_id, self.project_id, stage_name, concurrency)
+        )
+
+        count = self.context.labeling.get_task_queue_count(
+            self.org_id, self.project_id, stage_name
+        )
+
+        def _parse_entry(item: Dict) -> Dict:
+            return {
+                "taskId": item["taskId"],
+                "assignedTo": (item.get("assignedTo") or {}).get("email"),
+                "status": item["state"],
+            }
+
+        print("Downloading tasks in stage")
+        return [
+            _parse_entry(val)
+            for val in tqdm.tqdm(my_iter, unit=" datapoints", total=count)
+        ]

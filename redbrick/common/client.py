@@ -27,6 +27,10 @@ class RBClient:
             )
             res = {}
 
+            if response.status_code == 500:
+                raise ValueError(
+                    "Internal Server Error: You are probably using an invalid API key"
+                )
             if "errors" in response.json():
                 raise ValueError(response.json()["errors"][0]["message"])
             elif "data" in response.json():
@@ -52,6 +56,10 @@ class RBClient:
 
                 response_data = await response.json()
                 res = {}
+                if response.status == 500:
+                    raise ValueError(
+                        "Internal Server Error: You are probably using an invalid API key"
+                    )
                 if "errors" in response_data:
                     raise ValueError(response_data["errors"][0]["message"])
                 elif "data" in response_data:
