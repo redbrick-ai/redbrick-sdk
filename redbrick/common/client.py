@@ -31,6 +31,8 @@ class RBClient:
                 raise ValueError(
                     "Internal Server Error: You are probably using an invalid API key"
                 )
+            if response.status_code == 403:
+                raise PermissionError("Problem authenticating with Api Key")
             if "errors" in response.json():
                 raise ValueError(response.json()["errors"][0]["message"])
             elif "data" in response.json():
