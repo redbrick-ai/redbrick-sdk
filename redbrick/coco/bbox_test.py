@@ -31,6 +31,27 @@ def test_rb2coco_bbox() -> None:
     assert is_coco_bbox(result)
 
 
+def test_rb2coco_bbox() -> None:
+    """
+    Area calculation rounding error.
+
+    Regression test for issue caused by rounding area at the end
+    instead of using rounded width and height.
+    """
+    # arrange
+    label = {
+        "label_id": "1234",
+        "category": [["object", "bus"]],
+        "bbox2d": {"xnorm": 0, "ynorm": 0, "wnorm": 0.146, "hnorm": 0.116},
+    }
+
+    # action
+    result = rb2coco_bbox(label, 1, 1, 2, 100, 100)
+
+    # assert
+    assert result["area"] == result["bbox"][2] * result["bbox"][3]
+
+
 def test_is_coco_bbox() -> None:
     """Test if given coco label is an rb bbox."""
     assert is_coco_bbox(

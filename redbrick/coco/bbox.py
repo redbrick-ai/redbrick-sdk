@@ -29,7 +29,7 @@ def rb2coco_bbox(
             int(hnorm * height),
         ],
         "iscrowd": 0,
-        "area": int(wnorm * hnorm * width * height),
+        "area": int(wnorm * width) * int(hnorm * height),
         "segmentation": [],
     }
 
