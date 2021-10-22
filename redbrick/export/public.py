@@ -12,6 +12,7 @@ from redbrick.coco.coco_main import coco_converter
 
 def _parse_entry_latest(item: Dict) -> Dict:
     history_obj = item["history"][0]
+    task_id = item["taskId"]
     datapoint = history_obj["taskData"]["dataPoint"]
     items_presigned = datapoint["itemsPresigned"]
     items = datapoint["items"]
@@ -20,7 +21,22 @@ def _parse_entry_latest(item: Dict) -> Dict:
     created_by = history_obj["taskData"]["createdByEmail"]
     labels = [clean_rb_label(label) for label in history_obj["taskData"]["labels"]]
 
-    return flat_rb_format(labels, items, items_presigned, name, dp_id, created_by)
+    return flat_rb_format(
+        labels, items, items_presigned, name, dp_id, task_id, created_by
+    )
+
+
+def parse_output_entry(item: Dict) -> Dict:
+    items_presigned = item["itemsPresigned"]
+    items = item["items"]
+    name = item["name"]
+    dp_id = item["dpId"]
+    created_by = item["labelData"]["createdByEmail"]
+    labels = [clean_rb_label(label) for label in item["labelData"]["labels"]]
+    task_id = item["task"]["taskId"]
+    return flat_rb_format(
+        labels, items, items_presigned, name, dp_id, task_id, created_by
+    )
 
 
 class Export:
@@ -41,22 +57,10 @@ class Export:
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
 
-        def _parse_entry(item: Dict) -> Dict:
-            items_presigned = item["itemsPresigned"]
-            items = item["items"]
-            name = item["name"]
-            dp_id = item["dpId"]
-            created_by = item["labelData"]["createdByEmail"]
-            labels = [clean_rb_label(label) for label in item["labelData"]["labels"]]
-
-            return flat_rb_format(
-                labels, items, items_presigned, name, dp_id, created_by
-            )
-
-        print("Downloading datapoints")
+        print("Downloading tasks")
         return (
             [
-                _parse_entry(val)
+                parse_output_entry(val)
                 for val in tqdm.tqdm(
                     my_iter, unit=" datapoints", total=general_info["datapointCount"]
                 )
@@ -68,7 +72,7 @@ class Export:
         temp = self.context.export.get_datapoints_latest
 
         my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, concurrency, True)
+            partial(temp, self.org_id, self.project_id, concurrency)
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
@@ -76,7 +80,7 @@ class Export:
             self.org_id, self.project_id
         )
 
-        print("Downloading datapoints")
+        print("Downloading tasks")
         return (
             [
                 _parse_entry_latest(val)

@@ -2,7 +2,7 @@ from .client import RBClient
 from .export import ExportControllerInterface
 from .upload import UploadControllerInterface
 from .labeling import LabelingControllerInterface
-from .learning import LearningControllerInterface
+from .learning import LearningControllerInterface, LearningController2Interface
 from .project import ProjectRepoInterface
 
 
@@ -17,6 +17,7 @@ class RBContext:
         self.upload: UploadControllerInterface
         self.labeling: LabelingControllerInterface
         self.learning: LearningControllerInterface
+        self.learning2: LearningController2Interface
         self.project: ProjectRepoInterface
 
     def __str__(self) -> str:

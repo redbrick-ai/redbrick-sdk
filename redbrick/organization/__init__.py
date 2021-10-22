@@ -57,20 +57,10 @@ class RBOrganization:
         return str(self)
 
     def create_project(
-        self,
-        name: str,
-        label_type: LabelType,
-        taxonomy_name: str,
-        reviews: int = 0,
-        active_learning: Optional[Dict] = None,
+        self, name: str, label_type: LabelType, taxonomy_name: str, reviews: int = 0,
     ) -> RBProject:
         """Create a project, similar to quickstart through the UI."""
-        if active_learning:
-            batch_size = active_learning.get("batch_size", 20)
-            cycle_size = active_learning.get("cycle_size", 1)
-            stages = get_active_learning_project(reviews, batch_size, cycle_size)
-        else:
-            stages = get_basic_project(reviews)
+        stages = get_basic_project(reviews)
 
         project_data = self.context.project.create_project(
             self.org_id, name, stages, label_type.value, taxonomy_name

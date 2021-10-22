@@ -15,7 +15,7 @@ def _get_middle_stages(reviews: int, passed_name: str) -> Tuple[List[Dict], str]
         "brickName": "manual-labeling",
         "stageName": LABEL_NAME,
         "routing": {"nextStageName": "Review_1" if reviews > 0 else passed_name,},
-        "stageConfig": {},
+        "stageConfig": {"isPrimaryStage": True},
     }
     feedback_stage = {
         "brickName": "feedback",

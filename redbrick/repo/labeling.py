@@ -243,6 +243,7 @@ class LabelingRepo(LabelingControllerInterface):
                             itemsPresigned: items(presigned: true)
                             items(presigned: false)
                             dataType
+                            dpId
                             name
                     }
                     }
