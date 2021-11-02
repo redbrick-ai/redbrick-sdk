@@ -256,7 +256,9 @@ class Export:
         )
 
         # Convert rbai to png masks and save output
+        dp_map = {}
         for datapoint in datapoints:
+            dp_map[datapoint["dpId"]] = datapoint["items"][0]
             color_mask = Export.convert_rbai_mask(datapoint, class_id_map)
             plt.imsave(
                 os.path.join(output_dir, "%s.png" % datapoint["dpId"]), color_mask
@@ -264,6 +266,9 @@ class Export:
 
         with open(os.path.join(output_dir, "class_map.json"), "w+") as file:
             json.dump(color_map, file, indent=2)
+        
+        with open(os.path.join(output_dir, "datapoint_map.json"), "w+") as file:
+            json.dump(dp_map, file, indent=2)
 
         return
 
