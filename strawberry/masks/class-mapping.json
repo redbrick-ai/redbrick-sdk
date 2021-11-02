@@ -1,0 +1,816 @@
+{
+  "labels": [
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163719_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=75e7d7225eb0b6c6db6d329aa405e94685ef0c8eda366cace42003f8136b7f2a",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/037f7706-c3a6-43f7-aa75-1451ec0bf433.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163648_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=fada81d6254354a1479e87c6641b64b3b60e3de1ce91847e8c200645c79a9d9b",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/03bd662a-4c2c-4c01-852a-ce0b221cae23.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163938_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=ad58d405aa47db253d6a4d9913357b60308730f68348b73827462cb1f3834904",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/051a615e-c6ea-47f5-be06-25fbc41f85c1.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122755_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=837cada558985b49e496e0fb83e91db798ebf889f66048b5a54ef728f033c694",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/061f19d4-b033-4f19-84dc-bd227c8aa1ee.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163834_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=e2f86702fe645ded801774cdd934d1d5638ee99df66da2271dacd597c68bded9",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/073e43d9-526c-422a-9a4b-58f078f75262.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163029_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0f2b42fd5f4086831e19cbb1715a07e081ef1bf974c0434cde100ae614641f7f",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/09d4325c-e06e-4f94-80d2-588d9d6a739f.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163911_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=25003dfd76f2845058f2340500f77aa1a78c4c4c34b625fd9b6cd6e312062c11",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/0b8a6e16-de11-490a-a02f-cfaed085ef3a.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163642_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=ceb1bb8f543c7762a69e357f0e435c62f40ca1695ccb515c9b61b6848385f75d",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/0c7d3aa2-127b-4a74-9d3c-a3a5b488fac3.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163915_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=627c10fef91677a72519e5c2de3895cd2b981287612f70ead61d44de7df95fe3",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/0eed3770-4daa-46d3-a9e4-7c8c2e90fb3b.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163742_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=c05a1ddc308a8a8611b6cb47fb3f3846e373c6b1465d85b4a9b582de67bded48",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/111d35d9-60aa-482d-bf1a-9dbf4eac4c0e.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163330_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=4a55412f1864d4dd3dacb2e09becfa2f4297ffdeabb03545d4ed39194feb2aba",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/118f7063-e980-4cae-9b6a-8e315bb8c815.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163334_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=51fbb4250eabf0f87cbbbd135cd04933583b404f38d025fefeaeade657265aca",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/13410d57-731d-4bc2-b936-80388285de6e.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163805_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2dbe814af9624b1f92dab17ea36917b7950265ae344940cc53f469d2e8b364f2",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/1cc447f6-3d80-4c8e-8348-a6f439f84c41.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163830_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3e3cfe2f5d05efea869d1060f49c69f27ef3b1cce5ae3add2d1fc1cd64a76ef5",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/1cf24148-635d-442d-b838-ad26735fd526.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163722_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=30b3697aaeca37e29473dc8eae41652fee257640b37743cd6902ff0052628ebd",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/1e624102-f8c0-4f1a-a94f-9dd7e1207fc7.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163930_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=9034fd42208d8db104bbfdc0be1535f3d933489ec28578d30abfaf58282abc33",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/2235def2-7d3a-4552-88e1-c143bae92819.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163938_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=a31d827cb8d26663296d80b611abdb9961c63214555cc96d50f4a8607647e932",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/228f12bf-a657-41f0-b533-8b699ac8df8e.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163719_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=500634124920e36a9469ae12d843f10111474288ed14cf5e92d9ba070ae303e7",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/26bab45e-06f8-4fb7-8e65-f2115d1a3790.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163805_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=8537235755fef12aaf6cb04ab65d00a93335a6405d92c3b5855aa103b5a8f85b",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/28776aaf-50bd-4a51-8962-fc93f7b72287.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163833_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=7f640b930f86e2113e063e56e87bb34007e666e089150422bbd3c00e0ef26bad",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/28f89999-f889-4db2-8193-8d9b092e262a.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163744_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=a54f1bab9dcadfcb66fa5f87df8bcb03d08606111d3484c990c652da56d1e46d",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/292a771c-ae5d-4330-a34a-16766753c72c.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122738_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=742d77f05c8525be9fa5cb2b90a0d1dca66ff9b2a4b15c994b1db8e5f8858004",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/29fd0e56-201b-424d-b660-9387edd06c75.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163717_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=a7872d7d04b10c29ebce0a909e0c09fea8a09fb714124b29042b025c24dfe362",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/2ab94241-b245-4a44-8283-0db2b0052946.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163629_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=175f1ae5e3be08b4e2ecb0bcb1ea14fb37313161fe42bda6391d24e4e4736097",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/2d8bb50b-f67d-4cbb-a2c1-59204dd422a2.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163909_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=db951459fea43ce7a1255ae1e2118775c3fbf635d432032e1267f906b255ef6b",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/300a708d-b7dd-4bbe-8581-2a0050864ec8.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163934_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=c082b825972ce656dd52dcde89d0d91150b7624bdc7cbe438b3c437c31e194eb",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/33ea11db-d8a7-4ffc-b287-892aa0fbe46b.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163915_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=59e66846d54ddd8865f3ceb69935b22390b167a602b39ad7bc3f54d7ac30f77a",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/355708db-06d9-4353-9b57-3c11678a4f80.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163934_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=70cac96764519d2444a98af0a905a1e89af244b3f71d0cdf1efbf2d827fbf5d6",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/35f3f6ea-9a4d-48ea-8cd9-721d7268e6cd.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163803_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=38391d727c1e909f1fc624368df0b202995b155cbfff5113b3e09075945d471b",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/362035d6-60dc-4ec1-b761-5b6435b5c6ce.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163836_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=16d498c6cbe55bb759c2b7252e0355e78bd7493939d0b760be4a658df5a02333",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/36a965bb-e6ef-40a5-9941-207d724a3430.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163831_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=6bb6c2c4c9b5704f6456491d338053a3d916ce0766aa060089bd6ae7a2026a2a",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/38889990-4d27-461e-b026-4a222984c06c.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163812_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2616e13ea6ed691f43ec3855b9977abc722c2e2536e1918792cd92966d172979",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/393f80cf-759e-4441-a58b-cf4420663d81.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163648_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=e53b76ad72c48b580b853b58aae7700890c6be8bdf72f9a07fe6bc280bfb2e90",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/3ad916ea-9578-4773-89c5-4e45537f0c75.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163642_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=412635eccae1ba3bbf49c854e14afeaf83e0f5e06a5a4143e1dfbaf21cce531e",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/3b282012-9886-4a1b-b771-cb5cc5cbd6a3.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163904_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3ca156bf8253fac6ae99a5e44354800a72e3cadb7f2158da3b7e3151e7fae7ce",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/3ebd5f4c-8847-4b5b-b2d2-e284fe3debd2.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163633_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=5aa9adf5fdd77c522273b9d5ae081bd3ce1a9bdf110caf7b939b3115c280c428",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/3f3c12a5-2084-4ff6-b9a7-9138c68807ae.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163722_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=33561933ac854c191f031cdf27654eb039525747ed8d5e878f35cff7ffb414a2",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/4088fc0a-6402-4a1b-878b-3f345791e411.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163812_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=db6d13c0da4dcc9dff557ffb7ae5e4f2bf9f91c1211eb6f57117a1b82e24f2f7",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/42981097-e276-4f92-b2b0-d2f9bf73ab79.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163836_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3258328b34539840a43049825c20fbdded4da9d73c8470a96b8cf28ed749001f",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/430425f1-2652-4e03-82ab-4e606b6d7e83.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163415_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=bad1486794308a8166272d3cdec4b387a641369ef4ea932425d71ace3cb0d079",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/4304cb2c-0149-4aab-be62-f4b480ba39ae.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163633_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=ff77b9b2930c1ff795afc8e20545438d9c23f1d7aac717d6b607e3d590d45184",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/44d071b2-f649-4157-9708-3911356e509e.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163930_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=46290dfd163ede24f332258fd8218ad7fc71e22f6477cf206bb7bb40158dcf66",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/4954dfc3-d9a3-4d4c-b8c8-3a05ea49414d.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163920_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0c53b7bc288b296b5fd27569bc12e0bce53a2e0634fb702fb611d9c5fb2257b7",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/4e2c2aed-c93c-46f3-b854-23b0401a4f00.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163830_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=7b0180f4213f73f395778505e036a229df7a85ad3479fe54ff344a725d792540",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/4f7978ff-02e2-46d9-b94a-5bfb0b7a8fe1.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163657_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=c8c7bc71b1e8803b00e76a077cb3db1e5ec142e3892f50f49278471d0febf68c",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/50190bd2-e1e1-4c8b-bdb5-333bcbb8ce59.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163906_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=47ee99af99f03f26f80a42b734809f940f044d099a960e9c0c000c397227eaf2",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/508df399-0885-4e39-94f2-1aa36cbbe866.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163640_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=54f3c9191e37e815ebe7f77f9ed7b53066688327282abb116fa88c9812428509",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/5135b361-879e-49a4-9dfd-887b37e78510.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163642_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=93378c313bdda1d9fa4e853543920f78717a03faa5d264e0e7fca70f804a1b0b",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/525f75c4-20f3-4058-8e48-153ed0d1ed86.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163851_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0ae58c3e4c52673e127475864a6505c3287bb32bad7ffbc47cfe65cd400d1d66",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/53b8df8e-c13a-45e8-a236-bee5780d6cb9.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163906_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=f903bd2c2bb10228c601011577b9e5ac1f80a7b2ebba2bdb573e78f97592ea2d",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/549eff5f-c355-4339-81db-ca8081210fc1.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163343_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=091c7c5df36cc019d64eb1397f255d3845548c4143c44022094245047b40fbbb",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/54a3d9f2-a73c-4370-a14a-e946367eb428.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163805_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=181e59a4b7852b77334e28a2517934cef94afbb81fde6a8cd6e268bee77ec564",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/54c63374-bdaf-47be-8c32-4d4e0059c229.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163744_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=737a9a34675be1f0e9e0f65ea600eedf5888c60f1141f18fcae742e7b4c9f883",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/554d35c2-1d47-4125-8863-8f2f59e77d26.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163029_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=efd32cf837ae0aef1faf6898d4e51891d34701efa1b095beb70d8440f4896a98",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/595830f9-92cf-4c3e-8959-2ef6b0ddbdeb.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163730_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=5846992e9493e8e5434300efd90bf0a667a82074997e6906bc1928ad9a41b561",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/5b05d63f-6ad5-4d27-a983-2bbaa3cd39f5.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163640_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=68db540c06a4c4fd5b13882110caa89bb755e00153c32d898e972779a9051e94",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/5b3e288f-1e7b-491c-823b-8cb0cb16d0f2.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163324_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=4e2402f352e8d83ce58a03f19d9ad203868f8bc9828bb2dd483dea54ca47f476",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/5bf59019-9c78-4ca7-b901-23a5bf3d6663.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122738_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=c51a05adcb0afdcf3033e6248b58d96a1421ea69e62b7fdf697e17d1a3f2b646",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/5cc62593-2a89-4acb-a736-1b5db7da6ad2.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163343_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=aaad5884c99c2e8cfa5545806f5e89c2b98a52168795ac90bd84537607316cfd",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/5ec6f1e4-5ee8-474e-9cff-2a178e8e9c25.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163816_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3281b6a9e3c50a0c22d510e32ed54d87cee213824f3b13c8e20a218648592047",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/5f0ff27b-3ccc-4f34-9b8a-4652398ae52a.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163827_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=6a4e35b829f19f5871b0e46fb1bac2dba1050bba392a2a01d85d5558a00cbb93",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/6071d90c-2172-44b7-86aa-6cf2aee2147f.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163330_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=8d0eebddd56e9c2f4912ddf0abe4a039a452d5d26c4e72673ed763cfbdfed0e4",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/62c140a1-2d9b-40e8-9c80-cf73eae7a8e3.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163913_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=23698474f2c8da51eda4b5556a33ba03604b5b7ac5d04b98de541cdb4f58d649",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/63dbff2e-470d-4f2d-934b-2cf1c12635f3.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122913_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=9201cbdf3ebfea0cd666697066ae958dae6e4f092141584abb841020bbfb4b8e",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/66ca7e23-7c7a-475e-9c3b-9db0082fc033.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163834_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=9583417e08b14b23cd74842b8072c6226e39b126a2352614bff4bfdace7dfc3f",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/685d18bf-6341-4a76-88a4-e00e8e58c70d.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163724_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=70246ab76982251d59223efe891549641cf448319900c0a65712f155f23a5d59",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/68ac8874-1fe0-4fdf-9612-981cf2515346.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163932_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=f5c9988c2ccb1340deb9075054c7e86e6087617fc903ec79625fafca9ff19a87",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/69344281-5f36-482b-8a74-c32d171da45e.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163717_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=b18428d5aa79bdad4b3df3537c6f56a207dc1de1e9f396f37bb36e572765b0ec",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/6a3849de-d194-4f05-9a58-72304ccbf94d.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163749_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=cd3bd179a3d06925606aaae556faa98886758cc64480351976511ea3242b4d57",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/6a47b53b-65bc-457a-a44b-ede60cf8f746.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163410_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=8aca16de0fb265bc44e2f59a017b8693a5b421705160e610943e2acad6682f14",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/6adc1a13-d56b-456a-a9c2-5420247b5533.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163728_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=12561160086b8a68b19393a07e547b23dd6a4b83eb2539937f4c2d95a2835f07",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/6d8839eb-8320-4b6c-9429-537b2eba1597.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163029_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1d6cb0c96af7aba15f48f5e506e9bd6aaf3b0005e9048852a832fe4b9522015c",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/6df981e4-a54f-4c53-826b-cf26f80824cf.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163851_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=dc7f0c1cfadfb909f806df001050b414dc2060eb6fd8c7919413ea815532a260",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/6efc9c4b-b688-4113-b770-e6f225679725.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163734_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=968b034a993f74994f32fd6ef57010f099d9f3ad0178a5a00a306baff5dc814c",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/70257ad1-553b-4b4b-8f1a-3c6156adaebd.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163838_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=a571ff9ba4a278ee3e8aefddc06c7d5f45948c0ec01fdc046115779081d78cac",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/71595f76-7f75-4b83-a1e2-8d12e1994fe5.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163936_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=49d9bbf55f7cadc8fac9743c0938e82fa9970540c07a40caa83e387ee7250371",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/71ade172-e095-457e-a99d-00e512e8fb81.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122913_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=7b2b630851d1026413f6cc2c28a24f531a345ed81b8b227f6e23f1b77eb99bca",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/71d25270-baf8-4902-ab43-36db310019d2.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163334_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3f571b9fa2221963222b45281dba35b1c420d42dd749b8b9d5d18b65efc9a580",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/74b48d1b-9e53-400c-9dc3-7a1fefcb8a68.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163938_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1c2e309c4b72c609e43daee81467b7fcc3f2caa0bee8b8cbbe4c1ac6fdddb781",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/75ff21c7-3e4b-4332-a11f-8ed07c00c128.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163744_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=cfa56291cabc585af91f4e06c47d25cf43d8033d3c9bedc34479422b3a0ffa2a",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/7832c826-2a84-46db-ad74-a12bda8fc697.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163738_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0bceefd17d46c277d608d4a9608aa5421e2c7076fdb54f331d25c8fedd113eac",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/785b0ec7-eab2-41b2-9a0a-7cdddf1ab2f3.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163814_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=15d161b01bb16cd8d20273bbc223a79932a7c7e6f66736a1e31f235d5d8e68e2",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/7913bb9c-b0de-4668-a7df-a4a04da2a97f.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163828_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1051ec0009dbe5fff01c75c5332c79fb434f5745874f4ebd95bc74d3eed98518",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/79dea3e1-24df-4b8a-9cd6-f29aa6536cd0.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163918_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=653a5e581a8b180bccba3ce99b8f5e2745565a4be58145286949be30c0b0698b",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/7aee4feb-7e4c-4caf-9246-f60fae0e0e2e.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163645_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=f0513d47920a2fca0956612bad4b46db21b5a264bb7c48d3ad2470fcf34e4303",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/7b1f35eb-3359-4ed0-9021-b3d3cd9415a3.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163415_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=9004cb4ccfa8a363e36ac94e23bc4f7cd3b9ae433a5e5803ee731dd4a66b9be6",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/7d0ff938-7d94-4bd9-9932-a117a3bee003.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163730_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=12aa61e2a198b4276829e54a9d5cf26e0a735d0747895d9f98316edad8734550",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/7ea9662a-bfaf-425c-b64d-2441936974e5.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163810_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2d61d9c52a0fcd11cce446be6bf4b10546c4420404304404e9af866c86064b4e",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/81384ed5-810b-4783-8991-45938eec6898.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163629_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=cd9020f2831077c9d0f9ed0bc0eaf7971cda241e74b86512bb16ff25b01bc0e0",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/85ce7eaa-b09e-4e9d-a02a-43797874e827.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163742_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1e86b39b1857fa0d88bede85cfc5996669718e83c3a606bc84122bc69fe87423",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/8aa420cf-7bb5-4b3b-aed8-5b1990a3a378.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163638_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2611cc69832a3561b591afae48fa950612f873c51ed1fdf10f92730fa1053b17",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/8aca8bd2-21fa-4c8a-9228-3eeae40c5072.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163920_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=335638e28c1cb582e7e3e85deca958c889c2689859ba8c49fbf509f81e3e8ef4",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/8b6dc8d7-6f7e-4972-b7ed-488cf7e4dbf1.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163833_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=8723008a7f50495aa41c6f1abb556aad40d8eb35dd1ab06e0f254116e9fc97b5",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/8ba68f2b-f662-4e7f-bedc-3b65bc68f27b.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163645_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=deb569b049ab51c0dc764843f2b99c449cd44b9d7ea6dab2e566d62292667390",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/92345c7a-0f17-488c-a7dd-fdd772ac2d37.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163717_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=bdddfd58b53cdaccde86066e8dcc953e9a84085039cd31625d7d7609a760db0c",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/932bd30c-8080-4686-9d11-bfde76ffefb4.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122755_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=d4f1772fb8b34fb909afbea8e184a3b5a7187546943a4d60766a48cde5c819f6",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/93abdf15-63e6-43e9-a2c0-4e1f93bbeb9a.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163816_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3f889588cbbbece0277466cb25c441bce7615b2e29575a1b5eb14679fcef772d",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/9433e158-14ef-44d2-b0a3-6ba8392812c9.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163738_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=ea4d2e975b653906c4c34ab2967efdf3458a45fb9208a4b582d6e0c1a1e92149",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/96b9253a-abf5-4850-91b8-3d72bf2596f9.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163749_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3c6377d22291a822f3ae3fbde35dfdfccbc0e1c98c9178320ab3fafbf18bb324",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/9a93fb21-d846-453e-841b-5f99cc4b1321.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163747_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=f1c0f6226d21b8ea04080499f358bab1f68673fe3caf8f3c9fb634d56a2f0b9c",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/9c71ac8a-1edd-4956-9947-48feeda9fb8f.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163738_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=5331182001120e44ecea1023778e8043dd50575211d32cd478d04c3633836090",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/9cd94dde-0508-4091-8280-bba0574b7263.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163638_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=d0deb54dbf5098939645826154f468bb562d18ba3429df86cf101879fe500a8c",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/9dc2a886-7942-457a-a992-63e84e94fba0.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163638_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=65f8eb3180df1774f0f2531ecc7a1c34320c966872c4aa3858ae43f0c77166e0",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/9eb5c3b3-f45b-4809-9b68-3492d36f6d05.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163816_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=73cec0450a60b4d19f56ad3f84ef60e59a27306fe10935d108e09a14ff87c6e0",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/a07bb148-3b53-4703-8b6f-7570a8c0c353.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163834_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=7687fa0365d285ee138cf8a57cc44fd0be23df13d48ed759c54889b12f61963a",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/a15349eb-5110-4c16-8a9f-32c6f71bd63b.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163724_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1a384af360c262e1f6f07c3a854ba2166a1822669663df6cb6e03edb5b71f198",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/a5c3146d-7075-469d-a001-5aab5eed7ba6.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163934_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=9ddb227ffd8c6c83cc48076e32eeb9a1b67cf88a39636570108f5efd48d6de9f",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/a80a8652-5d08-453e-9dfc-a5066146c4d6.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122945_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=593f08364c0062579d552f6fc9c4a52a39b580573fb0b4cc21d8506676ad7c73",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ab0f3444-d0cb-41a1-b201-6eaebc06244b.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163742_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=e79cbf42987b70964efa85490fbced79b68fc68517a3d7d462a1241051f81f23",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/b03a177d-381a-4fdd-a461-c37daf210753.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163410_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=062e82f828859349492bfeb1625e01eb88c09e1997e83e0c90dea242031d5d35",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/b3247c09-cc20-47e4-8d82-d8eb6ae7989b.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163911_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=6daf92416b84ebe83940c63c019551fdaf11fe088047e9e1e975d60cf3391acb",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/b3701755-b800-406c-96ea-6bbbacc42594.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163734_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=7ae0f525d5339e867aaf652f0b80ac60094bbb534d38bad4dbbb9de6029b783f",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/b4b634b7-01b7-44ee-8669-1f71c88c6791.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163915_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=b6b1fdaf052fc365c9aeb1b63f0f80e16e480a14f0fba072996a36eb5cba3328",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/b5189238-a98b-4e38-bf2f-8e6161435128.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163838_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=51934bc8e0c13645459b4cbce86d81d8957be9f67be49885b7e968de247dad41",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/bbbfb2a9-444b-4b79-a73f-748b76f9b294.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122924_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=21028fe44b1e97bc9c4c068a8b073d660cb69973d87ec88f88acfc22c1fa2251",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/bbc2de34-7960-42eb-9183-31f24461b0c2.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163836_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=efc2665760beeecda63f3661574254a22d06da17686596b6109d32f1a99a8c1e",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/bccddd3f-4e97-421a-8ecc-e91d904cf2f8.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163749_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0c7524cba880cc30703db9741126a60417514b9c86441020ad81522983d43870",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/bec9803a-7f36-41f9-b5b7-a028b3e6348c.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163920_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=b6dc0de30b3a24dd31995f4278b8795c91bf5cc0897a010199ab757437ec209c",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/beddf0d5-61e5-4226-8737-00957999849c.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163640_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=45597d78be2bf9e4001985d75f460026ba2c8dc4b7efe94aeb190ea9f5e4a9eb",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/bfbc1028-592c-469d-97a4-8a4eba832cc7.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163851_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=e5388b561599f1272deba16c2cb9c120d8659fc6eb27c073edd4b0874686e6fc",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/c0dcc533-d7ba-4cfc-bb66-5f26a650d48a.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163913_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=34f5613c2c449afb92547b6b1514013e40abd4d7efc3c6b9a39219cb50d2f92b",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/c38d7d72-3405-4869-baaa-3c3184d36fbd.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163730_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=f22c59c2128adf13513fd33858df9342853cc7252fce776681672838c39ba6a6",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/c3b3371b-607a-45ee-98fe-0b8e68ed2565.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163808_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2068a08ab7db0c475b5e681bbe654f75252396f66f55f95e1d24f8dda3398d73",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/c75cea79-4372-455b-a496-cd094ed5fba8.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122913_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=ada8e66140f5819987396cdee55fce05857f7bd61e42ab2fbf2b50893f5e16a8",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/c892342d-2245-4c71-b385-b6ccceb049fa.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122855_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=6aed56eda583f215c5f36b48018f864289fc09b5202e08c0a6be8f38d2c514b4",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/cb97a990-7c50-432b-be79-114a33da68b9.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163810_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=b72318fef9580b50378a48a359f0a32bc9eadb5c8d0d7e91f814fa8113af24ab",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/cc966444-f5d3-406b-92a4-ce0e49849fe2.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163833_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=9948a738254cc1698cfe9a4f6876661d30b082ee09da5e8b760acbeec7ae0a43",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ce189054-03eb-44dd-b674-1927a99cedcb.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163722_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2e8b7456b9a20bd8587453a6245a4508a6845a5928bf33e20eb0772738d312a5",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ceb1e137-f50a-4c41-828b-30beec1e8c84.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163324_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=cfbd9a267c704b3355a893eea4e0e3c8e45a384bb20ddcf589b412fa28ab4848",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/d135e885-603f-4fd0-94e3-3072ae42a45f.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163334_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=853fc8c15679ade4248ecddc3312785880f18781eb1ec0fbd5eed836a1faa033",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/d308c681-7aaf-4af6-a089-928a7f1b60f8.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163340_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=8ca3847098993fad1106c26ec0788719b5d5d55bb0799629314b9fb9ad2ca22b",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/d38ad1ae-f035-4729-96b0-07caa2ebf0d4.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163353_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=89787ee3930ac97076d3c6b31c73d3988d4bc54fa3cf6e55f9db5505483f34e0",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/d52286d3-e243-4ffd-94b4-6724e43c32c7.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163652_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=cfd9a4db0fffa2250da12f8fecb7bfdef5b88996b7637d87ffc0ca25047916c6",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/daee2886-b055-4d49-9d5e-b65d7721beaa.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163324_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=6c33edf1f625619d67f4cb1d40f1d3100426ec626318b0db53c1dd72ed880117",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ddcc7215-aefe-4a26-b8d6-3ba70410d2b3.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163353_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=b7265898e56b80f8cb90abcb642849b87e91c06e468b87ba3db55061c5eaaa83",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/e0e6ae6f-5e4c-4b28-afc7-7dd39651ea9f.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163747_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=f99c2318ec41f0d170a727e0cd3d204da0e9c77516396ff5903e0cf5df429300",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/e11b61ed-0be4-41b2-a429-903690674c0d.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/03262021_122855_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=99626c92891ccd366d6b6120ad3cc398c8a1fa3099b1a3290193bf8115ce10f6",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/e13ff171-84d3-4dad-9d8d-86097670d059.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163828_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=8c65a52ec5612b82ac67b8b1f9310c864ffef7a0350305f46bdc0322493cbd65",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/e1e8af05-ab00-4964-9863-4dc315a0d40e.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163719_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=c4c6157fd3528d521363a040f0303b53185d04e140b670e8c7e8cfdc935f8642",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/e2cfd7cf-6e70-434f-9cf4-fc99788114a8.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163728_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=c3d61ce4e17012aa0461532a49da01519e9a37e4a2649683bace2ee9d7a14778",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/e82a2c4d-207a-442a-a4d4-0ec8e8fc4171.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163904_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=ef2b56513e6fdb538799c7f0ac06568336ddc5f3a837dfde042b83e07e0b686a",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/e84a865f-968c-4ab6-8155-a5dd2cc51c92.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163932_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=f60579fe27ea1f9629fd946f41de44a58f0b1ed9123a9e70942dc3cde5d2fba2",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ea1c837b-451a-4fa8-8eaf-a456f3388978.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163830_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=d41ea9a2e43c096353e4c8012ca57b4efb49e69525b0bdccaefcd9089018b14f",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/eac580f3-7d85-426e-91f7-68f23805f461.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163648_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=247e0e2900e1489f60e5305dd9d3b3be18c8b437644d61caa10369fafdf313d9",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/eb74ce34-499e-4a8b-bf35-7830e2a2bf9f.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163812_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=33e4dd38bcf17f7d0a5c8357a570e33e794af7d35fe4f198b19cf4068be5a00f",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ebebfe5d-541c-48d6-8c63-31c2c3be27d4.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163906_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=d8d149aeee5b3a2f898f2e62a04103a18cfa3219778de2cf719db69372ae4bbb",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ec775e6d-c755-47bd-9410-6b473ef9098a.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163340_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3c19aa7f93686f8e693cac8eeacb58c3c83326bfa2f46ab68529ee7a71772fca",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ec87aa20-72c1-46fa-8f8d-2da3718768ed.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163657_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=aeaf16a62d80ac9b877af55595184ae0254df762e6d2a6745e5ed53bbb222b0a",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ed0b6369-12f2-4560-b265-dfc3b6adf5d1.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163747_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=ddee1888779bfb4f8277aa0d6a96ace5da05799d7b0e44067240d09f89b734d1",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ed6ff124-4721-41b0-9313-f8c689ddc473.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163353_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2c3fbb23ca70f7c691a8350d13c1d06646cdc1ddb9f29ea770576cda664f6216",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ef67deab-dbd5-4e87-9c53-9d3b0de5d2cc.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163633_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=02f7591b80f819bc397df652cab6ee6b38c8918549509ead7278b50e928a5b2f",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/f052cb0a-a720-48d0-975c-51596a0c4d03.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163913_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=e75d5391cdc5817c13609eb58419ef4a6b3661621a1af93227e04bdd9bab41d8",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/f0fec063-36e0-4916-95ea-643309df0ab6.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163831_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3371699949cfe27aa0758da4e4cda2502f47acdda54b4f92eb8959ecee212565",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/f3be9333-e4f3-42e8-a661-3f668684cf47.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163936_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=b37999f9aa347e2fdaaefa94d9e59729b47e077aa32a6120cccc25ec4c51d295",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/f4668970-30f1-4b1e-99d6-845b86e1e145.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163803_grippercam_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1f342d84e447b5d61c8eaaa5a6e820c5c0fe0f246803653cdac8709bae348f21",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/f6ffa462-e9bd-4284-baf6-6355ba639e12.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163629_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=140c19251ed8e9ec2ed662ae1508b33e8219b03c67d0c1a1b5c6a097c73d66d3",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/f9d44d30-75ca-463e-9d95-cbdac99266e4.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163652_grippercam_2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=664d64bc395053d6e725bddab66a2376d28fb411d8a53e9c9df1bcea2fe979b2",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/fb0f67fc-97f0-4604-a6f4-81b850bddbe7.png"
+    },
+    {
+      "url": "https://redbrick-data.s3.amazonaws.com/saga-robotics/strawberry-data/04132021_163831_grippercam_1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5VAA23GQPZPKTIE2%2F20210416%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210416T145000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=334d64551b288d95ce85840c93c4d2a03d66161dc169d8323ae23eb55beb3c04",
+      "createdBy": "sampleprojects@infolks.in",
+      "exportUrl": "strawberry/masks/ff97b36b-e39f-4777-8f23-4e9c6c14372c.png"
+    }
+  ],
+  "taxonomy": {
+    "flesh": 1,
+    "calyx": 2,
+    "background": 0
+  },
+  "color_map": {
+    "1": [
+      256,
+      128,
+      128
+    ],
+    "2": [
+      12,
+      243,
+      243
+    ],
+    "0": [
+      0,
+      0,
+      0
+    ]
+  }
+}
