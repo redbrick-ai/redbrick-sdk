@@ -11,6 +11,7 @@ from redbrick.common.context import RBContext
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
 from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.logging import print_warning
 
 
 class Learning:
@@ -146,13 +147,32 @@ class Learning:
         return temp
 
 
-class Learning2(Learning):
+class Learning2:
     """Reimplemnt Learning."""
+
+    def __init__(
+        self, context: RBContext, org_id: str, project_id: str, stage_name: str
+    ) -> None:
+        """Construct Learning module."""
+        self.context = context
+        self.org_id = org_id
+        self.project_id = project_id
+        self.stage_name = stage_name
 
     def check_for_job(self, min_new_tasks: int = 100) -> bool:
         """Return true if there is a new job available."""
+        result = self.context.learning2.check_for_job(self.org_id, self.project_id)
+        if (
+            result.get("newTasks", 0) > min_new_tasks
+            and result.get("isProcessing") is False
+        ):
+            return True
 
-    def get_learning_info(self, concurrency: int = 10) -> Dict:
+        return False
+
+    def get_learning_info(
+        self, min_new_tasks: int = 100, concurrency: int = 10
+    ) -> Dict:
         """
         Get a dictionary with lightly parsed redbrick response.
 
@@ -160,9 +180,10 @@ class Learning2(Learning):
             labeled
             unlabeled
             taxonomy
-            cycle
+            type
         """
-        cycle = 1  # legacy, cycle is deprecated
+        if not self.check_for_job(min_new_tasks):
+            raise Exception("Not of enough new tasks since last training cycle.")
 
         taxonomy, td_type = self.context.learning2.get_taxonomy_and_type(
             self.org_id, self.project_id
@@ -241,7 +262,6 @@ class Learning2(Learning):
             "labeled": labeled,
             "unlabeled": unlabeled,
             "taxonomy": taxonomy,
-            "cycle": cycle,
             "type": td_type,
         }
 
@@ -278,6 +298,8 @@ class Learning2(Learning):
 
         Return any tasks that experienced issues.
         """
+        if cycle != 1:
+            print_warning("Use of cycle field is deprecated")
         _ = cycle  # deprecated
 
         # backwards compatibility
@@ -288,3 +310,11 @@ class Learning2(Learning):
 
         temp = asyncio.run(self._update_tasks2(tasks))
         return temp
+
+    def start_processing(self) -> None:
+        """Signal to RedBrick AI that the training has begun."""
+        self.context.learning2.start_processing(self.org_id, self.project_id)
+
+    def end_processing(self) -> None:
+        """Signal to RedBrick AI that the training has end."""
+        self.context.learning2.end_processing(self.org_id, self.project_id)
