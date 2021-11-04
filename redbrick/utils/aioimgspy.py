@@ -1,10 +1,11 @@
 # coding: utf-8
 # type: ignore
-"""
-aioimgspy
-======
+# pylint: disable=invalid-name
 
+"""
 aioimgspy is a port of imgspy by Derek Lukacs for RedBrick AI.
+
+======
 
 imgspy finds the metadata (type, size) of an image given its url by fetching
 as little as needed. This is a python implementation of `fastimage`_. Supports
@@ -107,17 +108,17 @@ async def probe(stream):
 
         tag_count = struct.unpack(endian + "H", chunk[offset : offset + 2])[0]
         offset += 2
-        for i in range(tag_count):
+        for _ in range(tag_count):
             if len(chunk) - offset < 12:
                 chunk += stream.readexactly(12)
-            type = struct.unpack(endian + "H", chunk[offset : offset + 2])[0]
+            type_ = struct.unpack(endian + "H", chunk[offset : offset + 2])[0]
             data = struct.unpack(endian + "H", chunk[offset + 8 : offset + 10])[0]
             offset += 12
-            if type == 0x100:
+            if type_ == 0x100:
                 w = data
-            elif type == 0x101:
+            elif type_ == 0x101:
                 h = data
-            elif type == 0x112:
+            elif type_ == 0x112:
                 orientation = data
             if all([w, h, orientation]):
                 break
@@ -127,19 +128,19 @@ async def probe(stream):
         return {"type": "tiff", "width": w, "height": h, "orientation": orientation}
     elif chunk[:4] == b"RIFF" and chunk[8:15] == b"WEBPVP8":
         w, h = None, None
-        type = chunk[15:16]
+        type_ = chunk[15:16]
         chunk += await stream.readexactly(30 - len(chunk))
-        if type == b" ":
+        if type_ == b" ":
             w, h = struct.unpack("<HH", chunk[26:30])
             w, h = w & 0x3FFF, h & 0x3FFF
-        elif type == b"L":
+        elif type_ == b"L":
             w = 1 + (((ord(chunk[22:23]) & 0x3F) << 8) | ord(chunk[21:22]))
             h = 1 + (
                 ((ord(chunk[24:25]) & 0xF) << 10)
                 | (ord(chunk[23:24]) << 2)
                 | ((ord(chunk[22:23]) & 0xC0) >> 6)
             )
-        elif type == b"X":
+        elif type_ == b"X":
             w = 1 + struct.unpack("<I", chunk[24:27] + b"\x00")[0]
             h = 1 + struct.unpack("<I", chunk[27:30] + b"\x00")[0]
         return {"type": "webp", "width": w, "height": h}

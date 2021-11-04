@@ -29,6 +29,7 @@ def version_check() -> None:
         warn = (
             "You are using version '{}' of the SDK. However, version '{}' is available!\n"
             + "Please update as soon as possible to get the latest features and bug fixes.\n"
-            + "You can use 'python -m pip install --upgrade redbrick-sdk' to get the latest version."
+            + "You can use 'python -m pip install --upgrade redbrick-sdk'"
+            + " to get the latest version."
         )
         print_warning(warn.format(curr_version, latest_version))

@@ -75,7 +75,7 @@ class Upload:
         self, storage_id: str, mask_dir: str
     ) -> List[Dict]:
         """
-        Creates datapoints in a project, from a directory of masks in RBAI format.
+        Create datapoints in a project, from a directory of masks in RBAI format.
 
         Returns list of datapoints that failed to create.
         """
@@ -96,8 +96,8 @@ class Upload:
         # Read in the datapoint_map.json file, if available
         if not os.path.isfile(os.path.join(mask_dir, "datapoint_map.json")):
             raise Exception(
-                "datapoint_map.json file not found! You must provide the datapoint_map.json file inside %s"
-                % mask_dir
+                "datapoint_map.json file not found! You must provide"
+                + " the datapoint_map.json file inside %s" % mask_dir
             )
         with open(os.path.join(mask_dir, "class_map.json"), "r") as file:
             datapoint_map = json.load(file)

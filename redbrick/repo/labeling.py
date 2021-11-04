@@ -275,7 +275,11 @@ class LabelingRepo(LabelingControllerInterface):
             query ($orgId: UUID!
                 $projectId: UUID!
                 $stageName: String!)  {
-                manualLabelingStageSummary(orgId:$orgId, projectId:$projectId, stageName:$stageName){
+                manualLabelingStageSummary(
+                    orgId:$orgId,
+                    projectId:$projectId,
+                    stageName:$stageName
+                ){
                     taskStatusSummary {
                     assignedCount
                     unassignedCount

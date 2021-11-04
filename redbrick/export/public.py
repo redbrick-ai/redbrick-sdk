@@ -136,7 +136,7 @@ class Export:
             class_id[category["name"]] = category["classId"] + 1
 
             # Create a color map
-            if not color_map == None:
+            if color_map is not None:
                 color_map[category["name"]] = Export.get_color(category["classId"])[
                     0:3
                 ]  # not doing +1 here.
