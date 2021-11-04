@@ -1,6 +1,6 @@
 # type: ignore
 # pylint: disable=invalid-name
-
+# noqa
 """
 aioimgspy is a port of imgspy by Derek Lukacs for RedBrick AI.
 
@@ -18,9 +18,9 @@ usage
 ::
     >>> async with aiohttp.ClientSession() as session:
     ...     async with session.get(url) as response:
-    ...         await imgspy.probe(response.content)
+    ...         await aioimgspy.probe(response.content)
 
-
+======
 
 ORIGINAL license:
 

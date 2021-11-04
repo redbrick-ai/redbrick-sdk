@@ -145,7 +145,6 @@ class Upload:
             mask=(mask > 0),
             transform=rasterio.Affine(1.0, 0, 0, 0, 1.0, 0),
         ):
-            # return shapely.geometry.shape(shape)
             all_polygons.append(shapely.geometry.shape(shape))
 
         polygon = shapely.geometry.MultiPolygon(all_polygons)
