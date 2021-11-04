@@ -5,6 +5,7 @@ import os
 from copy import deepcopy
 from typing import List, Dict, Optional
 import json
+import uuid
 
 import aiohttp
 import rasterio
@@ -12,10 +13,11 @@ import numpy as np
 from rasterio import features
 import shapely
 import matplotlib.pyplot as plt
-import uuid
+
 
 from redbrick.common.context import RBContext
 from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.logging import print_error
 
 
 class Upload:
@@ -42,7 +44,7 @@ class Upload:
                 point.get("labels"),
             )
         except Exception as error:
-            print(error)
+            print_error(error)
             point_error = deepcopy(point)
             point_error["error"] = error
             return point_error

@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import tqdm
 
 from redbrick.common.context import RBContext
+from redbrick.utils.logging import print_error, print_info
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
 from redbrick.coco.coco_main import coco_converter
@@ -70,7 +71,7 @@ class Export:
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
         self.general_info = general_info
 
-        print("Downloading tasks")
+        print_info("Downloading tasks")
         return (
             [
                 parse_output_entry(val)
@@ -94,7 +95,7 @@ class Export:
             self.org_id, self.project_id
         )
 
-        print("Downloading tasks")
+        print_info("Downloading tasks")
         return (
             [
                 _parse_entry_latest(val)
@@ -152,7 +153,7 @@ class Export:
         """Convert rbai datapoint to a numpy mask."""
         # 0 label task
         if len(task["labels"]) == 0:
-            print("No labels")
+            print_error("No labels")
             return None
 
         imagesize = task["labels"][0]["pixel"]["imagesize"]
@@ -247,13 +248,15 @@ class Export:
             datapoints, taxonomy = self._get_raw_data_latest(concurrency)
 
         if not self.general_info["taskType"] == "SEGMENTATION":
-            print("Project type needs to be SEGMENTATION, to use redbrick_png export!")
+            print_error(
+                "Project type needs to be SEGMENTATION, to use redbrick_png export!"
+            )
             return
 
         # Create output directory
         output_dir = Export.uniquify_path(self.project_id)
         os.mkdir(output_dir)
-        print("Saving masks to %s directory" % output_dir)
+        print_info("Saving masks to %s directory" % output_dir)
 
         # Create a color map from the taxonomy
         class_id_map: Dict = {}

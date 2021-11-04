@@ -125,7 +125,7 @@ class LabelingRepo(LabelingControllerInterface):
             "finished": True,
             "elapsedTimeMs": 0,
         }
-        result = await self.client.execute_query_async(session, query, variables)
+        await self.client.execute_query_async(session, query, variables)
 
     async def put_review_task_result(
         self,
@@ -168,7 +168,7 @@ class LabelingRepo(LabelingControllerInterface):
             "elapsedTimeMs": 0,
         }
 
-        result = await self.client.execute_query_async(session, query, variables)
+        await self.client.execute_query_async(session, query, variables)
 
     def assign_task(
         self, org_id: str, project_id: str, stage_name: str, task_id: str, email: str

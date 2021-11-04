@@ -40,15 +40,13 @@ class RBClient:
                 raise PermissionError("Problem authenticating with Api Key")
             if "errors" in response.json():
                 raise ValueError(response.json()["errors"][0]["message"])
-            elif "data" in response.json():
+            if "data" in response.json():
                 res = response.json()["data"]
             else:
                 res = response.json()
             return res
-        except ValueError:
-            # print(response.content)
-            # print(response.status_code)
-            raise
+        except ValueError as error:
+            raise error
 
     async def execute_query_async(
         self, aio_client: aiohttp.ClientSession, query: str, variables: Dict[str, Any]
@@ -69,12 +67,10 @@ class RBClient:
                     )
                 if "errors" in response_data:
                     raise ValueError(response_data["errors"][0]["message"])
-                elif "data" in response_data:
+                if "data" in response_data:
                     res = response_data["data"]
                 else:
                     res = response_data
                 return res
-        except ValueError:
-            # print(response.content)
-            # print(response.status_code)
-            raise
+        except ValueError as error:
+            raise error

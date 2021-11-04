@@ -4,6 +4,8 @@ import asyncio
 from typing import Awaitable, List, TypeVar, Optional, Iterable
 import tqdm.asyncio
 
+from redbrick.utils.logging import print_info
+
 ReturnType = TypeVar("ReturnType")
 
 
@@ -23,7 +25,7 @@ async def gather_with_concurrency(
 
     if progress_bar_name:
         result = []
-        print(progress_bar_name)
+        print_info(progress_bar_name)
         for f in tqdm.asyncio.tqdm.as_completed(coros):
             temp = await f
             result.append(temp)

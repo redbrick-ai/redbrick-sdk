@@ -11,7 +11,7 @@ from redbrick.common.context import RBContext
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.logging import print_warning
+from redbrick.utils.logging import print_error, print_info, print_warning
 
 
 class Learning:
@@ -89,9 +89,8 @@ class Learning:
         labeled: List[Dict] = []
         unlabeled: List[Dict] = []
 
-        print("Downloading tasks for active learning")
+        print_info("Downloading tasks for active learning")
         for entry in tqdm.tqdm(my_iter, unit=" tasks"):
-            # print(entry)
             if entry.get("groundTruth"):
                 labeled.append(_parse_labeled_entry(entry))
             else:
@@ -114,7 +113,7 @@ class Learning:
                 session, self.org_id, self.project_id, self.stage_name, cycle, [task]
             )
         except Exception as error:
-            print(error)
+            print_error(error)
             point_error = deepcopy(task)
             point_error["error"] = error
             return point_error
@@ -244,13 +243,13 @@ class Learning2:
                 "name": name,
             }
 
-        print("Downloading unfinished tasks")
+        print_info("Downloading unfinished tasks")
         unlabeled = [
             _parse_unlabeled_entry(item)
             for item in tqdm.tqdm(my_queue_iter, unit=" tasks", total=tasks_in_queue)
         ]
 
-        print("Downloading finished tasks")
+        print_info("Downloading finished tasks")
         labeled = [
             _parse_labeled_entry(item)
             for item in tqdm.tqdm(
@@ -274,7 +273,7 @@ class Learning2:
                 session, self.org_id, self.project_id, self.stage_name, [task]
             )
         except Exception as error:
-            print(error)
+            print_error(error)
             point_error = deepcopy(task)
             point_error["error"] = error
             return point_error
