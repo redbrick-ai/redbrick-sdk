@@ -6,9 +6,12 @@ from typing import Optional, List, Dict, Tuple
 import aiohttp
 
 from redbrick.common.client import RBClient
-from redbrick.common.learning import LearningControllerInterface
+from redbrick.common.learning import (
+    LearningControllerInterface,
+    LearningController2Interface,
+)
 
-from .shards import LABEL_SHARD
+from .shards import LABEL_SHARD, TAXONOMY_SHARD
 
 
 class LearningRepo(LearningControllerInterface):
@@ -97,32 +100,19 @@ class LearningRepo(LearningControllerInterface):
         self, org_id: str, project_id: str, stage_name: str
     ) -> Tuple[dict, str]:
         """Get the taxonomy for active learning."""
-        query = """
+        query = (
+            """
         query  ($orgId:UUID!, $projectId:UUID!, $stageName: String!){
             activeLearningClientSummary(orgId:$orgId, projectId:$projectId, stageName: $stageName){
                 tdType
                 taxonomy {
-                    name
-                    version
-                    categories {
-                        name
-                        children {
-                            name
-                            classId
-                            children {
-                                name
-                                classId
-                                children {
-                                    name
-                                    classId
-                                }
-                            }
-                        }
-                    }
+                    %s
                 }
             }
         }
         """
+            % TAXONOMY_SHARD
+        )
         variables = {
             "orgId": org_id,
             "projectId": project_id,
@@ -229,4 +219,119 @@ class LearningRepo(LearningControllerInterface):
             "cycle": cycle,
             "status": cycle_status,
         }
+        self.client.execute_query(query, variables)
+
+
+class Learning2Repo(LearningController2Interface):
+    """Abstract interface to Active Learning APIs."""
+
+    def __init__(self, client: RBClient) -> None:
+        """Construct ExportRepo."""
+        self.client = client
+
+    def check_for_job(self, org_id: str, project_id: str) -> Dict:
+        """Check for a job, and num new tasks."""
+        query = """
+        query checkForJob ($orgId:UUID!, $projectId: UUID!) {
+            currentCycleTracker(orgId:$orgId, projectId:$projectId) {
+                newTasks
+                isProcessing
+            }
+        }
+        """
+        variables = {"orgId": org_id, "projectId": project_id}
+        result: Dict[str, Dict] = self.client.execute_query(query, variables)
+
+        return result["currentCycleTracker"]
+
+    def get_taxonomy_and_type(self, org_id: str, project_id: str) -> Tuple[dict, str]:
+        """Get the taxonomy for active learning."""
+        query = (
+            """
+        query projectTypeAndTaxonomy ($orgId: UUID!, $projectId: UUID!) {
+            project(orgId: $orgId, projectId: $projectId){
+                tdType
+                taxonomy {
+                    %s
+                }
+            }
+        }
+
+        """
+            % TAXONOMY_SHARD
+        )
+
+        variables = {"orgId": org_id, "projectId": project_id}
+        result: Dict = self.client.execute_query(query, variables)
+        return (
+            result["project"]["taxonomy"],
+            result["project"]["tdType"],
+        )
+
+    async def update_prelabels_and_priorities(
+        self,
+        aio_client: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
+        tasks: List[Dict],
+    ) -> None:
+        """
+        Perform send_batch_learning_results with asyncio.
+
+        tasks is a list of dictionaries containing the following keys:
+        {
+            "taskId": "<>",
+            "priority": [0,1],
+            "labels": [{ }]  // see standard label format
+        }
+        """
+        query = """
+        mutation updatePrelabelsAndPriorities(
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String!
+            $tasks: [TaskUpdateInput!]!
+        ) {
+            updatePrelabelsOrPriority(
+                orgId: $orgId
+                projectId: $projectId
+                stageName: $stageName
+                tasks: $tasks
+            ) {
+                ok
+            }
+        }
+        """
+        variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+            "tasks": tasks,
+        }
+
+        await self.client.execute_query_async(aio_client, query, variables)
+
+    def start_processing(self, org_id: str, project_id: str) -> None:
+        """Set status of current training cycle."""
+        query = """
+        mutation ($orgId:UUID!, $projectId:UUID!){
+            startCycleProcessing(orgId:$orgId, projectId:$projectId){
+                ok
+            }
+        }
+        """
+        variables = {"orgId": org_id, "projectId": project_id}
+        self.client.execute_query(query, variables)
+
+    def end_processing(self, org_id: str, project_id: str) -> None:
+        """Set status of current training cycle."""
+        query = """
+        mutation ($orgId:UUID!, $projectId:UUID!){
+            endCycleProcessing(orgId:$orgId, projectId:$projectId){
+                ok
+            }
+        }
+        """
+        variables = {"orgId": org_id, "projectId": project_id}
         self.client.execute_query(query, variables)

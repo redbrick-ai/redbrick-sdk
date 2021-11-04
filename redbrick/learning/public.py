@@ -11,6 +11,7 @@ from redbrick.common.context import RBContext
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
 from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.logging import print_warning
 
 
 class Learning:
@@ -144,3 +145,176 @@ class Learning:
             self.org_id, self.project_id, self.stage_name, cycle, "DONE"
         )
         return temp
+
+
+class Learning2:
+    """Reimplemnt Learning."""
+
+    def __init__(
+        self, context: RBContext, org_id: str, project_id: str, stage_name: str
+    ) -> None:
+        """Construct Learning module."""
+        self.context = context
+        self.org_id = org_id
+        self.project_id = project_id
+        self.stage_name = stage_name
+
+    def check_for_job(self, min_new_tasks: int = 100) -> bool:
+        """Return true if there is a new job available."""
+        result = self.context.learning2.check_for_job(self.org_id, self.project_id)
+        if (
+            result.get("newTasks", 0) > min_new_tasks
+            and result.get("isProcessing") is False
+        ):
+            return True
+
+        return False
+
+    def get_learning_info(
+        self, min_new_tasks: int = 100, concurrency: int = 10
+    ) -> Dict:
+        """
+        Get a dictionary with lightly parsed redbrick response.
+
+        The dictonary has fields:
+            labeled
+            unlabeled
+            taxonomy
+            type
+        """
+        if not self.check_for_job(min_new_tasks):
+            raise Exception("Not of enough new tasks since last training cycle.")
+
+        taxonomy, td_type = self.context.learning2.get_taxonomy_and_type(
+            self.org_id, self.project_id
+        )
+
+        my_queue_iter = PaginationIterator(
+            partial(
+                self.context.labeling.get_tasks_queue,
+                self.org_id,
+                self.project_id,
+                self.stage_name,
+                concurrency,
+            )
+        )
+        tasks_in_queue = self.context.labeling.get_task_queue_count(
+            self.org_id, self.project_id, self.stage_name
+        )
+        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
+
+        my_finished_iter = PaginationIterator(
+            partial(
+                self.context.export.get_datapoints_output,
+                self.org_id,
+                self.project_id,
+                concurrency,
+            )
+        )
+
+        def _parse_labeled_entry(item: Dict) -> Dict:
+            items_presigned = item["itemsPresigned"]
+            name = item["name"]
+            items = item["items"]
+            dp_id = item["dpId"]
+            task_id = item["task"]["taskId"]
+            labels = [clean_rb_label(label) for label in item["labelData"]["labels"]]
+
+            return {
+                "dpId": dp_id,
+                "taskId": task_id,
+                "items": items,
+                "itemsPresigned": items_presigned,
+                "name": name,
+                "labels": labels,
+            }
+
+        def _parse_unlabeled_entry(item: Dict) -> Dict:
+            items_presigned = item["datapoint"]["itemsPresigned"]
+            name = item["datapoint"]["name"]
+            items = item["datapoint"]["items"]
+            dp_id = item["datapoint"]["dpId"]
+            task_id = item["taskId"]
+            return {
+                "taskId": task_id,
+                "dpId": dp_id,
+                "items": items,
+                "status": item["state"],
+                "itemsPresigned": items_presigned,
+                "name": name,
+            }
+
+        print("Downloading unfinished tasks")
+        unlabeled = [
+            _parse_unlabeled_entry(item)
+            for item in tqdm.tqdm(my_queue_iter, unit=" tasks", total=tasks_in_queue)
+        ]
+
+        print("Downloading finished tasks")
+        labeled = [
+            _parse_labeled_entry(item)
+            for item in tqdm.tqdm(
+                my_finished_iter, unit=" tasks", total=general_info["datapointCount"]
+            )
+        ]
+
+        return {
+            "labeled": labeled,
+            "unlabeled": unlabeled,
+            "taxonomy": taxonomy,
+            "type": td_type,
+        }
+
+    async def _update_task2(
+        self, session: aiohttp.ClientSession, task: Dict
+    ) -> Optional[Dict]:
+        """Attempt to update task."""
+        try:
+            await self.context.learning2.update_prelabels_and_priorities(
+                session, self.org_id, self.project_id, self.stage_name, [task]
+            )
+        except Exception as error:
+            print(error)
+            point_error = deepcopy(task)
+            point_error["error"] = error
+            return point_error
+        return None
+
+    async def _update_tasks2(self, tasks: List[Dict]) -> List[Dict]:
+        async with aiohttp.ClientSession() as session:
+            coros = [self._update_task2(session, task) for task in tasks]
+            temp = await gather_with_concurrency(
+                100, coros, "Updating tasks with priorities"
+            )
+            failed = []
+            for val in temp:
+                if val:
+                    failed.append(val)
+            return failed
+
+    def update_tasks(self, cycle: int, tasks: List[Dict]) -> List[Dict]:
+        """
+        Update tasks with new score and labels.
+
+        Return any tasks that experienced issues.
+        """
+        if cycle != 1:
+            print_warning("Use of cycle field is deprecated")
+        _ = cycle  # deprecated
+
+        # backwards compatibility
+        for task in tasks:
+            if task.get("score"):
+                task["priority"] = task["score"]
+                del task["score"]
+
+        temp = asyncio.run(self._update_tasks2(tasks))
+        return temp
+
+    def start_processing(self) -> None:
+        """Signal to RedBrick AI that the training has begun."""
+        self.context.learning2.start_processing(self.org_id, self.project_id)
+
+    def end_processing(self) -> None:
+        """Signal to RedBrick AI that the training has end."""
+        self.context.learning2.end_processing(self.org_id, self.project_id)

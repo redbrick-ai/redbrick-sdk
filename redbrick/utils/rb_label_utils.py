@@ -16,6 +16,7 @@ def flat_rb_format(
     name: str,
     dp_id: str,
     created_by: str,
+    task_id: str,
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
     return {
@@ -24,5 +25,6 @@ def flat_rb_format(
         "itemsPresigned": items_presigned,
         "name": name,
         "dpId": dp_id,
+        "taskId": task_id,
         "createdBy": created_by,
     }

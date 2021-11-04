@@ -26,7 +26,6 @@ class ExportControllerInterface(ABC):
         org_id: str,
         project_id: str,
         first: int = 50,
-        presign: bool = False,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get datapoints that have made it to the output of the project."""
