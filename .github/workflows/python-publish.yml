@@ -31,7 +31,7 @@ jobs:
           python setup.py sdist bdist_wheel
           twine upload dist/*
 
-  test3.8:
+  test38:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
