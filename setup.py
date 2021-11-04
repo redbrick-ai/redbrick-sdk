@@ -36,7 +36,7 @@ setup(
         "shapely==1.7.1",
         "numpy==1.21.3",
         "rasterio==1.2.10",
-        "matplotlib==3.4.3"
+        "matplotlib==3.4.3",
     ],
     extras_require={
         "dev": [

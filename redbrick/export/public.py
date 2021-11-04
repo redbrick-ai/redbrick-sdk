@@ -239,7 +239,7 @@ class Export:
         else:
             datapoints, taxonomy = self._get_raw_data_latest(concurrency)
 
-        if not self.general_info["taskType"] == "SEGMENTATION": 
+        if not self.general_info["taskType"] == "SEGMENTATION":
             print("Project type needs to be SEGMENTATION, to use redbrick_png export!")
             return
 
@@ -266,7 +266,7 @@ class Export:
 
         with open(os.path.join(output_dir, "class_map.json"), "w+") as file:
             json.dump(color_map, file, indent=2)
-        
+
         with open(os.path.join(output_dir, "datapoint_map.json"), "w+") as file:
             json.dump(dp_map, file, indent=2)
 

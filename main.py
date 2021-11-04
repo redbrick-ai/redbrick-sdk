@@ -9,7 +9,9 @@ org_id = "3d0caac7-b1e9-483f-8676-c0aca73af232"
 project_id = "d36ae4bd-c57f-41c6-ac3e-8116324b8091"
 
 project = redbrick.get_project(api_key, url, org_id, project_id)
-project.export.redbrick_png(True)  # passing true will only export Completed tasks
+project.upload.create_datapoints_from_masks("11111111-1111-1111-1111-111111111111", "test_mask")
+
+# project.export.redbrick_png(True)  # passing true will only export Completed tasks
 
 # optional, save to file
 # import json
