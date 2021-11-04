@@ -40,13 +40,8 @@ setup(
     ],
     extras_require={
         "dev": [
-            "pytest>=3.7",
-            "black==19.10b0",
-            "pydocstyle==5.0.2",
-            "pycodestyle==2.6.0",
             "twine==3.1.1",
             "wheel==0.35.1",
-            "mypy==0.790",
             "pytest-mock==3.3.1",
             "pytest==6.1.2",
             "black==21.7b0",
