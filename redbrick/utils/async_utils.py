@@ -1,8 +1,8 @@
 """Async utils."""
 
 import asyncio
-from typing import Generator, Sequence, Awaitable, List, TypeVar, Optional, Iterable
-import tqdm.asyncio  # type: ignore
+from typing import Awaitable, List, TypeVar, Optional, Iterable
+import tqdm.asyncio
 
 ReturnType = TypeVar("ReturnType")
 

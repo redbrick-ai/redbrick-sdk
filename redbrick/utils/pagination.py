@@ -1,6 +1,6 @@
 """A utility iterator to handle default RedBrick pagination behavior."""
 
-from typing import Any, Dict, Iterable, List, Optional, Callable, Tuple
+from typing import Any, Dict, List, Optional, Callable, Tuple
 
 
 class PaginationIterator:

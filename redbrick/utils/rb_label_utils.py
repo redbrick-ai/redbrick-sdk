@@ -1,3 +1,5 @@
+"""Utilities for working with label objects."""
+
 from typing import Dict, List
 
 

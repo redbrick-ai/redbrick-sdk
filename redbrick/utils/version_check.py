@@ -1,13 +1,11 @@
 """Management of versions to help users update."""
 
-from typing import List
-import json
 import os
 
-import requests
 from distutils.version import StrictVersion
-from .logging import print_warning
+import requests
 import redbrick
+from .logging import print_warning
 
 
 def version_check() -> None:
