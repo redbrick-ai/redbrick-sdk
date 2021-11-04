@@ -40,7 +40,6 @@ class ExportControllerInterface(ABC):
         org_id: str,
         project_id: str,
         first: int = 50,
-        presign: bool = False,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get the latest datapoints."""

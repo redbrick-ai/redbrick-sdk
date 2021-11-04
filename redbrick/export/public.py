@@ -56,13 +56,13 @@ class Export:
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
-        self.general_info = {}
+        self.general_info: Dict = {}
 
     def _get_raw_data_ground_truth(self, concurrency: int) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_output
 
         my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, concurrency, True)
+            partial(temp, self.org_id, self.project_id, concurrency)
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
