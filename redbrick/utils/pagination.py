@@ -19,9 +19,11 @@ class PaginationIterator:
         self.total = 0
 
     def __iter__(self) -> Any:
+        """Get iterator."""
         return self
 
     def __len__(self) -> int:
+        """Get length of iteration."""
         return self.total
 
     def __next__(self) -> Dict:

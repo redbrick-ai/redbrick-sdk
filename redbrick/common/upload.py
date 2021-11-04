@@ -9,6 +9,8 @@ import aiohttp
 
 
 class UploadControllerInterface(ABC):
+    """Abstract interface to define methods for Upload."""
+
     @abstractmethod
     def create_datapoint(
         self,

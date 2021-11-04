@@ -1,22 +1,23 @@
 """Public API to exporting."""
 
-from abc import abstractmethod
-from redbrick.utils.logging import print_warning
-import tqdm  # type: ignore
-from typing import List, Dict, Callable, Optional, Tuple
+
+from typing import List, Dict, Optional, Tuple
 from functools import partial
+import os
+import json
+import copy
+
+from shapely.geometry import Polygon
+import numpy as np
+import rasterio.features
+from matplotlib import cm
+import matplotlib.pyplot as plt
+import tqdm
+
 from redbrick.common.context import RBContext
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
 from redbrick.coco.coco_main import coco_converter
-import numpy as np  # type: ignore
-import copy
-from matplotlib import cm
-import matplotlib.pyplot as plt
-import os
-from shapely.geometry import Polygon
-import rasterio.features
-import json
 
 
 def _parse_entry_latest(item: Dict) -> Dict:
@@ -36,6 +37,7 @@ def _parse_entry_latest(item: Dict) -> Dict:
 
 
 def parse_output_entry(item: Dict) -> Dict:
+    """Parse entry for output data."""
     items_presigned = item["itemsPresigned"]
     items = item["items"]
     name = item["name"]
@@ -111,7 +113,7 @@ class Export:
 
     @staticmethod
     def get_color(id):
-        """Get's a color from class id"""
+        """Get a color from class id."""
         if id > 20:
             return cm.tab20b(int(id))
         else:
@@ -119,7 +121,7 @@ class Export:
 
     @staticmethod
     def uniquify_path(path):
-        """Provide unique path with number index"""
+        """Provide unique path with number index."""
         filename, extension = os.path.splitext(path)
         counter = 1
 
@@ -130,8 +132,10 @@ class Export:
         return path
 
     @staticmethod
-    def tax_class_id_mapping(taxonomy: Dict, class_id: Dict, color_map=None) -> None:
-        """Creates a class mapping from taxonomy categories to class_id"""
+    def tax_class_id_mapping(
+        taxonomy: Dict, class_id: Dict, color_map: Optional[Dict] = None
+    ) -> None:
+        """Create a class mapping from taxonomy categories to class_id."""
         for category in taxonomy:
             class_id[category["name"]] = category["classId"] + 1
 
@@ -145,8 +149,7 @@ class Export:
 
     @staticmethod
     def convert_rbai_mask(task: Dict, class_id_map: Dict) -> Optional[np.ndarray]:
-        """Converts rbai datapoint to a numpy mask."""
-
+        """Convert rbai datapoint to a numpy mask."""
         # 0 label task
         if len(task["labels"]) == 0:
             print("No labels")
@@ -234,7 +237,7 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
     ) -> None:
-        """Export segmentation labels as masks"""
+        """Export segmentation labels as masks."""
         if task_id:
             datapoints, taxonomy = self._get_raw_data_single(task_id)
 

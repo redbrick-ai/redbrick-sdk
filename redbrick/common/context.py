@@ -1,3 +1,5 @@
+"""Container for low-level methods to communicate with API."""
+
 from .client import RBClient
 from .export import ExportControllerInterface
 from .upload import UploadControllerInterface

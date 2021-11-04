@@ -1,3 +1,5 @@
+"""Test methods for converting polygons for coco."""
+
 from .polygon import rb2coco_polygon, is_coco_polygon
 
 

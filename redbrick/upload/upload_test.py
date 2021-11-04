@@ -1,10 +1,12 @@
-from . import Upload
+"""Tests for upload module."""
+
 import matplotlib.pyplot as plt
 import numpy as np
+from . import Upload
 
 
 def test_mask_to_polygon():
-
+    """Test converting a mask to a polygon."""
     # read mask, and convert to binary mask
     img = plt.imread("test_mask/7b03b871-1d65-4125-a1cc-9a3e7f9df504.png")
     img = img[:, :, 0]

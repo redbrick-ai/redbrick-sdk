@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 
 
 class ExportControllerInterface(ABC):
+    """Abstract interface to define methods for Export."""
+
     @abstractmethod
     def get_output_info(
         self,
