@@ -1,31 +1,19 @@
 from . import Upload
 import matplotlib.pyplot as plt
 import numpy as np
+import json
+
 
 def test_mask_to_polygon():
 
     # read mask, and convert to binary mask
-    img = plt.imread("test_mask/7b03b871-1d65-4125-a1cc-9a3e7f9df504.png")
-    img = img[:,:,0]
-    img[np.where(img != 0)] = 1
+    mask = plt.imread(
+        "redbrick/upload/mask_test/88664c8f-c6f8-4d5a-918e-41d8441a4509.png"
+    )
 
-    plt.imshow(img)
-    # plt.show()
+    with open("redbrick/upload/mask_test/class_map.json", "r") as file:
+        class_map = json.load(file)
 
-    polygons = list(Upload._mask_to_polygon(img))
-    exterior = []
-    for polygon in polygons:
-        # interior = list(polygon.interiors)
-        exterior += list(polygon.exterior.coords)
-
-        # plt.plot(interior, 'ro')
-    e_x = []
-    e_y = []
-    for point in exterior:
-        e_x += [point[0]]
-        e_y += [point[1]]
-
-    plt.plot(e_x, e_y, 'go')
-    plt.show()
-
+    dp_entry = Upload._mask_to_rbai(mask, class_map, "items123", "name123")
+    print(dp_entry)
     assert False
