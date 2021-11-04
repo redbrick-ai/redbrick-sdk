@@ -43,7 +43,7 @@ class Upload:
                 point["items"],
                 point.get("labels"),
             )
-        except Exception as error:
+        except ValueError as error:
             print_error(error)
             point_error = deepcopy(point)
             point_error["error"] = error

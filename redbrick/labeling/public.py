@@ -73,7 +73,7 @@ class Labeling:
                     session, self.org_id, self.project_id, stage_name, task_id, labels
                 )
 
-        except Exception as error:
+        except ValueError as error:
             print_error(error)
             point_error = deepcopy(task)
             point_error["error"] = error

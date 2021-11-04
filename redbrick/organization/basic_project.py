@@ -29,14 +29,14 @@ def _get_middle_stages(reviews: int, passed_name: str) -> Tuple[List[Dict], str]
     }
 
     stages = [label_stage]
-    for ii in range(1, reviews + 1):
+    for i in range(1, reviews + 1):
         stages.append(
             {
                 "brickName": "expert-review",
-                "stageName": f"Review_{ii}",
+                "stageName": f"Review_{i}",
                 "stageConfig": {},
                 "routing": {
-                    "passed": passed_name if ii == reviews else f"Review_{ii+1}",
+                    "passed": passed_name if i == reviews else f"Review_{i+1}",
                     "failed": feedback_stage["stageName"],
                 },
             }
@@ -49,7 +49,7 @@ def _get_middle_stages(reviews: int, passed_name: str) -> Tuple[List[Dict], str]
 
 
 def _get_active_learning_config(
-    middle_stages: List[Dict], entryPoint: str, batch_size: int, cycle_size: int
+    middle_stages: List[Dict], entry_point: str, batch_size: int, cycle_size: int
 ) -> List[Dict]:
 
     return (
@@ -66,7 +66,7 @@ def _get_active_learning_config(
                 "brickName": "active-learning",
                 "routing": {
                     "passed": OUTPUT_NAME,
-                    "failed": entryPoint,
+                    "failed": entry_point,
                 },
                 "stageName": "Active_Learning",
                 "stageConfig": {

@@ -13,7 +13,6 @@ class RBClient:
         self,
         api_key: str,
         url: str,
-        retry_count: int = 5,
     ) -> None:
         """Construct RBClient."""
         assert (

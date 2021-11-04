@@ -9,7 +9,7 @@ import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.utils.pagination import PaginationIterator
-from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
+from redbrick.utils.rb_label_utils import clean_rb_label
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import print_error, print_info, print_warning
 
@@ -112,7 +112,7 @@ class Learning:
             await self.context.learning.send_batch_learning_results_async(
                 session, self.org_id, self.project_id, self.stage_name, cycle, [task]
             )
-        except Exception as error:
+        except ValueError as error:
             print_error(error)
             point_error = deepcopy(task)
             point_error["error"] = error
@@ -272,7 +272,7 @@ class Learning2:
             await self.context.learning2.update_prelabels_and_priorities(
                 session, self.org_id, self.project_id, self.stage_name, [task]
             )
-        except Exception as error:
+        except ValueError as error:
             print_error(error)
             point_error = deepcopy(task)
             point_error["error"] = error

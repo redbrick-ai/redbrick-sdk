@@ -5,9 +5,9 @@ from typing import Dict, List
 
 def clean_rb_label(label: Dict) -> Dict:
     """Clean any None fields."""
-    for k, v in label.copy().items():
-        if v is None:
-            del label[k]
+    for key, val in label.copy().items():
+        if val is None:
+            del label[key]
     return label
 
 

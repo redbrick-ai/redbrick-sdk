@@ -113,12 +113,12 @@ class Export:
         return [_parse_entry_latest(datapoint)], general_info["taxonomy"]
 
     @staticmethod
-    def get_color(id):
+    def get_color(class_id):
         """Get a color from class id."""
-        if id > 20:
-            return cm.tab20b(int(id))
-        else:
-            return cm.tab20c(int(id))
+        if class_id > 20:
+            return cm.tab20b(int(class_id))
+
+        return cm.tab20c(int(class_id))
 
     @staticmethod
     def uniquify_path(path):
@@ -290,12 +290,12 @@ class Export:
     ) -> List[Dict]:
         """Export data into redbrick format."""
         if task_id:
-            datapoints, taxonomy = self._get_raw_data_single(task_id)
+            datapoints, _ = self._get_raw_data_single(task_id)
 
         elif only_ground_truth:
-            datapoints, taxonomy = self._get_raw_data_ground_truth(concurrency)
+            datapoints, _ = self._get_raw_data_ground_truth(concurrency)
         else:
-            datapoints, taxonomy = self._get_raw_data_latest(concurrency)
+            datapoints, _ = self._get_raw_data_latest(concurrency)
 
         return datapoints
 

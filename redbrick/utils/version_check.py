@@ -21,8 +21,8 @@ def version_check() -> None:
         os.path.join(os.path.dirname(redbrick.__file__), "VERSION"),
         "r",
         encoding="utf-8",
-    ) as f:
-        curr_version = f.read().strip()
+    ) as file_:
+        curr_version = file_.read().strip()
     if curr_version != latest_version:
         warn = (
             "You are using version '{}' of the SDK. However, version '{}' is available!\n"

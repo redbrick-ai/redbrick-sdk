@@ -76,9 +76,9 @@ class RBProject:
         project = self.context.project.get_project(self.org_id, self.project_id)
         if project["status"] == "CREATING":
             print_info("Project is still creating...", end="")
-            for ii in range(8):
+            for i in range(8):
                 print_info(".", end="")
-                time.sleep(2 ^ ii)
+                time.sleep(2 ^ i)
                 project = self.context.project.get_project(self.org_id, self.project_id)
                 if project["status"] != "CREATING":
                     break

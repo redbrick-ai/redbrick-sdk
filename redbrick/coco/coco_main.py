@@ -35,6 +35,7 @@ async def _get_image_dimension_map(
     return {temp[2]: (temp[0], temp[1]) for temp in all_sizes}
 
 
+# pylint: disable=too-many-locals
 def coco_converter(datapoints: List[Dict], taxonomy: Dict) -> Dict:
     """Convert redbrick labels to standard coco format."""
     coco_categories = rb2coco_categories_format(taxonomy)

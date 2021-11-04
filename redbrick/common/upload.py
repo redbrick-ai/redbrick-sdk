@@ -30,7 +30,7 @@ class UploadControllerInterface(ABC):
     @abstractmethod
     async def create_datapoint_async(
         self,
-        aio_http_session: aiohttp.ClientSession,
+        aio_client: aiohttp.ClientSession,
         org_id: str,
         project_id: str,
         storage_id: str,

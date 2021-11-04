@@ -26,8 +26,8 @@ async def gather_with_concurrency(
     if progress_bar_name:
         result = []
         print_info(progress_bar_name)
-        for f in tqdm.asyncio.tqdm.as_completed(coros):
-            temp = await f
+        for coro in tqdm.asyncio.tqdm.as_completed(coros):
+            temp = await coro
             result.append(temp)
         return result
 
