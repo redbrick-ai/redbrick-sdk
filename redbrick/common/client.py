@@ -9,7 +9,12 @@ import aiohttp
 class RBClient:
     """Client to communicate with RedBrick AI GraphQL Server."""
 
-    def __init__(self, api_key: str, url: str, retry_count: int = 5,) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        url: str,
+        retry_count: int = 5,
+    ) -> None:
         """Construct RBClient."""
         assert (
             len(api_key) == 43

@@ -14,13 +14,17 @@ def _get_middle_stages(reviews: int, passed_name: str) -> Tuple[List[Dict], str]
     label_stage = {
         "brickName": "manual-labeling",
         "stageName": LABEL_NAME,
-        "routing": {"nextStageName": "Review_1" if reviews > 0 else passed_name,},
+        "routing": {
+            "nextStageName": "Review_1" if reviews > 0 else passed_name,
+        },
         "stageConfig": {"isPrimaryStage": True},
     }
     feedback_stage = {
         "brickName": "feedback",
         "stageName": "Failed_Review",
-        "routing": {"feedbackStageName": label_stage["stageName"],},
+        "routing": {
+            "feedbackStageName": label_stage["stageName"],
+        },
         "stageConfig": {},
     }
 
@@ -52,20 +56,30 @@ def _get_active_learning_config(
         [
             {
                 "brickName": "labelset-input",
-                "routing": {"nextStageName": "Active_Learning",},
+                "routing": {
+                    "nextStageName": "Active_Learning",
+                },
                 "stageName": "Input",
                 "stageConfig": {},
             },
             {
                 "brickName": "active-learning",
-                "routing": {"passed": OUTPUT_NAME, "failed": entryPoint,},
+                "routing": {
+                    "passed": OUTPUT_NAME,
+                    "failed": entryPoint,
+                },
                 "stageName": "Active_Learning",
-                "stageConfig": {"batchSize": batch_size, "cycleSize": cycle_size,},
+                "stageConfig": {
+                    "batchSize": batch_size,
+                    "cycleSize": cycle_size,
+                },
             },
             {
                 "brickName": "labelset-output",
                 "stageName": OUTPUT_NAME,
-                "routing": {"nextStageName": "END",},
+                "routing": {
+                    "nextStageName": "END",
+                },
                 "stageConfig": {},
             },
         ]
@@ -74,7 +88,9 @@ def _get_active_learning_config(
             {
                 "brickName": "feedback",
                 "stageName": ACTIVE_LEARNING_ENTRY,
-                "routing": {"feedbackStageName": "Active_Learning",},
+                "routing": {
+                    "feedbackStageName": "Active_Learning",
+                },
                 "stageConfig": {},
             },
         ]
@@ -92,14 +108,18 @@ def get_basic_project(reviews: int = 0) -> List[Dict]:
 
     input_stage = {
         "brickName": "labelset-input",
-        "routing": {"nextStageName": entry_point,},
+        "routing": {
+            "nextStageName": entry_point,
+        },
         "stageName": "Input",
         "stageConfig": {},
     }
     output_stage = {
         "brickName": "labelset-output",
         "stageName": OUTPUT_NAME,
-        "routing": {"nextStageName": "END",},
+        "routing": {
+            "nextStageName": "END",
+        },
         "stageConfig": {},
     }
 

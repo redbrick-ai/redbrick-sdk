@@ -12,7 +12,9 @@ taxonomy_1 = {
                 {
                     "name": "bus",
                     "classId": 0,
-                    "children": [{"name": "motor", "classId": 6, "children": []},],
+                    "children": [
+                        {"name": "motor", "classId": 6, "children": []},
+                    ],
                 },
                 {"name": "traffic light", "classId": 1, "children": []},
                 {"name": "traffic sign", "classId": 2, "children": []},

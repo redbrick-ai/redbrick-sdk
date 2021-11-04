@@ -31,7 +31,7 @@ def _parse_entry_latest(item: Dict) -> Dict:
     labels = [clean_rb_label(label) for label in history_obj["taskData"]["labels"]]
 
     return flat_rb_format(
-        labels, items, items_presigned, name, dp_id, task_id, created_by
+        labels, items, items_presigned, name, dp_id, created_by, task_id
     )
 
 
@@ -44,7 +44,7 @@ def parse_output_entry(item: Dict) -> Dict:
     labels = [clean_rb_label(label) for label in item["labelData"]["labels"]]
     task_id = item["task"]["taskId"]
     return flat_rb_format(
-        labels, items, items_presigned, name, dp_id, task_id, created_by
+        labels, items, items_presigned, name, dp_id, created_by, task_id
     )
 
 
@@ -144,13 +144,13 @@ class Export:
             Export.tax_class_id_mapping(category["children"], class_id, color_map)
 
     @staticmethod
-    def convert_rbai_mask(task: Dict, class_id_map: Dict) -> np.ndarray:
-        """Converts rbai datapoint to a numpy mask"""
+    def convert_rbai_mask(task: Dict, class_id_map: Dict) -> Optional[np.ndarray]:
+        """Converts rbai datapoint to a numpy mask."""
 
         # 0 label task
         if len(task["labels"]) == 0:
             print("No labels")
-            return
+            return None
 
         imagesize = task["labels"][0]["pixel"]["imagesize"]
         mask = np.zeros([imagesize[1], imagesize[0]])
@@ -253,8 +253,8 @@ class Export:
         print("Saving masks to %s directory" % output_dir)
 
         # Create a color map from the taxonomy
-        class_id_map = {}
-        color_map = {}
+        class_id_map: Dict = {}
+        color_map: Dict = {}
         Export.tax_class_id_mapping(
             taxonomy["categories"][0]["children"], class_id_map, color_map
         )

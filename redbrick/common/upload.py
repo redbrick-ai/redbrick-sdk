@@ -43,11 +43,19 @@ class UploadControllerInterface(ABC):
         """
 
     @abstractmethod
-    def upload_image(self, org_id: str, project_id: str, file_path: Path,) -> str:
+    def upload_image(
+        self,
+        org_id: str,
+        project_id: str,
+        file_path: Path,
+    ) -> str:
         """Upload a local image and add labels."""
 
     @abstractmethod
     async def upload_image_async(
-        self, org_id: str, project_id: str, file_path: Path,
+        self,
+        org_id: str,
+        project_id: str,
+        file_path: Path,
     ) -> str:
         """Upload a local image and add labels."""

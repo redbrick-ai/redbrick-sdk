@@ -31,7 +31,7 @@ def test_rb2coco_bbox() -> None:
     assert is_coco_bbox(result)
 
 
-def test_rb2coco_bbox() -> None:
+def test_rb2coco_bbox_rounding_error() -> None:
     """
     Area calculation rounding error.
 

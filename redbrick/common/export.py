@@ -6,18 +6,11 @@ from abc import ABC, abstractmethod
 
 class ExportControllerInterface(ABC):
     @abstractmethod
-    def get_datapoints_input(
+    def get_output_info(
         self,
         org_id: str,
         project_id: str,
-        first: int = 50,
-        presign: bool = False,
-        cursor: Optional[str] = None,
-    ) -> Tuple[List[Dict], Optional[str]]:
-        """Get datapoints that were uploaded to the project."""
-
-    @abstractmethod
-    def get_output_info(self, org_id: str, project_id: str,) -> Dict:
+    ) -> Dict:
         """Get info about the output labelset and taxonomy."""
 
     @abstractmethod

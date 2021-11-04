@@ -265,7 +265,10 @@ class LabelingRepo(LabelingControllerInterface):
         return response["taskQueue"]["entries"], response["taskQueue"]["cursor"]
 
     def get_task_queue_count(
-        self, org_id: str, project_id: str, stage_name: str,
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
     ) -> int:
         """Get the length of the task queue for showing loading."""
         query_string = """

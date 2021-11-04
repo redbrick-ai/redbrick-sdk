@@ -11,7 +11,6 @@ import rasterio
 import numpy as np
 from rasterio import features
 import shapely
-from shapely.geometry import Point, Polygon
 import matplotlib.pyplot as plt
 import uuid
 
@@ -88,7 +87,7 @@ class Upload:
             )
         with open(os.path.join(mask_dir, "class_map.json"), "r") as file:
             class_map = json.load(file)
-        
+
         # Create a temp categorty -> id mapping
         class_id_map = {}
         for i, category in enumerate(class_map):
@@ -108,17 +107,17 @@ class Upload:
         files = os.listdir(mask_dir)
         files = list(filter(lambda file: file[-3:] == "png", files))
 
-        for file in files:
-            mask = plt.imread(os.path.join(mask_dir, file))
+        for file_ in files:
+            mask = plt.imread(os.path.join(mask_dir, file_))
             # TODO: temporarily convert to simple binary mask
-            mask = mask[:,:,0]
+            mask = mask[:, :, 0]
             mask[np.where(mask != 0)] = 1
 
             polygons = Upload._mask_to_polygon(mask)
-            entry = {}
+            entry: Dict = {}
             entry["labels"] = []
-            label_entry = {} 
-            label_entry["category"] = [["object", "bus"]] # TODO: Update
+            label_entry: Dict = {}
+            label_entry["category"] = [["object", "bus"]]  # TODO: Update
             label_entry["attributes"] = []
             label_entry["pixel"] = {}
             label_entry["pixel"]["imagesize"] = [mask.shape[1], mask.shape[0]]
@@ -129,18 +128,17 @@ class Upload:
                 for interior in polygon.interiors:
                     label_entry["pixel"]["holes"] += [list(interior.coords)]
 
-            entry["labels"] = [label_entry] # TODO: Update
+            entry["labels"] = [label_entry]  # TODO: Update
             entry["items"] = ["http://datasets.redbrickai.com/cars/07398.jpg"]
             entry["name"] = str(uuid.uuid4())
             datapoints += [entry]
 
         return asyncio.run(self._create_datapoints(storage_id, datapoints))
 
-
     @staticmethod
-    def _mask_to_polygon(mask):
+    def _mask_to_polygon(mask: np.ndarray) -> shapely.geometry.MultiPolygon:
         all_polygons = []
-        for shape, value in features.shapes(
+        for shape, _ in features.shapes(
             mask.astype(np.int16),
             mask=(mask > 0),
             transform=rasterio.Affine(1.0, 0, 0, 0, 1.0, 0),
@@ -148,11 +146,11 @@ class Upload:
             # return shapely.geometry.shape(shape)
             all_polygons.append(shapely.geometry.shape(shape))
 
-        all_polygons = shapely.geometry.MultiPolygon(all_polygons)
-        if not all_polygons.is_valid:
-            all_polygons = all_polygons.buffer(0)
+        polygon = shapely.geometry.MultiPolygon(all_polygons)
+        if not polygon.is_valid:
+            polygon = polygon.buffer(0)
             # Sometimes buffer() converts a simple Multipolygon to just a Polygon,
             # need to keep it a Multi throughout
-            if all_polygons.type == "Polygon":
-                all_polygons = shapely.geometry.MultiPolygon([all_polygons])
-        return all_polygons
+            if polygon.type == "Polygon":
+                polygon = shapely.geometry.MultiPolygon([polygon])
+        return polygon
