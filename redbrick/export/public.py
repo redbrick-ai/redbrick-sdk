@@ -258,7 +258,7 @@ class Export:
         # Create output directory
         output_dir = Export.uniquify_path(self.project_id)
         os.mkdir(output_dir)
-        print_info("Saving masks to %s directory" % output_dir)
+        print_info(f"Saving masks to {output_dir} directory")
 
         # Create a color map from the taxonomy
         class_id_map: Dict = {}
@@ -272,14 +272,16 @@ class Export:
         for datapoint in datapoints:
             dp_map[datapoint["dpId"]] = datapoint["items"][0]
             color_mask = Export.convert_rbai_mask(datapoint, class_id_map)
-            plt.imsave(
-                os.path.join(output_dir, "%s.png" % datapoint["dpId"]), color_mask
-            )
+            plt.imsave(os.path.join(output_dir, datapoint["dpId"] + ".png"), color_mask)
 
-        with open(os.path.join(output_dir, "class_map.json"), "w+") as file:
+        with open(
+            os.path.join(output_dir, "class_map.json"), "w+", encoding="utf-8"
+        ) as file:
             json.dump(color_map, file, indent=2)
 
-        with open(os.path.join(output_dir, "datapoint_map.json"), "w+") as file:
+        with open(
+            os.path.join(output_dir, "datapoint_map.json"), "w+", encoding="utf-8"
+        ) as file:
             json.dump(dp_map, file, indent=2)
 
         return
