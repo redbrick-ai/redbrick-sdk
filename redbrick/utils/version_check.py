@@ -11,7 +11,7 @@ from .logging import print_warning  # pylint: disable=cyclic-import
 def version_check() -> None:
     """Check if current installed version of the SDK is up to date with latest pypi release."""
     # Getting latest version on pypi
-    url = "https://pypi.org/pypi/{}/json".format("redbrick-sdk")
+    url = "https://pypi.org/pypi/redbrick-sdk/json"
     data = requests.get(url).json()
     versions = list(data["releases"].keys())
     versions.sort(key=StrictVersion)

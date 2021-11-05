@@ -9,7 +9,7 @@ RedBrick SDK to enable powerful use cases.
 """
 
 from redbrick.common.context import RBContext
-from redbrick.common.enums import LabelType
+from redbrick.common.enums import LabelType, StorageMethod
 from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
 from redbrick.utils import version_check  # pylint: disable=cyclic-import

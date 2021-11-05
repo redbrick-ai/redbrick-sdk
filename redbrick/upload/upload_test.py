@@ -12,14 +12,18 @@ def test_mask_rbai() -> None:
     mask = plt.imread(
         "redbrick/upload/mask_test/88664c8f-c6f8-4d5a-918e-41d8441a4509.png"
     )
-    with open("redbrick/upload/mask_test/class_map.json", "r") as file:
+    with open(
+        "redbrick/upload/mask_test/class_map.json", "r", encoding="utf-8"
+    ) as file:
         class_map = json.load(file)
 
     # convert the mask to rbai polygon
     dp_entry = Upload.mask_to_rbai(mask, class_map, "items123", "name123")
 
     # read original rbai polygon format
-    with open("redbrick/upload/mask_test/redbrick_export_segment.json", "r") as file:
+    with open(
+        "redbrick/upload/mask_test/redbrick_export_segment.json", "r", encoding="utf-8"
+    ) as file:
         datapoints = json.load(file)
     dp_entry_real = datapoints[0]
 

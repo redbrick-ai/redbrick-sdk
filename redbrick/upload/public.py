@@ -83,20 +83,23 @@ class Upload:
         # Read in the datapoint_map.json file
         if not os.path.isfile(os.path.join(mask_dir, "datapoint_map.json")):
             raise Exception(
-                """datapoint_map.json file not found!
-                You must provide the datapoint_map.json file inside %s"""
-                % mask_dir
+                "datapoint_map.json file not found!"
+                + f"You must provide the datapoint_map.json file inside {mask_dir}"
             )
-        with open(os.path.join(mask_dir, "datapoint_map.json"), "r") as file:
+        with open(
+            os.path.join(mask_dir, "datapoint_map.json"), "r", encoding="utf-8"
+        ) as file:
             datapoint_map = json.load(file)
 
         # Read in the class_map.json file
         if not os.path.isfile(os.path.join(mask_dir, "class_map.json")):
             raise Exception(
-                "class_map.json file not found! You must provide the class_map.json file inside %s"
-                % mask_dir
+                "class_map.json file not found! "
+                + f"You must provide the class_map.json file inside {mask_dir}"
             )
-        with open(os.path.join(mask_dir, "class_map.json"), "r") as file:
+        with open(
+            os.path.join(mask_dir, "class_map.json"), "r", encoding="utf-8"
+        ) as file:
             class_map = json.load(file)
 
         # Iterate over the PNG masks in the directory, and convert to RBAI format
