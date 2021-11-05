@@ -162,7 +162,7 @@ class Learning2:
         """Return true if there is a new job available."""
         result = self.context.learning2.check_for_job(self.org_id, self.project_id)
         if (
-            result.get("newTasks", 0) > min_new_tasks
+            result.get("newTasks", 0) >= min_new_tasks
             and result.get("isProcessing") is False
         ):
             return True
@@ -182,7 +182,7 @@ class Learning2:
             type
         """
         if not self.check_for_job(min_new_tasks):
-            raise Exception("Not of enough new tasks since last training cycle.")
+            raise Exception("Not enough new tasks since last training cycle.")
 
         taxonomy, td_type = self.context.learning2.get_taxonomy_and_type(
             self.org_id, self.project_id
