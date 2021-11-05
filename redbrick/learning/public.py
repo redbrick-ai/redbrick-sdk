@@ -170,7 +170,7 @@ class Learning2:
         return False
 
     def get_learning_info(
-        self, min_new_tasks: int = 100, concurrency: int = 10
+        self, min_new_tasks: int = 100, concurrency: int = 100
     ) -> Dict:
         """
         Get a dictionary with lightly parsed redbrick response.

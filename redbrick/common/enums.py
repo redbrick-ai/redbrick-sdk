@@ -17,3 +17,9 @@ class LabelType(Enum):
     VIDEOFRAMES_DETECTION = "VIDEO_BBOX"
     VIDEOFRAMES_CLASSIFY = "VIDEO_CLASSIFY"
     VIDEOFRAMES_POLYGON = "VIDEO_POLYGON"
+
+
+class StorageMethod:
+    """Special case storage method Ids."""
+
+    PUBLIC = "11111111-1111-1111-1111-111111111111"
