@@ -34,9 +34,9 @@ setup(
         "aiodns==3.0.0",
         "Pillow==8.3.2",
         "shapely==1.7.1",
-        "numpy==1.21.3",
+        "numpy>=1.15",
         "rasterio==1.2.10",
-        "matplotlib==3.4.3",
+        "matplotlib>=3.2",
     ],
     extras_require={
         "dev": [
