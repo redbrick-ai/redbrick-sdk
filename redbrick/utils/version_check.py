@@ -5,7 +5,7 @@ import os
 from distutils.version import StrictVersion
 import requests
 import redbrick
-from .logging import print_warning
+from .logging import print_warning  # pylint: disable=cyclic-import
 
 
 def version_check() -> None:
