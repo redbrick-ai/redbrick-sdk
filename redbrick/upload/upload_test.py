@@ -1,7 +1,9 @@
-from . import Upload
+"""Tests for upload module."""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+from . import Upload
 
 
 def test_mask_rbai():

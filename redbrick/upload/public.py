@@ -5,18 +5,19 @@ import os
 from copy import deepcopy
 from typing import List, Dict, Optional
 import json
+import uuid
 
 import aiohttp
 import rasterio
 import numpy as np
 from rasterio import features
 import shapely
-from shapely.geometry import Point, Polygon
 import matplotlib.pyplot as plt
-import uuid
+
 
 from redbrick.common.context import RBContext
 from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.logging import print_error
 
 
 class Upload:
@@ -42,8 +43,8 @@ class Upload:
                 point["items"],
                 point.get("labels"),
             )
-        except Exception as error:
-            print(error)
+        except ValueError as error:
+            print_error(error)
             point_error = deepcopy(point)
             point_error["error"] = error
             return point_error
@@ -76,7 +77,7 @@ class Upload:
         self, storage_id: str, mask_dir: str
     ) -> List[Dict]:
         """
-        Creates datapoints in a project, from a directory of masks in RBAI format.
+        Create datapoints in a project, from a directory of masks in RBAI format.
 
         Returns list of datapoints that failed to create.
         """
@@ -171,21 +172,20 @@ class Upload:
         return entry
 
     @staticmethod
-    def _mask_to_polygon(mask):
+    def _mask_to_polygon(mask: np.ndarray) -> shapely.geometry.MultiPolygon:
         all_polygons = []
-        for shape, value in features.shapes(
+        for shape, _ in features.shapes(
             mask.astype(np.int16),
             mask=(mask > 0),
             transform=rasterio.Affine(1.0, 0, 0, 0, 1.0, 0),
         ):
-            # return shapely.geometry.shape(shape)
             all_polygons.append(shapely.geometry.shape(shape))
 
-        all_polygons = shapely.geometry.MultiPolygon(all_polygons)
-        if not all_polygons.is_valid:
-            all_polygons = all_polygons.buffer(0)
+        polygon = shapely.geometry.MultiPolygon(all_polygons)
+        if not polygon.is_valid:
+            polygon = polygon.buffer(0)
             # Sometimes buffer() converts a simple Multipolygon to just a Polygon,
             # need to keep it a Multi throughout
-            if all_polygons.type == "Polygon":
-                all_polygons = shapely.geometry.MultiPolygon([all_polygons])
-        return all_polygons
+            if polygon.type == "Polygon":
+                polygon = shapely.geometry.MultiPolygon([polygon])
+        return polygon

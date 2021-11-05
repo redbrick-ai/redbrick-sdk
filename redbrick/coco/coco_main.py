@@ -1,11 +1,13 @@
 """Main file for converting RedBrick format to coco format."""
 import asyncio
 from typing import Dict, List, Tuple
+
+import aiohttp
+from yarl import URL
+
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils import aioimgspy
 from redbrick.utils.logging import print_error
-import aiohttp
-from yarl import URL
 from .polygon import rb2coco_polygon
 from .bbox import rb2coco_bbox
 from .categories import rb_get_class_id, rb2coco_categories_format
@@ -33,6 +35,7 @@ async def _get_image_dimension_map(
     return {temp[2]: (temp[0], temp[1]) for temp in all_sizes}
 
 
+# pylint: disable=too-many-locals
 def coco_converter(datapoints: List[Dict], taxonomy: Dict) -> Dict:
     """Convert redbrick labels to standard coco format."""
     coco_categories = rb2coco_categories_format(taxonomy)
@@ -44,7 +47,6 @@ def coco_converter(datapoints: List[Dict], taxonomy: Dict) -> Dict:
     for data in datapoints:
         file_name = data["name"]
         dp_id = data["dpId"]
-        name = data["name"]
         labels = data["labels"]
 
         width, height = image_dims_map[dp_id]

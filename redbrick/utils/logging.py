@@ -5,14 +5,14 @@ from termcolor import colored
 
 def print_info(text: str, end: Optional[str] = None) -> None:
     """Log general information."""
-    print(colored("[INFO]: ", "blue"), text, end=end)
+    print(colored("[INFO]: ", "blue"), text, end=end)  # noqa
 
 
 def print_warning(text: str) -> None:
     """Log warnings."""
-    print(colored("[WARNING]: ", "yellow"), text)
+    print(colored("[WARNING]: ", "yellow"), text)  # noqa
 
 
 def print_error(text: Union[str, Exception]) -> None:
     """Log errors."""
-    print(colored("[ERROR]: ", "red"), text)
+    print(colored("[ERROR]: ", "red"), text)  # noqa

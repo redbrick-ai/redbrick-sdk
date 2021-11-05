@@ -9,6 +9,8 @@ import aiohttp
 
 
 class UploadControllerInterface(ABC):
+    """Abstract interface to define methods for Upload."""
+
     @abstractmethod
     def create_datapoint(
         self,
@@ -28,7 +30,7 @@ class UploadControllerInterface(ABC):
     @abstractmethod
     async def create_datapoint_async(
         self,
-        aio_http_session: aiohttp.ClientSession,
+        aio_client: aiohttp.ClientSession,
         org_id: str,
         project_id: str,
         storage_id: str,
@@ -43,11 +45,19 @@ class UploadControllerInterface(ABC):
         """
 
     @abstractmethod
-    def upload_image(self, org_id: str, project_id: str, file_path: Path,) -> str:
+    def upload_image(
+        self,
+        org_id: str,
+        project_id: str,
+        file_path: Path,
+    ) -> str:
         """Upload a local image and add labels."""
 
     @abstractmethod
     async def upload_image_async(
-        self, org_id: str, project_id: str, file_path: Path,
+        self,
+        org_id: str,
+        project_id: str,
+        file_path: Path,
     ) -> str:
         """Upload a local image and add labels."""

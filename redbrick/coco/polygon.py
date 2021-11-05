@@ -83,3 +83,4 @@ def coco2rb_polygon(
     coco_label: Dict, category: List[List[str]], width: int, height: int
 ) -> Dict:
     """Convert coco polygon to rb polygon."""
+    raise NotImplementedError(coco_label, category, width, height)

@@ -36,8 +36,16 @@ taxonomy2 = {
                             "name": "water",
                             "classId": 1,
                             "children": [
-                                {"name": "water-other", "classId": 2, "children": [],},
-                                {"name": "waterdrops", "classId": 3, "children": [],},
+                                {
+                                    "name": "water-other",
+                                    "classId": 2,
+                                    "children": [],
+                                },
+                                {
+                                    "name": "waterdrops",
+                                    "classId": 3,
+                                    "children": [],
+                                },
                                 {"name": "sea", "classId": 4, "children": []},
                                 {"name": "river", "classId": 5, "children": []},
                                 {"name": "fog", "classId": 6, "children": []},

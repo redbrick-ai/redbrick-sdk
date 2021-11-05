@@ -1,6 +1,6 @@
 """A utility iterator to handle default RedBrick pagination behavior."""
 
-from typing import Any, Dict, Iterable, List, Optional, Callable, Tuple
+from typing import Any, Dict, List, Optional, Callable, Tuple
 
 
 class PaginationIterator:
@@ -11,45 +11,48 @@ class PaginationIterator:
     ) -> None:
         """Construct LabelsetIterator."""
         self.cursor: Optional[str] = None
-        self.datapointsBatch: Optional[List[Dict]] = None
-        self.datapointsBatchIndex: Optional[int] = None
+        self.datapoints_batch: Optional[List[Dict]] = None
+        self.datapoints_batch_index: Optional[int] = None
 
         self.func = func
 
         self.total = 0
 
     def __iter__(self) -> Any:
+        """Get iterator."""
         return self
 
     def __len__(self) -> int:
+        """Get length of iteration."""
         return self.total
 
     def __next__(self) -> Dict:
         """Get next batch of labels / datapoint."""
-        # If cursor is None and current datapointsBatch has been processed
+        # If cursor is None and current datapoints_batch has been processed
         if (
-            self.datapointsBatchIndex is not None
+            self.datapoints_batch_index is not None
             and self.cursor is None
-            and self.datapointsBatch
-            and len(self.datapointsBatch) == self.datapointsBatchIndex
+            and self.datapoints_batch
+            and len(self.datapoints_batch) == self.datapoints_batch_index
         ):
             raise StopIteration
 
-        # If current datapointsBatch is None or we have finished processing current datapointsBatch
+        # If current datapoints_batch is None or we have finished
+        # processing current datapoints_batch
         if (
-            self.datapointsBatch is None
-            or len(self.datapointsBatch) == self.datapointsBatchIndex
+            self.datapoints_batch is None
+            or len(self.datapoints_batch) == self.datapoints_batch_index
         ):
 
-            self.datapointsBatch, self.cursor = self.func(self.cursor)
-            self.datapointsBatchIndex = 0
+            self.datapoints_batch, self.cursor = self.func(self.cursor)
+            self.datapoints_batch_index = 0
 
-            self.total += len(self.datapointsBatch)
+            self.total += len(self.datapoints_batch)
 
         # Current entry to return
-        if self.datapointsBatch and self.datapointsBatchIndex is not None:
-            entry = self.datapointsBatch[self.datapointsBatchIndex]
-            self.datapointsBatchIndex += 1
+        if self.datapoints_batch and self.datapoints_batch_index is not None:
+            entry = self.datapoints_batch[self.datapoints_batch_index]
+            self.datapoints_batch_index += 1
 
             return entry
 

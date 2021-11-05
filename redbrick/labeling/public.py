@@ -5,9 +5,10 @@ from typing import List, Dict, Optional
 from copy import deepcopy
 from functools import partial
 import aiohttp
-import tqdm  # type: ignore
+import tqdm
 
 from redbrick.common.context import RBContext
+from redbrick.utils.logging import print_error, print_info
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.rb_label_utils import clean_rb_label
@@ -72,8 +73,8 @@ class Labeling:
                     session, self.org_id, self.project_id, stage_name, task_id, labels
                 )
 
-        except Exception as error:
-            print(error)
+        except ValueError as error:
+            print_error(error)
             point_error = deepcopy(task)
             point_error["error"] = error
             return point_error
@@ -121,7 +122,7 @@ class Labeling:
                 "name": item["datapoint"]["name"],
             }
 
-        print("Downloading tasks in stage")
+        print_info("Downloading tasks in stage")
         return [
             _parse_entry(val)
             for val in tqdm.tqdm(my_iter, unit=" datapoints", total=count)

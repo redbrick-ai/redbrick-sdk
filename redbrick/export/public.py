@@ -1,26 +1,29 @@
 """Public API to exporting."""
 
-from abc import abstractmethod
-from redbrick.utils.logging import print_warning
-import tqdm  # type: ignore
-from typing import List, Dict, Callable, Optional, Tuple
+
+from typing import List, Dict, Optional, Tuple
 from functools import partial
+import os
+import json
+import copy
+
+from shapely.geometry import Polygon
+import numpy as np
+import rasterio.features
+from matplotlib import cm
+import matplotlib.pyplot as plt
+import tqdm
+
 from redbrick.common.context import RBContext
+from redbrick.utils.logging import print_error, print_info
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
 from redbrick.coco.coco_main import coco_converter
-import numpy as np  # type: ignore
-import copy
-from matplotlib import cm
-import matplotlib.pyplot as plt
-import os
-from shapely.geometry import Polygon
-import rasterio.features
-import json
 
 
 def _parse_entry_latest(item: Dict) -> Dict:
     history_obj = item["history"][0]
+    task_id = item["taskId"]
     datapoint = history_obj["taskData"]["dataPoint"]
     items_presigned = datapoint["itemsPresigned"]
     items = datapoint["items"]
@@ -29,7 +32,23 @@ def _parse_entry_latest(item: Dict) -> Dict:
     created_by = history_obj["taskData"]["createdByEmail"]
     labels = [clean_rb_label(label) for label in history_obj["taskData"]["labels"]]
 
-    return flat_rb_format(labels, items, items_presigned, name, dp_id, created_by)
+    return flat_rb_format(
+        labels, items, items_presigned, name, dp_id, created_by, task_id
+    )
+
+
+def parse_output_entry(item: Dict) -> Dict:
+    """Parse entry for output data."""
+    items_presigned = item["itemsPresigned"]
+    items = item["items"]
+    name = item["name"]
+    dp_id = item["dpId"]
+    created_by = item["labelData"]["createdByEmail"]
+    labels = [clean_rb_label(label) for label in item["labelData"]["labels"]]
+    task_id = item["task"]["taskId"]
+    return flat_rb_format(
+        labels, items, items_presigned, name, dp_id, created_by, task_id
+    )
 
 
 class Export:
@@ -40,34 +59,22 @@ class Export:
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
-        self.general_info = {}
+        self.general_info: Dict = {}
 
     def _get_raw_data_ground_truth(self, concurrency: int) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_output
 
         my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, concurrency, True)
+            partial(temp, self.org_id, self.project_id, concurrency)
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
         self.general_info = general_info
 
-        def _parse_entry(item: Dict) -> Dict:
-            items_presigned = item["itemsPresigned"]
-            items = item["items"]
-            name = item["name"]
-            dp_id = item["dpId"]
-            created_by = item["labelData"]["createdByEmail"]
-            labels = [clean_rb_label(label) for label in item["labelData"]["labels"]]
-
-            return flat_rb_format(
-                labels, items, items_presigned, name, dp_id, created_by
-            )
-
-        print("Downloading datapoints")
+        print_info("Downloading tasks")
         return (
             [
-                _parse_entry(val)
+                parse_output_entry(val)
                 for val in tqdm.tqdm(
                     my_iter, unit=" datapoints", total=general_info["datapointCount"]
                 )
@@ -79,7 +86,7 @@ class Export:
         temp = self.context.export.get_datapoints_latest
 
         my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, concurrency, True)
+            partial(temp, self.org_id, self.project_id, concurrency)
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
@@ -88,7 +95,7 @@ class Export:
             self.org_id, self.project_id
         )
 
-        print("Downloading datapoints")
+        print_info("Downloading tasks")
         return (
             [
                 _parse_entry_latest(val)
@@ -106,16 +113,16 @@ class Export:
         return [_parse_entry_latest(datapoint)], general_info["taxonomy"]
 
     @staticmethod
-    def get_color(id):
-        """Get's a color from class id"""
-        if id > 20:
-            return cm.tab20b(int(id))
-        else:
-            return cm.tab20c(int(id))
+    def get_color(class_id):
+        """Get a color from class id."""
+        if class_id > 20:
+            return cm.tab20b(int(class_id))
+
+        return cm.tab20c(int(class_id))
 
     @staticmethod
     def uniquify_path(path):
-        """Provide unique path with number index"""
+        """Provide unique path with number index."""
         filename, extension = os.path.splitext(path)
         counter = 1
 
@@ -126,13 +133,15 @@ class Export:
         return path
 
     @staticmethod
-    def tax_class_id_mapping(taxonomy: Dict, class_id: Dict, color_map=None) -> None:
-        """Creates a class mapping from taxonomy categories to class_id"""
+    def tax_class_id_mapping(
+        taxonomy: Dict, class_id: Dict, color_map: Optional[Dict] = None
+    ) -> None:
+        """Create a class mapping from taxonomy categories to class_id."""
         for category in taxonomy:
             class_id[category["name"]] = category["classId"] + 1
 
             # Create a color map
-            if not color_map == None:
+            if color_map is not None:
                 color_map[category["name"]] = Export.get_color(category["classId"])[
                     0:3
                 ]  # not doing +1 here.
@@ -140,13 +149,12 @@ class Export:
             Export.tax_class_id_mapping(category["children"], class_id, color_map)
 
     @staticmethod
-    def convert_rbai_mask(task: Dict, class_id_map: Dict) -> np.ndarray:
-        """Converts rbai datapoint to a numpy mask"""
-
+    def convert_rbai_mask(task: Dict, class_id_map: Dict) -> Optional[np.ndarray]:
+        """Convert rbai datapoint to a numpy mask."""
         # 0 label task
         if len(task["labels"]) == 0:
-            print("No labels")
-            return
+            print_error("No labels")
+            return None
 
         imagesize = task["labels"][0]["pixel"]["imagesize"]
         mask = np.zeros([imagesize[1], imagesize[0]])
@@ -230,7 +238,7 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
     ) -> None:
-        """Export segmentation labels as masks"""
+        """Export segmentation labels as masks."""
         if task_id:
             datapoints, taxonomy = self._get_raw_data_single(task_id)
 
@@ -240,17 +248,19 @@ class Export:
             datapoints, taxonomy = self._get_raw_data_latest(concurrency)
 
         if not self.general_info["taskType"] == "SEGMENTATION":
-            print("Project type needs to be SEGMENTATION, to use redbrick_png export!")
+            print_error(
+                "Project type needs to be SEGMENTATION, to use redbrick_png export!"
+            )
             return
 
         # Create output directory
         output_dir = Export.uniquify_path(self.project_id)
         os.mkdir(output_dir)
-        print("Saving masks to %s directory" % output_dir)
+        print_info("Saving masks to %s directory" % output_dir)
 
         # Create a color map from the taxonomy
-        class_id_map = {}
-        color_map = {}
+        class_id_map: Dict = {}
+        color_map: Dict = {}
         Export.tax_class_id_mapping(
             taxonomy["categories"][0]["children"], class_id_map, color_map
         )
@@ -280,12 +290,12 @@ class Export:
     ) -> List[Dict]:
         """Export data into redbrick format."""
         if task_id:
-            datapoints, taxonomy = self._get_raw_data_single(task_id)
+            datapoints, _ = self._get_raw_data_single(task_id)
 
         elif only_ground_truth:
-            datapoints, taxonomy = self._get_raw_data_ground_truth(concurrency)
+            datapoints, _ = self._get_raw_data_ground_truth(concurrency)
         else:
-            datapoints, taxonomy = self._get_raw_data_latest(concurrency)
+            datapoints, _ = self._get_raw_data_latest(concurrency)
 
         return datapoints
 

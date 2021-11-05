@@ -9,7 +9,13 @@ org_id = "3d0caac7-b1e9-483f-8676-c0aca73af232"
 project_id = "d36ae4bd-c57f-41c6-ac3e-8116324b8091"
 
 project = redbrick.get_project(api_key, url, org_id, project_id)
+<<<<<<< HEAD
 # project.upload.create_datapoints_from_masks("11111111-1111-1111-1111-111111111111", "redbrick/upload/mask_test")
+=======
+project.upload.create_datapoints_from_masks(
+    "11111111-1111-1111-1111-111111111111", "test_mask"
+)
+>>>>>>> 5dd1ae654809b091a0fdaae46acae2457dc620c9
 
 result = project.export.redbrick_format(
     True

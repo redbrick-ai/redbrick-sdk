@@ -17,6 +17,7 @@ from redbrick.repo import (
     ExportRepo,
     LabelingRepo,
     LearningRepo,
+    Learning2Repo,
     UploadRepo,
     ProjectRepo,
 )
@@ -28,6 +29,7 @@ def _populate_context(context: RBContext) -> RBContext:
     context.export = ExportRepo(context.client)
     context.labeling = LabelingRepo(context.client)
     context.learning = LearningRepo(context.client)
+    context.learning2 = Learning2Repo(context.client)
     context.upload = UploadRepo(context.client)
     context.project = ProjectRepo(context.client)
     return context

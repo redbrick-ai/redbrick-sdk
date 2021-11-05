@@ -1,3 +1,5 @@
+"""Test methods for converting polygons for coco."""
+
 from .polygon import rb2coco_polygon, is_coco_polygon
 
 
@@ -17,8 +19,7 @@ def test_rb2coco_polygon_simple_square() -> None:
 
     # action
     result = rb2coco_polygon(label, 1, 1, 2, 100, 100)
-    # result2 = coco2rb_bbox(result, [["object", "bux"]], 100, 100)
-    # result3 = rb2coco_bbox(result2, 1, 1, 2, 100, 100)
+
     # assert
     assert result == {
         "id": 1,
@@ -29,7 +30,6 @@ def test_rb2coco_polygon_simple_square() -> None:
         "iscrowd": 0,
         "segmentation": [[0, 0, 100, 0, 100, 100, 0, 100]],
     }
-    # assert result == result3, "Conversion is not consistent/symmetric"
     assert is_coco_polygon(result)
 
 
@@ -49,8 +49,6 @@ def test_rb2coco_polygon_diamond() -> None:
 
     # action
     result = rb2coco_polygon(label, 1, 1, 2, 100, 100)
-    # result2 = coco2rb_bbox(result, [["object", "bux"]], 100, 100)
-    # result3 = rb2coco_bbox(result2, 1, 1, 2, 100, 100)
     # assert
     assert result == {
         "id": 1,
@@ -61,7 +59,6 @@ def test_rb2coco_polygon_diamond() -> None:
         "iscrowd": 0,
         "segmentation": [[50, 0, 100, 50, 50, 100, 0, 50]],
     }
-    # assert result == result3, "Conversion is not consistent/symmetric"
     assert is_coco_polygon(result)
 
 
@@ -96,5 +93,4 @@ def test_rb2coco_polygon_diamond_reverse_order() -> None:
         "iscrowd": 0,
         "segmentation": [[0, 50, 50, 100, 100, 50, 50, 0]],
     }
-    # assert result == result3, "Conversion is not consistent/symmetric"
     assert is_coco_polygon(result)

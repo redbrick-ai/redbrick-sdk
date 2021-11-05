@@ -43,6 +43,7 @@ class ProjectRepo(ProjectRepoInterface):
                 stages(orgId: $orgId, projectId: $projectId){
                     stageName
                     brickName
+                    stageConfig
                 }
             }
         """

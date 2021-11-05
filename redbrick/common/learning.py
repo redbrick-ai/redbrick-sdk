@@ -75,3 +75,34 @@ class LearningControllerInterface(ABC):
         cycle_status: str,
     ) -> None:
         """Set status of current training cycle."""
+
+
+class LearningController2Interface(ABC):
+    """Abstract interface to Active Learning APIs."""
+
+    @abstractmethod
+    def check_for_job(self, org_id: str, project_id: str) -> Dict:
+        """Check for a job, and num new tasks."""
+
+    @abstractmethod
+    def get_taxonomy_and_type(self, org_id: str, project_id: str) -> Tuple[dict, str]:
+        """Get the taxonomy for active learning."""
+
+    @abstractmethod
+    async def update_prelabels_and_priorities(
+        self,
+        aio_client: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
+        tasks: List[Dict],
+    ) -> None:
+        """Perform send_batch_learning_results with asyncio."""
+
+    @abstractmethod
+    def start_processing(self, org_id: str, project_id: str) -> None:
+        """Set status of current training cycle."""
+
+    @abstractmethod
+    def end_processing(self, org_id: str, project_id: str) -> None:
+        """Set status of current training cycle."""

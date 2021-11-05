@@ -1,3 +1,5 @@
+"""Repo for accessing export apis."""
+
 from typing import Optional, List, Dict, Tuple
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
@@ -12,6 +14,7 @@ LATEST_HISTORY_SHARD = (
                         name
                         itemsPresigned: items(presigned: true)
                         items(presigned: false)
+
                     }
                     createdByEmail
                     labels(interpolate: true) {
@@ -89,13 +92,12 @@ class ExportRepo(ExportControllerInterface):
         org_id: str,
         project_id: str,
         first: int = 50,
-        presign: bool = False,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get datapoints that have made it to the output of the project."""
         query_string = (
             """
-        query ($orgId: UUID!, $name: String!,$first: Int, $cursor: String){
+        query ($orgId: UUID!, $projectId: UUID!, $name: String!,$first: Int, $cursor: String){
         customGroup(orgId: $orgId, name:$name){
             datapointsPaged(first:$first, after:$cursor) {
             entries {
@@ -103,6 +105,9 @@ class ExportRepo(ExportControllerInterface):
                 name
                 itemsPresigned:items (presigned:true)
                 items(presigned:false)
+                task(projectId: $projectId) {
+                    taskId
+                }
                 labelData(customGroupName: $name){
                 createdByEmail
                 labels(interpolate: true) {
@@ -124,6 +129,7 @@ class ExportRepo(ExportControllerInterface):
         query_variables = {
             "orgId": org_id,
             "name": project_id + "-output",
+            "projectId": project_id,
             "cursor": cursor,
             "first": first,
         }
@@ -162,7 +168,6 @@ class ExportRepo(ExportControllerInterface):
         org_id: str,
         project_id: str,
         first: int = 50,
-        presign: bool = False,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get the latest datapoints."""
@@ -176,6 +181,7 @@ class ExportRepo(ExportControllerInterface):
                 after: $cursor
             ) {
                 entries {
+                    taskId
                     %s
                 }
                 cursor
@@ -210,6 +216,7 @@ class ExportRepo(ExportControllerInterface):
                 taskId: $taskId
 
             ) {
+                taskId
                 %s
             }
             }

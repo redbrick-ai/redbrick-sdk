@@ -48,5 +48,5 @@ def rb_get_class_id(label_category: List[str], taxonomy: dict) -> int:
     if new_root:
         class_id: int = new_root["classId"]
         return class_id
-    else:
-        raise Exception("Couldn't find class")
+
+    raise Exception("Couldn't find class")

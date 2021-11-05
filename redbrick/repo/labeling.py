@@ -125,7 +125,7 @@ class LabelingRepo(LabelingControllerInterface):
             "finished": True,
             "elapsedTimeMs": 0,
         }
-        result = await self.client.execute_query_async(session, query, variables)
+        await self.client.execute_query_async(session, query, variables)
 
     async def put_review_task_result(
         self,
@@ -168,7 +168,7 @@ class LabelingRepo(LabelingControllerInterface):
             "elapsedTimeMs": 0,
         }
 
-        result = await self.client.execute_query_async(session, query, variables)
+        await self.client.execute_query_async(session, query, variables)
 
     def assign_task(
         self, org_id: str, project_id: str, stage_name: str, task_id: str, email: str
@@ -243,6 +243,7 @@ class LabelingRepo(LabelingControllerInterface):
                             itemsPresigned: items(presigned: true)
                             items(presigned: false)
                             dataType
+                            dpId
                             name
                     }
                     }
@@ -264,14 +265,21 @@ class LabelingRepo(LabelingControllerInterface):
         return response["taskQueue"]["entries"], response["taskQueue"]["cursor"]
 
     def get_task_queue_count(
-        self, org_id: str, project_id: str, stage_name: str,
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
     ) -> int:
         """Get the length of the task queue for showing loading."""
         query_string = """
             query ($orgId: UUID!
                 $projectId: UUID!
                 $stageName: String!)  {
-                manualLabelingStageSummary(orgId:$orgId, projectId:$projectId, stageName:$stageName){
+                manualLabelingStageSummary(
+                    orgId:$orgId,
+                    projectId:$projectId,
+                    stageName:$stageName
+                ){
                     taskStatusSummary {
                     assignedCount
                     unassignedCount

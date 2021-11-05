@@ -4,28 +4,91 @@
 name: Upload Python Package
 
 on:
+  push:
+    branches: [master]
   release:
     types: [created]
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
-
+    if: github.event_name == 'release'
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine
-    - name: Build and publish
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python setup.py sdist bdist_wheel
+          twine upload dist/*
+
+  test36:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+      - name: Linters Tests
+        run: |
+          pytest redbrick -m "not slow" --quiet --mypy --black --eradicate --pycodestyle --pydocstyle --flake8 --pylint --pylint-rcfile=setup.cfg
+  test37:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+      - name: Linters Tests
+        run: |
+          pytest redbrick -m "not slow" --quiet --mypy --black --eradicate --pycodestyle --pydocstyle --flake8 --pylint --pylint-rcfile=setup.cfg
+
+  test38:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+      - name: Linters Tests
+        run: |
+          pytest redbrick -m "not slow" --quiet --mypy --black --eradicate --pycodestyle --pydocstyle --flake8 --pylint --pylint-rcfile=setup.cfg
+  test39:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+      - name: Linters Tests
+        run: |
+          pytest redbrick -m "not slow" --quiet --mypy --black --eradicate --pycodestyle --pydocstyle --flake8 --pylint --pylint-rcfile=setup.cfg

@@ -1,10 +1,12 @@
 """Main object for RedBrick SDK."""
 
+import json
 import time
 from typing import Dict, List
 from redbrick.common.context import RBContext
 
 from redbrick.export import Export
+from redbrick.learning.public import Learning2
 from redbrick.upload import Upload
 from redbrick.learning import Learning
 from redbrick.labeling import Labeling
@@ -58,13 +60,25 @@ class RBProject:
 
         raise Exception("No active learning stage in this project")
 
+    @property
+    def learning2(self) -> Learning2:
+        """Read only, get learning2 module."""
+        for stage in self._stages:
+            if stage["brickName"] == "manual-labeling":
+                if json.loads(stage["stageConfig"]).get("isPrimaryStage"):
+                    return Learning2(
+                        self.context, self.org_id, self.project_id, stage["stageName"]
+                    )
+
+        raise Exception("No stage available for active learning in this project")
+
     def __wait_for_project_to_finish_creating(self) -> Dict:
         project = self.context.project.get_project(self.org_id, self.project_id)
         if project["status"] == "CREATING":
             print_info("Project is still creating...", end="")
-            for ii in range(8):
+            for i in range(8):
                 print_info(".", end="")
-                time.sleep(2 ^ ii)
+                time.sleep(2 ^ i)
                 project = self.context.project.get_project(self.org_id, self.project_id)
                 if project["status"] != "CREATING":
                     break

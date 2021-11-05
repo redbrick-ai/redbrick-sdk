@@ -64,5 +64,10 @@ def coco2rb_bbox(
 
     return {
         "category": category,
-        "bbox2d": {"xnorm": xnorm, "ynorm": ynorm, "wnorm": wnorm, "hnorm": hnorm,},
+        "bbox2d": {
+            "xnorm": xnorm,
+            "ynorm": ynorm,
+            "wnorm": wnorm,
+            "hnorm": hnorm,
+        },
     }

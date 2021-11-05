@@ -1,6 +1,8 @@
 # type: ignore
-"""Testing functions for Export"""
+"""Testing functions for Export."""
 
+
+from typing import Dict
 import numpy as np
 from .public import Export
 
@@ -12,7 +14,9 @@ taxonomy_1 = {
                 {
                     "name": "bus",
                     "classId": 0,
-                    "children": [{"name": "motor", "classId": 6, "children": []},],
+                    "children": [
+                        {"name": "motor", "classId": 6, "children": []},
+                    ],
                 },
                 {"name": "traffic light", "classId": 1, "children": []},
                 {"name": "traffic sign", "classId": 2, "children": []},
@@ -40,12 +44,14 @@ tax_map_1 = {
 
 
 def test_tax_class_id_map() -> None:
-    tax_map = {}
+    """Test taxonomy classid map."""
+    tax_map: Dict = {}
     Export.tax_class_id_mapping(taxonomy_1["categories"][0]["children"], tax_map)
     assert tax_map == tax_map_1
 
 
 def test_png_convert_simple() -> None:
+    """Test converting to a simple png."""
     taxonomy = {
         "categories": [
             {
