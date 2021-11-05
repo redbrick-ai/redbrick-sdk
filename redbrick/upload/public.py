@@ -81,7 +81,7 @@ class Upload:
         Returns list of datapoints that failed to create.
         """
 
-        # Read in the datapoint_map.json file, if available
+        # Read in the datapoint_map.json file
         if not os.path.isfile(os.path.join(mask_dir, "datapoint_map.json")):
             raise Exception(
                 "datapoint_map.json file not found! You must provide the datapoint_map.json file inside %s"
@@ -117,7 +117,7 @@ class Upload:
     def _mask_to_rbai(mask, class_map, items, name):
         """Converts a mask to rbai datapoint format."""
 
-        # Convert 3D mask into a series of 2d masks for each object
+        # Convert 3D mask into a series of 2D masks for each object
         mask_2d_stack = None
         mask_2d_categories = []
         for i, category in enumerate(class_map):
@@ -132,11 +132,11 @@ class Upload:
             if len(class_idxs[0]) == 0:
                 # Skip classes that aren't present
                 continue
- 
+
             mask_2d[class_idxs] = 1  # fill in binary mask
             mask_2d_categories += [category]
 
-            # stack all individual masks
+            # Stack all individual masks
             if i == 0:
                 mask_2d_stack = mask_2d
             else:
