@@ -99,10 +99,8 @@ def _get_active_learning_config(
 
 def get_basic_project(reviews: int = 0) -> List[Dict]:
     """Get basic project config with reviews."""
-    if reviews < MIN_REVIEW:
-        reviews = MIN_REVIEW
-    if reviews > MAX_REVIEW:
-        reviews = MAX_REVIEW
+    reviews = max(reviews, MIN_REVIEW)
+    reviews = min(reviews, MAX_REVIEW)
 
     middle_stages, entry_point = _get_middle_stages(reviews, OUTPUT_NAME)
 

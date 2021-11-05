@@ -53,10 +53,8 @@ def coco2rb_bbox(
     wnorm = coco_label["bbox"][2] / width
     hnorm = coco_label["bbox"][3] / height
 
-    if xnorm < 0:
-        xnorm = 0
-    if ynorm < 0:
-        ynorm = 0
+    xnorm = max(xnorm, 0)
+    ynorm = max(ynorm, 0)
     if xnorm + wnorm > 1:
         wnorm = 1 - xnorm
     if ynorm + hnorm > 1:
