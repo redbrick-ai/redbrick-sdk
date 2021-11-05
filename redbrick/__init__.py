@@ -12,7 +12,7 @@ from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
 from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
-from redbrick.utils import version_check
+from redbrick.utils import version_check  # pylint: disable=cyclic-import
 from redbrick.repo import (
     ExportRepo,
     LabelingRepo,
