@@ -1,18 +1,18 @@
 """Public API to exporting."""
 
 
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from functools import partial
 import os
 import json
 import copy
 
-from shapely.geometry import Polygon
-import numpy as np
-import rasterio.features
-from matplotlib import cm
-import matplotlib.pyplot as plt
-import tqdm
+from shapely.geometry import Polygon  # type: ignore
+import numpy as np  # type: ignore
+import rasterio.features  # type: ignore
+from matplotlib import cm  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
+import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.utils.logging import print_error, print_info
@@ -113,15 +113,15 @@ class Export:
         return [_parse_entry_latest(datapoint)], general_info["taxonomy"]
 
     @staticmethod
-    def get_color(class_id):
+    def get_color(class_id: int) -> Any:
         """Get a color from class id."""
         if class_id > 20:
-            return cm.tab20b(int(class_id))
+            return cm.tab20b(int(class_id))  # pylint: disable=no-member
 
-        return cm.tab20c(int(class_id))
+        return cm.tab20c(int(class_id))  # pylint: disable=no-member
 
     @staticmethod
-    def uniquify_path(path):
+    def uniquify_path(path: str) -> str:
         """Provide unique path with number index."""
         filename, extension = os.path.splitext(path)
         counter = 1
@@ -149,12 +149,14 @@ class Export:
             Export.tax_class_id_mapping(category["children"], class_id, color_map)
 
     @staticmethod
-    def convert_rbai_mask(task: Dict, class_id_map: Dict) -> Optional[np.ndarray]:
+    def convert_rbai_mask(  # pylint: disable=too-many-locals
+        task: Dict, class_id_map: Dict
+    ) -> np.ndarray:
         """Convert rbai datapoint to a numpy mask."""
         # 0 label task
         if len(task["labels"]) == 0:
             print_error("No labels")
-            return None
+            return np.array([])
 
         imagesize = task["labels"][0]["pixel"]["imagesize"]
         mask = np.zeros([imagesize[1], imagesize[0]])
@@ -222,13 +224,13 @@ class Export:
 
             # convert 2d mask into 3d mask with colors
             color_mask = np.zeros((mask.shape[0], mask.shape[1], 3))
-            class_ids = np.unique(mask)
-            for id in class_ids:
-                if id == 0:
+            class_ids = np.unique(mask)  # type: ignore
+            for i in class_ids:
+                if i == 0:
                     # don't add color to background
                     continue
-                indexes = np.where(mask == id)
-                color_mask[indexes] = Export.get_color(id - 1)[0:3]
+                indexes = np.where(mask == i)
+                color_mask[indexes] = Export.get_color(i - 1)[0:3]
 
         return color_mask
 

@@ -5,14 +5,13 @@ import os
 from copy import deepcopy
 from typing import List, Dict, Optional
 import json
-import uuid
 
 import aiohttp
-import rasterio
+import rasterio  # type: ignore
 import numpy as np
 from rasterio import features
-import shapely
-import matplotlib.pyplot as plt
+import shapely  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
 
 
 from redbrick.common.context import RBContext
@@ -81,6 +80,16 @@ class Upload:
 
         Returns list of datapoints that failed to create.
         """
+        # Read in the datapoint_map.json file
+        if not os.path.isfile(os.path.join(mask_dir, "datapoint_map.json")):
+            raise Exception(
+                """datapoint_map.json file not found!
+                You must provide the datapoint_map.json file inside %s"""
+                % mask_dir
+            )
+        with open(os.path.join(mask_dir, "datapoint_map.json"), "r") as file:
+            datapoint_map = json.load(file)
+
         # Read in the class_map.json file
         if not os.path.isfile(os.path.join(mask_dir, "class_map.json")):
             raise Exception(
@@ -90,20 +99,6 @@ class Upload:
         with open(os.path.join(mask_dir, "class_map.json"), "r") as file:
             class_map = json.load(file)
 
-        # Create a temp categorty -> id mapping
-        class_id_map = {}
-        for i, category in enumerate(class_map):
-            class_id_map[category] = i
-
-        # Read in the datapoint_map.json file, if available
-        if not os.path.isfile(os.path.join(mask_dir, "datapoint_map.json")):
-            raise Exception(
-                "datapoint_map.json file not found! You must provide"
-                + " the datapoint_map.json file inside %s" % mask_dir
-            )
-        with open(os.path.join(mask_dir, "class_map.json"), "r") as file:
-            datapoint_map = json.load(file)
-
         # Iterate over the PNG masks in the directory, and convert to RBAI format
         datapoints = []
         files = os.listdir(mask_dir)
@@ -111,18 +106,57 @@ class Upload:
 
         for file_ in files:
             mask = plt.imread(os.path.join(mask_dir, file_))
-            # TODO: temporarily convert to simple binary mask
-            mask = mask[:, :, 0]
-            mask[np.where(mask != 0)] = 1
+            items = datapoint_map[file_[0:-4]]
+            name = file_
+            datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
+            datapoints += [datapoint_entry]
 
-            polygons = Upload._mask_to_polygon(mask)
-            entry: Dict = {}
-            entry["labels"] = []
+        return asyncio.run(self._create_datapoints(storage_id, datapoints))
+
+    @staticmethod
+    def mask_to_rbai(  # pylint: disable=too-many-locals
+        mask: np.ndarray, class_map: Dict, items: str, name: str
+    ) -> Dict:
+        """Convert a mask to rbai datapoint format."""
+        # Convert 3D mask into a series of 2D masks for each object
+        mask_2d_stack = np.array([])
+        mask_2d_categories = []
+        for i, category in enumerate(class_map):
+            mask_2d = np.zeros((mask.shape[0], mask.shape[1]))
+            color = class_map[category]
+            class_idxs = np.where(
+                (mask[:, :, 0] == color[0])
+                & (mask[:, :, 1] == color[1])
+                & (mask[:, :, 2] == color[2])
+            )
+
+            if len(class_idxs[0]) == 0:
+                # Skip classes that aren't present
+                continue
+
+            mask_2d[class_idxs] = 1  # fill in binary mask
+            mask_2d_categories += [category]
+
+            # Stack all individual masks
+            if i == 0:
+                mask_2d_stack = mask_2d
+            else:
+                mask_2d_stack = np.dstack((mask_2d_stack, mask_2d))  # type: ignore
+
+        entry: Dict = {}
+        entry["labels"] = []
+        for depth in range(mask_2d_stack.shape[-1]):
+            mask_depth = mask_2d_stack[:, :, depth]
+            polygons = Upload._mask_to_polygon(mask_depth)
+
             label_entry: Dict = {}
-            label_entry["category"] = [["object", "bus"]]  # TODO: Update
+            label_entry["category"] = [["object", mask_2d_categories[depth]]]
             label_entry["attributes"] = []
             label_entry["pixel"] = {}
-            label_entry["pixel"]["imagesize"] = [mask.shape[1], mask.shape[0]]
+            label_entry["pixel"]["imagesize"] = [
+                mask_depth.shape[1],
+                mask_depth.shape[0],
+            ]
             label_entry["pixel"]["regions"] = []
             label_entry["pixel"]["holes"] = []
             for polygon in polygons:
@@ -130,12 +164,12 @@ class Upload:
                 for interior in polygon.interiors:
                     label_entry["pixel"]["holes"] += [list(interior.coords)]
 
-            entry["labels"] = [label_entry]  # TODO: Update
-            entry["items"] = ["http://datasets.redbrickai.com/cars/07398.jpg"]
-            entry["name"] = str(uuid.uuid4())
-            datapoints += [entry]
+            entry["labels"] += [label_entry]
 
-        return asyncio.run(self._create_datapoints(storage_id, datapoints))
+        entry["items"] = [items]
+        entry["name"] = name
+
+        return entry
 
     @staticmethod
     def _mask_to_polygon(mask: np.ndarray) -> shapely.geometry.MultiPolygon:

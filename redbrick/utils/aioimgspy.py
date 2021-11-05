@@ -1,6 +1,6 @@
-# type: ignore
 # pylint: disable=invalid-name
 # noqa
+
 """
 aioimgspy is a port of imgspy by Derek Lukacs for RedBrick AI.
 
@@ -55,7 +55,7 @@ import struct
 
 # pylint: disable=too-many-statements,
 # pylint: disable=too-many-branches, too-many-locals, too-many-return-statements
-async def probe(stream):
+async def probe(stream):  # type: ignore
     """Probe for img dimensions."""
     w, h = None, None
     chunk = await stream.readexactly(26)
@@ -125,7 +125,7 @@ async def probe(stream):
             if all([w, h, orientation]):
                 break
 
-        if orientation >= 5:
+        if orientation >= 5:  # type: ignore
             w, h = h, w
         return {"type": "tiff", "width": w, "height": h, "orientation": orientation}
     if chunk[:4] == b"RIFF" and chunk[8:15] == b"WEBPVP8":
