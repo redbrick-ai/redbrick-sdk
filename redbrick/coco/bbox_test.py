@@ -4,7 +4,7 @@
 from .bbox import rb2coco_bbox, coco2rb_bbox, is_coco_bbox
 
 
-def test_rb2coco_bbox() -> None:
+def test_rb2coco_bbox():
     """Test converting from rb bbox to coco bbox."""
     # arrange
     label = {

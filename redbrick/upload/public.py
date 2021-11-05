@@ -5,14 +5,13 @@ import os
 from copy import deepcopy
 from typing import List, Dict, Optional
 import json
-import uuid
 
 import aiohttp
-import rasterio
+import rasterio  # type: ignore
 import numpy as np
 from rasterio import features
-import shapely
-import matplotlib.pyplot as plt
+import shapely  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
 
 
 from redbrick.common.context import RBContext
@@ -81,11 +80,11 @@ class Upload:
 
         Returns list of datapoints that failed to create.
         """
-
         # Read in the datapoint_map.json file
         if not os.path.isfile(os.path.join(mask_dir, "datapoint_map.json")):
             raise Exception(
-                "datapoint_map.json file not found! You must provide the datapoint_map.json file inside %s"
+                """datapoint_map.json file not found!
+                You must provide the datapoint_map.json file inside %s"""
                 % mask_dir
             )
         with open(os.path.join(mask_dir, "datapoint_map.json"), "r") as file:
@@ -105,21 +104,20 @@ class Upload:
         files = os.listdir(mask_dir)
         files = list(filter(lambda file: file[-3:] == "png", files))
 
-        for file in files:
-            mask = plt.imread(os.path.join(mask_dir, file))
-            items = datapoint_map[file[0:-4]]
-            name = file
+        for file_ in files:
+            mask = plt.imread(os.path.join(mask_dir, file_))
+            items = datapoint_map[file_[0:-4]]
+            name = file_
             datapoint_entry = Upload._mask_to_rbai(mask, class_map, items, name)
             datapoints += [datapoint_entry]
 
         return asyncio.run(self._create_datapoints(storage_id, datapoints))
 
     @staticmethod
-    def _mask_to_rbai(mask, class_map, items, name):
-        """Converts a mask to rbai datapoint format."""
-
+    def _mask_to_rbai(mask: np.ndarray, class_map: Dict, items: str, name: str) -> Dict:
+        """Convert a mask to rbai datapoint format."""
         # Convert 3D mask into a series of 2D masks for each object
-        mask_2d_stack = None
+        mask_2d_stack = np.array([])
         mask_2d_categories = []
         for i, category in enumerate(class_map):
             mask_2d = np.zeros((mask.shape[0], mask.shape[1]))
@@ -141,15 +139,15 @@ class Upload:
             if i == 0:
                 mask_2d_stack = mask_2d
             else:
-                mask_2d_stack = np.dstack((mask_2d_stack, mask_2d))
+                mask_2d_stack = np.dstack((mask_2d_stack, mask_2d))  # type: ignore
 
-        entry = {}
+        entry: Dict = {}
         entry["labels"] = []
         for depth in range(mask_2d_stack.shape[-1]):
             mask_depth = mask_2d_stack[:, :, depth]
             polygons = Upload._mask_to_polygon(mask_depth)
 
-            label_entry = {}
+            label_entry: Dict = {}
             label_entry["category"] = [["object", mask_2d_categories[depth]]]
             label_entry["attributes"] = []
             label_entry["pixel"] = {}
