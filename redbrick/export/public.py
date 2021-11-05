@@ -116,9 +116,9 @@ class Export:
     def get_color(class_id: int) -> Any:
         """Get a color from class id."""
         if class_id > 20:
-            return cm.tab20b(int(class_id))
+            return cm.tab20b(int(class_id))  # pylint: disable=no-member
 
-        return cm.tab20c(int(class_id))
+        return cm.tab20c(int(class_id))  # pylint: disable=no-member
 
     @staticmethod
     def uniquify_path(path: str) -> str:
@@ -149,12 +149,14 @@ class Export:
             Export.tax_class_id_mapping(category["children"], class_id, color_map)
 
     @staticmethod
-    def convert_rbai_mask(task: Dict, class_id_map: Dict) -> Optional[np.ndarray]:
+    def convert_rbai_mask(  # pylint: disable=too-many-locals
+        task: Dict, class_id_map: Dict
+    ) -> np.ndarray:
         """Convert rbai datapoint to a numpy mask."""
         # 0 label task
         if len(task["labels"]) == 0:
             print_error("No labels")
-            return None
+            return np.array([])
 
         imagesize = task["labels"][0]["pixel"]["imagesize"]
         mask = np.zeros([imagesize[1], imagesize[0]])
@@ -223,12 +225,12 @@ class Export:
             # convert 2d mask into 3d mask with colors
             color_mask = np.zeros((mask.shape[0], mask.shape[1], 3))
             class_ids = np.unique(mask)  # type: ignore
-            for id in class_ids:
-                if id == 0:
+            for i in class_ids:
+                if i == 0:
                     # don't add color to background
                     continue
-                indexes = np.where(mask == id)
-                color_mask[indexes] = Export.get_color(id - 1)[0:3]
+                indexes = np.where(mask == i)
+                color_mask[indexes] = Export.get_color(i - 1)[0:3]
 
         return color_mask
 

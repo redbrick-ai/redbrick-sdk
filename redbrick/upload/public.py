@@ -108,13 +108,15 @@ class Upload:
             mask = plt.imread(os.path.join(mask_dir, file_))
             items = datapoint_map[file_[0:-4]]
             name = file_
-            datapoint_entry = Upload._mask_to_rbai(mask, class_map, items, name)
+            datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
             datapoints += [datapoint_entry]
 
         return asyncio.run(self._create_datapoints(storage_id, datapoints))
 
     @staticmethod
-    def _mask_to_rbai(mask: np.ndarray, class_map: Dict, items: str, name: str) -> Dict:
+    def mask_to_rbai(  # pylint: disable=too-many-locals
+        mask: np.ndarray, class_map: Dict, items: str, name: str
+    ) -> Dict:
         """Convert a mask to rbai datapoint format."""
         # Convert 3D mask into a series of 2D masks for each object
         mask_2d_stack = np.array([])

@@ -45,7 +45,8 @@ tax_map_1 = {
 def test_tax_class_id_map() -> None:
     """Test taxonomy classid map."""
     tax_map: Dict = {}
-    Export.tax_class_id_mapping(taxonomy_1["categories"][0]["children"], tax_map)
+    tax = taxonomy_1["categories"][0]["children"]
+    Export.tax_class_id_mapping(tax, tax_map)  # type: ignore
     assert tax_map == tax_map_1
 
 
@@ -59,10 +60,10 @@ def test_png_convert_simple() -> None:
             }
         ]
     }
-    class_id_map = {}
-    color_map = {}
+    class_id_map: Dict = {}
+    color_map: Dict = {}
     Export.tax_class_id_mapping(
-        taxonomy["categories"][0]["children"], class_id_map, color_map
+        taxonomy["categories"][0]["children"], class_id_map, color_map  # type: ignore
     )
 
     task = {
