@@ -208,11 +208,6 @@ class Export:
         max_hole_size: int = 30,
     ) -> np.ndarray:
         """Convert rbai datapoint to a numpy mask."""
-        # 0 label task
-        if len(task["labels"]) == 0:
-            print_error("No labels")
-            return np.array([])
-
         imagesize = task["labels"][0]["pixel"]["imagesize"]
         mask = np.zeros([imagesize[1], imagesize[0]])
 
@@ -339,6 +334,10 @@ class Export:
         print_info("Converting to masks")
         for datapoint in tqdm.tqdm(datapoints):
             dp_map[datapoint["dpId"]] = datapoint["items"][0]
+            if len(datapoint["labels"]) == 0:
+                print_error("No labels, skipping")
+                continue
+
             color_mask = Export.convert_rbai_mask(
                 datapoint, class_id_map, fill_holes, max_hole_size
             )
