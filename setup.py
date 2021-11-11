@@ -19,7 +19,7 @@ setup(
     version=version,
     description="RedBrick platform Python SDK!",
     py_modules=["redbrick"],
-    python_requires=">=3.6.0, <3.10",
+    python_requires=">=3.7.0, <3.10",
     packages=find_packages(),
     long_description=long_description,
     long_description_content_type="text/markdown",
