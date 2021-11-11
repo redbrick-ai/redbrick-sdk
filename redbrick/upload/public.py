@@ -124,7 +124,7 @@ class Upload:
         # Convert 3D mask into a series of 2D masks for each object
         mask_2d_stack = np.array([])
         mask_2d_categories = []
-        for i, category in enumerate(class_map):
+        for _, category in enumerate(class_map):
             mask_2d = np.zeros((mask.shape[0], mask.shape[1]))
             color = class_map[category]
             class_idxs = np.where(
@@ -141,7 +141,7 @@ class Upload:
             mask_2d_categories += [category]
 
             # Stack all individual masks
-            if i == 0:
+            if mask_2d_stack.shape[0] == 0:
                 mask_2d_stack = mask_2d
             else:
                 mask_2d_stack = np.dstack((mask_2d_stack, mask_2d))  # type: ignore

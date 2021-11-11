@@ -2,6 +2,8 @@
 
 
 from typing import Dict
+import copy
+
 import numpy as np
 from .public import Export
 
@@ -79,5 +81,32 @@ def test_png_convert_simple() -> None:
             }
         ]
     }
-    color_mask = Export.convert_rbai_mask(task, class_id_map)
+    color_mask = Export.convert_rbai_mask(task, class_id_map, False, 30)
     assert (color_mask[1:8, 1:8, :] / color_map["bus"] == np.ones((7, 7, 3))).all()
+
+
+def test_fill_holes_simple():
+    """Tests the fill holes operation."""
+    mask = np.zeros((10, 10))
+    mask[2:7, 2:7] = 1
+    mask[3:6, 3:6] = 0
+
+    mask_true = np.zeros((10, 10))
+    mask_true[2:7, 2:7] = 1
+    mask_filled = Export.fill_mask_holes(mask, 30)
+
+    assert (mask_filled == mask_true).all()
+
+    mask_filled_2 = Export.fill_mask_holes(mask, 4)
+    assert (mask_filled_2 == mask).all()
+
+
+def test_fill_holes_big_and_small():
+    """Test the fill holes operation, for big and small holes."""
+    mask = np.ones((50, 50))
+    mask[20:40, 20:40] = 0
+    mask_true = copy.deepcopy(mask)
+    mask[2:7, 2:7] = 0
+
+    mask_filled = Export.fill_mask_holes(mask, 26)
+    assert (mask_filled == mask_true).all()

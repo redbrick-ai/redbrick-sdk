@@ -8,6 +8,8 @@ import json
 import copy
 
 from shapely.geometry import Polygon  # type: ignore
+import skimage
+import skimage.morphology  # type: ignore
 import numpy as np  # type: ignore
 import rasterio.features  # type: ignore
 from matplotlib import cm  # type: ignore
@@ -76,7 +78,9 @@ class Export:
             [
                 parse_output_entry(val)
                 for val in tqdm.tqdm(
-                    my_iter, unit=" datapoints", total=general_info["datapointCount"]
+                    my_iter,
+                    unit=" datapoints",
+                    total=general_info["datapointCount"],
                 )
             ],
             general_info["taxonomy"],
@@ -149,8 +153,59 @@ class Export:
             Export.tax_class_id_mapping(category["children"], class_id, color_map)
 
     @staticmethod
+    def fill_mask_holes(mask: np.ndarray, min_hole_size: int) -> np.ndarray:
+        """Fill holes."""
+        mask_copy = copy.deepcopy(mask)
+
+        # find indexes where mask has labels
+        mask_greater_zero = np.where(mask > 0)
+
+        # convery copy mask to binary
+        mask_copy[mask_greater_zero] = 1
+
+        # fill holes in copy binary mask
+        mask_copy = skimage.morphology.remove_small_holes(
+            mask_copy.astype(bool),
+            area_threshold=min_hole_size,
+        )
+        mask_copy = mask_copy.astype(int)
+
+        # set original pixel values
+        mask_copy[mask_greater_zero] = mask[mask_greater_zero]
+
+        # find indexes of holes, and fill with neighbor
+        mask_hole_loc = np.where((mask == 0) & (mask_copy > 0))
+
+        for i in range(len(mask_hole_loc[0])):
+            mask_copy = Export.fill_hole_with_neighbor(
+                mask_copy, mask_hole_loc[0][i], mask_hole_loc[1][i]
+            )
+
+        return mask_copy
+
+    @staticmethod
+    def fill_hole_with_neighbor(mask: np.ndarray, i, j) -> np.ndarray:
+        """Fill a pixel in the mask with it's neighbors value."""
+        row, col = mask.shape
+        top = 0 if j - 1 < 0 else mask[i][j - 1]
+        top_right = 0 if (j - 1 < 0) or (i + 1 == row) else mask[i + 1][j - 1]
+        right = 0 if i + 1 == row else mask[i + 1][j]
+        bottom_right = 0 if (j + 1 == col) or (i + 1 == row) else mask[i + 1][j + 1]
+        bottom = 0 if j + 1 == col else mask[i][j + 1]
+        bottom_left = 0 if (i - 1 < 0) or (j + 1 == col) else mask[i - 1][j + 1]
+        left = 0 if i - 1 < 0 else mask[i - 1][j]
+        top_left = 0 if (i - 1 < 0) or (j - 1 == 0) else mask[i - 1][j - 1]
+        mask[i][j] = max(
+            top, top_right, right, bottom_right, bottom, bottom_left, left, top_left
+        )
+        return mask
+
+    @staticmethod
     def convert_rbai_mask(  # pylint: disable=too-many-locals
-        task: Dict, class_id_map: Dict
+        task: Dict,
+        class_id_map: Dict,
+        fill_holes: bool = False,
+        min_hole_size: int = 30,
     ) -> np.ndarray:
         """Convert rbai datapoint to a numpy mask."""
         # 0 label task
@@ -171,15 +226,20 @@ class Export:
             region_mask = np.zeros([imagesize[1], imagesize[0]])
             if regions and len(regions) > 0:
                 for region in regions:
-                    if len(np.array(region).shape) == 1:
+                    if (
+                        len(np.array(region).shape) == 1
+                        or np.array(region).shape[0] < 3
+                    ):
                         # Don't add empty regions to the mask
+                        # Don't add regions with < 3 vertices
                         break
 
                     # convert polygon to mask
                     region_polygon = Polygon(region)
                     single_region_mask = (
                         rasterio.features.rasterize(
-                            [region_polygon], out_shape=(imagesize[1], imagesize[0])
+                            [region_polygon],
+                            out_shape=(imagesize[1], imagesize[0]),
                         ).astype(float)
                         * class_id
                     )
@@ -191,15 +251,17 @@ class Export:
             hole_mask = np.zeros([imagesize[1], imagesize[0]])
             if holes and len(holes) > 0:
                 for hole in holes:
-                    if len(np.array(hole).shape) == 1:
+                    if len(np.array(hole).shape) == 1 or np.array(hole).shape[0] < 3:
                         # Don't add empty hole to negative mask
+                        # Don't add holes with < 3 vertices
                         break
 
                     # convert polygon hole to mask
                     hole_polygon = Polygon(hole)
                     single_hole_mask = (
                         rasterio.features.rasterize(
-                            [hole_polygon], out_shape=(imagesize[1], imagesize[0])
+                            [hole_polygon],
+                            out_shape=(imagesize[1], imagesize[0]),
                         ).astype(float)
                         * class_id
                     )
@@ -213,14 +275,18 @@ class Export:
             # cleanup:
             # - remove overlapping region values
             neg_idxs = np.where(region_mask < 0)
-            region_mask[neg_idxs] = 0
+            region_mask[neg_idxs] = 100
             # - remove negative values from overlapping holes
             overlap_indexes = np.where(region_mask > class_id)
-            region_mask[overlap_indexes] = class_id
+            region_mask[overlap_indexes] = 100
 
             # merge current object to main mask
             class_idx_not_zero = np.where(region_mask != 0)
             mask[class_idx_not_zero] = region_mask[class_idx_not_zero]
+
+            # fill all single pixel holes
+            if fill_holes:
+                mask = Export.fill_mask_holes(mask, min_hole_size)
 
             # convert 2d mask into 3d mask with colors
             color_mask = np.zeros((mask.shape[0], mask.shape[1], 3))
@@ -239,6 +305,8 @@ class Export:
         only_ground_truth: bool = True,
         concurrency: int = 10,
         task_id: Optional[str] = None,
+        fill_holes: bool = False,
+        min_hole_size: int = 30,
     ) -> None:
         """Export segmentation labels as masks."""
         if task_id:
@@ -248,10 +316,9 @@ class Export:
             datapoints, taxonomy = self._get_raw_data_ground_truth(concurrency)
         else:
             datapoints, taxonomy = self._get_raw_data_latest(concurrency)
-
-        if not self.general_info["taskType"] == "SEGMENTATION":
+        if not self.general_info["taskType"] in ["SEGMENTATION", "MULTI"]:
             print_error(
-                "Project type needs to be SEGMENTATION, to use redbrick_png export!"
+                """Project type needs to be SEGMENTATION or MULTI for redbrick_png"""
             )
             return
 
@@ -269,10 +336,16 @@ class Export:
 
         # Convert rbai to png masks and save output
         dp_map = {}
-        for datapoint in datapoints:
+        print_info("Converting to masks")
+        for datapoint in tqdm.tqdm(datapoints):
             dp_map[datapoint["dpId"]] = datapoint["items"][0]
-            color_mask = Export.convert_rbai_mask(datapoint, class_id_map)
-            plt.imsave(os.path.join(output_dir, datapoint["dpId"] + ".png"), color_mask)
+            color_mask = Export.convert_rbai_mask(
+                datapoint, class_id_map, fill_holes, min_hole_size
+            )
+            plt.imsave(
+                os.path.join(output_dir, datapoint["dpId"] + ".png"),
+                color_mask,
+            )
 
         with open(
             os.path.join(output_dir, "class_map.json"), "w+", encoding="utf-8"
@@ -280,7 +353,9 @@ class Export:
             json.dump(color_map, file, indent=2)
 
         with open(
-            os.path.join(output_dir, "datapoint_map.json"), "w+", encoding="utf-8"
+            os.path.join(output_dir, "datapoint_map.json"),
+            "w+",
+            encoding="utf-8",
         ) as file:
             json.dump(dp_map, file, indent=2)
 
