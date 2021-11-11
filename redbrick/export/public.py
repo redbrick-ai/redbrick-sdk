@@ -153,7 +153,7 @@ class Export:
             Export.tax_class_id_mapping(category["children"], class_id, color_map)
 
     @staticmethod
-    def fill_mask_holes(mask: np.ndarray, min_hole_size: int) -> np.ndarray:
+    def fill_mask_holes(mask: np.ndarray, max_hole_size: int) -> np.ndarray:
         """Fill holes."""
         mask_copy = copy.deepcopy(mask)
 
@@ -166,7 +166,7 @@ class Export:
         # fill holes in copy binary mask
         mask_copy = skimage.morphology.remove_small_holes(
             mask_copy.astype(bool),
-            area_threshold=min_hole_size,
+            area_threshold=max_hole_size,
         )
         mask_copy = mask_copy.astype(int)
 
@@ -205,7 +205,7 @@ class Export:
         task: Dict,
         class_id_map: Dict,
         fill_holes: bool = False,
-        min_hole_size: int = 30,
+        max_hole_size: int = 30,
     ) -> np.ndarray:
         """Convert rbai datapoint to a numpy mask."""
         # 0 label task
@@ -286,7 +286,7 @@ class Export:
 
             # fill all single pixel holes
             if fill_holes:
-                mask = Export.fill_mask_holes(mask, min_hole_size)
+                mask = Export.fill_mask_holes(mask, max_hole_size)
 
             # convert 2d mask into 3d mask with colors
             color_mask = np.zeros((mask.shape[0], mask.shape[1], 3))
@@ -306,7 +306,7 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
         fill_holes: bool = False,
-        min_hole_size: int = 30,
+        max_hole_size: int = 30,
     ) -> None:
         """Export segmentation labels as masks."""
         if task_id:
@@ -340,7 +340,7 @@ class Export:
         for datapoint in tqdm.tqdm(datapoints):
             dp_map[datapoint["dpId"]] = datapoint["items"][0]
             color_mask = Export.convert_rbai_mask(
-                datapoint, class_id_map, fill_holes, min_hole_size
+                datapoint, class_id_map, fill_holes, max_hole_size
             )
             plt.imsave(
                 os.path.join(output_dir, datapoint["dpId"] + ".png"),
