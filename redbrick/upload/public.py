@@ -29,7 +29,7 @@ class Upload:
         self.project_id = project_id
 
     async def _create_datapoint(
-        self, session: aiohttp.ClientSession, storage_id: str, point: Dict
+        self, session: aiohttp.ClientSession, storage_id: str, point: Dict, is_ground_truth: bool
     ) -> Optional[Dict]:
         """Try to create a datapoint."""
         try:
@@ -41,6 +41,7 @@ class Upload:
                 point["name"],
                 point["items"],
                 point.get("labels"),
+                is_ground_truth
             )
         except ValueError as error:
             print_error(error)
@@ -50,11 +51,11 @@ class Upload:
         return None
 
     async def _create_datapoints(
-        self, storage_id: str, points: List[Dict]
+        self, storage_id: str, points: List[Dict], is_ground_truth: bool
     ) -> List[Dict]:
         async with aiohttp.ClientSession() as session:
             coros = [
-                self._create_datapoint(session, storage_id, point) for point in points
+                self._create_datapoint(session, storage_id, point, is_ground_truth) for point in points
             ]
 
             temp = await gather_with_concurrency(50, coros, "Creating datapoints")
@@ -64,16 +65,16 @@ class Upload:
                     failed.append(val)
             return failed
 
-    def create_datapoints(self, storage_id: str, points: List[Dict]) -> List[Dict]:
+    def create_datapoints(self, storage_id: str, points: List[Dict], is_ground_truth: bool = False) -> List[Dict]:
         """
         Create datapoints in project.
 
         Returns list of datapoints that failed to create.
         """
-        return asyncio.run(self._create_datapoints(storage_id, points))
+        return asyncio.run(self._create_datapoints(storage_id, points, is_ground_truth))
 
     def create_datapoints_from_masks(
-        self, storage_id: str, mask_dir: str
+        self, storage_id: str, mask_dir: str, is_ground_truth: bool = False
     ) -> List[Dict]:
         """
         Create datapoints in a project, from a directory of masks in RBAI format.
@@ -114,7 +115,7 @@ class Upload:
             datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
             datapoints += [datapoint_entry]
 
-        return asyncio.run(self._create_datapoints(storage_id, datapoints))
+        return asyncio.run(self._create_datapoints(storage_id, datapoints, is_ground_truth))
 
     @staticmethod
     def mask_to_rbai(  # pylint: disable=too-many-locals

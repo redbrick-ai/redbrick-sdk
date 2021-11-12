@@ -41,6 +41,7 @@ class UploadRepo(UploadControllerInterface):
         name: str,
         items: List[str],
         labels: Optional[List[Dict]],
+        is_ground_truth: bool = False
     ) -> None:
         """
         Create a datapoint and returns its dpId.
@@ -56,6 +57,7 @@ class UploadRepo(UploadControllerInterface):
                 $storageId: UUID!
                 $lsetName: String!
                 $labels: [LabelInput!]
+                $isGroundTruth: Boolean!
             ) {
                 createDatapoint(
                     orgId: $orgId
@@ -65,6 +67,7 @@ class UploadRepo(UploadControllerInterface):
                     storageId: $storageId
                     lsetName: $lsetName
                     labels: $labels
+                    isGroundTruth: $isGroundTruth
                 ) {
                     dpId
                 }
@@ -79,6 +82,7 @@ class UploadRepo(UploadControllerInterface):
             "storageId": storage_id,
             "lsetName": project_id + "-input",
             "labels": labels or [],
+            "isGroundTruth": is_ground_truth,
         }
 
         await self.client.execute_query_async(aio_client, query_string, query_variables)

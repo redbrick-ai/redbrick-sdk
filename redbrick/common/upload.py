@@ -37,6 +37,7 @@ class UploadControllerInterface(ABC):
         name: str,
         items: List[str],
         labels: Optional[List[Dict]],
+        is_ground_truth: bool = False
     ) -> None:
         """
         Create a datapoint and returns its dpId.
