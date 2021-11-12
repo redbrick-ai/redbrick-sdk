@@ -37,6 +37,7 @@ setup(
         "numpy>=1.15",
         "rasterio==1.2.10",
         "matplotlib>=3.2",
+        "scikit-image==0.18.3",
     ],
     extras_require={
         "dev": [
