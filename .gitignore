@@ -32,7 +32,6 @@ share/python-wheels/
 MANIFEST
 
 # User files
-*.py
 *.ipynb
 *.json
 *.png
