@@ -1,6 +1,6 @@
 """Abstract interface to upload."""
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from pathlib import Path
 
 import aiohttp
@@ -86,6 +86,33 @@ class UploadRepo(UploadControllerInterface):
         }
 
         await self.client.execute_query_async(aio_client, query_string, query_variables)
+
+    def items_upload_presign(
+        self, org_id: str, files: List[str], dataset: str, file_type: List[str]
+    ) -> List[Dict[Any, Any]]:
+        """Return presigned URLs to upload files."""
+        query_string = """
+            query itemsUploadPresign($orgId:UUID!, $files: [String]!,
+            $dataset:String!, $fileType:[String]!){
+                itemsUploadPresign(orgId:$orgId, files:$files, dataset:$dataset,
+                fileType:$fileType) {
+                    items {
+                        presignedUrl,
+                        filePath,
+                        fileName
+                    }
+                }
+            }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "files": files,
+            "dataset": dataset,
+            "fileType": file_type,
+        }
+        result = self.client.execute_query(query_string, query_variables)
+        return result["itemsUploadPresign"]["items"]
 
     def upload_image(self, org_id: str, project_id: str, file_path: Path) -> str:
         """Upload a local image and add labels."""

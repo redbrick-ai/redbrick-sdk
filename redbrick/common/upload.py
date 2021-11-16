@@ -1,6 +1,6 @@
 """Abstract interface to upload."""
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from abc import ABC, abstractmethod
 
 from pathlib import Path
@@ -62,3 +62,9 @@ class UploadControllerInterface(ABC):
         file_path: Path,
     ) -> str:
         """Upload a local image and add labels."""
+
+    @abstractmethod
+    def items_upload_presign(
+        self, org_id: str, files: List[str], dataset: str, file_type: List[str]
+    ) -> List[Dict[Any, Any]]:
+        """Get a presigned url for uploading items."""

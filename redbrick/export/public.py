@@ -13,8 +13,8 @@ import skimage.morphology  # type: ignore
 import numpy as np  # type: ignore
 import rasterio.features  # type: ignore
 from matplotlib import cm  # type: ignore
-import matplotlib.pyplot as plt  # type: ignore
 import tqdm  # type: ignore
+from PIL import Image  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.utils.logging import print_error, print_info
@@ -120,9 +120,13 @@ class Export:
     def get_color(class_id: int) -> Any:
         """Get a color from class id."""
         if class_id > 20:
-            return cm.tab20b(int(class_id))  # pylint: disable=no-member
+            color = (
+                np.array(cm.tab20b(int(class_id))) * 255  # pylint: disable=no-member
+            )
+            return color.astype(np.uint8)
 
-        return cm.tab20c(int(class_id))  # pylint: disable=no-member
+        color = np.array(cm.tab20c(int(class_id))) * 255  # pylint: disable=no-member
+        return color.astype(np.uint8)
 
     @staticmethod
     def uniquify_path(path: str) -> str:
@@ -148,7 +152,7 @@ class Export:
             if color_map is not None:
                 color_map[category["name"]] = Export.get_color(category["classId"])[
                     0:3
-                ]  # not doing +1 here.
+                ].tolist()  # not doing +1 here.
 
             Export.tax_class_id_mapping(category["children"], class_id, color_map)
 
@@ -295,7 +299,7 @@ class Export:
 
         return color_mask
 
-    def redbrick_png(
+    def redbrick_png(  # pylint: disable=too-many-locals
         self,
         only_ground_truth: bool = True,
         concurrency: int = 10,
@@ -333,8 +337,8 @@ class Export:
         dp_map = {}
         print_info("Converting to masks")
         for datapoint in tqdm.tqdm(datapoints):
-            print(datapoint)
-            dp_map[datapoint["taskId"]] = datapoint["items"][0]
+            filename = "%s.png" % datapoint["taskId"]
+            dp_map[filename] = datapoint["items"][0]
             if len(datapoint["labels"]) == 0:
                 print_error("No labels, skipping")
                 continue
@@ -342,10 +346,10 @@ class Export:
             color_mask = Export.convert_rbai_mask(
                 datapoint, class_id_map, fill_holes, max_hole_size
             )
-            plt.imsave(
-                os.path.join(output_dir, datapoint["taskId"] + ".png"),
-                color_mask,
-            )
+
+            # save png as 3 channel np.uint8 image
+            pil_color_mask = Image.fromarray(color_mask.astype(np.uint8))
+            pil_color_mask.save(os.path.join(output_dir, filename))
 
         with open(
             os.path.join(output_dir, "class_map.json"), "w+", encoding="utf-8"

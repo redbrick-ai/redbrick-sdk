@@ -1,22 +1,22 @@
 """Public interface to upload module."""
 
+import uuid
 import asyncio
-import os
 from copy import deepcopy
 from typing import List, Dict, Optional
-import json
+import requests
 
 import aiohttp
 import rasterio  # type: ignore
 import numpy as np
 from rasterio import features
 import shapely  # type: ignore
-import matplotlib.pyplot as plt  # type: ignore
-
 
 from redbrick.common.context import RBContext
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import print_error
+from redbrick.common.enums import StorageMethod
+from redbrick.utils.segmentation import get_file_type, check_mask_map_format
 
 
 class Upload:
@@ -80,50 +80,78 @@ class Upload:
         """
         return asyncio.run(self._create_datapoints(storage_id, points, is_ground_truth))
 
-    def create_datapoints_from_masks(
-        self, storage_id: str, mask_dir: str, is_ground_truth: bool = False
+    def _items_list_upload_presign(
+        self, files: List[str], file_type: List[str]
     ) -> List[Dict]:
-        """
-        Create datapoints in a project, from a directory of masks in RBAI format.
-
-        Returns list of datapoints that failed to create.
-        """
-        # Read in the datapoint_map.json file
-        if not os.path.isfile(os.path.join(mask_dir, "datapoint_map.json")):
-            raise Exception(
-                "datapoint_map.json file not found!"
-                + f"You must provide the datapoint_map.json file inside {mask_dir}"
+        """Generate presigned url's to perform upload."""
+        try:
+            dataset_name = self.project_id
+            result = self.context.upload.items_upload_presign(
+                self.org_id, files, dataset_name, file_type
             )
-        with open(
-            os.path.join(mask_dir, "datapoint_map.json"), "r", encoding="utf-8"
-        ) as file:
-            datapoint_map = json.load(file)
+        except ValueError as error:
+            print_error(error)
+            raise error
+        return result
 
-        # Read in the class_map.json file
-        if not os.path.isfile(os.path.join(mask_dir, "class_map.json")):
-            raise Exception(
-                "class_map.json file not found! "
-                + f"You must provide the class_map.json file inside {mask_dir}"
+    @staticmethod
+    def upload_image_to_presigned(
+        presigned_url: str, image_filepath: str, file_type: str
+    ) -> None:
+        """Upload a single image to s3 using the pre-signed url."""
+        with open(image_filepath, "rb") as file:
+            try:
+                requests.put(
+                    presigned_url,
+                    data=file,
+                    headers={"Content-Type": file_type},
+                )
+            except requests.exceptions.RequestException as error:
+                print_error("File upload failed %s" % image_filepath)
+                raise error
+
+    def create_datapoint_from_masks(
+        self,
+        storage_id: str,
+        mask: np.ndarray,
+        class_map: Dict,
+        image_path: str,
+    ) -> List[Dict]:
+        """Create a single datapoint with mask."""
+        check_mask_map_format(mask, class_map)
+
+        if storage_id == StorageMethod.REDBRICK:
+            _, file_type = get_file_type(image_path)
+            upload_filename = str(uuid.uuid4())
+
+            # get pre-signed url for s3 upload
+            presigned_items = self._items_list_upload_presign(
+                [upload_filename], [file_type]
             )
-        with open(
-            os.path.join(mask_dir, "class_map.json"), "r", encoding="utf-8"
-        ) as file:
-            class_map = json.load(file)
 
-        # Iterate over the PNG masks in the directory, and convert to RBAI format
-        datapoints = []
-        files = os.listdir(mask_dir)
-        files = list(filter(lambda file: file[-3:] == "png", files))
+            # upload to s3
+            Upload.upload_image_to_presigned(
+                presigned_items[0]["presignedUrl"],
+                image_path,  # filename on local machine
+                file_type,
+            )
 
-        for file_ in files:
-            mask = plt.imread(os.path.join(mask_dir, file_))
-            items = datapoint_map[file_[0:-4]]
-            name = file_
+            # create datapoint
+            items = presigned_items[0]["filePath"]
+            name = image_path
             datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-            datapoints += [datapoint_entry]
+            return asyncio.run(
+                self._create_datapoints(storage_id, [datapoint_entry], False)
+            )
 
+        # If storage_id is for remote storage
+        items = image_path
+        name = image_path
+
+        # create datapoint
+        datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
         return asyncio.run(
-            self._create_datapoints(storage_id, datapoints, is_ground_truth)
+            self._create_datapoints(storage_id, [datapoint_entry], False)
         )
 
     @staticmethod
@@ -186,6 +214,7 @@ class Upload:
 
     @staticmethod
     def _mask_to_polygon(mask: np.ndarray) -> shapely.geometry.MultiPolygon:
+        """Convert masks to polygons."""
         all_polygons = []
         for shape, _ in features.shapes(
             mask.astype(np.int16),
