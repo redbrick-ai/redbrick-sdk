@@ -1,7 +1,8 @@
 """Setup the python module."""
 
-from setuptools import setup, find_packages  # type: ignore
+import sys
 import os
+from setuptools import setup, find_packages  # type: ignore
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -12,6 +13,35 @@ with open(
     encoding="utf-8",
 ) as f:
     version = f.read().strip()
+
+# handle different OS's and python versions
+
+install_requires = [
+    "requests==2.23.0",
+    "tqdm==4.50.0",
+    "termcolor==1.1.0",
+    "requests==2.23.0",
+    "aiohttp==3.7.4",
+    "cchardet==2.1.7",
+    "aiodns==3.0.0",
+    "Pillow==8.3.2",
+    "shapely==1.7.1",
+    "numpy>=1.15",
+    "matplotlib>=3.2",
+    "scikit-image==0.18.3",
+    "pyparsing==2.4.7",
+]
+
+
+if sys.platform in ("darwin", "linux"):
+    install_requires.append("rasterio==1.2.10")
+
+if sys.platform in ("win32",):
+
+    if (sys.version_info.major, sys.version_info.minor) == (3, 8):
+        install_requires.append("GDAL-3.3.3-cp38-cp38-win_amd64.whl")
+        install_requires.append("rasterio-1.2.10-cp38-cp38-win_amd64.whl")
+
 
 setup(
     name="redbrick-sdk",
