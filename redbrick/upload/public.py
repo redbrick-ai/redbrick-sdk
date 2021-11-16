@@ -7,9 +7,7 @@ from typing import List, Dict, Optional
 import requests
 
 import aiohttp
-import rasterio  # type: ignore
 import numpy as np
-from rasterio import features
 import shapely  # type: ignore
 
 from redbrick.common.context import RBContext
@@ -213,8 +211,22 @@ class Upload:
         return entry
 
     @staticmethod
-    def _mask_to_polygon(mask: np.ndarray) -> shapely.geometry.MultiPolygon:
+    def _mask_to_polygon(
+        mask: np.ndarray,
+    ) -> shapely.geometry.MultiPolygon:
         """Convert masks to polygons."""
+        try:
+            import rasterio  # pylint: disable=import-outside-toplevel
+            from rasterio import features  # pylint: disable=import-outside-toplevel
+        except Exception as error:
+            print_error(
+                "For windows users, please follow the rasterio "
+                + "documentation to properly install the module "
+                + "https://rasterio.readthedocs.io/en/latest/installation.html "
+                + "Rasterio is required by RedBrick SDK to work with masks."
+            )
+            raise error
+
         all_polygons = []
         for shape, _ in features.shapes(
             mask.astype(np.int16),

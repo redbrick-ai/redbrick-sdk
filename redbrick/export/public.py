@@ -11,7 +11,6 @@ from shapely.geometry import Polygon  # type: ignore
 import skimage
 import skimage.morphology  # type: ignore
 import numpy as np  # type: ignore
-import rasterio.features  # type: ignore
 from matplotlib import cm  # type: ignore
 import tqdm  # type: ignore
 from PIL import Image  # type: ignore
@@ -212,6 +211,17 @@ class Export:
         max_hole_size: int = 30,
     ) -> np.ndarray:
         """Convert rbai datapoint to a numpy mask."""
+        try:
+            import rasterio.features  # pylint: disable=import-outside-toplevel
+        except Exception as error:
+            print_error(
+                "For windows users, please follow the rasterio "
+                + "documentation to properly install the module "
+                + "https://rasterio.readthedocs.io/en/latest/installation.html "
+                + "Rasterio is required by RedBrick SDK to work with masks."
+            )
+            raise error
+
         imagesize = task["labels"][0]["pixel"]["imagesize"]
         mask = np.zeros([imagesize[1], imagesize[0]])
 
