@@ -45,20 +45,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True,
-    install_requires=[
-        "requests==2.23.0",
-        "tqdm==4.50.0",
-        "termcolor==1.1.0",
-        "requests==2.23.0",
-        "aiohttp==3.7.4",
-        "cchardet==2.1.7",
-        "aiodns==3.0.0",
-        "Pillow==8.3.2",
-        "shapely==1.7.1",
-        "numpy>=1.15",
-        "matplotlib>=3.2",
-        "scikit-image==0.18.3",
-    ],
+    install_requires=install_requires,
     extras_require={
         "dev": [
             "twine==3.1.1",
