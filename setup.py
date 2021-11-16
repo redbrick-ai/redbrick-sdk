@@ -1,7 +1,8 @@
 """Setup the python module."""
 
-from setuptools import setup, find_packages  # type: ignore
+import sys
 import os
+from setuptools import setup, find_packages  # type: ignore
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -31,14 +32,13 @@ install_requires = [
     "pyparsing==2.4.7",
 ]
 
-import sys
 
 if sys.platform in ("darwin", "linux"):
     install_requires.append("rasterio==1.2.10")
 
 if sys.platform in ("win32",):
 
-    if sys.version_info == (3, 8):
+    if (sys.version_info.major, sys.version_info.minor) == (3, 8):
         install_requires.append("GDAL-3.3.3-cp38-cp38-win_amd64.whl")
         install_requires.append("rasterio-1.2.10-cp38-cp38-win_amd64.whl")
 
