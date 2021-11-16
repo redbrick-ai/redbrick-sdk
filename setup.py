@@ -56,7 +56,6 @@ setup(
         "Pillow==8.3.2",
         "shapely==1.7.1",
         "numpy>=1.15",
-        "rasterio==1.2.10",
         "matplotlib>=3.2",
         "scikit-image==0.18.3",
     ],
