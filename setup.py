@@ -28,11 +28,9 @@ install_requires = [
     "matplotlib>=3.2",
     "scikit-image==0.18.3",
     "pyparsing==2.4.7",
+    "rasterio==1.2.10; sys_platform=='darwin'",
+    "rasterio==1.2.10; sys_platform=='linux'"
 ]
-
-# Install rasterio for linux and darwin only.
-if sys.platform in ("darwin", "linux"):
-    install_requires.append("rasterio==1.2.10")
 
 setup(
     name="redbrick-sdk",
