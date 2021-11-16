@@ -333,7 +333,8 @@ class Export:
         dp_map = {}
         print_info("Converting to masks")
         for datapoint in tqdm.tqdm(datapoints):
-            dp_map[datapoint["dpId"]] = datapoint["items"][0]
+            print(datapoint)
+            dp_map[datapoint["taskId"]] = datapoint["items"][0]
             if len(datapoint["labels"]) == 0:
                 print_error("No labels, skipping")
                 continue
@@ -342,7 +343,7 @@ class Export:
                 datapoint, class_id_map, fill_holes, max_hole_size
             )
             plt.imsave(
-                os.path.join(output_dir, datapoint["dpId"] + ".png"),
+                os.path.join(output_dir, datapoint["taskId"] + ".png"),
                 color_mask,
             )
 
