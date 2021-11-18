@@ -166,6 +166,11 @@ class Learning2:
             and result.get("isProcessing") is False
         ):
             return True
+        if result.get("isProcessing") is True and (
+            result.get("newTasks", 0) + result.get("newTasksProcessing", 0)
+            >= min_new_tasks
+        ):
+            return True
 
         return False
 

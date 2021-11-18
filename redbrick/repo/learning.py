@@ -235,6 +235,7 @@ class Learning2Repo(LearningController2Interface):
         query checkForJob ($orgId:UUID!, $projectId: UUID!) {
             currentCycleTracker(orgId:$orgId, projectId:$projectId) {
                 newTasks
+                newTasksProcessing
                 isProcessing
             }
         }
