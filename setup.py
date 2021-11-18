@@ -14,8 +14,6 @@ with open(
 ) as f:
     version = f.read().strip()
 
-# handle different OS's and python versions
-
 install_requires = [
     "requests==2.23.0",
     "tqdm==4.50.0",
@@ -30,18 +28,9 @@ install_requires = [
     "matplotlib>=3.2",
     "scikit-image==0.18.3",
     "pyparsing==2.4.7",
+    "rasterio==1.2.10; sys_platform=='darwin'",
+    "rasterio==1.2.10; sys_platform=='linux'"
 ]
-
-
-if sys.platform in ("darwin", "linux"):
-    install_requires.append("rasterio==1.2.10")
-
-if sys.platform in ("win32",):
-
-    if (sys.version_info.major, sys.version_info.minor) == (3, 8):
-        install_requires.append("GDAL-3.3.3-cp38-cp38-win_amd64.whl")
-        install_requires.append("rasterio-1.2.10-cp38-cp38-win_amd64.whl")
-
 
 setup(
     name="redbrick-sdk",
