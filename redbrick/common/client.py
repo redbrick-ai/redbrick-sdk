@@ -6,6 +6,9 @@ import requests
 import aiohttp
 
 
+MAX_CONCURRENCY = 30
+
+
 class RBClient:
     """Client to communicate with RedBrick AI GraphQL Server."""
 
@@ -20,13 +23,18 @@ class RBClient:
         ), "Invalid Api Key length, make sure you've copied it correctly"
         self.api_key = api_key
         self.url = url.rstrip("/") + "/graphql/"
+        self.session = requests.Session()
+
+    def __del__(self) -> None:
+        """Garbage collect and close session."""
+        self.session.close()
 
     def execute_query(self, query: str, variables: Dict[str, Any]) -> Any:
         """Execute a graphql query."""
         headers = {"ApiKey": self.api_key}
 
         try:
-            response = requests.post(
+            response = self.session.post(
                 self.url, headers=headers, json={"query": query, "variables": variables}
             )
             res = {}

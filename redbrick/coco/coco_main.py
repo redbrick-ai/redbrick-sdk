@@ -28,10 +28,13 @@ async def _get_image_dimension_map(
             temp = await aioimgspy.probe(response.content)  # type: ignore
             return (temp["width"], temp["height"], datapoint["dpId"])
 
-    async with aiohttp.ClientSession() as session:
+    # limit to 30, default is 100, cleanup is done by session
+    conn = aiohttp.TCPConnector(limit=30)
+    async with aiohttp.ClientSession(connector=conn) as session:
         coros = [_get_size(session, dpoint) for dpoint in datapoints]
         all_sizes = await gather_with_concurrency(10, coros, "Getting image dimensions")
 
+    await asyncio.sleep(0.250)  # give time to close ssl connections
     return {temp[2]: (temp[0], temp[1]) for temp in all_sizes}
 
 

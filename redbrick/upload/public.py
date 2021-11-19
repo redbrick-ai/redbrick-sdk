@@ -55,7 +55,8 @@ class Upload:
     async def _create_datapoints(
         self, storage_id: str, points: List[Dict], is_ground_truth: bool
     ) -> List[Dict]:
-        async with aiohttp.ClientSession() as session:
+        conn = aiohttp.TCPConnector(limit=30)
+        async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
                 self._create_datapoint(session, storage_id, point, is_ground_truth)
                 for point in points
@@ -66,7 +67,9 @@ class Upload:
             for val in temp:
                 if val:
                     failed.append(val)
-            return failed
+
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        return failed
 
     def create_datapoints(
         self, storage_id: str, points: List[Dict], is_ground_truth: bool = False

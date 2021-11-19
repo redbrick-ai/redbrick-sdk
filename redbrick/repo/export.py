@@ -114,14 +114,11 @@ class ExportRepo(ExportControllerInterface):
                     %s
                     }
                 }
-
-
             }
             cursor
             }
         }
         }
-
         """
             % LABEL_SHARD
         )
@@ -206,7 +203,7 @@ class ExportRepo(ExportControllerInterface):
         )
 
     def get_datapoint_latest(self, org_id: str, project_id: str, task_id: str) -> Dict:
-        """Get the latest labels for a single datapoint."""
+        """Get the latest labels for a single bdatapoint."""
         query_string = (
             """
         query($orgId: UUID!, $projectId: UUID!, $taskId: UUID!) {

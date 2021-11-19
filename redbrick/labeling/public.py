@@ -81,15 +81,19 @@ class Labeling:
         return None
 
     async def _put_tasks(self, stage_name: str, tasks: List[Dict]) -> List[Dict]:
-        async with aiohttp.ClientSession() as session:
+        failed = []
+        conn = aiohttp.TCPConnector(limit=30)
+        async with aiohttp.ClientSession(connector=conn) as session:
             coros = [self._put_task(session, stage_name, task) for task in tasks]
 
             temp = await gather_with_concurrency(10, coros, "Uploading tasks")
-            failed = []
+
             for val in temp:
                 if val:
                     failed.append(val)
-            return failed
+
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        return failed
 
     def put_tasks(self, stage_name: str, tasks: List[Dict]) -> List[Dict]:
         """Put tasks, return tasks that failed."""

@@ -4,6 +4,7 @@ import asyncio
 from typing import Awaitable, List, TypeVar, Optional, Iterable
 import tqdm.asyncio
 
+from redbrick.common.client import MAX_CONCURRENCY
 from redbrick.utils.logging import print_info
 
 ReturnType = TypeVar("ReturnType")
@@ -15,6 +16,7 @@ async def gather_with_concurrency(
     progress_bar_name: Optional[str] = None,
 ) -> List[ReturnType]:
     """Utilizes a Semaphore to limit concurrency to n."""
+    max_concurrency = min(max_concurrency, MAX_CONCURRENCY)
     semaphore = asyncio.Semaphore(max_concurrency)
 
     async def sem_task(task: Awaitable[ReturnType]) -> ReturnType:

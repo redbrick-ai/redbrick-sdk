@@ -120,16 +120,20 @@ class Learning:
         return None
 
     async def _update_tasks(self, cycle: int, tasks: List[Dict]) -> List[Dict]:
-        async with aiohttp.ClientSession() as session:
+        failed = []
+        conn = aiohttp.TCPConnector(limit=30)
+        async with aiohttp.ClientSession(connector=conn) as session:
             coros = [self._update_task(session, cycle, task) for task in tasks]
             temp = await gather_with_concurrency(
                 100, coros, "Updating tasks with priorities"
             )
-            failed = []
+
             for val in temp:
                 if val:
                     failed.append(val)
-            return failed
+
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        return failed
 
     def update_tasks(self, cycle: int, tasks: List[Dict]) -> List[Dict]:
         """
@@ -285,16 +289,19 @@ class Learning2:
         return None
 
     async def _update_tasks2(self, tasks: List[Dict]) -> List[Dict]:
-        async with aiohttp.ClientSession() as session:
+        failed = []
+        conn = aiohttp.TCPConnector(limit=30)
+        async with aiohttp.ClientSession(connector=conn) as session:
             coros = [self._update_task2(session, task) for task in tasks]
             temp = await gather_with_concurrency(
-                100, coros, "Updating tasks with priorities"
+                30, coros, "Updating tasks with priorities"
             )
-            failed = []
+
             for val in temp:
                 if val:
                     failed.append(val)
-            return failed
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        return failed
 
     def update_tasks(self, cycle: int, tasks: List[Dict]) -> List[Dict]:
         """
