@@ -381,7 +381,28 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
     ) -> List[Dict]:
-        """Export data into redbrick format."""
+        """
+        Export data into redbrick format.
+        
+        Parameters: 
+        -----------------
+        only_ground_truth: bool = True
+            If set to True, will only return data that has 
+            been completed in your workflow. If False, will 
+            export latest state
+        
+        concurrency: int = 10
+
+        task_id: Optional[str] = None
+            If the unique task_id is mentioned, only a single
+            datapoint will be exported. 
+
+        Returns: 
+        -----------------
+        datapoints: List[Dict]
+            Datapoint and labels in RedBrick AI format. See
+            https://docs.redbrickai.com/python-sdk/reference 
+        """
         if task_id:
             datapoints, _ = self._get_raw_data_single(task_id)
 
