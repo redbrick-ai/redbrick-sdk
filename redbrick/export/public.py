@@ -23,15 +23,15 @@ from redbrick.coco.coco_main import coco_converter
 
 
 def _parse_entry_latest(item: Dict) -> Dict:
-    history_obj = item["history"][0]
     task_id = item["taskId"]
-    datapoint = history_obj["taskData"]["dataPoint"]
+    task_data = item["latestTaskData"]
+    datapoint = task_data["dataPoint"]
     items_presigned = datapoint["itemsPresigned"]
     items = datapoint["items"]
     name = datapoint["name"]
     dp_id = datapoint["dpId"]
-    created_by = history_obj["taskData"]["createdByEmail"]
-    labels = [clean_rb_label(label) for label in history_obj["taskData"]["labels"]]
+    created_by = task_data["createdByEmail"]
+    labels = [clean_rb_label(label) for label in json.loads(task_data["labelsData"])]
 
     return flat_rb_format(
         labels, items, items_presigned, name, dp_id, created_by, task_id
@@ -383,25 +383,25 @@ class Export:
     ) -> List[Dict]:
         """
         Export data into redbrick format.
-        
-        Parameters: 
+
+        Parameters:
         -----------------
         only_ground_truth: bool = True
-            If set to True, will only return data that has 
-            been completed in your workflow. If False, will 
+            If set to True, will only return data that has
+            been completed in your workflow. If False, will
             export latest state
-        
+
         concurrency: int = 10
 
         task_id: Optional[str] = None
             If the unique task_id is mentioned, only a single
-            datapoint will be exported. 
+            datapoint will be exported.
 
-        Returns: 
+        Returns:
         -----------------
         datapoints: List[Dict]
             Datapoint and labels in RedBrick AI format. See
-            https://docs.redbrickai.com/python-sdk/reference 
+            https://docs.redbrickai.com/python-sdk/reference
         """
         if task_id:
             datapoints, _ = self._get_raw_data_single(task_id)
