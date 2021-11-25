@@ -199,7 +199,14 @@ class Export:
         left = 0 if i - 1 < 0 else mask[i - 1][j]
         top_left = 0 if (i - 1 < 0) or (j - 1 == 0) else mask[i - 1][j - 1]
         mask[i][j] = max(
-            top, top_right, right, bottom_right, bottom, bottom_left, left, top_left
+            top,
+            top_right,
+            right,
+            bottom_right,
+            bottom,
+            bottom_left,
+            left,
+            top_left,
         )
         return mask
 
@@ -383,25 +390,25 @@ class Export:
     ) -> List[Dict]:
         """
         Export data into redbrick format.
-        
-        Parameters: 
+
+        Parameters:
         -----------------
         only_ground_truth: bool = True
-            If set to True, will only return data that has 
-            been completed in your workflow. If False, will 
+            If set to True, will only return data that has
+            been completed in your workflow. If False, will
             export latest state
-        
+
         concurrency: int = 10
 
         task_id: Optional[str] = None
             If the unique task_id is mentioned, only a single
-            datapoint will be exported. 
+            datapoint will be exported.
 
-        Returns: 
+        Returns:
         -----------------
         datapoints: List[Dict]
             Datapoint and labels in RedBrick AI format. See
-            https://docs.redbrickai.com/python-sdk/reference 
+            https://docs.redbrickai.com/python-sdk/reference
         """
         if task_id:
             datapoints, _ = self._get_raw_data_single(task_id)

@@ -29,7 +29,7 @@ install_requires = [
     "scikit-image==0.18.3",
     "pyparsing==2.4.7",
     "rasterio==1.2.10; sys_platform=='darwin'",
-    "rasterio==1.2.10; sys_platform=='linux'"
+    "rasterio==1.2.10; sys_platform=='linux'",
 ]
 
 setup(
