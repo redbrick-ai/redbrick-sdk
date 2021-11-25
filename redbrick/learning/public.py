@@ -61,7 +61,10 @@ class Learning:
             items = item["datapoint"]["items"]
             dp_id = item["datapoint"]["dpId"]
             task_id = item["taskId"]
-            labels = [clean_rb_label(label) for label in item["groundTruth"]["labels"]]
+            labels = [
+                clean_rb_label(label)
+                for label in item["groundTruth"]["labels"]
+            ]
 
             return {
                 "dpId": dp_id,
@@ -110,7 +113,12 @@ class Learning:
         """Attempt to update task."""
         try:
             await self.context.learning.send_batch_learning_results_async(
-                session, self.org_id, self.project_id, self.stage_name, cycle, [task]
+                session,
+                self.org_id,
+                self.project_id,
+                self.stage_name,
+                cycle,
+                [task],
             )
         except ValueError as error:
             print_error(error)
@@ -162,9 +170,18 @@ class Learning2:
         self.project_id = project_id
         self.stage_name = stage_name
 
+    def check_is_processing(self) -> bool:
+        """Checks if a job is in process already."""
+        result = self.context.learning2.check_for_job(
+            self.org_id, self.project_id
+        )
+        return bool(result.get("isProcessing"))
+
     def check_for_job(self, min_new_tasks: int = 100) -> bool:
         """Return true if there is a new job available."""
-        result = self.context.learning2.check_for_job(self.org_id, self.project_id)
+        result = self.context.learning2.check_for_job(
+            self.org_id, self.project_id
+        )
         if (
             result.get("newTasks", 0) >= min_new_tasks
             and result.get("isProcessing") is False
@@ -209,7 +226,9 @@ class Learning2:
         tasks_in_queue = self.context.labeling.get_task_queue_count(
             self.org_id, self.project_id, self.stage_name
         )
-        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
+        general_info = self.context.export.get_output_info(
+            self.org_id, self.project_id
+        )
 
         my_finished_iter = PaginationIterator(
             partial(
@@ -226,7 +245,9 @@ class Learning2:
             items = item["items"]
             dp_id = item["dpId"]
             task_id = item["task"]["taskId"]
-            labels = [clean_rb_label(label) for label in item["labelData"]["labels"]]
+            labels = [
+                clean_rb_label(label) for label in item["labelData"]["labels"]
+            ]
 
             return {
                 "dpId": dp_id,
@@ -255,14 +276,18 @@ class Learning2:
         print_info("Downloading unfinished tasks")
         unlabeled = [
             _parse_unlabeled_entry(item)
-            for item in tqdm.tqdm(my_queue_iter, unit=" tasks", total=tasks_in_queue)
+            for item in tqdm.tqdm(
+                my_queue_iter, unit=" tasks", total=tasks_in_queue
+            )
         ]
 
         print_info("Downloading finished tasks")
         labeled = [
             _parse_labeled_entry(item)
             for item in tqdm.tqdm(
-                my_finished_iter, unit=" tasks", total=general_info["datapointCount"]
+                my_finished_iter,
+                unit=" tasks",
+                total=general_info["datapointCount"],
             )
         ]
 
