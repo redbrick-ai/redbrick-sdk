@@ -22,6 +22,18 @@ project = "RedBrick SDK"
 copyright = "2021, RedBrick AI"
 author = "RedBrick AI"
 
+with open(
+    os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "redbrick", "VERSION"
+    ),
+    "r",
+    encoding="utf-8",
+) as f:
+    version = f.read().strip()
+
+version = version
+release = version
+
 
 # -- General configuration ---------------------------------------------------
 
