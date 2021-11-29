@@ -11,7 +11,13 @@ from .basic_project import get_active_learning_project, get_basic_project
 
 
 class RBOrganization:
-    """Representation of RedBrick organization."""
+    """
+    Representation of RedBrick organization.
+
+    The RBOrganization object allows you to programmatically interact with
+    your RedBrick organization. This class provides methods for querying your
+    organization and doing other high level actions.
+    """
 
     def __init__(self, context: RBContext, org_id: str) -> None:
         """Construct RBOrganization."""
@@ -41,12 +47,12 @@ class RBOrganization:
 
     @property
     def org_id(self) -> str:
-        """Get org_id read only field."""
+        """Retrieve the unique org_id of this organization."""
         return self._org_id
 
     @property
     def name(self) -> str:
-        """Get name of organization."""
+        """Retrieve unique name of this organization."""
         return self._name
 
     def __str__(self) -> str:
@@ -65,7 +71,33 @@ class RBOrganization:
         reviews: int = 0,
         active_learning: Optional[Dict] = None,
     ) -> RBProject:
-        """Create a project, similar to quickstart through the UI."""
+        """
+        Create a project within the organization.
+
+        This method creates an organization in a similar fashion to the
+        quickstart on the RedBrick Ai create project page.
+
+        Parameters
+        --------------
+        name: str
+            A unique name for your project
+
+        label_type: redbrick.LabelType
+            Configures the label and data type of your project.
+
+        taxonomy_name: str
+            The name of the taxonomy you want to use for this project.
+            Taxonomies can be found on the left side bar of the platform.
+
+        reviews: int = 0
+            The number of review stages that you want to add after the label
+            stage.
+
+        Returns
+        --------------
+        redbrick.project.RBProject
+            A RedBrick Project object.
+        """
         if active_learning is not None:
             print_warning("active_learning arg is deprecated and will be ignored")
         stages = get_basic_project(reviews)

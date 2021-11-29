@@ -72,12 +72,38 @@ class Upload:
         return failed
 
     def create_datapoints(
-        self, storage_id: str, points: List[Dict], is_ground_truth: bool = False
+        self,
+        storage_id: str,
+        points: List[Dict],
+        is_ground_truth: bool = False,
     ) -> List[Dict]:
         """
         Create datapoints in project.
 
-        Returns list of datapoints that failed to create.
+        Optionally you can upload labels with your data.
+
+        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project.upload.create_datapoints(...)
+
+        Parameters
+        --------------
+        storage_id: str
+            Your RedBrick AI external storage_id. This can be found under the Storage Tab
+            on the RedBrick AI platform. Currently, this method only supports external storage
+            or public storage i.e. redbrick.StorageMathod.PUBLIC (public hosted data).
+
+        points: List[Dict]
+            Please see the RedBrick AI reference documentation for overview of the format.
+            https://docs.redbrickai.com/python-sdk/importing-data-and-labels
+
+        is_ground_truth: bool = False
+            If labels are provided in points above, and this parameters is set to true, the labels
+            will be added to the Ground Truth stage. This is mainly useful for Active Learning.
+
+        Returns
+        -------------
+        List[Dict]
+            List of tasks that failed upload.
         """
         return asyncio.run(self._create_datapoints(storage_id, points, is_ground_truth))
 
@@ -118,7 +144,45 @@ class Upload:
         class_map: Dict,
         image_path: str,
     ) -> List[Dict]:
-        """Create a single datapoint with mask."""
+        """
+        Create a single datapoint with mask.
+
+        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project.upload.create_datapoint_from_masks(...)
+
+        Parameters
+        --------------
+        storage_id: str
+            Your RedBrick AI external storage_id. This can be found under the Storage Tab
+            on the RedBrick AI platform. Currently, this method only supports external storage
+            or public storage i.e. redbrick.StorageMathod.PUBLIC (public hosted data).
+
+        mask: np.ndarray.astype(np.uint8)
+            A RGB mask with values as np.uint8. The RGB values correspond to a category,
+            who's mapping can be gound in class_map.
+
+        class_map: Dict
+            Maps between the category_name in your Project Taxonomy and the RGB color of the mask.
+
+            >>> class_map
+            >>> {'category-1': [12, 22, 93], 'category-2': [1, 23, 128]...}
+
+        image_map: str
+            A valid path to the corresponding image. If storage_id is
+            redbrick.StorageMethod.REDBRICK, image_map must be a
+            valid path to a locally stored image.
+
+        Returns
+        -------------
+        List[Dict]
+            List of tasks that failed upload.
+
+        Warnings
+        ------------
+        The category names in class_map must be valid entries in your project taxonomy. The project
+        type also must be IMAGE_SEGMENTATION.
+
+        """
         check_mask_map_format(mask, class_map)
 
         if storage_id == StorageMethod.REDBRICK:
@@ -220,7 +284,9 @@ class Upload:
         """Convert masks to polygons."""
         try:
             import rasterio  # pylint: disable=import-outside-toplevel
-            from rasterio import features  # pylint: disable=import-outside-toplevel
+            from rasterio import (  # pylint: disable=import-outside-toplevel
+                features,
+            )
         except Exception as error:
             print_error(
                 "For windows users, please follow the rasterio "

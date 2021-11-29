@@ -85,9 +85,7 @@ class LearningController2Interface(ABC):
         """Check for a job, and num new tasks."""
 
     @abstractmethod
-    def get_taxonomy_and_type(
-        self, org_id: str, project_id: str
-    ) -> Tuple[dict, str]:
+    def get_taxonomy_and_type(self, org_id: str, project_id: str) -> Tuple[dict, str]:
         """Get the taxonomy for active learning."""
 
     @abstractmethod

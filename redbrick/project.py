@@ -17,7 +17,7 @@ class RBProject:
     """
     Interact with a RedBrick project.
 
-    Parameters
+    Attributes
     -----------
     export: redbrick.export.Export
         Interface for managing exporting data and
@@ -56,17 +56,29 @@ class RBProject:
 
     @property
     def org_id(self) -> str:
-        """Read only property."""
+        """
+        Read only property.
+
+        Retrieves the unique Organization UUID that this project belongs to
+        """
         return self._org_id
 
     @property
     def project_id(self) -> str:
-        """Read only property."""
+        """
+        Read only property.
+
+        Retrieves the unique Project ID UUID.
+        """
         return self._project_id
 
     @property
     def name(self) -> str:
-        """Read only name property."""
+        """
+        Read only name property.
+
+        Retrieves the project name.
+        """
         return self._project_name
 
     @property

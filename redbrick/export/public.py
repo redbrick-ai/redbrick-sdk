@@ -31,9 +31,7 @@ def _parse_entry_latest(item: Dict) -> Dict:
     name = datapoint["name"]
     dp_id = datapoint["dpId"]
     created_by = history_obj["taskData"]["createdByEmail"]
-    labels = [
-        clean_rb_label(label) for label in history_obj["taskData"]["labels"]
-    ]
+    labels = [clean_rb_label(label) for label in history_obj["taskData"]["labels"]]
 
     return flat_rb_format(
         labels, items, items_presigned, name, dp_id, created_by, task_id
@@ -58,31 +56,25 @@ class Export:
     """
     Primary interface to handling export from a project.
 
-    See https://docs.redbrickai.com/python-sdk/export-1, for full
-    documentation.
+    This class has methods to export to various formats depending on
+    your project type.
     """
 
-    def __init__(
-        self, context: RBContext, org_id: str, project_id: str
-    ) -> None:
+    def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
         """Construct Export object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
         self.general_info: Dict = {}
 
-    def _get_raw_data_ground_truth(
-        self, concurrency: int
-    ) -> Tuple[List[Dict], Dict]:
+    def _get_raw_data_ground_truth(self, concurrency: int) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_output
 
         my_iter = PaginationIterator(
             partial(temp, self.org_id, self.project_id, concurrency)
         )
 
-        general_info = self.context.export.get_output_info(
-            self.org_id, self.project_id
-        )
+        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
         self.general_info = general_info
 
         print_info("Downloading tasks")
@@ -98,18 +90,14 @@ class Export:
             general_info["taxonomy"],
         )
 
-    def _get_raw_data_latest(
-        self, concurrency: int
-    ) -> Tuple[List[Dict], Dict]:
+    def _get_raw_data_latest(self, concurrency: int) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_latest
 
         my_iter = PaginationIterator(
             partial(temp, self.org_id, self.project_id, concurrency)
         )
 
-        general_info = self.context.export.get_output_info(
-            self.org_id, self.project_id
-        )
+        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
         self.general_info = general_info
         datapoint_count = self.context.export.datapoints_in_project(
             self.org_id, self.project_id
@@ -119,17 +107,13 @@ class Export:
         return (
             [
                 _parse_entry_latest(val)
-                for val in tqdm.tqdm(
-                    my_iter, unit=" datapoints", total=datapoint_count
-                )
+                for val in tqdm.tqdm(my_iter, unit=" datapoints", total=datapoint_count)
             ],
             general_info["taxonomy"],
         )
 
     def _get_raw_data_single(self, task_id: str) -> Tuple[List[Dict], Dict]:
-        general_info = self.context.export.get_output_info(
-            self.org_id, self.project_id
-        )
+        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
         self.general_info = general_info
         datapoint = self.context.export.get_datapoint_latest(
             self.org_id, self.project_id, task_id
@@ -141,14 +125,11 @@ class Export:
         """Get a color from class id."""
         if class_id > 20:
             color = (
-                np.array(cm.tab20b(int(class_id)))
-                * 255  # pylint: disable=no-member
+                np.array(cm.tab20b(int(class_id))) * 255  # pylint: disable=no-member
             )
             return color.astype(np.uint8)
 
-        color = (
-            np.array(cm.tab20c(int(class_id))) * 255
-        )  # pylint: disable=no-member
+        color = np.array(cm.tab20c(int(class_id))) * 255  # pylint: disable=no-member
         return color.astype(np.uint8)
 
     @staticmethod
@@ -173,15 +154,11 @@ class Export:
 
             # Create a color map
             if color_map is not None:
-                color_map[category["name"]] = Export._get_color(
-                    category["classId"]
-                )[
+                color_map[category["name"]] = Export._get_color(category["classId"])[
                     0:3
                 ].tolist()  # not doing +1 here.
 
-            Export.tax_class_id_mapping(
-                category["children"], class_id, color_map
-            )
+            Export.tax_class_id_mapping(category["children"], class_id, color_map)
 
     @staticmethod
     def fill_mask_holes(mask: np.ndarray, max_hole_size: int) -> np.ndarray:
@@ -221,13 +198,9 @@ class Export:
         top = 0 if j - 1 < 0 else mask[i][j - 1]
         top_right = 0 if (j - 1 < 0) or (i + 1 == row) else mask[i + 1][j - 1]
         right = 0 if i + 1 == row else mask[i + 1][j]
-        bottom_right = (
-            0 if (j + 1 == col) or (i + 1 == row) else mask[i + 1][j + 1]
-        )
+        bottom_right = 0 if (j + 1 == col) or (i + 1 == row) else mask[i + 1][j + 1]
         bottom = 0 if j + 1 == col else mask[i][j + 1]
-        bottom_left = (
-            0 if (i - 1 < 0) or (j + 1 == col) else mask[i - 1][j + 1]
-        )
+        bottom_left = 0 if (i - 1 < 0) or (j + 1 == col) else mask[i - 1][j + 1]
         left = 0 if i - 1 < 0 else mask[i - 1][j]
         top_left = 0 if (i - 1 < 0) or (j - 1 == 0) else mask[i - 1][j - 1]
         mask[i][j] = max(
@@ -299,10 +272,7 @@ class Export:
             hole_mask = np.zeros([imagesize[1], imagesize[0]])
             if holes and len(holes) > 0:
                 for hole in holes:
-                    if (
-                        len(np.array(hole).shape) == 1
-                        or np.array(hole).shape[0] < 3
-                    ):
+                    if len(np.array(hole).shape) == 1 or np.array(hole).shape[0] < 3:
                         # Don't add empty hole to negative mask
                         # Don't add holes with < 3 vertices
                         break
@@ -359,7 +329,42 @@ class Export:
         fill_holes: bool = False,
         max_hole_size: int = 30,
     ) -> None:
-        """Export segmentation labels as masks."""
+        """
+        Export segmentation labels as masks.
+
+        Masks are exported to a local directory named after project_id.
+        Please visit https://docs.redbrickai.com/python-sdk/reference#png-mask-formats
+        to see an overview of the format of the exported masks.
+
+        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project.export.redbrick_png()
+
+        Parameters
+        --------------
+        only_ground_truth: bool = True
+            If set to True, will only return data that has
+            been completed in your workflow. If False, will
+            export latest state
+
+        concurrency: int = 10
+
+        task_id: Optional[str] = None
+            If the unique task_id is mentioned, only a single
+            datapoint will be exported.
+
+        fill_holes : bool = False
+            If set to True, will fill any holes in your segmentation
+            masks.
+
+        max_hole_size: int = 10
+            If fill_holes = True, this parameter defines the maximum
+            size hole, in pixels, to fill.
+
+        Warnings
+        ----------
+        redbrick_png only works for IMAGE_SEGMENTATION project types.
+
+        """
         if task_id:
             datapoints, taxonomy = self._get_raw_data_single(task_id)
 
@@ -426,6 +431,9 @@ class Export:
         """
         Export data into redbrick format.
 
+        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> result = project.export.redbrick_format()
+
         Parameters
         -----------------
         only_ground_truth: bool = True
@@ -462,7 +470,35 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
     ) -> Dict:
-        """Export project into coco format."""
+        """
+        Export project into coco format.
+
+        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> result = project.export.coco_format()
+
+        Parameters
+        -----------
+        only_ground_truth: bool = True
+            If set to True, will only return data that has
+            been completed in your workflow. If False, will
+            export latest state
+
+        concurrency: int = 10
+
+        task_id: Optional[str] = None
+            If the unique task_id is mentioned, only a single
+            datapoint will be exported.
+
+        Returns
+        -----------
+        List[Dict]
+            Datapoint and labels in COCO format. See
+            https://cocodataset.org/#format-data
+
+        Warnings
+        ----------
+        redbrick_coco only works for the following types - IMAGE_BBOX, IMAGE_POLYGON
+        """
         if task_id:
             datapoints, taxonomy = self._get_raw_data_single(task_id)
         elif only_ground_truth:

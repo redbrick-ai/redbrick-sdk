@@ -5,11 +5,18 @@ RedBrick AI Python SDK Documentation
    :maxdepth: 3
    :caption: Contents:
 
+RedBrick
+----------------------
+.. automodule:: redbrick
+   :members: get_project, get_org, LabelType, StorageMethod
+   :show-inheritance:
+
 Project
 ----------------------
 .. automodule:: redbrick.project
    :members:
    :show-inheritance:
+   :exclude-members: learning, learning2
 
 Organization
 ----------------------
