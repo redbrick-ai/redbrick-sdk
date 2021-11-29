@@ -23,9 +23,7 @@ copyright = "2021, RedBrick AI"
 author = "RedBrick AI"
 
 with open(
-    os.path.join(
-        os.path.abspath(os.path.dirname(__file__)), "redbrick", "VERSION"
-    ),
+    os.path.join("../redbrick", "VERSION"),
     "r",
     encoding="utf-8",
 ) as f:
