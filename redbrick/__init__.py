@@ -36,12 +36,24 @@ def _populate_context(context: RBContext) -> RBContext:
 
 
 def get_org(api_key: str, url: str, org_id: str) -> RBOrganization:
-    """Get redbrick organization object."""
+    """
+    Get redbrick organization object.
+
+    See https://docs.redbrickai.com/python-sdk/sdk-overview, for
+    an overview of how to perform this standard setup.
+    """
     context = _populate_context(RBContext(api_key, url))
     return RBOrganization(context, org_id)
 
 
-def get_project(api_key: str, url: str, org_id: str, project_id: str) -> RBProject:
-    """Get project object."""
+def get_project(
+    api_key: str, url: str, org_id: str, project_id: str
+) -> RBProject:
+    """
+    Get RedBrick project object.
+
+    See https://docs.redbrickai.com/python-sdk/sdk-overview, for
+    an overview of how to perform this standard setup.
+    """
     context = _populate_context(RBContext(api_key, url))
     return RBProject(context, org_id, project_id)

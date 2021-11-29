@@ -31,7 +31,9 @@ def _parse_entry_latest(item: Dict) -> Dict:
     name = datapoint["name"]
     dp_id = datapoint["dpId"]
     created_by = history_obj["taskData"]["createdByEmail"]
-    labels = [clean_rb_label(label) for label in history_obj["taskData"]["labels"]]
+    labels = [
+        clean_rb_label(label) for label in history_obj["taskData"]["labels"]
+    ]
 
     return flat_rb_format(
         labels, items, items_presigned, name, dp_id, created_by, task_id
@@ -53,23 +55,34 @@ def parse_output_entry(item: Dict) -> Dict:
 
 
 class Export:
-    """Primary interface to handling export from a project."""
+    """
+    Primary interface to handling export from a project.
 
-    def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
+    See https://docs.redbrickai.com/python-sdk/export-1, for full
+    documentation.
+    """
+
+    def __init__(
+        self, context: RBContext, org_id: str, project_id: str
+    ) -> None:
         """Construct Export object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
         self.general_info: Dict = {}
 
-    def _get_raw_data_ground_truth(self, concurrency: int) -> Tuple[List[Dict], Dict]:
+    def _get_raw_data_ground_truth(
+        self, concurrency: int
+    ) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_output
 
         my_iter = PaginationIterator(
             partial(temp, self.org_id, self.project_id, concurrency)
         )
 
-        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
+        general_info = self.context.export.get_output_info(
+            self.org_id, self.project_id
+        )
         self.general_info = general_info
 
         print_info("Downloading tasks")
@@ -85,14 +98,18 @@ class Export:
             general_info["taxonomy"],
         )
 
-    def _get_raw_data_latest(self, concurrency: int) -> Tuple[List[Dict], Dict]:
+    def _get_raw_data_latest(
+        self, concurrency: int
+    ) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_latest
 
         my_iter = PaginationIterator(
             partial(temp, self.org_id, self.project_id, concurrency)
         )
 
-        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
+        general_info = self.context.export.get_output_info(
+            self.org_id, self.project_id
+        )
         self.general_info = general_info
         datapoint_count = self.context.export.datapoints_in_project(
             self.org_id, self.project_id
@@ -102,13 +119,17 @@ class Export:
         return (
             [
                 _parse_entry_latest(val)
-                for val in tqdm.tqdm(my_iter, unit=" datapoints", total=datapoint_count)
+                for val in tqdm.tqdm(
+                    my_iter, unit=" datapoints", total=datapoint_count
+                )
             ],
             general_info["taxonomy"],
         )
 
     def _get_raw_data_single(self, task_id: str) -> Tuple[List[Dict], Dict]:
-        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
+        general_info = self.context.export.get_output_info(
+            self.org_id, self.project_id
+        )
         self.general_info = general_info
         datapoint = self.context.export.get_datapoint_latest(
             self.org_id, self.project_id, task_id
@@ -116,15 +137,18 @@ class Export:
         return [_parse_entry_latest(datapoint)], general_info["taxonomy"]
 
     @staticmethod
-    def get_color(class_id: int) -> Any:
+    def _get_color(class_id: int) -> Any:
         """Get a color from class id."""
         if class_id > 20:
             color = (
-                np.array(cm.tab20b(int(class_id))) * 255  # pylint: disable=no-member
+                np.array(cm.tab20b(int(class_id)))
+                * 255  # pylint: disable=no-member
             )
             return color.astype(np.uint8)
 
-        color = np.array(cm.tab20c(int(class_id))) * 255  # pylint: disable=no-member
+        color = (
+            np.array(cm.tab20c(int(class_id))) * 255
+        )  # pylint: disable=no-member
         return color.astype(np.uint8)
 
     @staticmethod
@@ -149,11 +173,15 @@ class Export:
 
             # Create a color map
             if color_map is not None:
-                color_map[category["name"]] = Export.get_color(category["classId"])[
+                color_map[category["name"]] = Export._get_color(
+                    category["classId"]
+                )[
                     0:3
                 ].tolist()  # not doing +1 here.
 
-            Export.tax_class_id_mapping(category["children"], class_id, color_map)
+            Export.tax_class_id_mapping(
+                category["children"], class_id, color_map
+            )
 
     @staticmethod
     def fill_mask_holes(mask: np.ndarray, max_hole_size: int) -> np.ndarray:
@@ -193,9 +221,13 @@ class Export:
         top = 0 if j - 1 < 0 else mask[i][j - 1]
         top_right = 0 if (j - 1 < 0) or (i + 1 == row) else mask[i + 1][j - 1]
         right = 0 if i + 1 == row else mask[i + 1][j]
-        bottom_right = 0 if (j + 1 == col) or (i + 1 == row) else mask[i + 1][j + 1]
+        bottom_right = (
+            0 if (j + 1 == col) or (i + 1 == row) else mask[i + 1][j + 1]
+        )
         bottom = 0 if j + 1 == col else mask[i][j + 1]
-        bottom_left = 0 if (i - 1 < 0) or (j + 1 == col) else mask[i - 1][j + 1]
+        bottom_left = (
+            0 if (i - 1 < 0) or (j + 1 == col) else mask[i - 1][j + 1]
+        )
         left = 0 if i - 1 < 0 else mask[i - 1][j]
         top_left = 0 if (i - 1 < 0) or (j - 1 == 0) else mask[i - 1][j - 1]
         mask[i][j] = max(
@@ -267,7 +299,10 @@ class Export:
             hole_mask = np.zeros([imagesize[1], imagesize[0]])
             if holes and len(holes) > 0:
                 for hole in holes:
-                    if len(np.array(hole).shape) == 1 or np.array(hole).shape[0] < 3:
+                    if (
+                        len(np.array(hole).shape) == 1
+                        or np.array(hole).shape[0] < 3
+                    ):
                         # Don't add empty hole to negative mask
                         # Don't add holes with < 3 vertices
                         break
@@ -312,7 +347,7 @@ class Export:
                     # don't add color to background
                     continue
                 indexes = np.where(mask == i)
-                color_mask[indexes] = Export.get_color(i - 1)[0:3]
+                color_mask[indexes] = Export._get_color(i - 1)[0:3]
 
         return color_mask
 
@@ -391,7 +426,7 @@ class Export:
         """
         Export data into redbrick format.
 
-        Parameters:
+        Parameters
         -----------------
         only_ground_truth: bool = True
             If set to True, will only return data that has
@@ -404,11 +439,12 @@ class Export:
             If the unique task_id is mentioned, only a single
             datapoint will be exported.
 
-        Returns:
+        Returns
         -----------------
-        datapoints: List[Dict]
+        List[Dict]
             Datapoint and labels in RedBrick AI format. See
             https://docs.redbrickai.com/python-sdk/reference
+
         """
         if task_id:
             datapoints, _ = self._get_raw_data_single(task_id)
