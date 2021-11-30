@@ -15,10 +15,21 @@ from redbrick.utils.rb_label_utils import clean_rb_label
 
 
 class Labeling:
-    """Perform automated labeling tasks."""
+    """
+    Perform programmatic labeling and review tasks.
+
+    The Labeling class allows you to programmatically submit tasks.
+    This can be useful for times when you want to make bulk actions
+    e.g accepting several tasks, or make automated actions like using automated
+    methods for review.
+    """
 
     def __init__(
-        self, context: RBContext, org_id: str, project_id: str, review: bool = False
+        self,
+        context: RBContext,
+        org_id: str,
+        project_id: str,
+        review: bool = False,
     ) -> None:
         """Construct Labeling."""
         self.context = context
@@ -27,7 +38,31 @@ class Labeling:
         self.review = review
 
     def get_tasks(self, stage_name: str, count: int = 1) -> List[Dict]:
-        """Get a list of tasks."""
+        """
+        Get a list of tasks from stage_name.
+
+        >>> project = redbrick.get_project(...)
+        >>> label_tasks = project.labeling.get_tasks(...)
+        >>> review_tasks = project.review.get_tasks...)
+
+        Parameters
+        -------------
+        stage_name: str
+            The name of the stage your want to get tasks from. You can
+            find the stage name on the workflow overview on the project
+            dashboard.
+
+        count: int = 1
+            The number of tasks to retrieve. We recommend keeping this
+            < 50.
+
+        Returns
+        ----------
+        List[Dict]
+            Tasks that are queued in this stage. Please see reference doc
+            for formats.
+            https://docs.redbrickai.com/python-sdk/reference#task-objects
+        """
         tasks = self.context.labeling.get_labeling_tasks(
             self.org_id, self.project_id, stage_name, count=count
         )
@@ -70,7 +105,12 @@ class Labeling:
 
                 labels = task["labels"]
                 await self.context.labeling.put_labeling_results(
-                    session, self.org_id, self.project_id, stage_name, task_id, labels
+                    session,
+                    self.org_id,
+                    self.project_id,
+                    stage_name,
+                    task_id,
+                    labels,
                 )
 
         except ValueError as error:
@@ -96,7 +136,28 @@ class Labeling:
         return failed
 
     def put_tasks(self, stage_name: str, tasks: List[Dict]) -> List[Dict]:
-        """Put tasks, return tasks that failed."""
+        """
+        Put tasks with new labels or review result.
+
+        >>> project = redbrick.get_project(...)
+        >>> project.labeling.put_tasks(...)
+        >>> project.review.put_tasks(...)
+
+        Parameters
+        --------------
+        stage_name: str
+            The stage to which you want to submit the tasks. This must be the
+            same stage as which you called get_tasks on.
+
+        tasks: List[Dict]
+            Tasks with new labels or review result. Please see doc for format.
+            https://docs.redbrickai.com/python-sdk/programmatically-label-and-review
+
+        Returns
+        ---------------
+        List[Dict]
+            A list of tasks that failed the upload.
+        """
         return asyncio.run(self._put_tasks(stage_name, tasks))
 
     def assign_task(self, stage_name: str, task_id: str, email: str) -> None:

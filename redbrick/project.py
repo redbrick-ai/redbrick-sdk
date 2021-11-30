@@ -14,7 +14,27 @@ from redbrick.utils.logging import print_info
 
 
 class RBProject:
-    """Interact with a RedBrick project."""
+    """
+    Interact with a RedBrick project.
+
+    Attributes
+    -----------
+    export: redbrick.export.Export
+        Interface for managing exporting data and
+        labels from your redbrick ai projects.
+
+    labeling: redbrick.labeling.Labeling
+        Interface for programmatically labeling your
+        redbrick ai tasks.
+
+    review: redbrick.labeling.Labeling
+        Interface for programmatically reviewing your
+        redbrick ai tasks.
+
+    upload: redbrick.upload.Upload
+        Interface for programmatically managing upload
+        of your data and labels.
+    """
 
     def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
         """Construct RBProject."""
@@ -36,17 +56,29 @@ class RBProject:
 
     @property
     def org_id(self) -> str:
-        """Read only property."""
+        """
+        Read only property.
+
+        Retrieves the unique Organization UUID that this project belongs to
+        """
         return self._org_id
 
     @property
     def project_id(self) -> str:
-        """Read only property."""
+        """
+        Read only property.
+
+        Retrieves the unique Project ID UUID.
+        """
         return self._project_id
 
     @property
     def name(self) -> str:
-        """Read only name property."""
+        """
+        Read only name property.
+
+        Retrieves the project name.
+        """
         return self._project_name
 
     @property
@@ -55,7 +87,10 @@ class RBProject:
         for stage in self._stages:
             if stage["brickName"] == "active-learning":
                 return Learning(
-                    self.context, self.org_id, self.project_id, stage["stageName"]
+                    self.context,
+                    self.org_id,
+                    self.project_id,
+                    stage["stageName"],
                 )
 
         raise Exception("No active learning stage in this project")
@@ -67,7 +102,10 @@ class RBProject:
             if stage["brickName"] == "manual-labeling":
                 if json.loads(stage["stageConfig"]).get("isPrimaryStage"):
                     return Learning2(
-                        self.context, self.org_id, self.project_id, stage["stageName"]
+                        self.context,
+                        self.org_id,
+                        self.project_id,
+                        stage["stageName"],
                     )
 
         raise Exception("No stage available for active learning in this project")

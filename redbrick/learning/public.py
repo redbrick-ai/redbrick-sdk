@@ -110,7 +110,12 @@ class Learning:
         """Attempt to update task."""
         try:
             await self.context.learning.send_batch_learning_results_async(
-                session, self.org_id, self.project_id, self.stage_name, cycle, [task]
+                session,
+                self.org_id,
+                self.project_id,
+                self.stage_name,
+                cycle,
+                [task],
             )
         except ValueError as error:
             print_error(error)
@@ -161,6 +166,11 @@ class Learning2:
         self.org_id = org_id
         self.project_id = project_id
         self.stage_name = stage_name
+
+    def check_is_processing(self) -> bool:
+        """Check if a job is in process already."""
+        result = self.context.learning2.check_for_job(self.org_id, self.project_id)
+        return bool(result.get("isProcessing"))
 
     def check_for_job(self, min_new_tasks: int = 100) -> bool:
         """Return true if there is a new job available."""
@@ -262,7 +272,9 @@ class Learning2:
         labeled = [
             _parse_labeled_entry(item)
             for item in tqdm.tqdm(
-                my_finished_iter, unit=" tasks", total=general_info["datapointCount"]
+                my_finished_iter,
+                unit=" tasks",
+                total=general_info["datapointCount"],
             )
         ]
 

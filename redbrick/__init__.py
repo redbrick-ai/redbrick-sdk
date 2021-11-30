@@ -1,11 +1,12 @@
 """
-RedBrick SDK to enable powerful use cases.
+RedBrick SDK is a Python package for the RedBrick AI platform.
 
-- To begin use: redbrick.get_project(api_key, org_id, project_id)
-- Start at https://app.redbrickai.com to create a project.
-- Learn more at https://docs.redbrickai.com
+Visit https://docs.redbrickai.com/python-sdk/sdk-overview for an
+overview of how to use the SDK and to view code examples.
 
-
+To use the RedBrick SDK you need to create an API key. Please
+see this documentation for accomplishing that.
+https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key
 """
 
 from redbrick.common.context import RBContext
@@ -36,12 +37,47 @@ def _populate_context(context: RBContext) -> RBContext:
 
 
 def get_org(api_key: str, url: str, org_id: str) -> RBOrganization:
-    """Get redbrick organization object."""
+    """
+    Create a redbrick organization object.
+
+    Organization object allows you to interact with your organization
+    and perform high level actions like creating a project.
+
+    Parameters
+    ---------------
+    api_key: str
+        Your secret api_key, can be created from the RedBrick AI platform.
+
+    url: str
+        Should default to https://api.redbrickai.com
+
+    org_id: str
+        Your organizations unique id https://app.redbrickai.com/<org_id>/.
+    """
     context = _populate_context(RBContext(api_key, url))
     return RBOrganization(context, org_id)
 
 
 def get_project(api_key: str, url: str, org_id: str, project_id: str) -> RBProject:
-    """Get project object."""
+    """
+    Create a RedBrick project object.
+
+    Project objects allow you to interact with your RedBrick Ai projects,
+    and perform actions like importing data, exporting data etc.
+
+    Parameters
+    ---------------
+    api_key: str
+        Your secret api_key, can be created from the RedBrick AI platform.
+
+    url: str
+        Should default to https://api.redbrickai.com
+
+    org_id: str
+        Your organizations unique id https://app.redbrickai.com/<org_id>/
+
+    project_id: str
+        Your projects unique id https://app.redbrickai.com/<org_id>/<project_id>/
+    """
     context = _populate_context(RBContext(api_key, url))
     return RBProject(context, org_id, project_id)
