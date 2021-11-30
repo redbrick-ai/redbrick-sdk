@@ -6,24 +6,18 @@ from redbrick.common.client import RBClient
 from .shards import LABEL_SHARD
 
 
-LATEST_HISTORY_SHARD = (
-    """history(latest: true) {
-                    taskData {
-                    dataPoint {
-                        dpId
-                        name
-                        itemsPresigned: items(presigned: true)
-                        items(presigned: false)
-
-                    }
-                    createdByEmail
-                    labels(interpolate: true) {
-                        %s
-                    }
-                    }
-                }"""
-    % LABEL_SHARD
-)
+LATEST_TASKDATA_SHARD = """
+    latestTaskData {
+        dataPoint {
+            dpId
+            name
+            itemsPresigned: items(presigned: true)
+            items(presigned: false)
+        }
+        createdByEmail
+        labelsData(interpolate: true)
+    }
+"""
 
 
 class ExportRepo(ExportControllerInterface):
@@ -141,20 +135,18 @@ class ExportRepo(ExportControllerInterface):
     def datapoints_in_project(self, org_id: str, project_id: str) -> int:
         """Get number of datapoints in project."""
         query_string = """
-        query($orgId: UUID!, $projectId: UUID!) {
+        query($orgId: UUID!, $projectId: UUID!, $first: Int) {
             tasksPaged(
                 orgId: $orgId
                 projectId: $projectId
+                first: $first
             ) {
                 count
             }
         }
         """
         # EXECUTE THE QUERY
-        query_variables = {
-            "orgId": org_id,
-            "projectId": project_id,
-        }
+        query_variables = {"orgId": org_id, "projectId": project_id, "first": 0}
 
         result = self.client.execute_query(query_string, query_variables)
 
@@ -185,7 +177,7 @@ class ExportRepo(ExportControllerInterface):
             }
             }
         """
-            % LATEST_HISTORY_SHARD
+            % LATEST_TASKDATA_SHARD
         )
         # EXECUTE THE QUERY
         query_variables = {
@@ -218,7 +210,7 @@ class ExportRepo(ExportControllerInterface):
             }
             }
         """
-            % LATEST_HISTORY_SHARD
+            % LATEST_TASKDATA_SHARD
         )
         # EXECUTE THE QUERY
         query_variables = {
