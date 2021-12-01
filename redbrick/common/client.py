@@ -69,7 +69,6 @@ class RBClient:
     @staticmethod
     def _process_json_response(response_data: Dict) -> Dict:
         """Process JSON resonse."""
-
         if "errors" in response_data:
             raise ValueError(response_data["errors"][0]["message"])
 
