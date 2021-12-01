@@ -37,7 +37,8 @@ class RBClient:
             response = self.session.post(
                 self.url, headers=headers, json={"query": query, "variables": variables}
             )
-            return self._process_json_response(response.status_code, response.json())
+            self._check_status_msg(response.status_code)
+            return self._process_json_response(response.json())
         except ValueError as error:
             raise error
 
@@ -51,21 +52,23 @@ class RBClient:
             async with aio_client.post(
                 self.url, headers=headers, json={"query": query, "variables": variables}
             ) as response:
-                return self._process_json_response(
-                    response.status, await response.json()
-                )
+                self._check_status_msg(response.status)
+                return self._process_json_response(await response.json())
         except ValueError as error:
             raise error
 
     @staticmethod
-    def _process_json_response(response_status: int, response_data: Dict) -> Dict:
-        """Process JSON resonse."""
+    def _check_status_msg(response_status: int) -> None:
         if response_status == 500:
             raise ValueError(
                 "Internal Server Error: You are probably using an invalid API key"
             )
         if response_status == 403:
             raise PermissionError("Problem authenticating with Api Key")
+
+    @staticmethod
+    def _process_json_response(response_data: Dict) -> Dict:
+        """Process JSON resonse."""
 
         if "errors" in response_data:
             raise ValueError(response_data["errors"][0]["message"])
