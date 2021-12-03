@@ -2,8 +2,10 @@
 import json
 import sys
 
+import redbrick
 import matplotlib.pyplot as plt  # type: ignore
 from . import Upload
+from redbrick.utils.segmentation import get_file_type
 
 
 def test_mask_rbai() -> None:
@@ -46,3 +48,38 @@ def test_mask_rbai() -> None:
                         label_real["pixel"]["holes"].sort()
                         == label["pixel"]["holes"].sort()
                     )
+
+
+def test_file_type_extraction() -> None:
+    """Tests the extraction of MIME file type."""
+    filepath = "folder/subfolder/image.png"
+    filetype = get_file_type(filepath)
+    assert filetype[0] == "png" and filetype[1] == "image/png"
+
+
+def test_file_type_extraction_invalid() -> None:
+    """Check invalid file extraction"""
+    filepath = "folder/subfolder/image.csv"
+    try:
+        get_file_type(filepath)
+        assert False
+    except ValueError as error:
+        assert type(error).__name__ == "ValueError"
+
+
+def test_items_presigning() -> None:
+    """Tests signing of an items list."""
+    filepath = "redbrick/upload/mask_test/88664c8f-c6f8-4d5a-918e-41d8441a4509.png"
+    filetype = get_file_type(filepath)[-1]
+
+    api_key = "WgEsMl7Xyg1mYXYSw6v0poFy25ZnV3FtT0mD9E2L12o"
+    org_id = "540abd9a-cb3b-4fd1-a14a-ccea6ae8c31e"
+    project_id = "05bd0b82-b370-41b5-b618-e78de7c144b8"
+
+    project = redbrick.get_project(
+        api_key, "https://api.redbrickai.com", org_id, project_id
+    )
+    print("project", project._td_type)
+    print(filetype, filepath)
+    result = project.upload._generate_upload_presigned_url([filepath], [filetype])
+    print(result)

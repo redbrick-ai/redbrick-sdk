@@ -20,11 +20,14 @@ from redbrick.utils.segmentation import get_file_type, check_mask_map_format
 class Upload:
     """Primary interface to uploading new data to a project."""
 
-    def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
+    def __init__(
+        self, context: RBContext, org_id: str, project_id: str, td_type: str
+    ) -> None:
         """Construct Upload object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
+        self.td_type = td_type
 
     async def _create_datapoint(
         self,
@@ -71,46 +74,34 @@ class Upload:
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return failed
 
-    def create_datapoints(
-        self,
-        storage_id: str,
-        points: List[Dict],
-        is_ground_truth: bool = False,
-    ) -> List[Dict]:
-        """
-        Create datapoints in project.
-
-        Optionally you can upload labels with your data.
-
-        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
-        >>> project.upload.create_datapoints(...)
-
-        Parameters
-        --------------
-        storage_id: str
-            Your RedBrick AI external storage_id. This can be found under the Storage Tab
-            on the RedBrick AI platform. Currently, this method only supports external storage
-            or public storage i.e. redbrick.StorageMathod.PUBLIC (public hosted data).
-
-        points: List[Dict]
-            Please see the RedBrick AI reference documentation for overview of the format.
-            https://docs.redbrickai.com/python-sdk/importing-data-and-labels
-
-        is_ground_truth: bool = False
-            If labels are provided in points above, and this parameters is set to true, the labels
-            will be added to the Ground Truth stage. This is mainly useful for Active Learning.
-
-        Returns
-        -------------
-        List[Dict]
-            List of tasks that failed upload.
-        """
-        return asyncio.run(self._create_datapoints(storage_id, points, is_ground_truth))
-
-    def _items_list_upload_presign(
+    def _generate_upload_presigned_url(
         self, files: List[str], file_type: List[str]
     ) -> List[Dict]:
-        """Generate presigned url's to perform upload."""
+        """
+        Generate presigned url's to perform upload.
+
+        Parameters:
+        -------------
+        files: List[str]
+            This needs to be names of the files when it's uploaded.
+            i.e. locally, the file can be image.png, but after
+            uploading if you want it named image001.png, the files
+            List must contain [image001.png].
+
+        file_type: List[str]
+            Corresponding file types.
+
+        Returns
+        ------------
+        List[Dict]
+            [
+                {
+                    "presignedUrl: "...", # url to upload to
+                    "filePath": "..." # remote file path
+                    "fileName": "..." # the same as values in files
+                }
+            ]
+        """
         try:
             dataset_name = self.project_id
             result = self.context.upload.items_upload_presign(
@@ -122,7 +113,43 @@ class Upload:
         return result
 
     @staticmethod
-    def upload_image_to_presigned(
+    def _mask_to_polygon(
+        mask: np.ndarray,
+    ) -> shapely.geometry.MultiPolygon:
+        """Convert masks to polygons."""
+        try:
+            import rasterio  # pylint: disable=import-outside-toplevel
+            from rasterio import (  # pylint: disable=import-outside-toplevel
+                features,
+            )
+        except Exception as error:
+            print_error(
+                "For windows users, please follow the rasterio "
+                + "documentation to properly install the module "
+                + "https://rasterio.readthedocs.io/en/latest/installation.html "
+                + "Rasterio is required by RedBrick SDK to work with masks."
+            )
+            raise error
+
+        all_polygons = []
+        for shape, _ in features.shapes(
+            mask.astype(np.int16),
+            mask=(mask > 0),
+            transform=rasterio.Affine(1.0, 0, 0, 0, 1.0, 0),
+        ):
+            all_polygons.append(shapely.geometry.shape(shape))
+
+        polygon = shapely.geometry.MultiPolygon(all_polygons)
+        if not polygon.is_valid:
+            polygon = polygon.buffer(0)
+            # Sometimes buffer() converts a simple Multipolygon to just a Polygon,
+            # need to keep it a Multi throughout
+            if polygon.type == "Polygon":
+                polygon = shapely.geometry.MultiPolygon([polygon])
+        return polygon
+
+    @staticmethod
+    def _upload_image_to_presigned(
         presigned_url: str, image_filepath: str, file_type: str
     ) -> None:
         """Upload a single image to s3 using the pre-signed url."""
@@ -137,87 +164,29 @@ class Upload:
                 print_error("File upload failed %s" % image_filepath)
                 raise error
 
-    def create_datapoint_from_masks(
-        self,
-        storage_id: str,
-        mask: np.ndarray,
-        class_map: Dict,
-        image_path: str,
-    ) -> List[Dict]:
+    def _upload_image_items_to_s3(self, items: List[str]) -> List[Dict]:
         """
-        Create a single datapoint with mask.
-
-        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
-        >>> project.upload.create_datapoint_from_masks(...)
+        Uploads an image items list to RedBrick storage.
 
         Parameters
-        --------------
-        storage_id: str
-            Your RedBrick AI external storage_id. This can be found under the Storage Tab
-            on the RedBrick AI platform. Currently, this method only supports external storage
-            or public storage i.e. redbrick.StorageMathod.PUBLIC (public hosted data).
-
-        mask: np.ndarray.astype(np.uint8)
-            A RGB mask with values as np.uint8. The RGB values correspond to a category,
-            who's mapping can be gound in class_map.
-
-        class_map: Dict
-            Maps between the category_name in your Project Taxonomy and the RGB color of the mask.
-
-            >>> class_map
-            >>> {'category-1': [12, 22, 93], 'category-2': [1, 23, 128]...}
-
-        image_map: str
-            A valid path to the corresponding image. If storage_id is
-            redbrick.StorageMethod.REDBRICK, image_map must be a
-            valid path to a locally stored image.
+        ------------
+        items: List[str]
+            [{"items": [...]}]
 
         Returns
-        -------------
+        ----------
         List[Dict]
-            List of tasks that failed upload.
-
-        Warnings
-        ------------
-        The category names in class_map must be valid entries in your project taxonomy. The project
-        type also must be IMAGE_SEGMENTATION.
-
+            Same return value as self._generate_upload_presigned_url
         """
-        check_mask_map_format(mask, class_map)
+        # Get the presigned url
+        file_type = get_file_type(items[0])
+        presigned_items = self._generate_upload_presigned_url(items, [file_type[-1]])
 
-        if storage_id == StorageMethod.REDBRICK:
-            _, file_type = get_file_type(image_path)
-            upload_filename = str(uuid.uuid4())
-
-            # get pre-signed url for s3 upload
-            presigned_items = self._items_list_upload_presign(
-                [upload_filename], [file_type]
-            )
-
-            # upload to s3
-            Upload.upload_image_to_presigned(
-                presigned_items[0]["presignedUrl"],
-                image_path,  # filename on local machine
-                file_type,
-            )
-
-            # create datapoint
-            items = presigned_items[0]["filePath"]
-            name = image_path
-            datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-            return asyncio.run(
-                self._create_datapoints(storage_id, [datapoint_entry], False)
-            )
-
-        # If storage_id is for remote storage
-        items = image_path
-        name = image_path
-
-        # create datapoint
-        datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-        return asyncio.run(
-            self._create_datapoints(storage_id, [datapoint_entry], False)
+        # Upload the image to s3
+        Upload._upload_image_to_presigned(
+            presigned_items[0]["presignedUrl"], items[0], file_type[-1]
         )
+        return presigned_items
 
     @staticmethod
     def mask_to_rbai(  # pylint: disable=too-many-locals
@@ -277,38 +246,128 @@ class Upload:
 
         return entry
 
-    @staticmethod
-    def _mask_to_polygon(
+    def create_datapoints(
+        self,
+        storage_id: str,
+        points: List[Dict],
+        is_ground_truth: bool = False,
+    ) -> List[Dict]:
+        """
+        Create datapoints in project.
+
+        Optionally you can upload labels with your data.
+
+        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project.upload.create_datapoints(...)
+
+        Parameters
+        --------------
+        storage_id: str
+            Your RedBrick AI external storage_id. This can be found under the Storage Tab
+            on the RedBrick AI platform. Currently, this method only supports external storage
+            or public storage i.e. redbrick.StorageMathod.PUBLIC (public hosted data).
+
+        points: List[Dict]
+            Please see the RedBrick AI reference documentation for overview of the format.
+            https://docs.redbrickai.com/python-sdk/importing-data-and-labels
+
+        is_ground_truth: bool = False
+            If labels are provided in points above, and this parameters is set to true, the labels
+            will be added to the Ground Truth stage. This is mainly useful for Active Learning.
+
+        Returns
+        -------------
+        List[Dict]
+            List of tasks that failed upload.
+        """
+        # Check if user wants to do a direct upload
+        if storage_id == StorageMethod.REDBRICK:
+            # Check if image or video
+            if self.td_type.split("_")[0] == "IMAGE":
+                pass
+            else:
+                pass
+
+        return asyncio.run(self._create_datapoints(storage_id, points, is_ground_truth))
+
+    def create_datapoint_from_masks(
+        self,
+        storage_id: str,
         mask: np.ndarray,
-    ) -> shapely.geometry.MultiPolygon:
-        """Convert masks to polygons."""
-        try:
-            import rasterio  # pylint: disable=import-outside-toplevel
-            from rasterio import (  # pylint: disable=import-outside-toplevel
-                features,
-            )
-        except Exception as error:
-            print_error(
-                "For windows users, please follow the rasterio "
-                + "documentation to properly install the module "
-                + "https://rasterio.readthedocs.io/en/latest/installation.html "
-                + "Rasterio is required by RedBrick SDK to work with masks."
-            )
-            raise error
+        class_map: Dict,
+        image_path: str,
+    ) -> List[Dict]:
+        """
+        Create a single datapoint with mask.
 
-        all_polygons = []
-        for shape, _ in features.shapes(
-            mask.astype(np.int16),
-            mask=(mask > 0),
-            transform=rasterio.Affine(1.0, 0, 0, 0, 1.0, 0),
-        ):
-            all_polygons.append(shapely.geometry.shape(shape))
+        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project.upload.create_datapoint_from_masks(...)
 
-        polygon = shapely.geometry.MultiPolygon(all_polygons)
-        if not polygon.is_valid:
-            polygon = polygon.buffer(0)
-            # Sometimes buffer() converts a simple Multipolygon to just a Polygon,
-            # need to keep it a Multi throughout
-            if polygon.type == "Polygon":
-                polygon = shapely.geometry.MultiPolygon([polygon])
-        return polygon
+        Parameters
+        --------------
+        storage_id: str
+            Your RedBrick AI external storage_id. This can be found under the Storage Tab
+            on the RedBrick AI platform. Currently, this method only supports external storage
+            or public storage i.e. redbrick.StorageMathod.PUBLIC (public hosted data).
+
+        mask: np.ndarray.astype(np.uint8)
+            A RGB mask with values as np.uint8. The RGB values correspond to a category,
+            who's mapping can be gound in class_map.
+
+        class_map: Dict
+            Maps between the category_name in your Project Taxonomy and the RGB color of the mask.
+
+            >>> class_map
+            >>> {'category-1': [12, 22, 93], 'category-2': [1, 23, 128]...}
+
+        image_map: str
+            A valid path to the corresponding image. If storage_id is
+            redbrick.StorageMethod.REDBRICK, image_map must be a
+            valid path to a locally stored image.
+
+        Returns
+        -------------
+        List[Dict]
+            List of tasks that failed upload.
+
+        Warnings
+        ------------
+        The category names in class_map must be valid entries in your project taxonomy. The project
+        type also must be IMAGE_SEGMENTATION.
+
+        """
+        check_mask_map_format(mask, class_map)
+
+        if storage_id == StorageMethod.REDBRICK:
+            _, file_type = get_file_type(image_path)
+            upload_filename = str(uuid.uuid4())
+
+            # get pre-signed url for s3 upload
+            presigned_items = self._generate_upload_presigned_url(
+                [upload_filename], [file_type]
+            )
+
+            # upload to s3
+            Upload._upload_image_to_presigned(
+                presigned_items[0]["presignedUrl"],
+                image_path,  # filename on local machine
+                file_type,
+            )
+
+            # create datapoint
+            items = presigned_items[0]["filePath"]
+            name = image_path
+            datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
+            return asyncio.run(
+                self._create_datapoints(storage_id, [datapoint_entry], False)
+            )
+
+        # If storage_id is for remote storage
+        items = image_path
+        name = image_path
+
+        # create datapoint
+        datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
+        return asyncio.run(
+            self._create_datapoints(storage_id, [datapoint_entry], False)
+        )
