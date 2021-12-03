@@ -74,12 +74,28 @@ def test_items_presigning() -> None:
 
     api_key = "WgEsMl7Xyg1mYXYSw6v0poFy25ZnV3FtT0mD9E2L12o"
     org_id = "540abd9a-cb3b-4fd1-a14a-ccea6ae8c31e"
-    project_id = "05bd0b82-b370-41b5-b618-e78de7c144b8"
+    project_id = "8bea083d-9e56-4874-b081-15dfd4097bdb"
 
     project = redbrick.get_project(
         api_key, "https://api.redbrickai.com", org_id, project_id
     )
-    print("project", project._td_type)
-    print(filetype, filepath)
-    result = project.upload._generate_upload_presigned_url([filepath], [filetype])
-    print(result)
+
+    datapoints = [
+        {
+            "items": [
+                "../sample-data/bccd/bccd/BloodImage_00000.jpg",
+                "../sample-data/bccd/bccd/BloodImage_00001.jpg",
+                "../sample-data/bccd/bccd/BloodImage_00002.jpg",
+            ],
+            "name": "video-1",
+        },
+        {
+            "items": [
+                "../sample-data/bccd/bccd/BloodImage_00003.jpg",
+                "../sample-data/bccd/bccd/BloodImage_00004.jpg",
+                "../sample-data/bccd/bccd/BloodImage_00005.jpg",
+            ],
+            "name": "video-2",
+        },
+    ]
+    project.upload.create_datapoints(redbrick.StorageMethod.REDBRICK, datapoints)

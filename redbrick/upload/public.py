@@ -2,6 +2,7 @@
 
 import uuid
 import asyncio
+import os
 from copy import deepcopy
 from typing import List, Dict, Optional
 import requests
@@ -152,7 +153,20 @@ class Upload:
     def _upload_image_to_presigned(
         presigned_url: str, image_filepath: str, file_type: str
     ) -> None:
-        """Upload a single image to s3 using the pre-signed url."""
+        """
+        Upload a single image to s3 using the pre-signed url.
+
+        Parameters
+        ------------
+        presigned_url: str
+            The URL to upload to.
+
+        image_filepath: str
+            Local filepath of file to upload.
+
+        file_type: str
+            MIME filetype.
+        """
         with open(image_filepath, "rb") as file:
             try:
                 requests.put(
@@ -168,6 +182,10 @@ class Upload:
         """
         Uploads an image items list to RedBrick storage.
 
+        Creates the presigned url using only the image name (not including
+        any directory path before). This will store the image in remote
+        without the directory information in the name.
+
         Parameters
         ------------
         items: List[str]
@@ -180,12 +198,46 @@ class Upload:
         """
         # Get the presigned url
         file_type = get_file_type(items[0])
-        presigned_items = self._generate_upload_presigned_url(items, [file_type[-1]])
+        upload_items = [
+            os.path.split(items[0])[-1]
+        ]  # create presigned url, with only filename
+        presigned_items = self._generate_upload_presigned_url(
+            upload_items, [file_type[-1]]
+        )
 
         # Upload the image to s3
         Upload._upload_image_to_presigned(
             presigned_items[0]["presignedUrl"], items[0], file_type[-1]
         )
+        return presigned_items
+
+    def _upload_video_items_to_s3(self, items: List[str]) -> List[Dict]:
+        """
+        Uploads a video items list to RedBrick Storage.
+
+        See Also
+        ---------
+        ``_upload_image_items_to_s3``
+        """
+        # Get the presigned url
+        file_types = []
+        for item in items:
+            file_types += [get_file_type(item)[-1]]
+
+        upload_items = []
+        for item in items:
+            upload_items += [
+                os.path.split(item)[-1]
+            ]  # create presigned url, with only filename
+
+        presigned_items = self._generate_upload_presigned_url(upload_items, file_types)
+
+        # Upload the image frames to s3
+        for i, item in enumerate(items):
+            Upload._upload_image_to_presigned(
+                presigned_items[i]["presignedUrl"], items[i], file_types[i]
+            )
+
         return presigned_items
 
     @staticmethod
@@ -264,8 +316,8 @@ class Upload:
         --------------
         storage_id: str
             Your RedBrick AI external storage_id. This can be found under the Storage Tab
-            on the RedBrick AI platform. Currently, this method only supports external storage
-            or public storage i.e. redbrick.StorageMathod.PUBLIC (public hosted data).
+            on the RedBrick AI platform. To directly upload images to rbai,
+            use redbrick.StorageMathod.REDBRICK.
 
         points: List[Dict]
             Please see the RedBrick AI reference documentation for overview of the format.
@@ -279,14 +331,57 @@ class Upload:
         -------------
         List[Dict]
             List of tasks that failed upload.
+
+        Notes
+        ----------
+            1. If doing direct upload, please use ``redbrick.StorageMethod.REDBRICK`` as the storage id.
+            Your items path must be a valid path to a locally stored image.
+
+            2. When doing direct upload i.e. ``redbrick.StorageMethod.REDBRICK``, if you didn't specify a "name"
+            field in your datapoints object, we will assign the "items" path to it.
+
         """
         # Check if user wants to do a direct upload
         if storage_id == StorageMethod.REDBRICK:
-            # Check if image or video
+            # Direct upload for images
             if self.td_type.split("_")[0] == "IMAGE":
-                pass
+
+                print("POINTS", points)
+
+                for point in points:
+
+                    # check points items
+                    if len(point["items"]) != 1:
+                        raise ValueError(
+                            "Incorrect items format!"
+                            + " Your items field must have exactly one entry."
+                        )
+                    if not os.path.exists(point["items"][0]):
+                        raise OSError("Invalid local filepath %s" % point["items"][0])
+
+                    # upload image items to s3
+                    presigned_items = self._upload_image_items_to_s3(point["items"])
+                    print(presigned_items)
+
+                    # update points dict with correct information
+                    if "name" not in point:
+                        point["name"] = point["items"][0]
+                    point["items"] = [presigned_items[0]["filePath"]]
+
             else:
-                pass
+                # Direct upload for videos
+                for point in points:
+                    # check points
+                    if len(point["items"]) < 1:
+                        raise ValueError(
+                            "Incorrect items format!"
+                            + "Your items field for video must have atleast one entry."
+                        )
+
+                    presigned_items = self._upload_video_items_to_s3(point["items"])
+                    point["items"] = [
+                        presigned_item["filePath"] for presigned_item in presigned_items
+                    ]
 
         return asyncio.run(self._create_datapoints(storage_id, points, is_ground_truth))
 
