@@ -7,6 +7,7 @@ from copy import deepcopy
 from typing import List, Dict, Optional
 import requests
 
+import aiofiles
 import aiohttp
 import numpy as np
 import shapely  # type: ignore
@@ -178,6 +179,41 @@ class Upload:
                 print_error("File upload failed %s" % image_filepath)
                 raise error
 
+    @staticmethod
+    async def _upload_image_to_presigned_async(
+        session: aiohttp.ClientSession,
+        presigned_url: str,
+        image_filepath: str,
+        file_type: str,
+    ) -> None:
+        """
+        Upload a single image to s3 using the pre-signed url using asyncio.
+
+        Parameters
+        ------------
+        presigned_url: str
+            The URL to upload to.
+
+        image_filepath: str
+            Local filepath of file to upload.
+
+        file_type: str
+            MIME filetype.
+        """
+        async with aiofiles.open(image_filepath, mode="rb") as file:  # type: ignore
+            contents = await file.read()
+            headers = {"Content-Type": file_type}
+            try:
+                async with session.put(
+                    presigned_url, headers=headers, data=contents
+                ) as response:
+                    if str(response.status) != "200":
+                        raise ValueError(
+                            "Error in uploading %s to RedBrick" % image_filepath
+                        )
+            except ValueError as error:
+                raise error
+
     def _upload_image_items_to_s3(self, items: List[str]) -> List[Dict]:
         """
         Upload an image items list to RedBrick storage.
@@ -211,7 +247,7 @@ class Upload:
         )
         return presigned_items
 
-    def _upload_video_items_to_s3(self, items: List[str]) -> List[Dict]:
+    async def _upload_video_items_to_s3(self, items: List[str]) -> List[Dict]:
         """
         Upload a video items list to RedBrick Storage.
 
@@ -232,12 +268,23 @@ class Upload:
 
         presigned_items = self._generate_upload_presigned_url(upload_items, file_types)
 
-        # Upload the image frames to s3
-        for i, item in enumerate(items):
-            Upload._upload_image_to_presigned(
-                presigned_items[i]["presignedUrl"], items[i], file_types[i]
-            )
+        conn = aiohttp.TCPConnector(limit=30)
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = []
+            # Upload the image frames to s3
+            for i, _ in enumerate(items):
+                coros.append(
+                    Upload._upload_image_to_presigned_async(
+                        session,
+                        presigned_items[i]["presignedUrl"],
+                        items[i],
+                        file_types[i],
+                    )
+                )
 
+            await gather_with_concurrency(20, coros, "Upload video items to RedBrick")
+
+        await asyncio.sleep(0.250)  # give time to close ssl connections
         return presigned_items
 
     @staticmethod
@@ -376,7 +423,9 @@ class Upload:
                             + "Your items field for video must have atleast one entry."
                         )
 
-                    presigned_items = self._upload_video_items_to_s3(point["items"])
+                    presigned_items = asyncio.run(
+                        self._upload_video_items_to_s3(point["items"])
+                    )
 
                     # update point dicts with correct items
                     point["items"] = [

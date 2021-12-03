@@ -49,6 +49,8 @@ def get_file_type(image_path: str) -> Tuple[str, str]:
         file_type = "image/png"
     elif file_ext in ["jpg", "jpeg"]:
         file_type = "image/jpeg"
+    elif file_ext == "bmp":
+        file_type = "image/bmp"
     else:
         raise ValueError(
             ".%s file type not supported! Only .png, .jpeg, and .jpg are supported. "
