@@ -180,7 +180,7 @@ class Upload:
 
     def _upload_image_items_to_s3(self, items: List[str]) -> List[Dict]:
         """
-        Uploads an image items list to RedBrick storage.
+        Upload an image items list to RedBrick storage.
 
         Creates the presigned url using only the image name (not including
         any directory path before). This will store the image in remote
@@ -213,7 +213,7 @@ class Upload:
 
     def _upload_video_items_to_s3(self, items: List[str]) -> List[Dict]:
         """
-        Uploads a video items list to RedBrick Storage.
+        Upload a video items list to RedBrick Storage.
 
         See Also
         ---------
@@ -334,19 +334,18 @@ class Upload:
 
         Notes
         ----------
-            1. If doing direct upload, please use ``redbrick.StorageMethod.REDBRICK`` as the storage id.
-            Your items path must be a valid path to a locally stored image.
+            1. If doing direct upload, please use ``redbrick.StorageMethod.REDBRICK``
+            as the storage id. Your items path must be a valid path to a locally stored image.
 
-            2. When doing direct upload i.e. ``redbrick.StorageMethod.REDBRICK``, if you didn't specify a "name"
-            field in your datapoints object, we will assign the "items" path to it.
+            2. When doing direct upload i.e. ``redbrick.StorageMethod.REDBRICK``,
+            if you didn't specify a "name" field in your datapoints object,
+            we will assign the "items" path to it.
 
         """
         # Check if user wants to do a direct upload
         if storage_id == StorageMethod.REDBRICK:
             # Direct upload for images
             if self.td_type.split("_")[0] == "IMAGE":
-
-                print("POINTS", points)
 
                 for point in points:
 
@@ -361,7 +360,6 @@ class Upload:
 
                     # upload image items to s3
                     presigned_items = self._upload_image_items_to_s3(point["items"])
-                    print(presigned_items)
 
                     # update points dict with correct information
                     if "name" not in point:
@@ -379,6 +377,8 @@ class Upload:
                         )
 
                     presigned_items = self._upload_video_items_to_s3(point["items"])
+
+                    # update point dicts with correct items
                     point["items"] = [
                         presigned_item["filePath"] for presigned_item in presigned_items
                     ]

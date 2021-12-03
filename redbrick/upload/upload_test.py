@@ -2,10 +2,9 @@
 import json
 import sys
 
-import redbrick
 import matplotlib.pyplot as plt  # type: ignore
-from . import Upload
 from redbrick.utils.segmentation import get_file_type
+from . import Upload
 
 
 def test_mask_rbai() -> None:
@@ -58,7 +57,7 @@ def test_file_type_extraction() -> None:
 
 
 def test_file_type_extraction_invalid() -> None:
-    """Check invalid file extraction"""
+    """Check invalid file extraction."""
     filepath = "folder/subfolder/image.csv"
     try:
         get_file_type(filepath)
