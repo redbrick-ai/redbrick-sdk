@@ -65,37 +65,3 @@ def test_file_type_extraction_invalid() -> None:
         assert False
     except ValueError as error:
         assert type(error).__name__ == "ValueError"
-
-
-def test_items_presigning() -> None:
-    """Tests signing of an items list."""
-    filepath = "redbrick/upload/mask_test/88664c8f-c6f8-4d5a-918e-41d8441a4509.png"
-    filetype = get_file_type(filepath)[-1]
-
-    api_key = "WgEsMl7Xyg1mYXYSw6v0poFy25ZnV3FtT0mD9E2L12o"
-    org_id = "540abd9a-cb3b-4fd1-a14a-ccea6ae8c31e"
-    project_id = "8bea083d-9e56-4874-b081-15dfd4097bdb"
-
-    project = redbrick.get_project(
-        api_key, "https://api.redbrickai.com", org_id, project_id
-    )
-
-    datapoints = [
-        {
-            "items": [
-                "../sample-data/bccd/bccd/BloodImage_00000.jpg",
-                "../sample-data/bccd/bccd/BloodImage_00001.jpg",
-                "../sample-data/bccd/bccd/BloodImage_00002.jpg",
-            ],
-            "name": "video-1",
-        },
-        {
-            "items": [
-                "../sample-data/bccd/bccd/BloodImage_00003.jpg",
-                "../sample-data/bccd/bccd/BloodImage_00004.jpg",
-                "../sample-data/bccd/bccd/BloodImage_00005.jpg",
-            ],
-            "name": "video-2",
-        },
-    ]
-    project.upload.create_datapoints(redbrick.StorageMethod.REDBRICK, datapoints)
