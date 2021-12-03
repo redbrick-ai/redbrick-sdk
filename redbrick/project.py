@@ -44,6 +44,7 @@ class RBProject:
         self._project_id = project_id
         self._project_name: str
         self._stages: List[Dict]
+        self._td_type: str
 
         # check if project exists on backend to validate
         self._get_project()
@@ -52,7 +53,7 @@ class RBProject:
 
         self.labeling = Labeling(context, org_id, project_id)
         self.review = Labeling(context, org_id, project_id, review=True)
-        self.upload = Upload(context, org_id, project_id)
+        self.upload = Upload(context, org_id, project_id, self._td_type)
 
     @property
     def org_id(self) -> str:
@@ -134,6 +135,7 @@ class RBProject:
         project = self.__wait_for_project_to_finish_creating()
 
         self._project_name = project["name"]
+        self._td_type = project["tdType"]
         self._stages = self.context.project.get_stages(self.org_id, self.project_id)
 
     def __str__(self) -> str:

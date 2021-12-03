@@ -3,6 +3,7 @@ import json
 import sys
 
 import matplotlib.pyplot as plt  # type: ignore
+from redbrick.utils.segmentation import get_file_type
 from . import Upload
 
 
@@ -46,3 +47,20 @@ def test_mask_rbai() -> None:
                         label_real["pixel"]["holes"].sort()
                         == label["pixel"]["holes"].sort()
                     )
+
+
+def test_file_type_extraction() -> None:
+    """Tests the extraction of MIME file type."""
+    filepath = "folder/subfolder/image.png"
+    filetype = get_file_type(filepath)
+    assert filetype[0] == "png" and filetype[1] == "image/png"
+
+
+def test_file_type_extraction_invalid() -> None:
+    """Check invalid file extraction."""
+    filepath = "folder/subfolder/image.csv"
+    try:
+        get_file_type(filepath)
+        assert False
+    except ValueError as error:
+        assert type(error).__name__ == "ValueError"

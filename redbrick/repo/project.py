@@ -26,6 +26,7 @@ class ProjectRepo(ProjectRepoInterface):
                     projectId
                     name
                     status
+                    tdType
                 }
             }
         """
