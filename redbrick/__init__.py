@@ -23,6 +23,7 @@ from redbrick.repo import (
     ProjectRepo,
 )
 
+__version__ = version_check.get_version()
 version_check.version_check()
 
 
