@@ -14,12 +14,25 @@ class CLIExportController(CLIExportInterface):
 
     def __init__(self, parser: ArgumentParser) -> None:
         """Intialize export sub commands."""
-        parser.add_argument("type", nargs="?", default="latest")
         parser.add_argument(
-            "--format", "-f", choices=["coco", "redbrick"], default="redbrick"
+            "type",
+            nargs="?",
+            default="latest",
+            help="Export type: (latest [default], groundtruth, <task id>)",
         )
-        parser.add_argument("--clear-cache", action="store_true")
-        parser.add_argument("--destination", "-d", default=".")
+        parser.add_argument(
+            "--format",
+            "-f",
+            choices=["coco", "redbrick"],
+            default="redbrick",
+            help="Export format",
+        )
+        parser.add_argument(
+            "--clear-cache", action="store_true", help="Clear local cache"
+        )
+        parser.add_argument(
+            "--destination", "-d", default=".", help="Destination directory"
+        )
 
     def handler(self, args: Namespace) -> None:
         """Handle export command."""
@@ -56,7 +69,9 @@ class CLIExportController(CLIExportInterface):
             self.project.path
             if self.args.destination is None
             else self.args.destination,
-            "export_" + datetime.strftime(datetime.now(), "%Y%m%d%H%M%S%f") + ".json",
+            f"export_{self.args.format}_"
+            + datetime.strftime(datetime.now(), "%Y-%m-%d_%H-%M-%S")
+            + ".json",
         )
         os.makedirs(os.path.dirname(export_path), exist_ok=True)
         with open(export_path, "w", encoding="utf-8") as file_:

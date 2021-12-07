@@ -3,6 +3,8 @@ import os
 from typing import Dict, List
 from configparser import ConfigParser
 
+from redbrick.common.context import RBContext
+
 
 class CLICredentials:
     """CLICredentials entity."""
@@ -54,19 +56,17 @@ class CLICredentials:
         return profile
 
     @property
-    def api_key(self) -> str:
-        """Get api_key of default profile."""
-        return self.get_profile(self.selected_profile)["key"].strip()
-
-    @property
     def org_id(self) -> str:
         """Get org_id of default profile."""
         return self.get_profile(self.selected_profile)["org"].strip().lower()
 
     @property
-    def url(self) -> str:
-        """Get url of default profile."""
-        return self.get_profile(self.selected_profile)["url"].strip().rstrip("/")
+    def context(self) -> RBContext:
+        """Get SDK context."""
+        return RBContext(
+            api_key=self.get_profile(self.selected_profile)["key"].strip(),
+            url=self.get_profile(self.selected_profile)["url"].strip().rstrip("/"),
+        )
 
     def get_profile(self, profile_name: str) -> Dict[str, str]:
         """Get profile object from profile name."""

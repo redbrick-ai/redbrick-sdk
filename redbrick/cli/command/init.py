@@ -1,4 +1,5 @@
 """CLI init command."""
+import os
 from argparse import ArgumentParser, Namespace
 
 from halo.halo import Halo  # type: ignore
@@ -15,17 +16,28 @@ class CLIInitController(CLIInitInterface):
 
     def __init__(self, parser: ArgumentParser) -> None:
         """Intialize init sub commands."""
-        parser.add_argument("--name", "-n")
-        parser.add_argument("--label", "-l")
-        parser.add_argument("--taxonomy", "-t")
-        parser.add_argument("--reviews", "-r")
-        parser.add_argument("path", nargs="?", default=".")
+        parser.add_argument("--name", "-n", help="Project name")
+        parser.add_argument("--label", "-l", help="Label type")
+        parser.add_argument("--taxonomy", "-t", help="Taxonomy name")
+        parser.add_argument("--reviews", "-r", help="Number of review stages")
+        parser.add_argument(
+            "path", nargs="?", default=".", help="Local path of project"
+        )
 
     def handler(self, args: Namespace) -> None:
         """Handle init command."""
         self.args = args
         project = CLIProject.from_path(path=self.args.path, required=False)
         assert project is None, f"Already a RedBrick project {project.path}"
+
+        path = os.path.realpath(self.args.path)
+        if os.path.exists(path):
+            if not os.path.isdir(path):
+                raise Exception(f"Not a directory {path}")
+            if os.listdir(path):
+                raise Exception(f"{path} is not empty")
+        else:
+            os.makedirs(path)
 
         self.project = CLIProject(path=self.args.path, required=False)
 
@@ -52,16 +64,17 @@ class CLIInitController(CLIInitInterface):
                 raise error
 
         name = CLIInputText(self.args.name, "Name").get()
-        label = CLIInputSelect(
-            self.args.label, "Label", [label.value for label in LabelType]
-        ).get()
-        label_type = LabelType(label)
+        label_type = LabelType(
+            CLIInputSelect(
+                self.args.label, "Label", [label.value for label in LabelType]
+            ).get()
+        )
         taxonomy = CLIInputSelect(self.args.taxonomy, "Taxonomy", taxonomies).get()
-        reviews = CLIInputNumber(self.args.reviews, "Reviews").get()
+        reviews = int(CLIInputNumber(self.args.reviews, "Reviews").get())
 
         with Halo(text="Creating project", spinner="dots") as spinner:
             try:
-                project = org.create_project(name, label_type, taxonomy, int(reviews))
+                project = org.create_project(name, label_type, taxonomy, reviews)
                 spinner.succeed(str(project))
             except Exception as error:
                 spinner.fail()

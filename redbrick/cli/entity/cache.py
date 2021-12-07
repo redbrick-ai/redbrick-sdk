@@ -24,7 +24,7 @@ class CLICache:
 
         if self._conf.exists:
             conf_version = self._conf.get_option("module", "version")
-            if conf_version and conf_version != redbrick.__version__:
+            if not conf_version or conf_version != redbrick.__version__:
                 self.clear_cache()
                 self._conf.set_option("module", "version", redbrick.__version__)
                 self._conf.save()

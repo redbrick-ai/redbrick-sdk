@@ -79,8 +79,7 @@ class CLIProject:
     def context(self) -> RBContext:
         """Get RedBrick context."""
         if not self._context:
-            self._context = RBContext(api_key=self.creds.api_key, url=self.creds.url)
-            self._context = _populate_context(self._context)
+            self._context = _populate_context(self.creds.context)
         return self._context
 
     @property
@@ -140,6 +139,8 @@ class CLIProject:
         assert not os.path.isdir(
             self._rb_dir
         ), f"Already a RedBrick project {self.path}"
+
+        self.conf.save()
 
         self.conf.set_section("org", {"id": project.org_id})
         self.conf.set_section("project", {"id": project.project_id})

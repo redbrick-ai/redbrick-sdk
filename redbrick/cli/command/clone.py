@@ -17,8 +17,8 @@ class CLICloneController(CLICloneInterface):
 
     def __init__(self, parser: ArgumentParser) -> None:
         """Intialize clone sub commands."""
-        parser.add_argument("project", help="Project ID or Name", nargs="?")
-        parser.add_argument("path", nargs="?")
+        parser.add_argument("project", nargs="?", help="Project ID or Name")
+        parser.add_argument("path", nargs="?", help="Local path of project")
 
     def handler(self, args: Namespace) -> None:
         """Handle clone command."""

@@ -10,7 +10,7 @@ class CLIInfoController(CLIInfoInterface):
 
     def __init__(self, parser: ArgumentParser) -> None:
         """Intialize info sub commands."""
-        parser.add_argument("path", nargs="?", default=".")
+        parser.add_argument("path", nargs="?", default=".", help="Path of project")
 
     def handler(self, args: Namespace) -> None:
         """Handle info command."""

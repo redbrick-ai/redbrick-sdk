@@ -7,15 +7,17 @@ from InquirerPy.utils import color_print  # type: ignore
 from InquirerPy.separator import Separator  # type: ignore
 from halo import Halo  # type: ignore
 
+from redbrick import _populate_context
 from redbrick.cli.input import (
     CLIInputAPIKey,
     CLIInputUUID,
     CLIInputURL,
     CLIInputProfile,
 )
-from redbrick import get_org
 from redbrick.cli import CLIProject
 from redbrick.common.cli import CLIConfigInterface
+from redbrick.common.context import RBContext
+from redbrick.organization import RBOrganization
 
 
 class CLIConfigController(CLIConfigInterface):
@@ -154,13 +156,17 @@ class CLIConfigController(CLIConfigInterface):
                 self.args.profile, self.project.creds.profile_names
             ).get()
 
+        profile_details = self.project.creds.get_profile(profile)
+        context = _populate_context(
+            RBContext(
+                api_key=profile_details["key"].strip(),
+                url=profile_details["url"].strip().rstrip("/"),
+            )
+        )
+
         with Halo(text="Fetching organization", spinner="dots") as spinner:
             try:
-                org = get_org(
-                    self.project.creds.api_key,
-                    self.project.creds.url,
-                    self.project.creds.org_id,
-                )
+                org = RBOrganization(context, profile_details["org"])
                 spinner.succeed(str(org))
             except Exception as error:
                 spinner.fail()
