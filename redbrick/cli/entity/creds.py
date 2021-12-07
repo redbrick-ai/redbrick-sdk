@@ -82,7 +82,6 @@ class CLICredentials:
         self, profile_name: str, api_key: str, org_id: str, url: str
     ) -> None:
         """Add profile to credentials."""
-        assert self.exists, "Credentials missing"
         assert profile_name not in self.profile_names, "Profile already exists"
         self._creds[profile_name] = {
             "key": api_key.strip(),
@@ -92,13 +91,11 @@ class CLICredentials:
 
     def remove_profile(self, profile_name: str) -> None:
         """Remove profile from credentials."""
-        assert self.exists, "Credentials missing"
         assert profile_name in self.profile_names, "Profile does not exist"
         self._creds.pop(profile_name)
 
     def set_default(self, profile_name: str) -> None:
         """Set default profile in credentials."""
-        assert self.exists, "Credentials missing"
         assert profile_name in self.profile_names, "Profile does not exist"
         self._creds[self.DEFAULT_PROFILE] = {"profile": profile_name}
 

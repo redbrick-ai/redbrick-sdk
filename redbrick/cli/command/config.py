@@ -119,7 +119,6 @@ class CLIConfigController(CLIConfigInterface):
 
     def handle_add(self, set_default: bool = False) -> None:
         """Handle add sub command."""
-        assert self.project.creds.exists, "Credentials file does not exist"
         org_id = CLIInputUUID(self.args.org, "Org ID").get()
         api_key = CLIInputAPIKey(self.args.key).get()
         url = CLIInputURL(self.args.url).get()
@@ -150,7 +149,6 @@ class CLIConfigController(CLIConfigInterface):
 
     def handle_verify(self, profile: Optional[str] = None) -> None:
         """Handle verify sub command."""
-        assert self.project.creds.exists, "Credentials file does not exist"
         if profile is None:
             profile = CLIInputProfile(
                 self.args.profile, self.project.creds.profile_names
