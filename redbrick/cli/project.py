@@ -140,6 +140,7 @@ class CLIProject:
             self._rb_dir
         ), f"Already a RedBrick project {self.path}"
 
+        os.mkdir(self._rb_dir)
         self.conf.save()
 
         self.conf.set_section("org", {"id": project.org_id})

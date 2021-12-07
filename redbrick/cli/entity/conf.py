@@ -10,9 +10,9 @@ class CLIConfiguration:
     _conf_file: str
     _conf: ConfigParser
 
-    def __init__(self, creds_file: str) -> None:
+    def __init__(self, conf_file: str) -> None:
         """Initialize CLIConfiguration."""
-        self._conf_file = creds_file
+        self._conf_file = conf_file
         self._conf = ConfigParser()
 
         if self.exists:
