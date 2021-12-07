@@ -2,7 +2,7 @@
 import os
 import sys
 import argparse
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from redbrick.common.cli import CLIInterface
 from redbrick.cli.command import (
@@ -52,12 +52,23 @@ class CLIController(CLIInterface):
             raise argparse.ArgumentError(None, "")
 
 
+def cli_parser(generate_docs: bool = True) -> Any:
+    """Initialize argument parser."""
+    parser = argparse.ArgumentParser(description="RedBrick AI")
+    cli = CLIController(parser.add_subparsers(title="Commands", dest="command"))
+
+    if generate_docs:
+        return parser
+
+    return parser, cli
+
+
 def cli_main(argv: Optional[List[str]] = None) -> None:
     """CLI main handler."""
-    parser = argparse.ArgumentParser(description="RedBrick AI")
-    command = parser.add_subparsers(title="Commands", dest="command")
+    parser: argparse.ArgumentParser
+    cli: CLIController
 
-    cli = CLIController(command)
+    parser, cli = cli_parser(False)
 
     try:
         args = parser.parse_args(argv if argv is not None else sys.argv[1:])
