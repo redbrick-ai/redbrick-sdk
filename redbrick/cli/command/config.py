@@ -84,12 +84,14 @@ class CLIConfigController(CLIConfigInterface):
 
     def handle_config(self) -> None:
         """Handle empty sub command."""
-        if not self.args.force and self.project.creds.exists:
-            confirmation = inquirer.confirm(
-                message="Credentials file already exists. Overwrite?", default=False
-            ).execute()
-            if not confirmation:
-                return
+        if self.project.creds.exists:
+            if not self.args.force:
+                confirmation = inquirer.confirm(
+                    message="Credentials file already exists. Overwrite?", default=False
+                ).execute()
+                if not confirmation:
+                    return
+            self.project.creds.remove()
 
         self.handle_add(True)
 

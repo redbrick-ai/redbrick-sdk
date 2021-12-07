@@ -151,4 +151,4 @@ class CLIProject:
 
         self.conf.save()
 
-        color_print([("green", "Successfully initialized project: " + str(project))])
+        color_print([("green", f"Successfully initialized {project} in {self.path}")])
