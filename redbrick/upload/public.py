@@ -4,7 +4,7 @@ import uuid
 import asyncio
 import os
 from copy import deepcopy
-from typing import List, Dict, Optional
+from typing import List, Dict, Tuple
 import requests
 
 import aiofiles
@@ -37,10 +37,10 @@ class Upload:
         storage_id: str,
         point: Dict,
         is_ground_truth: bool,
-    ) -> Optional[Dict]:
+    ) -> Dict:
         """Try to create a datapoint."""
         try:
-            await self.context.upload.create_datapoint_async(
+            response = await self.context.upload.create_datapoint_async(
                 session,
                 self.org_id,
                 self.project_id,
@@ -50,16 +50,18 @@ class Upload:
                 point.get("labels"),
                 is_ground_truth,
             )
+            point_success = deepcopy(point)
+            point_success["response"] = response
+            return point_success
         except ValueError as error:
             print_error(error)
             point_error = deepcopy(point)
             point_error["error"] = error
             return point_error
-        return None
 
     async def _create_datapoints(
         self, storage_id: str, points: List[Dict], is_ground_truth: bool
-    ) -> List[Dict]:
+    ) -> Tuple[List[Dict], List[Dict]]:
         conn = aiohttp.TCPConnector(limit=30)
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
@@ -68,13 +70,15 @@ class Upload:
             ]
 
             temp = await gather_with_concurrency(50, coros, "Creating datapoints")
-            failed = []
+            succeeded, failed = [], []
             for val in temp:
-                if val:
+                if "error" in val:
                     failed.append(val)
+                else:
+                    succeeded.append(val)
 
         await asyncio.sleep(0.250)  # give time to close ssl connections
-        return failed
+        return succeeded, failed
 
     def _generate_upload_presigned_url(
         self, files: List[str], file_type: List[str]
@@ -432,7 +436,10 @@ class Upload:
                         presigned_item["filePath"] for presigned_item in presigned_items
                     ]
 
-        return asyncio.run(self._create_datapoints(storage_id, points, is_ground_truth))
+        _succeeded, failed = asyncio.run(
+            self._create_datapoints(storage_id, points, is_ground_truth)
+        )
+        return failed
 
     def create_datapoint_from_masks(
         self,
@@ -502,9 +509,10 @@ class Upload:
             items = presigned_items[0]["filePath"]
             name = image_path
             datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-            return asyncio.run(
+            _succeeded, failed = asyncio.run(
                 self._create_datapoints(storage_id, [datapoint_entry], False)
             )
+            return failed
 
         # If storage_id is for remote storage
         items = image_path
@@ -512,6 +520,7 @@ class Upload:
 
         # create datapoint
         datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-        return asyncio.run(
+        _succeeded, failed = asyncio.run(
             self._create_datapoints(storage_id, [datapoint_entry], False)
         )
+        return failed

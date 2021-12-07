@@ -42,7 +42,7 @@ class UploadRepo(UploadControllerInterface):
         items: List[str],
         labels: Optional[List[Dict]],
         is_ground_truth: bool = False,
-    ) -> None:
+    ) -> Dict:
         """
         Create a datapoint and returns its dpId.
 
@@ -69,7 +69,7 @@ class UploadRepo(UploadControllerInterface):
                     labels: $labels
                     isGroundTruth: $isGroundTruth
                 ) {
-                    dpId
+                    taskIds
                 }
             }
         """
@@ -85,7 +85,11 @@ class UploadRepo(UploadControllerInterface):
             "isGroundTruth": is_ground_truth,
         }
 
-        await self.client.execute_query_async(aio_client, query_string, query_variables)
+        response = await self.client.execute_query_async(
+            aio_client, query_string, query_variables
+        )
+        assert isinstance(response["createDatapoint"], dict)
+        return response["createDatapoint"]
 
     def items_upload_presign(
         self, org_id: str, files: List[str], dataset: str, file_type: List[str]
@@ -112,6 +116,7 @@ class UploadRepo(UploadControllerInterface):
             "fileType": file_type,
         }
         result = self.client.execute_query(query_string, query_variables)
+        assert isinstance(result["itemsUploadPresign"]["items"], list)
         return result["itemsUploadPresign"]["items"]
 
     def upload_image(self, org_id: str, project_id: str, file_path: Path) -> str:
