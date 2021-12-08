@@ -22,8 +22,10 @@ from redbrick.repo import (
     UploadRepo,
     ProjectRepo,
 )
+from redbrick.utils.logging import print_warning
 
 version_check.version_check()
+DEFAULT_URL = "https://api.redbrickai.com"
 
 
 def _populate_context(context: RBContext) -> RBContext:
@@ -36,48 +38,86 @@ def _populate_context(context: RBContext) -> RBContext:
     return context
 
 
-def get_org(api_key: str, url: str, org_id: str) -> RBOrganization:
+ORG_API_HAS_CHANGED = (
+    "this api has changed recently, try running help(redbrick.get_org)"
+    + " or visiting https://redbrick-sdk.readthedocs.io/en/stable/#redbrick.get_org"
+)
+
+
+PROJECT_API_HAS_CHANGED = (
+    "this api has changed recently, try running help(redbrick.get_project)"
+    + " or visiting https://redbrick-sdk.readthedocs.io/en/stable/#redbrick.get_project"
+)
+
+print_warning(
+    "We've made url an optional argument, you'll need to update your code to use the following:"
+    + "\n \t\t get_org(org_id=org_id, api_key=api_key) and"
+    + "\n \t\t get_project(org_id=org_id, project_id=project_id, api_key=api_key),"
+    + "\n https://redbrick-sdk.readthedocs.io/en/stable/#redbrick.get_org"
+)
+
+
+def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization:
     """
-    Create a redbrick organization object.
+    Get an existing redbrick organization object.
 
     Organization object allows you to interact with your organization
     and perform high level actions like creating a project.
 
     Parameters
     ---------------
+    org_id: str
+        Your organizations unique id https://app.redbrickai.com/<org_id>/.
+
     api_key: str
         Your secret api_key, can be created from the RedBrick AI platform.
 
-    url: str
+    url: str = DEFAULT_URL
         Should default to https://api.redbrickai.com
-
-    org_id: str
-        Your organizations unique id https://app.redbrickai.com/<org_id>/.
     """
+    if len(org_id) != 32:
+        raise ValueError("Your first argument looks incorrect, " + ORG_API_HAS_CHANGED)
+    if "http" in api_key:
+        raise ValueError(
+            "Your second argument looks like a url, " + ORG_API_HAS_CHANGED
+        )
+
     context = _populate_context(RBContext(api_key, url))
+
     return RBOrganization(context, org_id)
 
 
-def get_project(api_key: str, url: str, org_id: str, project_id: str) -> RBProject:
+def get_project(
+    org_id: str, project_id: str, api_key: str, url: str = DEFAULT_URL
+) -> RBProject:
     """
-    Create a RedBrick project object.
+    Get an existing RedBrick project object.
 
     Project objects allow you to interact with your RedBrick Ai projects,
     and perform actions like importing data, exporting data etc.
 
     Parameters
     ---------------
-    api_key: str
-        Your secret api_key, can be created from the RedBrick AI platform.
-
-    url: str
-        Should default to https://api.redbrickai.com
-
     org_id: str
         Your organizations unique id https://app.redbrickai.com/<org_id>/
 
     project_id: str
         Your projects unique id https://app.redbrickai.com/<org_id>/<project_id>/
+
+    api_key: str
+        Your secret api_key, can be created from the RedBrick AI platform.
+
+    url: str = DEFAULT_URL
+        Should default to https://api.redbrickai.com
     """
+    if len(org_id) != 32:
+        raise ValueError(
+            "Your first argument looks incorrect, " + PROJECT_API_HAS_CHANGED
+        )
+    if "http" in project_id:
+        raise ValueError(
+            "Your second argument looks like a url, " + PROJECT_API_HAS_CHANGED
+        )
+
     context = _populate_context(RBContext(api_key, url))
     return RBProject(context, org_id, project_id)
