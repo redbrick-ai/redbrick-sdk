@@ -11,7 +11,7 @@ https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key
 
 import asyncio
 
-import nest_asyncio
+import nest_asyncio  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType, StorageMethod
