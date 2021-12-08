@@ -116,7 +116,7 @@ class Upload:
         return result
 
     @staticmethod
-    def _check_validity_of_items(items):
+    def _check_validity_of_items(items: List[str]) -> List[str]:
         """
         Checks the validity of an items entry with locally stored data.
 
