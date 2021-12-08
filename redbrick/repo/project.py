@@ -27,6 +27,9 @@ class ProjectRepo(ProjectRepoInterface):
                     name
                     status
                     tdType
+                    taxonomy {
+                        name
+                    }
                 }
             }
         """

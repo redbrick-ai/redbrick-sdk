@@ -6,6 +6,7 @@ import os
 from copy import deepcopy
 from typing import List, Dict, Optional
 import requests
+import tqdm
 
 import aiofiles
 import aiohttp
@@ -14,7 +15,7 @@ import shapely  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.logging import print_error
+from redbrick.utils.logging import print_error, print_info
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.segmentation import get_file_type, check_mask_map_format
 
@@ -115,6 +116,25 @@ class Upload:
         return result
 
     @staticmethod
+    def _check_validity_of_items(items: List[str]) -> List[str]:
+        """
+        Check the validity of an items entry with locally stored data.
+
+        Returns
+        ---------
+        List[str]
+            List of invalid items.
+        """
+        invalid = []
+        for item in items:
+            if not os.path.exists(item):
+                invalid += [item]
+
+        if len(invalid) > 0:
+            print_error(f"{invalid} is an invalid path(s), skipping.")
+        return invalid
+
+    @staticmethod
     def _mask_to_polygon(
         mask: np.ndarray,
     ) -> shapely.geometry.MultiPolygon:
@@ -169,15 +189,20 @@ class Upload:
             MIME filetype.
         """
         with open(image_filepath, "rb") as file:
-            try:
-                requests.put(
-                    presigned_url,
-                    data=file,
-                    headers={"Content-Type": file_type},
-                )
-            except requests.exceptions.RequestException as error:
-                print_error("File upload failed %s" % image_filepath)
-                raise error
+
+            # Put image, re-try 2 times if failure
+            tries = 0
+            while tries < 3:
+                try:
+                    requests.put(
+                        presigned_url,
+                        data=file,
+                        headers={"Content-Type": file_type},
+                    )
+                    break
+                except requests.exceptions.RequestException:
+                    print_error(f"File upload failed {image_filepath}, re-trying")
+                    tries += 1
 
     @staticmethod
     async def _upload_image_to_presigned_async(
@@ -203,16 +228,23 @@ class Upload:
         async with aiofiles.open(image_filepath, mode="rb") as file:  # type: ignore
             contents = await file.read()
             headers = {"Content-Type": file_type}
-            try:
-                async with session.put(
-                    presigned_url, headers=headers, data=contents
-                ) as response:
-                    if str(response.status) != "200":
-                        raise ValueError(
-                            "Error in uploading %s to RedBrick" % image_filepath
-                        )
-            except ValueError as error:
-                raise error
+
+            # Put image, re-try 2 times if failure
+            tries = 0
+            while tries < 3:
+                try:
+                    async with session.put(
+                        presigned_url, headers=headers, data=contents
+                    ) as response:
+                        if str(response.status) != "200":
+                            raise ValueError(
+                                "Error in uploading %s to RedBrick" % image_filepath
+                            )
+                    break
+                except (aiohttp.ClientConnectionError, IOError):
+                    print_error(f"{image_filepath} failed to upload, re-trying.")
+                    await asyncio.sleep(1)
+                    tries += 1
 
     def _upload_image_items_to_s3(self, items: List[str]) -> List[Dict]:
         """
@@ -394,7 +426,8 @@ class Upload:
             # Direct upload for images
             if self.td_type.split("_")[0] == "IMAGE":
 
-                for point in points:
+                print_info("Uploading image items")
+                for point in tqdm.tqdm(points):
 
                     # check points items
                     if len(point["items"]) != 1:
@@ -402,8 +435,11 @@ class Upload:
                             "Incorrect items format!"
                             + " Your items field must have exactly one entry."
                         )
-                    if not os.path.exists(point["items"][0]):
-                        raise OSError("Invalid local filepath %s" % point["items"][0])
+
+                    # check path of items, if invalid, skip
+                    invalid = Upload._check_validity_of_items(point["items"])
+                    if len(invalid) > 0:
+                        continue
 
                     # upload image items to s3
                     presigned_items = self._upload_image_items_to_s3(point["items"])
@@ -422,6 +458,10 @@ class Upload:
                             "Incorrect items format!"
                             + "Your items field for video must have atleast one entry."
                         )
+                    # check path of items, if invalid, skip
+                    invalid = Upload._check_validity_of_items(point["items"])
+                    if len(invalid) > 0:
+                        continue
 
                     presigned_items = asyncio.run(
                         self._upload_video_items_to_s3(point["items"])

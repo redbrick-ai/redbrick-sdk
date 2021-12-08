@@ -4,6 +4,7 @@ import json
 import time
 from typing import Dict, List
 from redbrick.common.context import RBContext
+from redbrick.common.enums import LabelType
 
 from redbrick.export import Export
 from redbrick.learning.public import Learning2
@@ -45,6 +46,7 @@ class RBProject:
         self._project_name: str
         self._stages: List[Dict]
         self._td_type: str
+        self._taxonomy_name: str
 
         # check if project exists on backend to validate
         self._get_project()
@@ -81,6 +83,24 @@ class RBProject:
         Retrieves the project name.
         """
         return self._project_name
+
+    @property
+    def taxonomy_name(self) -> str:
+        """
+        Read only taxonomy_name property.
+
+        Retrieves the taxonomy name.
+        """
+        return self._taxonomy_name
+
+    @property
+    def project_type(self) -> LabelType:
+        """
+        Read only project_type property.
+
+        Retrieves the type of the project.
+        """
+        return LabelType(self._td_type)
 
     @property
     def learning(self) -> Learning:
@@ -136,6 +156,7 @@ class RBProject:
 
         self._project_name = project["name"]
         self._td_type = project["tdType"]
+        self._taxonomy_name = project["taxonomy"]["name"]
         self._stages = self.context.project.get_stages(self.org_id, self.project_id)
 
     def __str__(self) -> str:
