@@ -50,7 +50,7 @@ PROJECT_API_HAS_CHANGED = (
 )
 
 print_warning(
-    "We've made url an optional argument, you'll need to update your code to use the following:"
+    "For 0.7 onwards, we've made url an optional argument, you'll need to update your code to use the following:"
     + "\n \t\t get_org(org_id=org_id, api_key=api_key) and"
     + "\n \t\t get_project(org_id=org_id, project_id=project_id, api_key=api_key),"
     + "\n https://redbrick-sdk.readthedocs.io/en/stable/#redbrick.get_org"
