@@ -30,6 +30,7 @@ install_requires = [
     "pyparsing==2.4.7",
     "rasterio==1.2.10; sys_platform=='darwin'",
     "rasterio==1.2.10; sys_platform=='linux'",
+    "nest-asyncio==1.5.4",
 ]
 
 setup(

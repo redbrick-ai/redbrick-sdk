@@ -9,11 +9,16 @@ see this documentation for accomplishing that.
 https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key
 """
 
+import asyncio
+
+import nest_asyncio
+
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType, StorageMethod
 from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
 from redbrick.utils import version_check  # pylint: disable=cyclic-import
+from redbrick.utils.logging import print_info, print_warning
 from redbrick.repo import (
     ExportRepo,
     LabelingRepo,
@@ -22,6 +27,19 @@ from redbrick.repo import (
     UploadRepo,
     ProjectRepo,
 )
+
+
+# if there is a running event loop, apply nest_asyncio
+try:
+    asyncio.get_running_loop()
+    nest_asyncio.apply()
+    print_info(
+        "Applying nest-asyncio to a running event loop, this likely means you're in a jupyter"
+        + " notebook and you can safely ignore this."
+    )
+except RuntimeError:
+    pass
+
 
 version_check.version_check()
 
