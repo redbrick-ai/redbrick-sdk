@@ -27,7 +27,6 @@ from redbrick.repo import (
     UploadRepo,
     ProjectRepo,
 )
-from redbrick.utils.logging import print_warning
 
 
 # if there is a running event loop, apply nest_asyncio
