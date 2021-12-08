@@ -31,6 +31,7 @@ install_requires = [
     "aiofiles==0.8.0",
     "rasterio==1.2.10; sys_platform=='darwin'",
     "rasterio==1.2.10; sys_platform=='linux'",
+    "nest-asyncio==1.5.4",
 ]
 
 setup(
