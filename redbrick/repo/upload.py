@@ -51,36 +51,33 @@ class UploadRepo(UploadControllerInterface):
         query_string = """
             mutation(
                 $orgId: UUID!
+                $projectId: UUID!
                 $items: [String!]!
                 $name: String!
-                $dsetName: String!
                 $storageId: UUID!
-                $lsetName: String!
                 $labels: [LabelInput!]
                 $isGroundTruth: Boolean!
             ) {
                 createDatapoint(
                     orgId: $orgId
+                    projectId: $projectId
                     items: $items
                     name: $name
-                    dsetName: $dsetName
                     storageId: $storageId
-                    lsetName: $lsetName
                     labels: $labels
                     isGroundTruth: $isGroundTruth
                 ) {
-                    taskIds
+                    taskId
                 }
             }
         """
 
         query_variables = {
             "orgId": org_id,
+            "projectId": project_id,
             "items": items,
             "name": name,
-            "dsetName": project_id,
             "storageId": storage_id,
-            "lsetName": project_id + "-input",
             "labels": labels or [],
             "isGroundTruth": is_ground_truth,
         }
@@ -92,14 +89,12 @@ class UploadRepo(UploadControllerInterface):
         return response["createDatapoint"]
 
     def items_upload_presign(
-        self, org_id: str, files: List[str], dataset: str, file_type: List[str]
+        self, org_id: str, project_id: str, files: List[str], file_type: List[str]
     ) -> List[Dict[Any, Any]]:
         """Return presigned URLs to upload files."""
         query_string = """
-            query itemsUploadPresign($orgId:UUID!, $files: [String]!,
-            $dataset:String!, $fileType:[String]!){
-                itemsUploadPresign(orgId:$orgId, files:$files, dataset:$dataset,
-                fileType:$fileType) {
+            query itemsUploadPresign($orgId:UUID!, $projectId: UUID!, $files: [String]!, $fileType:[String]!){
+                itemsUploadPresign(orgId:$orgId, projectId: $projectId, files:$files, fileType:$fileType) {
                     items {
                         presignedUrl,
                         filePath,
@@ -111,8 +106,8 @@ class UploadRepo(UploadControllerInterface):
 
         query_variables = {
             "orgId": org_id,
+            "projectId": project_id,
             "files": files,
-            "dataset": dataset,
             "fileType": file_type,
         }
         result = self.client.execute_query(query_string, query_variables)

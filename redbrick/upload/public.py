@@ -109,9 +109,8 @@ class Upload:
             ]
         """
         try:
-            dataset_name = self.project_id
             result = self.context.upload.items_upload_presign(
-                self.org_id, files, dataset_name, file_type
+                self.org_id, self.project_id, files, file_type
             )
         except ValueError as error:
             print_error(error)
