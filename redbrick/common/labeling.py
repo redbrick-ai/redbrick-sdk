@@ -61,5 +61,6 @@ class LabelingControllerInterface(ABC):
         org_id: str,
         project_id: str,
         stage_name: str,
+        for_active_learning: bool = False,
     ) -> int:
         """Get the length of the task queue for showing loading."""

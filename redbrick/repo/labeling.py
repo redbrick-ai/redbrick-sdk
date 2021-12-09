@@ -269,6 +269,7 @@ class LabelingRepo(LabelingControllerInterface):
         org_id: str,
         project_id: str,
         stage_name: str,
+        for_active_learning: bool = False,
     ) -> int:
         """Get the length of the task queue for showing loading."""
         query_string = """
@@ -297,8 +298,12 @@ class LabelingRepo(LabelingControllerInterface):
 
         response = self.client.execute_query(query_string, query_variables)
         summary = response["manualLabelingStageSummary"]["taskStatusSummary"]
-        return int(
-            summary["assignedCount"]
-            + summary["unassignedCount"]
-            + summary["inProgressCount"]
+        return (
+            int(summary["unassignedCount"])
+            if for_active_learning
+            else int(
+                summary["assignedCount"]
+                + summary["unassignedCount"]
+                + summary["inProgressCount"]
+            )
         )

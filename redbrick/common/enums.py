@@ -25,3 +25,13 @@ class StorageMethod:
 
     PUBLIC = "11111111-1111-1111-1111-111111111111"
     REDBRICK = "22222222-2222-2222-2222-222222222222"
+
+
+class TaskStates(Enum):
+    """Potential states of task status."""
+
+    UNASSIGNED = "UNASSIGNED"
+    ASSIGNED = "ASSIGNED"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    PROBLEM = "PROBLEM"
