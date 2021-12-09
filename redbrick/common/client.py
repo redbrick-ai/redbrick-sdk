@@ -18,12 +18,12 @@ class RBClient:
         url: str,
     ) -> None:
         """Construct RBClient."""
+        self.session = requests.Session()
         assert (
             len(api_key) == 43
         ), "Invalid Api Key length, make sure you've copied it correctly"
         self.api_key = api_key
         self.url = url.rstrip("/") + "/graphql/"
-        self.session = requests.Session()
 
     def __del__(self) -> None:
         """Garbage collect and close session."""

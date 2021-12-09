@@ -41,6 +41,7 @@ except RuntimeError:
     pass
 
 
+__version__ = version_check.get_version()
 version_check.version_check()
 DEFAULT_URL = "https://api.redbrickai.com"
 

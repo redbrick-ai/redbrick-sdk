@@ -1,10 +1,8 @@
 """Setup the python module."""
-
-import sys
 import os
 from setuptools import setup, find_packages  # type: ignore
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 with open(
@@ -18,7 +16,6 @@ install_requires = [
     "requests==2.23.0",
     "tqdm==4.50.0",
     "termcolor==1.1.0",
-    "requests==2.23.0",
     "aiohttp==3.7.4",
     "cchardet==2.1.7",
     "aiodns==3.0.0",
@@ -31,6 +28,8 @@ install_requires = [
     "aiofiles==0.8.0",
     "rasterio==1.2.10; sys_platform=='darwin'",
     "rasterio==1.2.10; sys_platform=='linux'",
+    "InquirerPy==0.3.0",
+    "halo==0.0.31",
     "nest-asyncio==1.5.4",
 ]
 
@@ -46,6 +45,9 @@ setup(
     long_description_content_type="text/markdown",
     include_package_data=True,
     install_requires=install_requires,
+    entry_points={
+        "console_scripts": ["redbrick=redbrick.cli:cli_main"],
+    },
     extras_require={
         "dev": [
             "twine==3.1.1",
