@@ -38,7 +38,7 @@ class UploadControllerInterface(ABC):
         items: List[str],
         labels: Optional[List[Dict]],
         is_ground_truth: bool = False,
-    ) -> None:
+    ) -> Dict:
         """
         Create a datapoint and returns its dpId.
 
@@ -65,6 +65,6 @@ class UploadControllerInterface(ABC):
 
     @abstractmethod
     def items_upload_presign(
-        self, org_id: str, files: List[str], dataset: str, file_type: List[str]
+        self, org_id: str, project_id: str, files: List[str], file_type: List[str]
     ) -> List[Dict[Any, Any]]:
         """Get a presigned url for uploading items."""
