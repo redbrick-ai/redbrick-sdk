@@ -94,9 +94,9 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
     url: str = DEFAULT_URL
         Should default to https://api.redbrickai.com
     """
-    if len(org_id) != 32:
+    if len(org_id) != 36:
         raise ValueError("Your first argument looks incorrect, " + ORG_API_HAS_CHANGED)
-    if "http" in api_key:
+    if "." in api_key:
         raise ValueError(
             "Your second argument looks like a url, " + ORG_API_HAS_CHANGED
         )
@@ -129,7 +129,7 @@ def get_project(
     url: str = DEFAULT_URL
         Should default to https://api.redbrickai.com
     """
-    if len(org_id) != 32:
+    if len(org_id) != 36:
         raise ValueError(
             "Your first argument looks incorrect, " + PROJECT_API_HAS_CHANGED
         )

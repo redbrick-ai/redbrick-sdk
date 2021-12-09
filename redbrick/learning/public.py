@@ -1,13 +1,14 @@
 """Public interface to learning module."""
 
 import asyncio
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from functools import partial
 from copy import deepcopy
 import aiohttp
 import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
+from redbrick.common.enums import TaskStates
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label
 from redbrick.utils.async_utils import gather_with_concurrency
@@ -207,9 +208,23 @@ class Learning2:
             self.org_id, self.project_id
         )
 
+        def _filter_active_learning_tasks(
+            org_id: str,
+            project_id: str,
+            stage_name: str,
+            concurrency: int,
+            cursor: Optional[str],
+        ) -> Tuple[List[Dict], str]:
+            entries, new_cursor = self.context.labeling.get_tasks_queue(
+                org_id, project_id, stage_name, concurrency, cursor
+            )
+            return [
+                item for item in entries if item["state"] == TaskStates.UNASSIGNED.value
+            ], new_cursor
+
         my_queue_iter = PaginationIterator(
             partial(
-                self.context.labeling.get_tasks_queue,
+                _filter_active_learning_tasks,
                 self.org_id,
                 self.project_id,
                 self.stage_name,
@@ -217,7 +232,7 @@ class Learning2:
             )
         )
         tasks_in_queue = self.context.labeling.get_task_queue_count(
-            self.org_id, self.project_id, self.stage_name
+            self.org_id, self.project_id, self.stage_name, True
         )
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
 
