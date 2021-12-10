@@ -134,6 +134,12 @@ class CLIExportInterface(ABC):
     args: Namespace
     project: CLIProject
 
+    TYPE_LATEST = "latest"
+    TYPE_GROUNDTRUTH = "groundtruth"
+
+    FORMAT_REDBRICK = "redbrick"
+    FORMAT_COCO = "coco"
+
     @abstractmethod
     def handler(self, args: Namespace) -> None:
         """Handle export command."""

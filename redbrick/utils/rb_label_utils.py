@@ -19,6 +19,7 @@ def flat_rb_format(
     dp_id: str,
     created_by: str,
     task_id: str,
+    current_stage_name: str,
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
     return {
@@ -29,4 +30,5 @@ def flat_rb_format(
         "dpId": dp_id,
         "taskId": task_id,
         "createdBy": created_by,
+        "currentStageName": current_stage_name,
     }

@@ -6,6 +6,7 @@ from functools import partial
 import os
 import json
 import copy
+from datetime import datetime
 
 from shapely.geometry import Polygon  # type: ignore
 import skimage
@@ -34,7 +35,14 @@ def _parse_entry_latest(item: Dict) -> Dict:
     labels = [clean_rb_label(label) for label in json.loads(task_data["labelsData"])]
 
     return flat_rb_format(
-        labels, items, items_presigned, name, dp_id, created_by, task_id
+        labels,
+        items,
+        items_presigned,
+        name,
+        dp_id,
+        created_by,
+        task_id,
+        item["currentStageName"],
     )
 
 
@@ -48,7 +56,7 @@ def parse_output_entry(item: Dict) -> Dict:
     labels = [clean_rb_label(label) for label in item["labelData"]["labels"]]
     task_id = item["task"]["taskId"]
     return flat_rb_format(
-        labels, items, items_presigned, name, dp_id, created_by, task_id
+        labels, items, items_presigned, name, dp_id, created_by, task_id, "END"
     )
 
 
@@ -90,11 +98,13 @@ class Export:
             general_info["taxonomy"],
         )
 
-    def _get_raw_data_latest(self, concurrency: int) -> Tuple[List[Dict], Dict]:
+    def _get_raw_data_latest(
+        self, concurrency: int, cache_time: Optional[datetime] = None
+    ) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_latest
 
         my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, concurrency)
+            partial(temp, self.org_id, self.project_id, cache_time, concurrency)
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
@@ -461,7 +471,14 @@ class Export:
         else:
             datapoints, _ = self._get_raw_data_latest(concurrency)
 
-        return datapoints
+        return [
+            {
+                key: value
+                for key, value in datapoint.items()
+                if key not in ("itemsPresigned", "currentStageName")
+            }
+            for datapoint in datapoints
+        ]
 
     def coco_format(
         self,

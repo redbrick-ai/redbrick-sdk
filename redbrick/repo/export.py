@@ -1,6 +1,7 @@
 """Repo for accessing export apis."""
 
 from typing import Optional, List, Dict, Tuple
+from datetime import datetime
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
 from .shards import LABEL_SHARD
@@ -156,21 +157,24 @@ class ExportRepo(ExportControllerInterface):
         self,
         org_id: str,
         project_id: str,
+        cache_time: Optional[datetime] = None,
         first: int = 50,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get the latest datapoints."""
         query_string = (
             """
-        query($orgId: UUID!, $projectId: UUID!, $first: Int, $cursor: String) {
+        query($orgId: UUID!, $projectId: UUID!, $cacheTime: DateTime, $first: Int, $cursor: String) {
             tasksPaged(
                 orgId: $orgId
                 projectId: $projectId
+                cacheTime: $cacheTime
                 first: $first
                 after: $cursor
             ) {
                 entries {
                     taskId
+                    currentStageName
                     %s
                 }
                 cursor
@@ -183,8 +187,9 @@ class ExportRepo(ExportControllerInterface):
         query_variables = {
             "orgId": org_id,
             "projectId": project_id,
-            "cursor": cursor,
+            "cacheTime": None if cache_time is None else cache_time.isoformat(),
             "first": first,
+            "cursor": cursor,
         }
 
         result = self.client.execute_query(query_string, query_variables)
