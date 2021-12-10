@@ -2,11 +2,14 @@
 import os
 import shutil
 import pickle
-from typing import Any
+import zlib
+import json
+from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 
 import redbrick
 from redbrick.cli.entity import CLIConfiguration
+from redbrick.utils.common_utils import hash_sha256
 
 
 class CLICache:
@@ -40,7 +43,7 @@ class CLICache:
 
     def cache_path(self, *path: str) -> str:
         """Get cache file path."""
-        path_dir = os.path.join(self._cache_dir, *path[:-1])
+        path_dir = os.path.join(self._cache_dir, redbrick.__version__, *path[:-1])
         os.makedirs(path_dir, exist_ok=True)
         return os.path.join(path_dir, path[-1])
 
@@ -74,6 +77,32 @@ class CLICache:
 
         if save_conf:
             self._conf.save()
+
+    def get_data(
+        self, name: str, cache_hash: Optional[str], json_data: bool = True
+    ) -> Optional[Union[str, Dict, List]]:
+        """Get cache data."""
+        if cache_hash is None:
+            return None
+        cache_file = self.cache_path(name)
+        if os.path.isfile(cache_file):
+            with open(cache_file, "rb") as file_:
+                data = file_.read()
+            if cache_hash == hash_sha256(data):
+                data = zlib.decompress(data)
+                return json.loads(data) if json_data else data.decode()
+        return None
+
+    def set_data(self, name: str, entity: Union[str, Dict, List]) -> str:
+        """Set cache data."""
+        cache_file = self.cache_path(name)
+        data = zlib.compress(
+            (entity if isinstance(entity, str) else json.dumps(entity)).encode()
+        )
+        cache_hash = hash_sha256(data)
+        with open(cache_file, "wb") as file_:
+            file_.write(data)
+        return cache_hash
 
     def clear_cache(self, all_caches: bool = False) -> None:
         """Clear project cache."""

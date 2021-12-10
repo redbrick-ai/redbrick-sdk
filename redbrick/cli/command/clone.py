@@ -88,7 +88,7 @@ class CLICloneController(CLICloneInterface):
         else:
             path = os.path.join(
                 os.path.realpath("."),
-                re.sub(r"[^\w -]+", "_", project_names[selected_index]),
+                re.sub(r"\W+", "-", project_names[selected_index]),
             )
 
         os.makedirs(path)

@@ -1,6 +1,6 @@
 """Main file for converting RedBrick format to coco format."""
 import asyncio
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import aiohttp
 from yarl import URL
@@ -39,11 +39,16 @@ async def _get_image_dimension_map(
 
 
 # pylint: disable=too-many-locals
-def coco_converter(datapoints: List[Dict], taxonomy: Dict) -> Dict:
+def coco_converter(
+    datapoints: List[Dict],
+    taxonomy: Dict,
+    image_dims_map: Optional[Dict[str, Tuple[int, int]]] = None,
+) -> Dict:
     """Convert redbrick labels to standard coco format."""
     coco_categories = rb2coco_categories_format(taxonomy)
 
-    image_dims_map = asyncio.run(_get_image_dimension_map(datapoints))
+    if image_dims_map is None:
+        image_dims_map = asyncio.run(_get_image_dimension_map(datapoints))
 
     images: List[Dict] = []
     annotations: List[Dict] = []
@@ -59,7 +64,6 @@ def coco_converter(datapoints: List[Dict], taxonomy: Dict) -> Dict:
             "id": current_image_id,
             "file_name": file_name,
             "raw_url": data["items"][0],
-            "signed_url": data["itemsPresigned"][0],
             "dp_id": data["dpId"],
             "height": height,
             "width": width,

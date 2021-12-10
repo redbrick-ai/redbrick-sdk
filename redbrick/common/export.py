@@ -2,6 +2,7 @@
 
 from typing import Optional, List, Dict, Tuple
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 
 class ExportControllerInterface(ABC):
@@ -34,6 +35,7 @@ class ExportControllerInterface(ABC):
         self,
         org_id: str,
         project_id: str,
+        cache_time: Optional[datetime] = None,
         first: int = 50,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
