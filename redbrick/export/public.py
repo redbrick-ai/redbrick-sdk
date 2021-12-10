@@ -235,6 +235,10 @@ class Export:
             raise error
 
         imagesize = task["labels"][0]["pixel"]["imagesize"]
+
+        # deal with condition where imagesize is returned as float
+        imagesize = np.round(imagesize).astype(int)
+
         mask = np.zeros([imagesize[1], imagesize[0]])
 
         for label in task["labels"]:
@@ -242,6 +246,9 @@ class Export:
             regions = copy.deepcopy(label["pixel"]["regions"])
             holes = copy.deepcopy(label["pixel"]["holes"])
             imagesize = label["pixel"]["imagesize"]
+
+            # deal with condition where imagesize is returned as float
+            imagesize = np.round(imagesize).astype(int)
 
             # iterate through regions, and create region mask
             region_mask = np.zeros([imagesize[1], imagesize[0]])
@@ -393,6 +400,7 @@ class Export:
         # Convert rbai to png masks and save output
         dp_map = {}
         print_info("Converting to masks")
+
         for datapoint in tqdm.tqdm(datapoints):
             filename = "%s.png" % datapoint["taskId"]
             dp_map[filename] = datapoint["items"][0]
