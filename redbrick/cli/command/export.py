@@ -125,7 +125,12 @@ class CLIExportController(CLIExportInterface):
             data = [task] if task else []
 
         if self.args.format == self.FORMAT_COCO:
-            compute_dims = [dp for dp in data if cached_dimensions[dp["dpId"]] is None]
+            compute_dims = [
+                dp
+                for dp in data
+                if dp["dpId"] not in cached_dimensions
+                or cached_dimensions[dp["dpId"]] is None
+            ]
             if compute_dims:
                 image_dimensions = asyncio.run(_get_image_dimension_map(compute_dims))
                 for dp_id, dimension in image_dimensions.items():
