@@ -154,7 +154,9 @@ class CLIExportController(CLIExportInterface):
             if self.args.destination is None
             else self.args.destination,
             f"export_{self.args.format}_{self.args.type}_"
-            + datetime.strftime(datetime.now(), "%Y-%m-%d_%H-%M-%S")
+            + datetime.strftime(
+                datetime.fromtimestamp(current_timestamp), "%Y-%m-%d_%H-%M-%S"
+            )
             + ".json",
         )
         os.makedirs(os.path.dirname(export_path), exist_ok=True)
