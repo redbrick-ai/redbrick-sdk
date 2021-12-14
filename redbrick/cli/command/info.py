@@ -3,6 +3,7 @@ from argparse import ArgumentParser, Namespace
 
 from redbrick.cli import CLIProject
 from redbrick.common.cli import CLIInfoInterface
+from redbrick.utils.logging import print_info
 
 
 class CLIInfoController(CLIInfoInterface):
@@ -26,5 +27,5 @@ class CLIInfoController(CLIInfoInterface):
         org = self.project.org
         project = self.project.project
 
-        print(org)
-        print(project)
+        print_info(f"Organization: {org}")
+        print_info(f"Project: {project}")

@@ -475,7 +475,7 @@ class Export:
             {
                 key: value
                 for key, value in datapoint.items()
-                if key not in ("itemsPresigned", "currentStageName")
+                if key not in ("currentStageName")
             }
             for datapoint in datapoints
         ]

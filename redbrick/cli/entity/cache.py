@@ -18,6 +18,8 @@ class CLICache:
     _cache_dir: str
     _conf: CLIConfiguration
 
+    _cache_name: str
+
     CACHE_LIFETIME: int = 86400
 
     def __init__(self, cache_dir: str, conf: CLIConfiguration) -> None:
@@ -25,12 +27,14 @@ class CLICache:
         self._cache_dir = cache_dir
         self._conf = conf
 
-        if self._conf.exists:
-            conf_version = self._conf.get_option("module", "version")
-            if not conf_version or conf_version != redbrick.__version__:
-                self.clear_cache()
-                self._conf.set_option("module", "version", redbrick.__version__)
-                self._conf.save()
+        self._cache_name = "-".join(redbrick.__version__.split(".", 2)[:2])
+
+        if self._conf.exists and self._cache_name != self._conf.get_option(
+            "cache", "name"
+        ):
+            self.clear_cache()
+            self._conf.set_option("cache", "name", self._cache_name)
+            self._conf.save()
 
     @property
     def exists(self) -> bool:
@@ -43,7 +47,7 @@ class CLICache:
 
     def cache_path(self, *path: str) -> str:
         """Get cache file path."""
-        path_dir = os.path.join(self._cache_dir, redbrick.__version__, *path[:-1])
+        path_dir = os.path.join(self._cache_dir, self._cache_name, *path[:-1])
         os.makedirs(path_dir, exist_ok=True)
         return os.path.join(path_dir, path[-1])
 
@@ -111,7 +115,7 @@ class CLICache:
 
         caches = os.listdir(self._cache_dir)
         if not all_caches:
-            caches = [cache for cache in caches if cache != redbrick.__version__]
+            caches = [cache for cache in caches if cache != self._cache_name]
 
         for cache in caches:
             shutil.rmtree(os.path.join(self._cache_dir, cache), True)

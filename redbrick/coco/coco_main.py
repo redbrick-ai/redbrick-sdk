@@ -68,6 +68,8 @@ def coco_converter(
             "height": height,
             "width": width,
         }
+        if "itemsPresigned" in data:
+            image_entry["signed_url"] = data["itemsPresigned"][0]
 
         for label in labels:
             annotation_index = len(annotations)
