@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from argparse import Namespace
 
-from redbrick.cli import CLIProject
+from redbrick.cli.project import CLIProject
 from redbrick.utils.logging import print_warning
 
 
