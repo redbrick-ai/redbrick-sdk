@@ -32,8 +32,10 @@ class CLIInputProfile(CLIInputParams):
     def validator(self, entity: str) -> bool:
         """Validate input entity."""
         profile = self.filtrator(entity)
-        return re.match(r"^\w+$", profile) is not None and (
-            profile not in self.profiles if self.add else profile in self.profiles
+        return (
+            profile.lower() != "default"
+            and re.match(r"^\w+$", profile) is not None
+            and (profile not in self.profiles if self.add else profile in self.profiles)
         )
 
     def get(self) -> str:
