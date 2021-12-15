@@ -14,7 +14,7 @@ from redbrick.cli.input import (
     CLIInputURL,
     CLIInputProfile,
 )
-from redbrick.cli import CLIProject
+from redbrick.cli.project import CLIProject
 from redbrick.common.cli import CLIConfigInterface
 from redbrick.common.context import RBContext
 from redbrick.organization import RBOrganization

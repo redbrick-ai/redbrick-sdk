@@ -5,7 +5,7 @@ from argparse import ArgumentParser, Namespace
 from halo.halo import Halo  # type: ignore
 
 from redbrick.cli.input import CLIInputNumber, CLIInputSelect, CLIInputText
-from redbrick.cli import CLIProject
+from redbrick.cli.project import CLIProject
 from redbrick.common.cli import CLIInitInterface
 from redbrick.common.enums import LabelType
 from redbrick.organization import RBOrganization

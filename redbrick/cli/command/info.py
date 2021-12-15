@@ -1,7 +1,7 @@
 """CLI info command."""
 from argparse import ArgumentParser, Namespace
 
-from redbrick.cli import CLIProject
+from redbrick.cli.project import CLIProject
 from redbrick.common.cli import CLIInfoInterface
 from redbrick.utils.logging import print_info
 
