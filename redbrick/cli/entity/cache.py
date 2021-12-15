@@ -7,7 +7,7 @@ import json
 from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 
-import redbrick
+from redbrick.version import __version__
 from redbrick.cli.entity import CLIConfiguration
 from redbrick.utils.common_utils import hash_sha256
 
@@ -27,7 +27,7 @@ class CLICache:
         self._cache_dir = cache_dir
         self._conf = conf
 
-        self._cache_name = "-".join(redbrick.__version__.split(".", 2)[:2])
+        self._cache_name = "-".join(__version__.split(".", 2)[:2])
 
         if self._conf.exists and self._cache_name != self._conf.get_option(
             "cache", "name"

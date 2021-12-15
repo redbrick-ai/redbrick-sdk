@@ -17,7 +17,7 @@ from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType, StorageMethod
 from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
-from redbrick.utils import version_check  # pylint: disable=cyclic-import
+
 from redbrick.utils.logging import print_info, print_warning
 from redbrick.repo import (
     ExportRepo,
@@ -27,6 +27,7 @@ from redbrick.repo import (
     UploadRepo,
     ProjectRepo,
 )
+from .version import __version__
 
 
 # if there is a running event loop, apply nest_asyncio
@@ -41,8 +42,6 @@ except RuntimeError:
     pass
 
 
-__version__ = version_check.get_version()
-version_check.version_check()
 DEFAULT_URL = "https://api.redbrickai.com"
 
 
