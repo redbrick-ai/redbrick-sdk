@@ -27,7 +27,7 @@ from redbrick.repo import (
     UploadRepo,
     ProjectRepo,
 )
-from .version import __version__
+from .version_check import __version__
 
 
 # if there is a running event loop, apply nest_asyncio

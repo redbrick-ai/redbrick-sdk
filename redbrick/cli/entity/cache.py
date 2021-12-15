@@ -7,7 +7,7 @@ import json
 from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 
-from redbrick.version import __version__
+from redbrick.version_check import __version__
 from redbrick.cli.entity import CLIConfiguration
 from redbrick.utils.common_utils import hash_sha256
 

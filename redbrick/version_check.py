@@ -6,14 +6,13 @@ from datetime import datetime
 
 from distutils.version import StrictVersion
 import requests
-import redbrick
-from .logging import print_warning  # pylint: disable=cyclic-import
+from .utils.logging import print_warning  # pylint: disable=cyclic-import
 
 
 def get_version() -> str:
     """Get current installed version of the SDK."""
     with open(
-        os.path.join(os.path.dirname(redbrick.__file__), "VERSION"),
+        os.path.join(os.path.dirname(__file__), "VERSION"),
         "r",
         encoding="utf-8",
     ) as file_:
@@ -34,9 +33,9 @@ def version_check() -> None:
     if (
         "version" not in cache_config
         or "current_version" not in cache_config["version"]
-        or cache_config["version"]["current_version"] != redbrick.__version__
+        or cache_config["version"]["current_version"] != __version__
     ):
-        cache_config["version"] = {"current_version": redbrick.__version__}
+        cache_config["version"] = {"current_version": __version__}
         update_cache = True
 
     current_timestamp = int(datetime.now().timestamp())
@@ -52,14 +51,14 @@ def version_check() -> None:
         versions.sort(key=StrictVersion)
         latest_version = versions[-1]
         # Comparing with current installed version
-        if redbrick.__version__ != latest_version:
+        if __version__ != latest_version:
             warn = (
                 "You are using version '{}' of the SDK. However, version '{}' is available!\n"
                 + "Please update as soon as possible to get the latest features and bug fixes.\n"
                 + "You can use 'python -m pip install --upgrade redbrick-sdk'"
                 + " to get the latest version."
             )
-            print_warning(warn.format(redbrick.__version__, latest_version))
+            print_warning(warn.format(__version__, latest_version))
 
         cache_config["version"]["latest_version"] = latest_version
         cache_config["version"]["last_checked"] = str(current_timestamp)
@@ -68,3 +67,7 @@ def version_check() -> None:
     if update_cache:
         with open(cache_file, "w", encoding="utf-8") as file_:
             cache_config.write(file_)
+
+
+__version__ = get_version()
+version_check()
