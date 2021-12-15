@@ -93,8 +93,18 @@ class UploadRepo(UploadControllerInterface):
     ) -> List[Dict[Any, Any]]:
         """Return presigned URLs to upload files."""
         query_string = """
-            query itemsUploadPresign($orgId:UUID!, $projectId: UUID!, $files: [String]!, $fileType:[String]!){
-                itemsUploadPresign(orgId:$orgId, projectId: $projectId, files:$files, fileType:$fileType) {
+            query itemsUploadPresign(
+                $orgId:UUID!,
+                $projectId: UUID!,
+                $files: [String]!,
+                $fileType:[String]!
+            ){
+                itemsUploadPresign(
+                    orgId:$orgId,
+                    projectId: $projectId,
+                    files:$files,
+                    fileType:$fileType
+                ) {
                     items {
                         presignedUrl,
                         filePath,

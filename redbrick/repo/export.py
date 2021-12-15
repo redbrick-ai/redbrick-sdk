@@ -164,7 +164,13 @@ class ExportRepo(ExportControllerInterface):
         """Get the latest datapoints."""
         query_string = (
             """
-        query($orgId: UUID!, $projectId: UUID!, $cacheTime: DateTime, $first: Int, $cursor: String) {
+        query(
+            $orgId: UUID!,
+            $projectId: UUID!,
+            $cacheTime: DateTime,
+            $first: Int,
+            $cursor: String
+        ) {
             tasksPaged(
                 orgId: $orgId
                 projectId: $projectId

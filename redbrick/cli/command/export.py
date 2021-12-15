@@ -47,6 +47,7 @@ class CLIExportController(CLIExportInterface):
 
         self.handle_export()
 
+    # pylint: disable=too-many-statements
     def handle_export(self) -> None:
         """Handle empty sub command."""
         # pylint: disable=too-many-locals, too-many-branches

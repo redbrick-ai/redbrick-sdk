@@ -134,9 +134,9 @@ class RBProject:
     def __wait_for_project_to_finish_creating(self) -> Dict:
         project = self.context.project.get_project(self.org_id, self.project_id)
         if project["status"] == "CREATING":
-            print_info("Project is still creating...", end="")
+            print_info("Project is still creating...")
             for i in range(8):
-                print_info(".", end="")
+                print_info(".")
                 time.sleep(2 ^ i)
                 project = self.context.project.get_project(self.org_id, self.project_id)
                 if project["status"] != "CREATING":

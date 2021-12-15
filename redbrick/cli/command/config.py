@@ -37,7 +37,8 @@ class CLIConfigController(CLIConfigInterface):
             "--force", "-f", action="store_true", help="Force create new credentials"
         )
 
-        _list_sub_command = sub_command.add_parser(self.LIST, help="List all profiles")
+        # list_sub_command
+        _ = sub_command.add_parser(self.LIST, help="List all profiles")
 
         set_sub_command = sub_command.add_parser(self.SET, help="Set default profile")
         set_sub_command.add_argument("profile", nargs="?", help="Profile name")
@@ -51,9 +52,8 @@ class CLIConfigController(CLIConfigInterface):
         unset_sub_command = sub_command.add_parser(self.REMOVE, help="Remove a profile")
         unset_sub_command.add_argument("profile", nargs="?", help="Profile name")
 
-        _clear_sub_command = sub_command.add_parser(
-            self.CLEAR, help="Clear all credentials"
-        )
+        # clear_sub_command
+        _ = sub_command.add_parser(self.CLEAR, help="Clear all credentials")
 
         verify_sub_command = sub_command.add_parser(
             self.VERIFY, help="Verify a profile"
@@ -101,14 +101,14 @@ class CLIConfigController(CLIConfigInterface):
         default_profile = self.project.creds.selected_profile
         profiles = self.project.creds.profile_names
         if profiles:
-            print(Separator())
+            color_print([("white", f"{Separator()}")])
         for profile in profiles:
             for key, value in self.project.creds.get_profile(profile).items():
                 if profile == default_profile:
                     color_print([("green", f"{profile}.{key}={value}")])
                 else:
-                    print(f"{profile}.{key}={value}")
-            print(Separator())
+                    color_print([("white", f"{profile}.{key}={value}")])
+            color_print([("white", f"{Separator()}")])
 
     def handle_set(self) -> None:
         """Handle set sub command."""
