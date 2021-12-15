@@ -2,7 +2,7 @@
 from argparse import ArgumentParser, Namespace
 
 from redbrick.cli.project import CLIProject
-from redbrick.common.cli import CLIInfoInterface
+from redbrick.cli.cli_base import CLIInfoInterface
 from redbrick.utils.logging import print_info
 
 

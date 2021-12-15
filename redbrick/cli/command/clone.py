@@ -7,7 +7,7 @@ from halo.halo import Halo  # type: ignore
 
 from redbrick.cli.input.select import CLIInputSelect
 from redbrick.cli.project import CLIProject
-from redbrick.common.cli import CLICloneInterface
+from redbrick.cli.cli_base import CLICloneInterface
 from redbrick.organization import RBOrganization
 from redbrick.project import RBProject
 

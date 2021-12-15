@@ -8,7 +8,7 @@ from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import Dict
 
 from redbrick.cli.project import CLIProject
-from redbrick.common.cli import CLIExportInterface
+from redbrick.cli.cli_base import CLIExportInterface
 from redbrick.coco.coco_main import _get_image_dimension_map, coco_converter
 from redbrick.utils.logging import print_info
 

@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from InquirerPy import inquirer  # type: ignore
 
-from redbrick.common.cli import CLIInputParams
+from redbrick.cli.cli_base import CLIInputParams
 
 
 class CLIInputProfile(CLIInputParams):

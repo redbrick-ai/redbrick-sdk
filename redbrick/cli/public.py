@@ -4,7 +4,7 @@ import sys
 import argparse
 from typing import Any, List, Optional
 
-from redbrick.common.cli import CLIInterface
+from .cli_base import CLIInterface
 from redbrick.cli.command import (
     CLIConfigController,
     CLIInitController,
