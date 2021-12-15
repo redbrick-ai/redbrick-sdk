@@ -4,7 +4,7 @@ import sys
 import argparse
 from typing import Any, List, Optional
 
-from .cli_base import CLIInterface
+
 from redbrick.cli.command import (
     CLIConfigController,
     CLIInitController,
@@ -13,6 +13,8 @@ from redbrick.cli.command import (
     CLIExportController,
 )
 from redbrick.utils.logging import print_error, print_warning
+
+from .cli_base import CLIInterface
 
 
 class CLIController(CLIInterface):
