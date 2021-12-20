@@ -214,9 +214,9 @@ class ExportRepo(ExportControllerInterface):
                 orgId: $orgId
                 projectId: $projectId
                 taskId: $taskId
-
             ) {
                 taskId
+                currentStageName
                 %s
             }
             }

@@ -63,7 +63,9 @@ class CLIInitController(CLIInitInterface):
                 spinner.fail()
                 raise error
 
-        name = CLIInputText(self.args.name, "Name").get()
+        name = CLIInputText(
+            self.args.name, "Name", os.path.basename(self.project.path)
+        ).get()
         label_type = LabelType(
             CLIInputSelect(
                 self.args.label, "Label", [label.value for label in LabelType]

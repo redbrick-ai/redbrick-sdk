@@ -29,9 +29,7 @@ class CLICloneController(CLICloneInterface):
             assert not os.path.exists(path), f"{path} already exists"
 
         project = CLIProject.from_path(
-            path="." if self.args.path is None else self.args.path,
-            required=False,
-            check_dir=False,
+            path="." if self.args.path is None else self.args.path, required=False
         )
         assert project is None, f"Already in a project {project.path}"
 

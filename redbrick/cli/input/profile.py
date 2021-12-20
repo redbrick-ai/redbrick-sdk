@@ -16,6 +16,7 @@ class CLIInputProfile(CLIInputParams):
         entity: Optional[str],
         profiles: List[str],
         add: bool = False,
+        default: Optional[str] = None,
     ) -> None:
         """Init handlers."""
         self.entity = entity
@@ -24,6 +25,7 @@ class CLIInputProfile(CLIInputParams):
         )
         self.add = add
         self.profiles = profiles
+        self.default = default
 
     def filtrator(self, entity: str) -> str:
         """Filter input entity."""
@@ -55,7 +57,11 @@ class CLIInputProfile(CLIInputParams):
                 ).execute()
             elif self.profiles:
                 self.entity = inquirer.rawlist(
-                    qmark=">", amark=">", message="Profile name:", choices=self.profiles
+                    qmark=">",
+                    amark=">",
+                    message="Profile name:",
+                    choices=self.profiles,
+                    default=self.default,
                 ).execute()
             else:
                 raise ValueError("No profiles available")

@@ -87,11 +87,11 @@ def test_png_convert_simple() -> None:
             }
         ]
     }
-    color_mask = Export.convert_rbai_mask(task, class_id_map, False, 30)
+    color_mask = Export.convert_rbai_mask(task["labels"], class_id_map, False, 30)
     assert (color_mask[1:8, 1:8, :] / color_map["bus"] == np.ones((7, 7, 3))).all()
 
 
-def test_fill_holes_simple():
+def test_fill_holes_simple() -> None:
     """Tests the fill holes operation."""
     mask = np.zeros((10, 10))
     mask[2:7, 2:7] = 1
@@ -107,7 +107,7 @@ def test_fill_holes_simple():
     assert (mask_filled_2 == mask).all()
 
 
-def test_fill_holes_big_and_small():
+def test_fill_holes_big_and_small() -> None:
     """Test the fill holes operation, for big and small holes."""
     mask = np.ones((50, 50))
     mask[20:40, 20:40] = 0

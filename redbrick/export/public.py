@@ -86,17 +86,16 @@ class Export:
         self.general_info = general_info
 
         print_info("Downloading tasks")
-        return (
-            [
-                parse_output_entry(val)
-                for val in tqdm.tqdm(
-                    my_iter,
-                    unit=" datapoints",
-                    total=general_info["datapointCount"],
-                )
-            ],
-            general_info["taxonomy"],
-        )
+        with tqdm.tqdm(
+            my_iter, unit=" datapoints", total=general_info["datapointCount"]
+        ) as progress:
+            datapoints = [parse_output_entry(val) for val in progress]
+            disable = progress.disable
+            progress.disable = False
+            progress.update(general_info["datapointCount"] - progress.n)
+            progress.disable = disable
+
+        return datapoints, general_info["taxonomy"]
 
     def _get_raw_data_latest(
         self, concurrency: int, cache_time: Optional[datetime] = None
@@ -114,13 +113,15 @@ class Export:
         )
 
         print_info("Downloading tasks")
-        return (
-            [
-                _parse_entry_latest(val)
-                for val in tqdm.tqdm(my_iter, unit=" datapoints", total=datapoint_count)
-            ],
-            general_info["taxonomy"],
-        )
+
+        with tqdm.tqdm(my_iter, unit=" datapoints", total=datapoint_count) as progress:
+            datapoints = [_parse_entry_latest(val) for val in progress]
+            disable = progress.disable
+            progress.disable = False
+            progress.update(datapoint_count - progress.n)
+            progress.disable = disable
+
+        return datapoints, general_info["taxonomy"]
 
     def _get_raw_data_single(self, task_id: str) -> Tuple[List[Dict], Dict]:
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
@@ -202,7 +203,7 @@ class Export:
         return mask_copy
 
     @staticmethod
-    def fill_hole_with_neighbor(mask: np.ndarray, i, j) -> np.ndarray:
+    def fill_hole_with_neighbor(mask: np.ndarray, i: Any, j: Any) -> np.ndarray:
         """Fill a pixel in the mask with it's neighbors value."""
         row, col = mask.shape
         top = 0 if j - 1 < 0 else mask[i][j - 1]
@@ -227,7 +228,7 @@ class Export:
 
     @staticmethod
     def convert_rbai_mask(  # pylint: disable=too-many-locals
-        task: Dict,
+        labels: List,
         class_id_map: Dict,
         fill_holes: bool = False,
         max_hole_size: int = 30,
@@ -244,21 +245,21 @@ class Export:
             )
             raise error
 
-        imagesize = task["labels"][0]["pixel"]["imagesize"]
+        imagesize = labels[0]["pixel"]["imagesize"]
 
         # deal with condition where imagesize is returned as float
-        imagesize = np.round(imagesize).astype(int)
+        imagesize = np.round(imagesize).astype(int)  # type: ignore
 
         mask = np.zeros([imagesize[1], imagesize[0]])
 
-        for label in task["labels"]:
+        for label in labels:
             class_id = class_id_map[label["category"][0][-1]]
             regions = copy.deepcopy(label["pixel"]["regions"])
             holes = copy.deepcopy(label["pixel"]["holes"])
             imagesize = label["pixel"]["imagesize"]
 
             # deal with condition where imagesize is returned as float
-            imagesize = np.round(imagesize).astype(int)
+            imagesize = np.round(imagesize).astype(int)  # type: ignore
 
             # iterate through regions, and create region mask
             region_mask = np.zeros([imagesize[1], imagesize[0]])
@@ -338,6 +339,55 @@ class Export:
 
         return color_mask
 
+    @staticmethod
+    def _export_png_mask_data(
+        datapoints: List[Dict],
+        taxonomy: Dict,
+        mask_dir: str,
+        class_map: str,
+        datapoint_map: str,
+        fill_holes: bool = False,
+        max_hole_size: int = 30,
+    ) -> None:
+        """Export png masks and map json."""
+        # pylint: disable=too-many-locals
+        # Create a color map from the taxonomy
+        class_id_map: Dict = {}
+        color_map: Dict = {}
+        Export.tax_class_id_mapping(
+            taxonomy["categories"][0]["children"], class_id_map, color_map
+        )
+
+        # Convert rbai to png masks and save output
+        dp_map = {}
+        print_info("Converting to masks")
+
+        for datapoint in tqdm.tqdm(datapoints):
+            filename = f"{datapoint['taskId']}.png"
+            dp_map[filename] = datapoint["items"][0]
+
+            labels = [label for label in datapoint["labels"] if "pixel" in label]
+
+            if len(labels) == 0:
+                print_error(
+                    f"No segmentation labels in task {datapoint['taskId']}, skipping"
+                )
+                continue
+
+            color_mask = Export.convert_rbai_mask(
+                labels, class_id_map, fill_holes, max_hole_size
+            )
+
+            # save png as 3 channel np.uint8 image
+            pil_color_mask = Image.fromarray(color_mask.astype(np.uint8))
+            pil_color_mask.save(os.path.join(mask_dir, filename))
+
+        with open(class_map, "w", encoding="utf-8") as file_:
+            json.dump(color_map, file_, indent=2)
+
+        with open(datapoint_map, "w", encoding="utf-8") as file_:
+            json.dump(dp_map, file_, indent=2)
+
     def redbrick_png(  # pylint: disable=too-many-locals
         self,
         only_ground_truth: bool = True,
@@ -400,45 +450,15 @@ class Export:
         os.mkdir(output_dir)
         print_info(f"Saving masks to {output_dir} directory")
 
-        # Create a color map from the taxonomy
-        class_id_map: Dict = {}
-        color_map: Dict = {}
-        Export.tax_class_id_mapping(
-            taxonomy["categories"][0]["children"], class_id_map, color_map
-        )
-
-        # Convert rbai to png masks and save output
-        dp_map = {}
-        print_info("Converting to masks")
-
-        for datapoint in tqdm.tqdm(datapoints):
-            filename = "%s.png" % datapoint["taskId"]
-            dp_map[filename] = datapoint["items"][0]
-            if len(datapoint["labels"]) == 0:
-                print_error("No labels, skipping")
-                continue
-
-            color_mask = Export.convert_rbai_mask(
-                datapoint, class_id_map, fill_holes, max_hole_size
-            )
-
-            # save png as 3 channel np.uint8 image
-            pil_color_mask = Image.fromarray(color_mask.astype(np.uint8))
-            pil_color_mask.save(os.path.join(output_dir, filename))
-
-        with open(
-            os.path.join(output_dir, "class_map.json"), "w+", encoding="utf-8"
-        ) as file:
-            json.dump(color_map, file, indent=2)
-
-        with open(
+        Export._export_png_mask_data(
+            datapoints,
+            taxonomy,
+            output_dir,
+            os.path.join(output_dir, "class_map.json"),
             os.path.join(output_dir, "datapoint_map.json"),
-            "w+",
-            encoding="utf-8",
-        ) as file:
-            json.dump(dp_map, file, indent=2)
-
-        return
+            fill_holes,
+            max_hole_size,
+        )
 
     def redbrick_format(
         self,
@@ -483,7 +503,7 @@ class Export:
             {
                 key: value
                 for key, value in datapoint.items()
-                if key not in ("currentStageName")
+                if key not in ("dpId", "currentStageName")
             }
             for datapoint in datapoints
         ]
