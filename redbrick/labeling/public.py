@@ -1,5 +1,5 @@
 """Public interface to labeling module."""
-
+import json
 import asyncio
 from typing import List, Dict, Optional
 from copy import deepcopy
@@ -69,7 +69,7 @@ class Labeling:
 
         def _clean_tasks(task: Dict) -> Dict:
             task_id = task["taskId"]
-            labels = task.get("taskData", {}).get("labels", [])
+            labels = json.loads(task.get("taskData", {}).get("labelsData", "[]"))
             labels_cleaned = [clean_rb_label(label) for label in labels]
 
             items = task["datapoint"]["items"]

@@ -4,7 +4,6 @@ from typing import Optional, List, Dict, Tuple
 from datetime import datetime
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
-from .shards import LABEL_SHARD
 
 
 LATEST_TASKDATA_SHARD = """
@@ -17,6 +16,7 @@ LATEST_TASKDATA_SHARD = """
         }
         createdByEmail
         labelsData(interpolate: true)
+        labelsPath
     }
 """
 
@@ -90,8 +90,7 @@ class ExportRepo(ExportControllerInterface):
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get datapoints that have made it to the output of the project."""
-        query_string = (
-            """
+        query_string = """
         query ($orgId: UUID!, $projectId: UUID!, $name: String!,$first: Int, $cursor: String){
         customGroup(orgId: $orgId, name:$name){
             datapointsPaged(first:$first, after:$cursor) {
@@ -104,10 +103,9 @@ class ExportRepo(ExportControllerInterface):
                     taskId
                 }
                 labelData(customGroupName: $name){
-                createdByEmail
-                labels(interpolate: true) {
-                    %s
-                    }
+                    createdByEmail
+                    labelsData(interpolate: true)
+                    labelsPath
                 }
             }
             cursor
@@ -115,8 +113,6 @@ class ExportRepo(ExportControllerInterface):
         }
         }
         """
-            % LABEL_SHARD
-        )
         # EXECUTE THE QUERY
         query_variables = {
             "orgId": org_id,
@@ -217,6 +213,7 @@ class ExportRepo(ExportControllerInterface):
 
             ) {
                 taskId
+                currentStageName
                 %s
             }
             }

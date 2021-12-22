@@ -16,6 +16,9 @@ async def gather_with_concurrency(
     progress_bar_name: Optional[str] = None,
 ) -> List[ReturnType]:
     """Utilizes a Semaphore to limit concurrency to n."""
+    if not tasks:
+        return []
+
     max_concurrency = min(max_concurrency, MAX_CONCURRENCY)
     semaphore = asyncio.Semaphore(max_concurrency)
 
