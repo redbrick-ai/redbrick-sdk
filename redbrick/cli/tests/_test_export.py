@@ -8,7 +8,7 @@ import shutil
 import random
 import subprocess
 from uuid import uuid4
-from typing import Generator, Tuple
+from typing import Generator, Optional, Tuple
 
 from redbrick.common.enums import LabelType, StorageMethod
 from redbrick.project import RBProject
@@ -22,6 +22,7 @@ def create_project(
     reviews: int = 1,
 ) -> Generator[Tuple[str, RBProject], None, None]:
     """Create project."""
+    project: Optional[RBProject] = None
     try:
         home_dir = os.path.expanduser("~")
         project_dir = os.path.join(home_dir, project_name)
@@ -53,10 +54,13 @@ def create_project(
         ) as file_:
             project = pickle.load(file_)
 
+        assert project
         yield project_dir, project
     finally:
         os.chdir(home_dir)
         shutil.rmtree(project_dir, ignore_errors=True)
+        if project:
+            project.context.project.delete_project(project.org_id, project.project_id)
 
 
 def upload_data(project: RBProject, num_tasks: int) -> None:

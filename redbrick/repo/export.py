@@ -217,6 +217,7 @@ class ExportRepo(ExportControllerInterface):
 
             ) {
                 taskId
+                currentStageName
                 %s
             }
             }
