@@ -1,6 +1,7 @@
 """Public API to exporting."""
 
 
+import asyncio
 from typing import List, Dict, Optional, Tuple, Any
 from functools import partial
 import os
@@ -17,6 +18,7 @@ import tqdm  # type: ignore
 from PIL import Image  # type: ignore
 
 from redbrick.common.context import RBContext
+from redbrick.utils.files import download_files
 from redbrick.utils.logging import print_error, print_info
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
@@ -43,6 +45,7 @@ def _parse_entry_latest(item: Dict) -> Dict:
         created_by,
         task_id,
         item["currentStageName"],
+        task_data["labelsPath"],
     )
 
 
@@ -53,10 +56,20 @@ def parse_output_entry(item: Dict) -> Dict:
     name = item["name"]
     dp_id = item["dpId"]
     created_by = item["labelData"]["createdByEmail"]
-    labels = [clean_rb_label(label) for label in item["labelData"]["labels"]]
+    labels = [
+        clean_rb_label(label) for label in json.loads(item["labelData"]["labelsData"])
+    ]
     task_id = item["task"]["taskId"]
     return flat_rb_format(
-        labels, items, items_presigned, name, dp_id, created_by, task_id, "END"
+        labels,
+        items,
+        items_presigned,
+        name,
+        dp_id,
+        created_by,
+        task_id,
+        "END",
+        item["labelData"]["labelsPath"],
     )
 
 
@@ -460,6 +473,83 @@ class Export:
             max_hole_size,
         )
 
+    def redbrick_nifti(
+        self,
+        only_ground_truth: bool = True,
+        concurrency: int = 10,
+        task_id: Optional[str] = None,
+    ) -> None:
+        """
+        Export dicom segmentation labels in NIfTI-1 format.
+
+        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project.export.redbrick_nifti()
+
+        Parameters
+        --------------
+        only_ground_truth: bool = True
+            If set to True, will only return data that has
+            been completed in your workflow. If False, will
+            export latest state
+
+        concurrency: int = 10
+
+        task_id: Optional[str] = None
+            If the unique task_id is mentioned, only a single
+            datapoint will be exported.
+
+        Warnings
+        ----------
+        redbrick_nifti only works for DICOM_SEGMENTATION project type.
+
+        """
+        if task_id:
+            datapoints, _ = self._get_raw_data_single(task_id)
+
+        elif only_ground_truth:
+            datapoints, _ = self._get_raw_data_ground_truth(concurrency)
+        else:
+            datapoints, _ = self._get_raw_data_latest(concurrency)
+        if (
+            self.general_info["dataType"] != "DICOM"
+            or self.general_info["taskType"] != "SEGMENTATION"
+        ):
+            print_error(
+                """Project type needs to be DICOM_SEGMENTATION for redbrick_nifti"""
+            )
+            return
+
+        # Create output directory
+        destination = Export.uniquify_path(self.project_id)
+        os.makedirs(destination, exist_ok=True)
+        print_info(f"Saving NIfTI files to {destination} directory")
+
+        files = []
+        for datapoint in datapoints:
+            path = os.path.realpath(
+                os.path.join(destination, f"{datapoint['taskId']}.nii")
+            )
+            files.append((datapoint["labelsPath"], path))
+
+        asyncio.run(download_files(files))
+
+        tasks = [
+            {
+                "filePath": file_[1] if os.path.isfile(file_[1]) else None,
+                **{
+                    key: value
+                    for key, value in datapoint.items()
+                    if key not in ("dpId", "currentStageName", "labelsPath")
+                },
+            }
+            for datapoint, file_ in zip(datapoints, files)
+        ]
+
+        with open(
+            os.path.join(destination, "tasks.json"), "w", encoding="utf-8"
+        ) as tasks_file:
+            json.dump(tasks, tasks_file, indent=2)
+
     def redbrick_format(
         self,
         only_ground_truth: bool = True,
@@ -503,7 +593,7 @@ class Export:
             {
                 key: value
                 for key, value in datapoint.items()
-                if key not in ("dpId", "currentStageName")
+                if key not in ("dpId", "currentStageName", "labelsPath")
             }
             for datapoint in datapoints
         ]

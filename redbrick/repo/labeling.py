@@ -5,7 +5,6 @@ import aiohttp
 
 from redbrick.common.client import RBClient
 from redbrick.common.labeling import LabelingControllerInterface
-from .shards import LABEL_SHARD
 
 
 class LabelingRepo(LabelingControllerInterface):
@@ -60,15 +59,11 @@ class LabelingRepo(LabelingControllerInterface):
                         taskType
                         createdAt
                         createdBy
-                        labels(interpolate: true) {
-                            %s
-                        }
+                        labelsData(interpolate: true)
                 }
             }
         }
-        """ % (
-            LABEL_SHARD
-        )
+        """
 
         response = self.client.execute_query(
             query,

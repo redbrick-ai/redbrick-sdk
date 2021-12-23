@@ -35,6 +35,8 @@ MANIFEST
 # User files
 *.ipynb
 *.json
+*.nii
+*.gz
 *.png
 *.jpeg
 main.py

@@ -11,7 +11,7 @@ from redbrick.common.learning import (
     LearningController2Interface,
 )
 
-from .shards import LABEL_SHARD, TAXONOMY_SHARD
+from .shards import TAXONOMY_SHARD
 
 
 class LearningRepo(LearningControllerInterface):
@@ -56,8 +56,7 @@ class LearningRepo(LearningControllerInterface):
         cursor: Optional[str] = None,
     ) -> Tuple[List[dict], Optional[str]]:
         """Get batch of tasks, paginated."""
-        query = (
-            """
+        query = """
         query  ($orgId:UUID!, $projectId:UUID!, $stageName: String!, $first: Int!, $cursor: String){
             activeLearningClientSummary(orgId:$orgId, projectId:$projectId, stageName: $stageName){
                 tdType
@@ -72,7 +71,7 @@ class LearningRepo(LearningControllerInterface):
                             items(presigned:false)
                         }
                         groundTruth {
-                            labels(interpolate: true) {
+                            labelsData(interpolate: true) {
                                 %s
                             }
                         }
@@ -81,8 +80,6 @@ class LearningRepo(LearningControllerInterface):
             }
         }
         """
-            % LABEL_SHARD
-        )
         variables = {
             "cursor": cursor,
             "orgId": org_id,

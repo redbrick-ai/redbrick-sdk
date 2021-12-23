@@ -1,5 +1,5 @@
 """Public interface to learning module."""
-
+import json
 import asyncio
 from typing import Dict, List, Optional, Tuple
 from functools import partial
@@ -62,7 +62,10 @@ class Learning:
             items = item["datapoint"]["items"]
             dp_id = item["datapoint"]["dpId"]
             task_id = item["taskId"]
-            labels = [clean_rb_label(label) for label in item["groundTruth"]["labels"]]
+            labels = [
+                clean_rb_label(label)
+                for label in json.loads(item["groundTruth"]["labelsData"])
+            ]
 
             return {
                 "dpId": dp_id,
@@ -251,7 +254,10 @@ class Learning2:
             items = item["items"]
             dp_id = item["dpId"]
             task_id = item["task"]["taskId"]
-            labels = [clean_rb_label(label) for label in item["labelData"]["labels"]]
+            labels = [
+                clean_rb_label(label)
+                for label in json.loads(item["labelData"]["labelsData"])
+            ]
 
             return {
                 "dpId": dp_id,
