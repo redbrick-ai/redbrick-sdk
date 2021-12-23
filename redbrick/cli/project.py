@@ -55,13 +55,10 @@ class CLIProject:
 
     @classmethod
     def from_path(
-        cls, path: str = ".", required: bool = True, check_dir: bool = True
+        cls, path: str = ".", required: bool = True
     ) -> Optional["CLIProject"]:
         """Get CLIProject from given directory."""
         path = os.path.realpath(path)
-
-        if check_dir:
-            assert os.path.isdir(path), f"Not a valid directory {path}"
 
         if os.path.isdir(os.path.join(path, ".redbrick")):
             return cls(path, required)
@@ -73,7 +70,7 @@ class CLIProject:
                 raise Exception(f"No redbrick project found. Searched upto {path}")
             return None
 
-        return cls.from_path(parent, required, check_dir)
+        return cls.from_path(parent, required)
 
     @property
     def context(self) -> RBContext:

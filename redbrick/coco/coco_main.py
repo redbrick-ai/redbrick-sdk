@@ -64,7 +64,6 @@ def coco_converter(
             "id": current_image_id,
             "file_name": file_name,
             "raw_url": data["items"][0],
-            "dp_id": data["dpId"],
             "height": height,
             "width": width,
         }

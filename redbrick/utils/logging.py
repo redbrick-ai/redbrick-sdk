@@ -4,6 +4,34 @@ from typing import Union
 import logging
 
 
+class Formatter(logging.Formatter):
+    """Custom formatter."""
+
+    grey = "\x1b[38;22m"
+    blue = "\x1b[34;22m"
+    yellow = "\x1b[33;22m"
+    red = "\x1b[31;22m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+
+    format_color = "%(levelname)s - "
+    format_rest = "%(message)s"
+
+    FORMATS = {
+        logging.DEBUG: grey + format_color + reset + format_rest,
+        logging.INFO: blue + format_color + reset + format_rest,
+        logging.WARNING: yellow + format_color + reset + format_rest,
+        logging.ERROR: red + format_color + reset + format_rest,
+        logging.CRITICAL: bold_red + format_color + reset + format_rest,
+    }
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format method."""
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+
 class Logger:
     """Custom logger."""
 
@@ -17,7 +45,7 @@ class Logger:
         console = logging.StreamHandler()
 
         # Create formatters and add it to handlers
-        console.setFormatter(logging.Formatter("%(levelname)s - %(message)s"))
+        console.setFormatter(Formatter())
 
         # Add handlers to the logger
         logger_.addHandler(console)

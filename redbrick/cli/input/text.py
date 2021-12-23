@@ -9,11 +9,12 @@ from redbrick.cli.cli_base import CLIInputParams
 class CLIInputText(CLIInputParams):
     """Input text handler."""
 
-    def __init__(self, entity: Optional[str], name: str) -> None:
+    def __init__(self, entity: Optional[str], name: str, default: str = "") -> None:
         """Init handlers."""
         self.entity = entity
         self.error_message = "Empty value"
         self.name = name
+        self.default = default
 
     def filtrator(self, entity: str) -> str:
         """Filter input entity."""
@@ -32,6 +33,7 @@ class CLIInputText(CLIInputParams):
                 qmark=">",
                 amark=">",
                 message=self.name + ":",
+                default=self.default,
                 transformer=self.filtrator,
                 filter=self.filtrator,
                 validate=self.validator,
