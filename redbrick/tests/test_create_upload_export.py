@@ -16,23 +16,19 @@ from redbrick.project import RBProject
 @pytest.fixture(name="org_id")
 def fixture_org_id() -> str:
     """Get org_id."""
-    return os.environ.get("REDBRICK_SDK_ORG_ID", "17391ebc-1b0c-468e-9029-8f2308f05df5")
+    return os.environ.get("REDBRICK_SDK_ORG_ID", "")
 
 
 @pytest.fixture(name="api_key")
 def fixture_api_key() -> str:
     """Get api_key."""
-    return os.environ.get(
-        "REDBRICK_SDK_API_KEY", "dNW-B8l1zBID2eitjZ-WtG-XYp9wChi89wMXNOvWOsQ"
-    )
+    return os.environ.get("REDBRICK_SDK_API_KEY", "")
 
 
 @pytest.fixture(name="url")
 def fixture_url() -> str:
     """Get url."""
-    return os.environ.get(
-        "REDBRICK_SDK_URL", "https://piljxrnf0h.execute-api.us-east-1.amazonaws.com/qa"
-    )
+    return os.environ.get("REDBRICK_SDK_URL", "")
 
 
 @contextlib.contextmanager
@@ -137,7 +133,7 @@ def label_test_data(
     to_label = random.randint(0, num_tasks)
     cur_batch = [
         {
-            "taskId": task["taskId"],
+            **task,
             "labels": labels(),
         }
         for task in tasks[:to_label]
@@ -147,14 +143,20 @@ def label_test_data(
         cur_batch
         + [
             {
-                "taskId": task["taskId"],
+                **task,
                 "labels": [],
             }
             for task in tasks[to_label:]
         ]
     )
     if cur_batch:
-        project.labeling.put_tasks("Label", cur_batch)
+        project.labeling.put_tasks(
+            "Label",
+            [
+                {"taskId": task["taskId"], "labels": task["labels"]}
+                for task in cur_batch
+            ],
+        )
 
     return all_tasks, labeled_tasks
 
@@ -209,9 +211,9 @@ def validate_export_data_redbrick(
     validate_redbrick_labels(tasks, exported_data)
 
 
+# pylint: disable=unused-argument
 def validate_coco_labels(tasks: Dict[str, Dict], exported: Dict) -> None:
     """Validate coco labels."""
-    pass
 
 
 def validate_export_data_coco(
@@ -231,7 +233,7 @@ def validate_export_data_coco(
     # TaskId
     task_id = random.choice(list(tasks.keys()))
     exported_data = project.export.coco_format(task_id=task_id)
-    assert len(exported_data) == 1
+    assert len(exported_data["images"]) == 1
     validate_coco_labels(tasks, exported_data)
 
 
