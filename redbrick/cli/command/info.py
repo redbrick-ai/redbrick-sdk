@@ -1,9 +1,11 @@
 """CLI info command."""
 from argparse import ArgumentParser, Namespace
 
+from InquirerPy.utils import color_print  # type: ignore
+from InquirerPy.separator import Separator  # type: ignore
+
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIInfoInterface
-from redbrick.utils.logging import print_info
 
 
 class CLIInfoController(CLIInfoInterface):
@@ -27,5 +29,25 @@ class CLIInfoController(CLIInfoInterface):
         org = self.project.org
         project = self.project.project
 
-        print_info(f"Organization: {org}")
-        print_info(f"Project: {project}")
+        org_data, project_data = [], []
+        org_data.append(f"ID: {org.org_id}")
+        org_data.append(f"Name: {org.name}")
+
+        project_data.append(f"ID: {project.project_id}")
+        project_data.append(f"Name: {project.name}")
+        project_data.append(f"Type: {project.project_type.value}")
+        project_data.append(f"Taxonomy: {project.taxonomy_name}")
+
+        max_length = max(map(len, org_data + project_data))
+
+        color_print(
+            [
+                ("", "Organization"),
+                ("", f"\n{Separator('-'*max_length)}\n"),
+                ("", "\n".join(org_data)),
+                ("", f"\n{Separator('*'*max_length)}\n"),
+                ("", "Project"),
+                ("", f"\n{Separator('-'*max_length)}\n"),
+                ("", "\n".join(project_data)),
+            ]
+        )

@@ -10,6 +10,8 @@ from typing import Dict
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
 from redbrick.coco.coco_main import _get_image_dimension_map, coco_converter
+from redbrick.common.enums import LabelType
+from redbrick.export.public import Export
 from redbrick.utils.logging import print_info
 
 
@@ -27,12 +29,31 @@ class CLIExportController(CLIExportInterface):
         parser.add_argument(
             "--format",
             "-f",
-            choices=[self.FORMAT_REDBRICK, self.FORMAT_COCO],
-            default=self.FORMAT_REDBRICK,
-            help="Export format",
+            choices=[self.FORMAT_REDBRICK, self.FORMAT_COCO, self.FORMAT_MASK],
+            help="Export format (Default: "
+            + f"{self.FORMAT_MASK} if project type is {LabelType.IMAGE_SEGMENTATION} "
+            + f"else {self.FORMAT_REDBRICK}",
         )
         parser.add_argument(
             "--clear-cache", action="store_true", help="Clear local cache"
+        )
+        parser.add_argument(
+            "--concurrency",
+            "-c",
+            type=int,
+            default=10,
+            help="Concurrency value (Default: 10)",
+        )
+        parser.add_argument(
+            "--fill-holes",
+            action="store_true",
+            help=f"Fill holes (for {self.FORMAT_MASK} export format)",
+        )
+        parser.add_argument(
+            "--max-hole-size",
+            type=int,
+            default=30,
+            help=f"Max hole size (for {self.FORMAT_MASK} export format. Default: 30)",
         )
         parser.add_argument(
             "--destination", "-d", default=".", help="Destination directory"
@@ -51,6 +72,15 @@ class CLIExportController(CLIExportInterface):
     def handle_export(self) -> None:
         """Handle empty sub command."""
         # pylint: disable=too-many-locals, too-many-branches
+        format_type = (
+            self.args.format
+            if self.args.format
+            else (
+                self.FORMAT_MASK
+                if self.project.project.project_type == LabelType.IMAGE_SEGMENTATION
+                else self.FORMAT_REDBRICK
+            )
+        )
         if (
             self.args.type not in (self.TYPE_LATEST, self.TYPE_GROUNDTRUTH)
             and re.match(
@@ -92,10 +122,10 @@ class CLIExportController(CLIExportInterface):
         current_timestamp = int(datetime.now(timezone.utc).timestamp())
         # pylint: disable=protected-access
         datapoints, taxonomy = self.project.project.export._get_raw_data_latest(
-            25, cache_time
+            self.args.concurrency, cache_time
         )
 
-        print_info(f"Refreshed {len(datapoints)} tasks")
+        print_info(f"Refreshed {len(datapoints)} newly updated tasks")
 
         for datapoint in datapoints:
             dp_id = datapoint["dpId"]
@@ -125,7 +155,7 @@ class CLIExportController(CLIExportInterface):
                     break
             data = [task] if task else []
 
-        if self.args.format == self.FORMAT_COCO:
+        if format_type == self.FORMAT_COCO:
             compute_dims = [
                 dp
                 for dp in data
@@ -141,33 +171,63 @@ class CLIExportController(CLIExportInterface):
         self.project.conf.set_section("dimensions", {"cache": dim_hash})
         self.project.conf.save()
 
-        data = [
-            {
-                key: value
-                for key, value in dp.items()
-                if key not in ("itemsPresigned", "currentStageName")
-            }
-            for dp in data
-        ]
-
-        export_path = os.path.join(
+        export_dir = (
             self.project.path
             if self.args.destination is None
-            else self.args.destination,
-            f"export_{self.args.format}_{self.args.type}_"
-            + datetime.strftime(
-                datetime.fromtimestamp(current_timestamp), "%Y-%m-%d_%H-%M-%S"
-            )
-            + ".json",
+            else self.args.destination
         )
-        os.makedirs(os.path.dirname(export_path), exist_ok=True)
-        with open(export_path, "w", encoding="utf-8") as file_:
-            json.dump(
-                coco_converter(data, taxonomy, cached_dimensions)
-                if self.args.format == "coco"
-                else data,
-                file_,
-                indent=2,
+
+        os.makedirs(export_dir, exist_ok=True)
+
+        if format_type == self.FORMAT_MASK:
+            mask_dir = os.path.join(export_dir, "masks")
+            class_map = os.path.join(export_dir, "class_map.json")
+            datapoint_map = os.path.join(export_dir, "datapoint_map.json")
+            os.makedirs(mask_dir, exist_ok=True)
+            Export._export_png_mask_data(
+                data,
+                taxonomy,
+                mask_dir,
+                class_map,
+                datapoint_map,
+                self.args.fill_holes,
+                self.args.max_hole_size,
+            )
+            print_info(f"Exported: {class_map}")
+            print_info(f"Exported: {datapoint_map}")
+            print_info(f"Exported masks to: {mask_dir}")
+        else:
+            export_path = os.path.join(
+                export_dir,
+                f"export_{format_type}_{self.args.type}_"
+                + datetime.strftime(
+                    datetime.fromtimestamp(current_timestamp), "%Y-%m-%d_%H-%M-%S"
+                )
+                + ".json",
             )
 
-        print_info(f"Exported successfully to: {export_path}")
+            data = [
+                {key: value for key, value in dp.items() if key != "itemsPresigned"}
+                for dp in data
+            ]
+
+            if format_type == self.FORMAT_COCO:
+                with open(export_path, "w", encoding="utf-8") as file_:
+                    json.dump(
+                        coco_converter(data, taxonomy, cached_dimensions),
+                        file_,
+                        indent=2,
+                    )
+            else:
+                data = [
+                    {
+                        key: value
+                        for key, value in dp.items()
+                        if key not in ("dpId", "currentStageName")
+                    }
+                    for dp in data
+                ]
+                with open(export_path, "w", encoding="utf-8") as file_:
+                    json.dump(data, file_, indent=2)
+
+            print_info(f"Exported successfully to: {export_path}")

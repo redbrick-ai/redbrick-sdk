@@ -1,6 +1,7 @@
 """CLI config command."""
 from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import Optional
+import functools
 
 from InquirerPy import inquirer  # type: ignore
 from InquirerPy.utils import color_print  # type: ignore
@@ -100,15 +101,25 @@ class CLIConfigController(CLIConfigInterface):
         assert self.project.creds.exists, "Credentials file does not exist"
         default_profile = self.project.creds.selected_profile
         profiles = self.project.creds.profile_names
-        if profiles:
-            color_print([("white", f"{Separator()}")])
+        data = []
+        max_length = 0
         for profile in profiles:
+            color = "green" if profile == default_profile else ""
+            cur_data = [
+                (color, f"{'*' if profile == default_profile else ''}{profile}\n"),
+                (color, f"{Separator('-'*len(profile)*2)}\n"),
+            ]
             for key, value in self.project.creds.get_profile(profile).items():
-                if profile == default_profile:
-                    color_print([("green", f"{profile}.{key}={value}")])
-                else:
-                    color_print([("white", f"{profile}.{key}={value}")])
-            color_print([("white", f"{Separator()}")])
+                info = f"{key}={value}"
+                max_length = max(max_length, len(info))
+                cur_data.append((color, f"{info}\n"))
+            data.append(cur_data)
+        if data:
+            color_print(
+                functools.reduce(
+                    lambda x, y: x + [("", f"{Separator('*'*max_length)}\n")] + y, data
+                )
+            )
 
     def handle_set(self) -> None:
         """Handle set sub command."""
@@ -152,8 +163,15 @@ class CLIConfigController(CLIConfigInterface):
     def handle_verify(self, profile: Optional[str] = None) -> None:
         """Handle verify sub command."""
         if profile is None:
+            selected_profile = None
+            try:
+                selected_profile = self.project.creds.selected_profile
+            except AssertionError:
+                pass
             profile = CLIInputProfile(
-                self.args.profile, self.project.creds.profile_names
+                self.args.profile,
+                self.project.creds.profile_names,
+                default=selected_profile,
             ).get()
 
         profile_details = self.project.creds.get_profile(profile)
