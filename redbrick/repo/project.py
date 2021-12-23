@@ -152,3 +152,14 @@ class ProjectRepo(ProjectRepoInterface):
             query, {"orgId": org_id}
         )
         return [tax["name"] for tax in response["taxonomies"]]
+
+    def delete_project(self, org_id: str, project_id: str) -> None:
+        """Delete Project."""
+        query = """
+            mutation removeProjectSDK($orgId: UUID!, $projectId: UUID!) {
+                removeProject(orgId: $orgId, projectId: $projectId) {
+                    ok
+                }
+            }
+        """
+        self.client.execute_query(query, {"orgId": org_id, "projectId": project_id})
