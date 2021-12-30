@@ -7,10 +7,7 @@ import tenacity
 
 import redbrick
 from redbrick.utils.logging import print_error
-
-
-MAX_CONCURRENCY = 30
-MAX_RETRY_ATTEMPTS = 5
+from redbrick.common.constants import MAX_RETRY_ATTEMPTS
 
 
 class RBClient:

@@ -433,7 +433,7 @@ class Export:
         redbrick_png only works for the following types - IMAGE_SEGMENTATION, IMAGE_MULTI
 
         """
-        if not self.project_type in (
+        if self.project_type not in (
             LabelType.IMAGE_SEGMENTATION,
             LabelType.IMAGE_MULTI,
         ):

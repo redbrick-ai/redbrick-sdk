@@ -8,7 +8,7 @@ import aiofiles
 from yarl import URL
 import tenacity
 
-from redbrick.common.client import MAX_CONCURRENCY, MAX_RETRY_ATTEMPTS
+from redbrick.common.constants import MAX_CONCURRENCY, MAX_RETRY_ATTEMPTS
 from redbrick.utils.async_utils import gather_with_concurrency
 
 

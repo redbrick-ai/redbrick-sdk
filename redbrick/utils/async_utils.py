@@ -4,7 +4,7 @@ import asyncio
 from typing import Awaitable, List, TypeVar, Optional, Iterable
 import tqdm.asyncio
 
-from redbrick.common.client import MAX_CONCURRENCY
+from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.utils.logging import print_info
 
 ReturnType = TypeVar("ReturnType")

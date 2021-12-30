@@ -12,11 +12,11 @@ import tqdm
 import aiofiles
 import aiohttp
 import numpy as np
-import shapely  # type: ignore
+import shapely
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
-from redbrick.common.client import MAX_CONCURRENCY
+from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import print_error, print_info

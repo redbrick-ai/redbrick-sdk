@@ -8,7 +8,7 @@ import aiohttp
 import tqdm
 
 from redbrick.common.context import RBContext
-from redbrick.common.client import MAX_CONCURRENCY
+from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.utils.logging import print_error, print_info
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.async_utils import gather_with_concurrency

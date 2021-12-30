@@ -15,6 +15,11 @@ import nest_asyncio  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType, StorageMethod
+from redbrick.common.constants import (
+    DEFAULT_URL,
+    ORG_API_HAS_CHANGED,
+    PROJECT_API_HAS_CHANGED,
+)
 from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
 
@@ -42,9 +47,6 @@ except RuntimeError:
     pass
 
 
-DEFAULT_URL = "https://api.redbrickai.com"
-
-
 def _populate_context(context: RBContext) -> RBContext:
     context.export = ExportRepo(context.client)
     context.labeling = LabelingRepo(context.client)
@@ -54,17 +56,6 @@ def _populate_context(context: RBContext) -> RBContext:
     context.project = ProjectRepo(context.client)
     return context
 
-
-ORG_API_HAS_CHANGED = (
-    "this api has changed recently, try running help(redbrick.get_org)"
-    + " or visiting https://redbrick-sdk.readthedocs.io/en/stable/#redbrick.get_org"
-)
-
-
-PROJECT_API_HAS_CHANGED = (
-    "this api has changed recently, try running help(redbrick.get_project)"
-    + " or visiting https://redbrick-sdk.readthedocs.io/en/stable/#redbrick.get_project"
-)
 
 print_warning(
     "For 0.7 onwards, we've made url an optional argument,"

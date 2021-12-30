@@ -6,7 +6,7 @@ from functools import partial
 from copy import deepcopy
 import aiohttp
 import tqdm
-from redbrick.common.client import MAX_CONCURRENCY  # type: ignore
+from redbrick.common.constants import MAX_CONCURRENCY
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import TaskStates
