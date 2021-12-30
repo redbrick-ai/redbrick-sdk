@@ -27,8 +27,10 @@ def create_project(
     reviews: int = 1,
 ) -> Generator[Tuple[str, RBProject], None, None]:
     """Create project."""
-    profile = datetime.strftime(datetime.now(), "%Y%m%d%H%M%S")
-    project_name = f"cli-test-{profile}"
+    profile = datetime.strftime(datetime.now(), "%Y%m%d%H%M%S%f") + str(
+        random.randint(0, 1000)
+    )
+    project_name = f"cli-{profile}"
     home_dir = os.path.expanduser("~")
     project_dir = os.path.join(home_dir, project_name)
     project: Optional[RBProject] = None

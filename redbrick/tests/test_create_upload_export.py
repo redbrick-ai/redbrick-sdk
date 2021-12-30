@@ -24,7 +24,8 @@ def create_test_project(
 ) -> Generator[RBProject, None, None]:
     """Create project."""
     project_name = (
-        f"test-{label_type.value}-{datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')}"
+        f"{label_type.value}"
+        + f"{datetime.strftime(datetime.now(), '%Y%m%d%H%M%S%f')}{random.randint(0, 1000)}"
     )
     project: Optional[RBProject] = None
     try:
