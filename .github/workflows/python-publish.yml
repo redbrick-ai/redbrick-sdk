@@ -52,6 +52,8 @@ jobs:
       REDBRICK_SDK_API_KEY: ${{ secrets.REDBRICK_SDK_API_KEY }}
       REDBRICK_SDK_URL: ${{ secrets.REDBRICK_SDK_URL }}
       REDBRICK_SDK_ORG_ID: ${{ secrets.REDBRICK_SDK_ORG_ID }}
+      REDBRICK_SDK_PROJECT_ID: ${{ secrets.REDBRICK_SDK_PROJECT_ID }}
+      REDBRICK_SDK_SOURCE: GITHUB
     steps:
       - uses: actions/checkout@v2
 

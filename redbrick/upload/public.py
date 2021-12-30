@@ -4,19 +4,22 @@ import uuid
 import asyncio
 import os
 from copy import deepcopy
-from typing import List, Dict, Tuple
+from typing import List, Dict
+import json
 import requests
-import tqdm
 
+import tqdm
 import aiofiles
 import aiohttp
 import numpy as np
 import shapely  # type: ignore
 
 from redbrick.common.context import RBContext
+from redbrick.common.enums import LabelType
+from redbrick.common.client import MAX_CONCURRENCY
+from redbrick.common.enums import StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import print_error, print_info
-from redbrick.common.enums import StorageMethod
 from redbrick.utils.segmentation import get_file_type, check_mask_map_format
 
 
@@ -24,13 +27,13 @@ class Upload:
     """Primary interface to uploading new data to a project."""
 
     def __init__(
-        self, context: RBContext, org_id: str, project_id: str, td_type: str
+        self, context: RBContext, org_id: str, project_id: str, project_type: LabelType
     ) -> None:
         """Construct Upload object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
-        self.td_type = td_type
+        self.project_type = project_type
 
     async def _create_datapoint(
         self,
@@ -41,6 +44,36 @@ class Upload:
     ) -> Dict:
         """Try to create a datapoint."""
         try:
+            # Basic structural validations, rest handled by API
+            assert (
+                isinstance(point, dict) and point
+            ), "Task object must be a non-empty dictionary"
+            assert (
+                "response" not in point and "error" not in point
+            ), "Task object must not contain `response` or `error`"
+            assert (
+                "name" in point and isinstance(point["name"], str) and point["name"]
+            ), "Task object must contain a valid `name`"
+            assert (
+                "items" in point
+                and isinstance(point["items"], list)
+                and (
+                    len(point["items"]) == 1
+                    if str(self.project_type.value).startswith("IMAGE_")
+                    else point["items"]
+                )
+                and all(
+                    map(lambda item: isinstance(item, str) and item, point["items"])
+                )
+            ), "`items` must be a list of urls (one for image and multiple for videoframes)"
+            assert "labels" not in point or (
+                isinstance(point["labels"], list)
+                and all(
+                    map(
+                        lambda label: isinstance(label, dict) and label, point["labels"]
+                    )
+                )
+            ), "`labels` must be a list of label objects"
             response = await self.context.upload.create_datapoint_async(
                 session,
                 self.org_id,
@@ -48,13 +81,14 @@ class Upload:
                 storage_id,
                 point["name"],
                 point["items"],
-                point.get("labels"),
+                json.dumps(point.get("labels", [])),
                 is_ground_truth,
             )
+            assert response.get("taskId"), "Failed to create task"
             point_success = deepcopy(point)
             point_success["response"] = response
             return point_success
-        except ValueError as error:
+        except Exception as error:  # pylint:disable=broad-except
             print_error(error)
             point_error = deepcopy(point)
             point_error["error"] = error
@@ -62,24 +96,19 @@ class Upload:
 
     async def _create_datapoints(
         self, storage_id: str, points: List[Dict], is_ground_truth: bool
-    ) -> Tuple[List[Dict], List[Dict]]:
-        conn = aiohttp.TCPConnector(limit=30)
+    ) -> List[Dict]:
+        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
                 self._create_datapoint(session, storage_id, point, is_ground_truth)
                 for point in points
             ]
-
-            temp = await gather_with_concurrency(50, coros, "Creating datapoints")
-            succeeded, failed = [], []
-            for val in temp:
-                if "error" in val:
-                    failed.append(val)
-                else:
-                    succeeded.append(val)
+            tasks = await gather_with_concurrency(
+                MAX_CONCURRENCY, coros, "Creating datapoints"
+            )
 
         await asyncio.sleep(0.250)  # give time to close ssl connections
-        return succeeded, failed
+        return tasks
 
     def _generate_upload_presigned_url(
         self, files: List[str], file_type: List[str]
@@ -129,11 +158,15 @@ class Upload:
             List of invalid items.
         """
         invalid = []
+        if not (isinstance(items, list) and items):
+            error = "`items` must be a list of urls (one for image and multiple for videoframes)"
+            print_error(error)
+            return [error]
         for item in items:
-            if not os.path.exists(item):
+            if not (isinstance(item, str) and item and os.path.exists(item)):
                 invalid += [item]
 
-        if len(invalid) > 0:
+        if invalid:
             print_error(f"{invalid} is an invalid path(s), skipping.")
         return invalid
 
@@ -241,7 +274,7 @@ class Upload:
                     ) as response:
                         if str(response.status) != "200":
                             raise ValueError(
-                                "Error in uploading %s to RedBrick" % image_filepath
+                                f"Error in uploading {image_filepath} to RedBrick"
                             )
                     break
                 except (aiohttp.ClientConnectionError, IOError):
@@ -303,7 +336,7 @@ class Upload:
 
         presigned_items = self._generate_upload_presigned_url(upload_items, file_types)
 
-        conn = aiohttp.TCPConnector(limit=30)
+        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = []
             # Upload the image frames to s3
@@ -412,7 +445,7 @@ class Upload:
         Returns
         -------------
         List[Dict]
-            List of tasks that failed upload.
+            List of task objects with key `response` if successful, else `error`
 
         Notes
         ----------
@@ -424,61 +457,39 @@ class Upload:
             we will assign the "items" path to it.
 
         """
+        if str(self.project_type.value).startswith("IMAGE_"):
+            data_type = "image"
+        elif str(self.project_type.value).startswith("VIDEO_"):
+            data_type = "video"
+        else:
+            raise NotImplementedError(
+                "create_datapoints supports only IMAGE and VIDEO project types"
+            )
         # Check if user wants to do a direct upload
         if storage_id == StorageMethod.REDBRICK:
-            # Direct upload for images
-            if self.td_type.split("_")[0] == "IMAGE":
+            print_info(f"Uploading {data_type} items")
+            for point in tqdm.tqdm(points):
+                # check path of items, if invalid, skip
+                invalid = Upload._check_validity_of_items(point.get("items"))
+                if invalid:
+                    continue
 
-                print_info("Uploading image items")
-                for point in tqdm.tqdm(points):
+                # upload items to s3
+                presigned_items = (
+                    self._upload_image_items_to_s3(point["items"])
+                    if data_type == "image"
+                    else asyncio.run(self._upload_video_items_to_s3(point["items"]))
+                )
 
-                    # check points items
-                    if len(point["items"]) != 1:
-                        raise ValueError(
-                            "Incorrect items format!"
-                            + " Your items field must have exactly one entry."
-                        )
+                # update points dict with correct information
+                if "name" not in point:
+                    point["name"] = point["items"][0]
 
-                    # check path of items, if invalid, skip
-                    invalid = Upload._check_validity_of_items(point["items"])
-                    if len(invalid) > 0:
-                        continue
+                point["items"] = [
+                    presigned_item["filePath"] for presigned_item in presigned_items
+                ]
 
-                    # upload image items to s3
-                    presigned_items = self._upload_image_items_to_s3(point["items"])
-
-                    # update points dict with correct information
-                    if "name" not in point:
-                        point["name"] = point["items"][0]
-                    point["items"] = [presigned_items[0]["filePath"]]
-
-            else:
-                # Direct upload for videos
-                for point in points:
-                    # check points
-                    if len(point["items"]) < 1:
-                        raise ValueError(
-                            "Incorrect items format!"
-                            + "Your items field for video must have atleast one entry."
-                        )
-                    # check path of items, if invalid, skip
-                    invalid = Upload._check_validity_of_items(point["items"])
-                    if len(invalid) > 0:
-                        continue
-
-                    presigned_items = asyncio.run(
-                        self._upload_video_items_to_s3(point["items"])
-                    )
-
-                    # update point dicts with correct items
-                    point["items"] = [
-                        presigned_item["filePath"] for presigned_item in presigned_items
-                    ]
-
-        _succeeded, failed = asyncio.run(
-            self._create_datapoints(storage_id, points, is_ground_truth)
-        )
-        return failed
+        return asyncio.run(self._create_datapoints(storage_id, points, is_ground_truth))
 
     def create_datapoint_from_masks(
         self,
@@ -486,7 +497,7 @@ class Upload:
         mask: np.ndarray,
         class_map: Dict,
         image_path: str,
-    ) -> List[Dict]:
+    ) -> Dict:
         """
         Create a single datapoint with mask.
 
@@ -517,8 +528,8 @@ class Upload:
 
         Returns
         -------------
-        List[Dict]
-            List of tasks that failed upload.
+        Dict
+            Task object with key `response` if successful, else `error`
 
         Warnings
         ------------
@@ -548,10 +559,9 @@ class Upload:
             items = presigned_items[0]["filePath"]
             name = image_path
             datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-            _succeeded, failed = asyncio.run(
+            return asyncio.run(
                 self._create_datapoints(storage_id, [datapoint_entry], False)
-            )
-            return failed
+            )[0]
 
         # If storage_id is for remote storage
         items = image_path
@@ -559,7 +569,6 @@ class Upload:
 
         # create datapoint
         datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-        _succeeded, failed = asyncio.run(
+        return asyncio.run(
             self._create_datapoints(storage_id, [datapoint_entry], False)
-        )
-        return failed
+        )[0]

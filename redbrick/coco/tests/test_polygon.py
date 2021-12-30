@@ -1,6 +1,6 @@
 """Test methods for converting polygons for coco."""
 
-from .polygon import rb2coco_polygon, is_coco_polygon
+from redbrick.coco.polygon import rb2coco_polygon, is_coco_polygon
 
 
 def test_rb2coco_polygon_simple_square() -> None:

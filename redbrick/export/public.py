@@ -18,58 +18,60 @@ import tqdm  # type: ignore
 from PIL import Image  # type: ignore
 
 from redbrick.common.context import RBContext
-from redbrick.utils.files import download_files
-from redbrick.utils.logging import print_error, print_info
+from redbrick.common.enums import LabelType
+from redbrick.utils.files import uniquify_path, download_files
+from redbrick.utils.logging import print_error, print_info, print_warning
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
 from redbrick.coco.coco_main import coco_converter
 
 
 def _parse_entry_latest(item: Dict) -> Dict:
-    task_id = item["taskId"]
-    task_data = item["latestTaskData"]
-    datapoint = task_data["dataPoint"]
-    items_presigned = datapoint["itemsPresigned"]
-    items = datapoint["items"]
-    name = datapoint["name"]
-    dp_id = datapoint["dpId"]
-    created_by = task_data["createdByEmail"]
-    labels = [clean_rb_label(label) for label in json.loads(task_data["labelsData"])]
+    task_id = item.get("taskId", "") or ""
+    task_data = item.get("latestTaskData", {}) or {}
+    datapoint = task_data.get("dataPoint", {}) or {}
+    items_presigned = datapoint.get("itemsPresigned", []) or []
+    items = datapoint.get("items", []) or []
+    name = datapoint.get("name", "") or ""
+    created_by = task_data.get("createdByEmail", "") or ""
+    labels = [
+        clean_rb_label(label)
+        for label in json.loads(task_data.get("labelsData", "[]") or "[]")
+    ]
 
     return flat_rb_format(
         labels,
         items,
         items_presigned,
         name,
-        dp_id,
         created_by,
         task_id,
-        item["currentStageName"],
-        task_data["labelsPath"],
+        item.get("currentStageName", "") or "",
+        task_data.get("labelsPath"),
     )
 
 
 def parse_output_entry(item: Dict) -> Dict:
     """Parse entry for output data."""
-    items_presigned = item["itemsPresigned"]
-    items = item["items"]
-    name = item["name"]
-    dp_id = item["dpId"]
-    created_by = item["labelData"]["createdByEmail"]
+    items_presigned = item.get("itemsPresigned", []) or []
+    items = item.get("items", []) or []
+    name = item.get("name", "") or ""
+    label_data = item.get("labelData", {}) or {}
+    created_by = label_data.get("createdByEmail", "") or ""
     labels = [
-        clean_rb_label(label) for label in json.loads(item["labelData"]["labelsData"])
+        clean_rb_label(label)
+        for label in json.loads(label_data.get("labelsData", "[]") or "[]")
     ]
-    task_id = item["task"]["taskId"]
+    task = item.get("task", {}) or {}
     return flat_rb_format(
         labels,
         items,
         items_presigned,
         name,
-        dp_id,
         created_by,
-        task_id,
+        task.get("taskId", "") or "",
         "END",
-        item["labelData"]["labelsPath"],
+        label_data.get("labelsPath"),
     )
 
 
@@ -81,12 +83,14 @@ class Export:
     your project type.
     """
 
-    def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
+    def __init__(
+        self, context: RBContext, org_id: str, project_id: str, project_type: LabelType
+    ) -> None:
         """Construct Export object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
-        self.general_info: Dict = {}
+        self.project_type = project_type
 
     def _get_raw_data_ground_truth(self, concurrency: int) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_output
@@ -96,7 +100,6 @@ class Export:
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
-        self.general_info = general_info
 
         print_info("Downloading tasks")
         with tqdm.tqdm(
@@ -120,7 +123,6 @@ class Export:
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
-        self.general_info = general_info
         datapoint_count = self.context.export.datapoints_in_project(
             self.org_id, self.project_id
         )
@@ -138,7 +140,6 @@ class Export:
 
     def _get_raw_data_single(self, task_id: str) -> Tuple[List[Dict], Dict]:
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
-        self.general_info = general_info
         datapoint = self.context.export.get_datapoint_latest(
             self.org_id, self.project_id, task_id
         )
@@ -155,18 +156,6 @@ class Export:
 
         color = np.array(cm.tab20c(int(class_id))) * 255  # pylint: disable=no-member
         return color.astype(np.uint8)
-
-    @staticmethod
-    def uniquify_path(path: str) -> str:
-        """Provide unique path with number index."""
-        filename, extension = os.path.splitext(path)
-        counter = 1
-
-        while os.path.exists(path):
-            path = filename + " (" + str(counter) + ")" + extension
-            counter += 1
-
-        return path
 
     @staticmethod
     def tax_class_id_mapping(
@@ -376,16 +365,15 @@ class Export:
         print_info("Converting to masks")
 
         for datapoint in tqdm.tqdm(datapoints):
-            filename = f"{datapoint['taskId']}.png"
-            dp_map[filename] = datapoint["items"][0]
-
             labels = [label for label in datapoint["labels"] if "pixel" in label]
-
-            if len(labels) == 0:
-                print_error(
+            if not labels:
+                print_warning(
                     f"No segmentation labels in task {datapoint['taskId']}, skipping"
                 )
                 continue
+
+            filename = f"{datapoint['taskId']}.png"
+            dp_map[filename] = datapoint["items"][0]
 
             color_mask = Export.convert_rbai_mask(
                 labels, class_id_map, fill_holes, max_hole_size
@@ -442,31 +430,36 @@ class Export:
 
         Warnings
         ----------
-        redbrick_png only works for IMAGE_SEGMENTATION project types.
+        redbrick_png only works for the following types - IMAGE_SEGMENTATION, IMAGE_MULTI
 
         """
+        if not self.project_type in (
+            LabelType.IMAGE_SEGMENTATION,
+            LabelType.IMAGE_MULTI,
+        ):
+            print_error(
+                f"Project type needs to be {LabelType.IMAGE_SEGMENTATION} or "
+                + f"{LabelType.IMAGE_MULTI} for redbrick_png"
+            )
+            return
+
         if task_id:
             datapoints, taxonomy = self._get_raw_data_single(task_id)
-
         elif only_ground_truth:
             datapoints, taxonomy = self._get_raw_data_ground_truth(concurrency)
         else:
             datapoints, taxonomy = self._get_raw_data_latest(concurrency)
-        if not self.general_info["taskType"] in ["SEGMENTATION", "MULTI"]:
-            print_error(
-                """Project type needs to be SEGMENTATION or MULTI for redbrick_png"""
-            )
-            return
 
         # Create output directory
-        output_dir = Export.uniquify_path(self.project_id)
-        os.mkdir(output_dir)
+        output_dir = uniquify_path(self.project_id)
+        mask_dir = os.path.join(output_dir, "masks")
+        os.makedirs(mask_dir, exist_ok=True)
         print_info(f"Saving masks to {output_dir} directory")
 
         Export._export_png_mask_data(
             datapoints,
             taxonomy,
-            output_dir,
+            mask_dir,
             os.path.join(output_dir, "class_map.json"),
             os.path.join(output_dir, "datapoint_map.json"),
             fill_holes,
@@ -500,49 +493,50 @@ class Export:
 
         Warnings
         ----------
-        redbrick_nifti only works for DICOM_SEGMENTATION project type.
+        redbrick_nifti only works for the following types - DICOM_SEGMENTATION
 
         """
+        if self.project_type != LabelType.DICOM_SEGMENTATION:
+            print_error(
+                f"Project type needs to be {LabelType.DICOM_SEGMENTATION} "
+                + "for redbrick_nifi"
+            )
+            return
+
         if task_id:
             datapoints, _ = self._get_raw_data_single(task_id)
-
         elif only_ground_truth:
             datapoints, _ = self._get_raw_data_ground_truth(concurrency)
         else:
             datapoints, _ = self._get_raw_data_latest(concurrency)
-        if (
-            self.general_info["dataType"] != "DICOM"
-            or self.general_info["taskType"] != "SEGMENTATION"
-        ):
-            print_error(
-                """Project type needs to be DICOM_SEGMENTATION for redbrick_nifti"""
-            )
-            return
 
         # Create output directory
-        destination = Export.uniquify_path(self.project_id)
-        os.makedirs(destination, exist_ok=True)
+        destination = uniquify_path(self.project_id)
+        nifti_dir = os.path.join(destination, "nifti")
+        os.makedirs(nifti_dir, exist_ok=True)
         print_info(f"Saving NIfTI files to {destination} directory")
 
         files = []
         for datapoint in datapoints:
-            path = os.path.realpath(
-                os.path.join(destination, f"{datapoint['taskId']}.nii")
+            files.append(
+                (
+                    datapoint["labelsPath"],
+                    os.path.join(nifti_dir, f"{datapoint['taskId']}.nii"),
+                )
             )
-            files.append((datapoint["labelsPath"], path))
 
-        asyncio.run(download_files(files))
+        paths: List[Optional[str]] = asyncio.run(download_files(files))
 
         tasks = [
             {
-                "filePath": file_[1] if os.path.isfile(file_[1]) else None,
+                "filePath": path,
                 **{
                     key: value
                     for key, value in datapoint.items()
-                    if key not in ("dpId", "currentStageName", "labelsPath")
+                    if key not in ("currentStageName", "labelsPath")
                 },
             }
-            for datapoint, file_ in zip(datapoints, files)
+            for datapoint, path in zip(datapoints, paths)
         ]
 
         with open(
@@ -593,7 +587,7 @@ class Export:
             {
                 key: value
                 for key, value in datapoint.items()
-                if key not in ("dpId", "currentStageName", "labelsPath")
+                if key not in ("currentStageName", "labelsPath")
             }
             for datapoint in datapoints
         ]
@@ -633,10 +627,18 @@ class Export:
         ----------
         redbrick_coco only works for the following types - IMAGE_BBOX, IMAGE_POLYGON
         """
+        if self.project_type not in (LabelType.IMAGE_BBOX, LabelType.IMAGE_POLYGON):
+            print_error(
+                f"Project type needs to be {LabelType.IMAGE_BBOX} or "
+                + f"{LabelType.IMAGE_POLYGON} for redbrick_coco"
+            )
+            return {}
+
         if task_id:
             datapoints, taxonomy = self._get_raw_data_single(task_id)
         elif only_ground_truth:
             datapoints, taxonomy = self._get_raw_data_ground_truth(concurrency)
         else:
             datapoints, taxonomy = self._get_raw_data_latest(concurrency)
+
         return coco_converter(datapoints, taxonomy)

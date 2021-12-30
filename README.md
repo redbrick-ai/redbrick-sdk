@@ -47,7 +47,7 @@ datapoints = [
         ]
     }
 ]
-failed_to_create = project.upload.create_datapoints(storage_id, datapoints)
+task_objects = project.upload.create_datapoints(storage_id, datapoints)
 
 
 # Datapoint object definition

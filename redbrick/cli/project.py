@@ -2,7 +2,6 @@
 import os
 from typing import Optional
 
-from InquirerPy.utils import color_print  # type: ignore
 from halo.halo import Halo  # type: ignore
 
 from redbrick import _populate_context
@@ -10,6 +9,7 @@ from redbrick.common.context import RBContext
 from redbrick.organization import RBOrganization
 from redbrick.project import RBProject
 from redbrick.cli.entity import CLICache, CLIConfiguration, CLICredentials
+from redbrick.utils.logging import print_info
 
 
 class CLIProject:
@@ -148,4 +148,4 @@ class CLIProject:
 
         self.conf.save()
 
-        color_print([("green", f"Successfully initialized {project} in {self.path}")])
+        print_info(f"Successfully initialized {project} in {self.path}")

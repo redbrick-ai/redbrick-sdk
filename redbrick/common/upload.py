@@ -22,7 +22,7 @@ class UploadControllerInterface(ABC):
         labels: Optional[List[Dict]],
     ) -> str:
         """
-        Create a datapoint and returns its dpId.
+        Create a datapoint and returns its taskId.
 
         Name must be unique in the project.
         """
@@ -36,11 +36,11 @@ class UploadControllerInterface(ABC):
         storage_id: str,
         name: str,
         items: List[str],
-        labels: Optional[List[Dict]],
+        labels_data: Optional[str],
         is_ground_truth: bool = False,
     ) -> Dict:
         """
-        Create a datapoint and returns its dpId.
+        Create a datapoint and returns its taskId.
 
         Name must be unique in the project.
         """

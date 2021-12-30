@@ -1,7 +1,7 @@
 """Tests for bbox conversion."""
 
 
-from .bbox import rb2coco_bbox, coco2rb_bbox, is_coco_bbox
+from redbrick.coco.bbox import rb2coco_bbox, coco2rb_bbox, is_coco_bbox
 
 
 def test_rb2coco_bbox() -> None:

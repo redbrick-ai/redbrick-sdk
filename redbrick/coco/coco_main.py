@@ -4,10 +4,12 @@ from typing import Dict, List, Optional, Tuple
 
 import aiohttp
 from yarl import URL
+import tenacity
 
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils import aioimgspy
-from redbrick.utils.logging import print_error
+from redbrick.utils.logging import print_warning
+from redbrick.common.client import MAX_CONCURRENCY, MAX_RETRY_ATTEMPTS
 from .polygon import rb2coco_polygon
 from .bbox import rb2coco_bbox
 from .categories import rb_get_class_id, rb2coco_categories_format
@@ -16,26 +18,33 @@ from .categories import rb_get_class_id, rb2coco_categories_format
 async def _get_image_dimension_map(
     datapoints: List[Dict],
 ) -> Dict[str, Tuple[int, int]]:
-    """Get a map from dpId to [width, height] of the images."""
+    """Get a map from taskId to (width, height) of the images."""
 
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
+        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
+        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+    )
     async def _get_size(
         session: aiohttp.ClientSession, datapoint: Dict
-    ) -> Tuple[int, int, str]:
+    ) -> Tuple[str, Tuple[int, int]]:
+        if not datapoint["itemsPresigned"] or not datapoint["itemsPresigned"][0]:
+            return datapoint["taskId"], (0, 0)
         async with session.get(
             # encode with yarl so that aiohttp doesn't encode again.
             URL(datapoint["itemsPresigned"][0], encoded=True)
         ) as response:
             temp = await aioimgspy.probe(response.content)  # type: ignore
-            return (temp["width"], temp["height"], datapoint["dpId"])
+        return datapoint["taskId"], (temp["width"], temp["height"])
 
     # limit to 30, default is 100, cleanup is done by session
-    conn = aiohttp.TCPConnector(limit=30)
+    conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [_get_size(session, dpoint) for dpoint in datapoints]
         all_sizes = await gather_with_concurrency(10, coros, "Getting image dimensions")
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
-    return {temp[2]: (temp[0], temp[1]) for temp in all_sizes}
+    return {temp[0]: temp[1] for temp in all_sizes}
 
 
 # pylint: disable=too-many-locals
@@ -54,14 +63,15 @@ def coco_converter(
     annotations: List[Dict] = []
     for data in datapoints:
         file_name = data["name"]
-        dp_id = data["dpId"]
+        task_id = data["taskId"]
         labels = data["labels"]
 
-        width, height = image_dims_map[dp_id]
+        width, height = image_dims_map[task_id]
 
         current_image_id = len(images)
         image_entry = {
             "id": current_image_id,
+            "task_id": task_id,
             "file_name": file_name,
             "raw_url": data["items"][0],
             "height": height,
@@ -70,25 +80,41 @@ def coco_converter(
         if "itemsPresigned" in data:
             image_entry["signed_url"] = data["itemsPresigned"][0]
 
+        images.append(image_entry)
+
+        skipped_labels = 0
         for label in labels:
             annotation_index = len(annotations)
-            if label.get("bbox2d"):
-                class_id = rb_get_class_id(label["category"][0], taxonomy)
-                coco_label = rb2coco_bbox(
-                    label, annotation_index, current_image_id, class_id, width, height
-                )
-                annotations.append(coco_label)
-            elif label.get("polygon"):
-                class_id = rb_get_class_id(label["category"][0], taxonomy)
-                coco_label = rb2coco_polygon(
-                    label, annotation_index, current_image_id, class_id, width, height
-                )
-                annotations.append(coco_label)
-            else:
-                print_error(
-                    "Label not converted, Coco format only supports bbox and polygon labels."
-                )
-        images.append(image_entry)
+            try:
+                if label.get("bbox2d"):
+                    class_id = rb_get_class_id(label["category"][0], taxonomy)
+                    coco_label = rb2coco_bbox(
+                        label,
+                        annotation_index,
+                        current_image_id,
+                        class_id,
+                        width,
+                        height,
+                    )
+                    annotations.append(coco_label)
+                elif label.get("polygon"):
+                    class_id = rb_get_class_id(label["category"][0], taxonomy)
+                    coco_label = rb2coco_polygon(
+                        label,
+                        annotation_index,
+                        current_image_id,
+                        class_id,
+                        width,
+                        height,
+                    )
+                    annotations.append(coco_label)
+                else:
+                    skipped_labels += 1
+            except Exception:  # pylint: disable=broad-except
+                skipped_labels += 1
+
+        if skipped_labels:
+            print_warning(f"Skipped {skipped_labels} labels for {data['taskId']}")
 
     return {
         "images": images,

@@ -20,7 +20,7 @@ install_requires = [
     "cchardet==2.1.7",
     "aiodns==3.0.0",
     "Pillow==8.3.2",
-    "shapely==1.7.1",
+    "shapely==1.8.0",
     "numpy>=1.15",
     "matplotlib>=3.2",
     "scikit-image==0.18.3",
@@ -31,6 +31,7 @@ install_requires = [
     "InquirerPy==0.3.0",
     "halo==0.0.31",
     "nest-asyncio==1.5.4",
+    "tenacity==8.0.1",
 ]
 
 setup(

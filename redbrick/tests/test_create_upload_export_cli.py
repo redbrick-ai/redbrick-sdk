@@ -10,24 +10,46 @@ import subprocess
 from uuid import uuid4
 from typing import Generator, Optional, Tuple
 
+import pytest
+
 from redbrick.common.enums import LabelType, StorageMethod
 from redbrick.project import RBProject
 
 
 @contextlib.contextmanager
 def create_project(
-    project_name: str,
+    org_id: str,
+    api_key: str,
+    url: str,
     label_type: LabelType,
     taxonomy: str = "DEFAULT::Berkeley Deep Drive (BDD)",
     reviews: int = 1,
 ) -> Generator[Tuple[str, RBProject], None, None]:
     """Create project."""
+    profile = datetime.strftime(datetime.now(), "%Y%m%d%H%M%S")
+    project_name = f"cli-test-{profile}"
+    home_dir = os.path.expanduser("~")
+    project_dir = os.path.join(home_dir, project_name)
     project: Optional[RBProject] = None
     try:
-        home_dir = os.path.expanduser("~")
-        project_dir = os.path.join(home_dir, project_name)
         os.makedirs(project_dir)
-
+        subprocess.run(
+            [
+                "redbrick",
+                "config",
+                "add",
+                "-o",
+                org_id,
+                "-k",
+                api_key,
+                "-u",
+                url,
+                "-p",
+                profile,
+            ],
+            check=True,
+        )
+        subprocess.run(["redbrick", "config", "set", profile], check=True)
         subprocess.run(
             [
                 "redbrick",
@@ -61,6 +83,10 @@ def create_project(
         shutil.rmtree(project_dir, ignore_errors=True)
         if project:
             project.context.project.delete_project(project.org_id, project.project_id)
+        if os.environ.get("REDBRICK_SDK_SOURCE") == "GITHUB":
+            subprocess.run(["redbrick", "config", "clear"], check=True)
+        else:
+            subprocess.run(["redbrick", "config", "remove", profile], check=True)
 
 
 def upload_data(project: RBProject, num_tasks: int) -> None:
@@ -110,16 +136,16 @@ def label_data(project: RBProject, num_tasks: int) -> None:
         )
 
 
-def test_export() -> None:
-    """Test export."""
-    project_name = f"cli-test-{datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')}"
-    with create_project(project_name, LabelType.IMAGE_POLYGON) as (
+@pytest.mark.slow
+def test_cli_export(org_id: str, api_key: str, url: str) -> None:
+    """Test cli export."""
+    with create_project(org_id, api_key, url, LabelType.IMAGE_POLYGON) as (
         project_dir,
         project,
     ):
         os.chdir(project_dir)
 
-        total_tasks = 200
+        total_tasks = 40
         upload_data(project, total_tasks)
 
         files = set(os.listdir(project_dir))

@@ -150,6 +150,21 @@ class CLIExportInterface(ABC):
         """Handle empty sub command."""
 
 
+class CLIPruneInterface(ABC):
+    """CLI prune interface."""
+
+    args: Namespace
+    project: CLIProject
+
+    @abstractmethod
+    def handler(self, args: Namespace) -> None:
+        """Handle prune command."""
+
+    @abstractmethod
+    def handle_prune(self) -> None:
+        """Handle empty sub command."""
+
+
 class CLIInterface(ABC):
     """Main CLI Interface."""
 
@@ -158,12 +173,14 @@ class CLIInterface(ABC):
     clone: CLICloneInterface
     info: CLIInfoInterface
     export: CLIExportInterface
+    prune: CLIPruneInterface
 
     CONFIG = "config"
     INIT = "init"
     CLONE = "clone"
     INFO = "info"
     EXPORT = "export"
+    PRUNE = "prune"
 
     @abstractmethod
     def handle_command(self, args: Namespace) -> None:

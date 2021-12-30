@@ -8,6 +8,7 @@ import aiohttp
 import tqdm
 
 from redbrick.common.context import RBContext
+from redbrick.common.client import MAX_CONCURRENCY
 from redbrick.utils.logging import print_error, print_info
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.async_utils import gather_with_concurrency
@@ -102,7 +103,6 @@ class Labeling:
                     review_val,
                 )
             else:
-
                 labels = task["labels"]
                 await self.context.labeling.put_labeling_results(
                     session,
@@ -110,7 +110,7 @@ class Labeling:
                     self.project_id,
                     stage_name,
                     task_id,
-                    labels,
+                    json.dumps(labels),
                 )
 
         except ValueError as error:
@@ -121,19 +121,12 @@ class Labeling:
         return None
 
     async def _put_tasks(self, stage_name: str, tasks: List[Dict]) -> List[Dict]:
-        failed = []
-        conn = aiohttp.TCPConnector(limit=30)
+        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [self._put_task(session, stage_name, task) for task in tasks]
-
             temp = await gather_with_concurrency(10, coros, "Uploading tasks")
-
-            for val in temp:
-                if val:
-                    failed.append(val)
-
         await asyncio.sleep(0.250)  # give time to close ssl connections
-        return failed
+        return [val for val in temp if val]
 
     def put_tasks(self, stage_name: str, tasks: List[Dict]) -> List[Dict]:
         """

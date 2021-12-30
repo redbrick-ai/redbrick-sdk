@@ -2,6 +2,7 @@
 
 from typing import Dict, List
 from shapely.geometry import Polygon  # type: ignore
+from shapely.validation import make_valid  # type: ignore
 
 
 def _create_bbox(polygon: Polygon) -> List[int]:
@@ -30,7 +31,9 @@ def _get_polygon(segmentation: List[int]) -> Polygon:
         else:
             y_pos += [coord]
 
-    return Polygon(zip(x_pos, y_pos))
+    polygon = Polygon(zip(x_pos, y_pos))
+
+    return polygon if polygon.is_valid else make_valid(polygon)
 
 
 def _get_segmentation(polygon: List[Dict], width: int, height: int) -> List[int]:

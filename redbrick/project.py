@@ -1,11 +1,12 @@
 """Main object for RedBrick SDK."""
 
 import json
-import time
 from typing import Dict, List
+
+import tenacity
+
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
-
 from redbrick.export import Export
 from redbrick.learning.public import Learning2
 from redbrick.upload import Upload
@@ -51,11 +52,11 @@ class RBProject:
         # check if project exists on backend to validate
         self._get_project()
 
-        self.export = Export(context, org_id, project_id)
+        self.export = Export(context, org_id, project_id, self.project_type)
 
         self.labeling = Labeling(context, org_id, project_id)
         self.review = Labeling(context, org_id, project_id, review=True)
-        self.upload = Upload(context, org_id, project_id, self._td_type)
+        self.upload = Upload(context, org_id, project_id, self.project_type)
 
     @property
     def org_id(self) -> str:
@@ -132,15 +133,22 @@ class RBProject:
         raise Exception("No stage available for active learning in this project")
 
     def __wait_for_project_to_finish_creating(self) -> Dict:
-        project = self.context.project.get_project(self.org_id, self.project_id)
-        if project["status"] == "CREATING":
-            print_info("Project is still creating...")
-            for i in range(8):
-                print_info(".")
-                time.sleep(2 ^ i)
-                project = self.context.project.get_project(self.org_id, self.project_id)
-                if project["status"] != "CREATING":
-                    break
+        try:
+            for attempt in tenacity.Retrying(
+                stop=tenacity.stop_after_attempt(10),
+                wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
+                retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+            ):
+                with attempt:
+                    project = self.context.project.get_project(
+                        self.org_id, self.project_id
+                    )
+                    if project["status"] == "CREATING":
+                        if attempt.retry_state.attempt_number == 1:
+                            print_info("Project is still creating...")
+                        raise Exception("Unknown problem occurred")
+        except tenacity.RetryError as error:
+            raise Exception("Unknown problem occurred") from error
 
         if project["status"] == "REMOVING":
             raise Exception("Project has been deleted")

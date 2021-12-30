@@ -1,11 +1,9 @@
 """CLI info command."""
 from argparse import ArgumentParser, Namespace
 
-from InquirerPy.utils import color_print  # type: ignore
-from InquirerPy.separator import Separator  # type: ignore
-
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIInfoInterface
+from redbrick.utils.logging import print_info
 
 
 class CLIInfoController(CLIInfoInterface):
@@ -13,7 +11,12 @@ class CLIInfoController(CLIInfoInterface):
 
     def __init__(self, parser: ArgumentParser) -> None:
         """Intialize info sub commands."""
-        parser.add_argument("path", nargs="?", default=".", help="Path of project")
+        parser.add_argument(
+            "path",
+            nargs="?",
+            default=".",
+            help="Path of project (Default: current directory)",
+        )
 
     def handler(self, args: Namespace) -> None:
         """Handle info command."""
@@ -38,16 +41,5 @@ class CLIInfoController(CLIInfoInterface):
         project_data.append(f"Type: {project.project_type.value}")
         project_data.append(f"Taxonomy: {project.taxonomy_name}")
 
-        max_length = max(map(len, org_data + project_data))
-
-        color_print(
-            [
-                ("", "Organization"),
-                ("", f"\n{Separator('-'*max_length)}\n"),
-                ("", "\n".join(org_data)),
-                ("", f"\n{Separator('*'*max_length)}\n"),
-                ("", "Project"),
-                ("", f"\n{Separator('-'*max_length)}\n"),
-                ("", "\n".join(project_data)),
-            ]
-        )
+        print_info("Organization:\n" + "\n".join(org_data))
+        print_info("Project:\n" + "\n".join(project_data))

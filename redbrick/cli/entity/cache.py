@@ -118,4 +118,4 @@ class CLICache:
             caches = [cache for cache in caches if cache != self._cache_name]
 
         for cache in caches:
-            shutil.rmtree(os.path.join(self._cache_dir, cache), True)
+            shutil.rmtree(os.path.join(self._cache_dir, cache), ignore_errors=True)
