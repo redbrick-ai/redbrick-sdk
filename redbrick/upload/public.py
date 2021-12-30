@@ -176,8 +176,8 @@ class Upload:
     ) -> shapely.geometry.MultiPolygon:
         """Convert masks to polygons."""
         try:
-            import rasterio  # pylint: disable=import-outside-toplevel
-            from rasterio import (  # pylint: disable=import-outside-toplevel
+            import rasterio  # pylint: disable=import-error, import-outside-toplevel
+            from rasterio import (  # pylint: disable=import-error, import-outside-toplevel
                 features,
             )
         except Exception as error:

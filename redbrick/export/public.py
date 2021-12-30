@@ -237,7 +237,7 @@ class Export:
     ) -> np.ndarray:
         """Convert rbai datapoint to a numpy mask."""
         try:
-            import rasterio.features  # pylint: disable=import-outside-toplevel
+            import rasterio.features  # pylint: disable=import-error, import-outside-toplevel
         except Exception as error:
             print_error(
                 "For windows users, please follow the rasterio "
