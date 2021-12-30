@@ -33,11 +33,11 @@ async def download_files(files: List[Tuple[str, str]]) -> List[Optional[str]]:
         retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
     )
     async def _download_file(
-        session: aiohttp.ClientSession, url: URL, path: str
+        session: aiohttp.ClientSession, url: str, path: str
     ) -> Optional[str]:
         if not url or not path:
             return None
-        async with session.get(url) as response:
+        async with session.get(URL(url, encoded=True)) as response:
             if response.status == 200:
                 path = uniquify_path(path)
                 async with aiofiles.open(path, "wb") as file_:  # type: ignore
@@ -48,9 +48,7 @@ async def download_files(files: List[Tuple[str, str]]) -> List[Optional[str]]:
     # limit to 30, default is 100, cleanup is done by session
     conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
     async with aiohttp.ClientSession(connector=conn) as session:
-        coros = [
-            _download_file(session, URL(url, encoded=True), path) for url, path in files
-        ]
+        coros = [_download_file(session, url, path) for url, path in files]
         paths = await gather_with_concurrency(10, coros, "Downloading files")
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
