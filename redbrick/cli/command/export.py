@@ -5,14 +5,16 @@ import re
 import json
 from datetime import datetime, timezone
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import Dict
+from typing import List, Dict
+import shutil
 
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
 from redbrick.coco.coco_main import _get_image_dimension_map, coco_converter
 from redbrick.common.enums import LabelType
 from redbrick.export.public import Export
-from redbrick.utils.logging import print_info
+from redbrick.utils.files import uniquify_path, download_files
+from redbrick.utils.logging import print_info, print_warning, print_error
 
 
 class CLIExportController(CLIExportInterface):
@@ -32,7 +34,12 @@ class CLIExportController(CLIExportInterface):
             choices=[self.FORMAT_REDBRICK, self.FORMAT_COCO, self.FORMAT_MASK],
             help="Export format (Default: "
             + f"{self.FORMAT_MASK} if project type is {LabelType.IMAGE_SEGMENTATION} "
-            + f"else {self.FORMAT_REDBRICK}",
+            + f"else {self.FORMAT_REDBRICK})",
+        )
+        parser.add_argument(
+            "--with-files",
+            action="store_true",
+            help="Export with files (e.g. images/video frames)",
         )
         parser.add_argument(
             "--clear-cache", action="store_true", help="Clear local cache"
@@ -56,7 +63,10 @@ class CLIExportController(CLIExportInterface):
             help=f"Max hole size (for {self.FORMAT_MASK} export format. Default: 30)",
         )
         parser.add_argument(
-            "--destination", "-d", default=".", help="Destination directory"
+            "--destination",
+            "-d",
+            default=".",
+            help="Destination directory (Default: current directory)",
         )
 
     def handler(self, args: Namespace) -> None:
@@ -68,10 +78,9 @@ class CLIExportController(CLIExportInterface):
 
         self.handle_export()
 
-    # pylint: disable=too-many-statements
     def handle_export(self) -> None:
         """Handle empty sub command."""
-        # pylint: disable=too-many-locals, too-many-branches
+        # pylint: disable=too-many-statements, too-many-locals, too-many-branches, protected-access
         format_type = (
             self.args.format
             if self.args.format
@@ -91,7 +100,7 @@ class CLIExportController(CLIExportInterface):
         ):
             raise ArgumentError(None, "")
 
-        if self.args.clear_cache:
+        if self.args.clear_cache or self.args.with_files:
             self.project.cache.clear_cache(True)
 
         cached_datapoints: Dict = {}
@@ -120,7 +129,6 @@ class CLIExportController(CLIExportInterface):
             print_info("Refreshing cache with all tasks")
 
         current_timestamp = int(datetime.now(timezone.utc).timestamp())
-        # pylint: disable=protected-access
         datapoints, taxonomy = self.project.project.export._get_raw_data_latest(
             self.args.concurrency, cache_time
         )
@@ -128,11 +136,11 @@ class CLIExportController(CLIExportInterface):
         print_info(f"Refreshed {len(datapoints)} newly updated tasks")
 
         for datapoint in datapoints:
-            dp_id = datapoint["dpId"]
-            if dp_id not in cached_dimensions:
-                cached_dimensions[dp_id] = None
+            task_id = datapoint["taskId"]
+            if task_id not in cached_dimensions:
+                cached_dimensions[task_id] = None
 
-            cached_datapoints[dp_id] = datapoint
+            cached_datapoints[task_id] = datapoint
 
         dp_hash = self.project.cache.set_data("datapoints", cached_datapoints)
         self.project.conf.set_section(
@@ -145,7 +153,7 @@ class CLIExportController(CLIExportInterface):
         if self.args.type == self.TYPE_LATEST:
             pass
         elif self.args.type == self.TYPE_GROUNDTRUTH:
-            data = [dp for dp in data if dp["currentStageName"] == "END"]
+            data = [task for task in data if task["currentStageName"] == "END"]
         else:
             task_id = self.args.type.strip().lower()
             task = None
@@ -157,25 +165,21 @@ class CLIExportController(CLIExportInterface):
 
         if format_type == self.FORMAT_COCO:
             compute_dims = [
-                dp
-                for dp in data
-                if dp["dpId"] not in cached_dimensions
-                or cached_dimensions[dp["dpId"]] is None
+                task
+                for task in data
+                if task["taskId"] not in cached_dimensions
+                or cached_dimensions[task["taskId"]] is None
             ]
             if compute_dims:
                 image_dimensions = asyncio.run(_get_image_dimension_map(compute_dims))
-                for dp_id, dimension in image_dimensions.items():
-                    cached_dimensions[dp_id] = dimension
+                for task_id, dimension in image_dimensions.items():
+                    cached_dimensions[task_id] = dimension
 
         dim_hash = self.project.cache.set_data("dimensions", cached_dimensions)
         self.project.conf.set_section("dimensions", {"cache": dim_hash})
         self.project.conf.save()
 
-        export_dir = (
-            self.project.path
-            if self.args.destination is None
-            else self.args.destination
-        )
+        export_dir = self.args.destination
 
         os.makedirs(export_dir, exist_ok=True)
 
@@ -206,28 +210,90 @@ class CLIExportController(CLIExportInterface):
                 + ".json",
             )
 
-            data = [
-                {key: value for key, value in dp.items() if key != "itemsPresigned"}
-                for dp in data
+            cleaned_data = [
+                {
+                    key: value
+                    for key, value in task.items()
+                    if key not in ("currentStageName", "itemsPresigned", "labelsPath")
+                }
+                for task in data
             ]
-
-            if format_type == self.FORMAT_COCO:
-                with open(export_path, "w", encoding="utf-8") as file_:
-                    json.dump(
-                        coco_converter(data, taxonomy, cached_dimensions),
-                        file_,
-                        indent=2,
-                    )
-            else:
-                data = [
-                    {
-                        key: value
-                        for key, value in dp.items()
-                        if key not in ("dpId", "currentStageName")
-                    }
-                    for dp in data
-                ]
-                with open(export_path, "w", encoding="utf-8") as file_:
-                    json.dump(data, file_, indent=2)
+            output = (
+                coco_converter(cleaned_data, taxonomy, cached_dimensions)
+                if format_type == self.FORMAT_COCO
+                else cleaned_data
+            )
+            with open(export_path, "w", encoding="utf-8") as file_:
+                json.dump(output, file_, indent=2)
 
             print_info(f"Exported successfully to: {export_path}")
+
+        if self.args.with_files:
+            try:
+                asyncio.run(self._download_files(data, export_dir))
+            except Exception:  # pylint: disable=broad-except
+                print_error("Failed to download files")
+
+    async def _download_files(self, data: List[Dict], export_dir: str) -> None:
+        project_type = str(self.project.project.project_type.value)
+        if project_type.startswith("IMAGE_"):
+            files_dir = os.path.join(export_dir, "images")
+        elif project_type.startswith("VIDEO_"):
+            files_dir = os.path.join(export_dir, "videos")
+        else:
+            print_warning(
+                "Project data type needs to be IMAGE or VIDEO to export files"
+            )
+            return
+
+        shutil.rmtree(files_dir, ignore_errors=True)
+        os.makedirs(files_dir, exist_ok=True)
+
+        files = []
+        for task in data:
+            if project_type.startswith("IMAGE_"):
+                fill_index = 0
+                task_dir = files_dir
+                task_name = os.path.basename(task.get("name", ""))
+            else:
+                fill_index = len(str(len(task["items"])))
+                task_dir = uniquify_path(
+                    os.path.join(
+                        files_dir,
+                        re.sub(
+                            r"\W+",
+                            "-",
+                            os.path.splitext(os.path.basename(task.get("name", "")))[0],
+                        )
+                        or task["taskId"],
+                    )
+                )
+                os.makedirs(task_dir, exist_ok=True)
+                task_name = ""
+
+            for index, (item, url) in enumerate(
+                zip(task["items"], task["itemsPresigned"])
+            ):
+                if not task_name:
+                    task_name = re.sub(r"[^\w.]+", "-", os.path.basename(item))
+                    if not task_name:
+                        continue
+
+                file_name, file_ext = os.path.splitext(task_name)
+                files.append(
+                    (
+                        url,
+                        os.path.join(
+                            task_dir,
+                            file_name
+                            + (
+                                ("-" + str(index).zfill(fill_index))
+                                if fill_index
+                                else ""
+                            )
+                            + (file_ext if file_ext else ".jpg"),
+                        ),
+                    )
+                )
+
+        await download_files(files)

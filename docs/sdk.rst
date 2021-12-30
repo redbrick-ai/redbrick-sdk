@@ -23,7 +23,7 @@ Organization
 Export
 ----------------------
 .. autoclass:: redbrick.export.Export
-   :members: redbrick_format, redbrick_png, coco_format
+   :members: redbrick_format, redbrick_png, coco_format, redbrick_nifti
    :show-inheritance:
 
 Upload

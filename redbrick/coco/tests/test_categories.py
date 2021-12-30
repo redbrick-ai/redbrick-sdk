@@ -1,6 +1,6 @@
 """Test functions for coco and rb categories."""
 
-from .categories import rb2coco_categories_format, rb_get_class_id
+from redbrick.coco.categories import rb2coco_categories_format, rb_get_class_id
 
 taxonomy1 = {
     "name": "helloWorld",

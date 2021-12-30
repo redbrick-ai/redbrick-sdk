@@ -26,7 +26,7 @@ class UploadRepo(UploadControllerInterface):
         labels: Optional[List[Dict]],
     ) -> str:
         """
-        Create a datapoint and returns its dpId.
+        Create a datapoint and returns its taskId.
 
         Name must be unique in the project.
         """
@@ -40,11 +40,11 @@ class UploadRepo(UploadControllerInterface):
         storage_id: str,
         name: str,
         items: List[str],
-        labels: Optional[List[Dict]],
+        labels_data: Optional[str],
         is_ground_truth: bool = False,
     ) -> Dict:
         """
-        Create a datapoint and returns its dpId.
+        Create a datapoint and returns its taskId.
 
         Name must be unique in the project.
         """
@@ -55,7 +55,7 @@ class UploadRepo(UploadControllerInterface):
                 $items: [String!]!
                 $name: String!
                 $storageId: UUID!
-                $labels: [LabelInput!]
+                $labelsData: String
                 $isGroundTruth: Boolean!
             ) {
                 createDatapoint(
@@ -64,7 +64,7 @@ class UploadRepo(UploadControllerInterface):
                     items: $items
                     name: $name
                     storageId: $storageId
-                    labels: $labels
+                    labelsData: $labelsData
                     isGroundTruth: $isGroundTruth
                 ) {
                     taskId
@@ -78,15 +78,13 @@ class UploadRepo(UploadControllerInterface):
             "items": items,
             "name": name,
             "storageId": storage_id,
-            "labels": labels or [],
+            "labelsData": labels_data,
             "isGroundTruth": is_ground_truth,
         }
-
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables
         )
-        assert isinstance(response["createDatapoint"], dict)
-        return response["createDatapoint"]
+        return response.get("createDatapoint", {})
 
     def items_upload_presign(
         self, org_id: str, project_id: str, files: List[str], file_type: List[str]

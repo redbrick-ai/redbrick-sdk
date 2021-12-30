@@ -48,7 +48,6 @@ class LabelingRepo(LabelingControllerInterface):
                         version
                     }
                     datapoint {
-                        dpId
                         itemsPresigned: items(presigned: true)
                         items(presigned: false)
                         dataType
@@ -84,7 +83,7 @@ class LabelingRepo(LabelingControllerInterface):
         project_id: str,
         stage_name: str,
         task_id: str,
-        labels: List[Dict],
+        labels_data: str,
     ) -> None:
         """Put Labeling results."""
         query = """
@@ -94,7 +93,7 @@ class LabelingRepo(LabelingControllerInterface):
         $stageName: String!
         $taskId: UUID!
         $elapsedTimeMs: Int!
-        $labels: [LabelInput]!
+        $labelsData: String
         $finished: Boolean!
         ) {
             putManualLabelingTaskAndLabels(
@@ -103,7 +102,7 @@ class LabelingRepo(LabelingControllerInterface):
                 stageName: $stageName
                 taskId: $taskId
                 elapsedTimeMs: $elapsedTimeMs
-                labels: $labels
+                labelsData: $labelsData
                 finished: $finished
             ) {
                 ok
@@ -116,7 +115,7 @@ class LabelingRepo(LabelingControllerInterface):
             "projectId": project_id,
             "stageName": stage_name,
             "taskId": task_id,
-            "labels": labels,
+            "labelsData": labels_data,
             "finished": True,
             "elapsedTimeMs": 0,
         }
@@ -238,7 +237,6 @@ class LabelingRepo(LabelingControllerInterface):
                             itemsPresigned: items(presigned: true)
                             items(presigned: false)
                             dataType
-                            dpId
                             name
                     }
                     }

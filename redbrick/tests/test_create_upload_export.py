@@ -1,34 +1,16 @@
 """Test create project, upload labels and export data."""
 import contextlib
 from datetime import datetime
-import os
-import time
 import random
 from uuid import uuid4
 from typing import Dict, Generator, List, Optional, Tuple
 import pytest
 
+import tenacity
+
 import redbrick
 from redbrick.common.enums import LabelType, StorageMethod
 from redbrick.project import RBProject
-
-
-@pytest.fixture(name="org_id")
-def fixture_org_id() -> str:
-    """Get org_id."""
-    return os.environ.get("REDBRICK_SDK_ORG_ID", "")
-
-
-@pytest.fixture(name="api_key")
-def fixture_api_key() -> str:
-    """Get api_key."""
-    return os.environ.get("REDBRICK_SDK_API_KEY", "")
-
-
-@pytest.fixture(name="url")
-def fixture_url() -> str:
-    """Get url."""
-    return os.environ.get("REDBRICK_SDK_URL", "")
 
 
 @contextlib.contextmanager
@@ -36,12 +18,15 @@ def create_test_project(
     org_id: str,
     api_key: str,
     url: str,
-    project_name: str,
     label_type: LabelType,
     taxonomy: str = "DEFAULT::Berkeley Deep Drive (BDD)",
     reviews: int = 1,
 ) -> Generator[RBProject, None, None]:
     """Create project."""
+    project_name = (
+        f"{label_type.value}"
+        + f"{datetime.strftime(datetime.now(), '%Y%m%d%H%M%S%f')}{random.randint(0, 1000)}"
+    )
     project: Optional[RBProject] = None
     try:
         org = redbrick.get_org(api_key=api_key, org_id=org_id, url=url)
@@ -62,7 +47,7 @@ def upload_test_data(project: RBProject, num_tasks: int) -> None:
     tasks = [
         {
             "name": str(uuid4()),
-            "items": ["http://datasets.redbrickai.com/bccd/BloodImage_00000.jpg"],
+            "items": ["https://datasets.redbrickai.com/bccd/BloodImage_00000.jpg"],
         }
         for _ in range(num_tasks)
     ]
@@ -120,15 +105,14 @@ def label_test_data(
         labels = get_test_label_polygon
 
     tasks: List[Dict] = []
-    retries = 0
-    while True:  # to make sure tasks have been fully processed
-        tasks = project.labeling.get_tasks("Label", num_tasks)
-        if len(tasks) == num_tasks:
-            break
-        time.sleep(1)
-        retries += 1
-        if retries == 10:
-            assert False, tasks
+    for attempt in tenacity.Retrying(
+        stop=tenacity.stop_after_attempt(10),
+        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
+        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+    ):
+        with attempt:
+            tasks = project.labeling.get_tasks("Label", num_tasks)
+            assert len(tasks) == num_tasks
 
     to_label = random.randint(0, num_tasks)
     cur_batch = [
@@ -245,16 +229,10 @@ def test_classify_project(
     org_id: str, api_key: str, url: str, label_type: LabelType
 ) -> None:
     """Test export."""
-    project_name = (
-        f"test-{label_type.value}-{datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')}"
-    )
-    with create_test_project(org_id, api_key, url, project_name, label_type) as project:
-
+    with create_test_project(org_id, api_key, url, label_type) as project:
         task_count = 20
         upload_test_data(project, task_count)
-
         all_tasks, labeled_tasks = label_test_data(project, task_count)
-
         reviewed_tasks = review_test_data(project, labeled_tasks)
 
         tasks_map = {task["taskId"]: task for task in all_tasks}
@@ -263,4 +241,5 @@ def test_classify_project(
         ]
 
         validate_export_data_redbrick(project, tasks_map, groundtruth_task_ids)
-        validate_export_data_coco(project, tasks_map, groundtruth_task_ids)
+        if label_type in (LabelType.IMAGE_POLYGON,):
+            validate_export_data_coco(project, tasks_map, groundtruth_task_ids)

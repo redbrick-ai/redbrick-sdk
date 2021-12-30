@@ -22,7 +22,7 @@ class LabelingControllerInterface(ABC):
         project_id: str,
         stage_name: str,
         task_id: str,
-        labels: List[Dict],
+        labels_data: str,
     ) -> None:
         """Put Labeling results."""
 

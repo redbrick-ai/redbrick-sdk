@@ -1,10 +1,16 @@
 """Tests for upload module."""
 import json
 import sys
+from typing import List, Dict
 
-import matplotlib.pyplot as plt  # type: ignore
+from uuid import uuid4
+import matplotlib.pyplot as plt
+import pytest
+
+from redbrick.common.enums import StorageMethod
 from redbrick.utils.segmentation import get_file_type
-from . import Upload
+from redbrick.upload.public import Upload
+from redbrick.tests.conftest import *  # pylint: disable=wildcard-import, unused-wildcard-import
 
 
 def test_mask_rbai() -> None:
@@ -64,3 +70,51 @@ def test_file_type_extraction_invalid() -> None:
         assert False
     except ValueError as error:
         assert type(error).__name__ == "ValueError"
+
+
+def test_items_validity() -> None:
+    """Check invalid items."""
+    # pylint: disable=protected-access
+    file_name = f"{uuid4()}.txt"
+    with open(file_name, "w", encoding="utf-8") as file_:
+        file_.write("test")
+
+    items = [2, "", "missing.txt", file_name]
+    invalid = Upload._check_validity_of_items(items)  # type: ignore
+    os.remove(file_name)
+    assert len(invalid) == len(items) - 1
+
+
+@pytest.mark.slow
+def test_invalid_upload_object(project: RBProject) -> None:
+    """Check invalid item list upload."""
+    tasks: List[Dict] = [
+        {},
+        {"name": None},
+        {"items": []},
+        {"name": "test"},
+        {"name": "test", "items": ""},
+        {"name": "test", "items": []},
+        {"name": "test", "items": [0]},
+        {
+            "name": "test",
+            "items": [
+                "https://datasets.redbrickai.com/bccd/BloodImage_00000.jpg",
+                "https://datasets.redbrickai.com/bccd/BloodImage_00000.jpg",
+            ],
+        },
+        {
+            "name": "test",
+            "items": ["https://datasets.redbrickai.com/bccd/BloodImage_00000.jpg"],
+            "labels": {},
+        },
+        {
+            "name": str(uuid4()),
+            "items": ["https://datasets.redbrickai.com/bccd/BloodImage_00000.jpg"],
+        },
+    ]
+    task_objects = project.upload.create_datapoints(StorageMethod.PUBLIC, tasks)
+    assert (
+        len(task_objects) == len(tasks)
+        and len(list(filter(lambda task: "response" in task, task_objects))) == 1
+    )

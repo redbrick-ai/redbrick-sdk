@@ -6,7 +6,7 @@ from typing import Dict
 import copy
 
 import numpy as np
-from .public import Export
+from redbrick.export.public import Export
 
 taxonomy_1 = {
     "categories": [
@@ -78,7 +78,6 @@ def test_png_convert_simple() -> None:
         "labels": [
             {
                 "category": [["object", "bus"]],
-                "dpId": 123,
                 "pixel": {
                     "imagesize": [10, 10],
                     "regions": [[[1, 1], [8, 1], [8, 8], [1, 8]]],

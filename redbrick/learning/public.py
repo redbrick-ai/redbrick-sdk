@@ -5,7 +5,8 @@ from typing import Dict, List, Optional, Tuple
 from functools import partial
 from copy import deepcopy
 import aiohttp
-import tqdm  # type: ignore
+import tqdm
+from redbrick.common.constants import MAX_CONCURRENCY
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import TaskStates
@@ -57,18 +58,18 @@ class Learning:
         )
 
         def _parse_labeled_entry(item: Dict) -> Dict:
-            items_presigned = item["datapoint"]["itemsPresigned"]
-            name = item["datapoint"]["name"]
-            items = item["datapoint"]["items"]
-            dp_id = item["datapoint"]["dpId"]
-            task_id = item["taskId"]
+            datapoint = item.get("datapoint", {}) or {}
+            items_presigned = datapoint.get("itemsPresigned", []) or []
+            name = datapoint.get("name")
+            items = datapoint.get("items", []) or []
+            task_id = item.get("taskId")
+            groundtruth = item.get("groundTruth", {}) or {}
             labels = [
                 clean_rb_label(label)
-                for label in json.loads(item["groundTruth"]["labelsData"])
+                for label in json.loads(groundtruth.get("labelsData", "[]") or "[]")
             ]
 
             return {
-                "dpId": dp_id,
                 "taskId": task_id,
                 "items": items,
                 "itemsPresigned": items_presigned,
@@ -77,14 +78,13 @@ class Learning:
             }
 
         def _parse_unlabeled_entry(item: Dict) -> Dict:
-            items_presigned = item["datapoint"]["itemsPresigned"]
-            name = item["datapoint"]["name"]
-            items = item["datapoint"]["items"]
-            dp_id = item["datapoint"]["dpId"]
-            task_id = item["taskId"]
+            datapoint = item.get("datapoint", {}) or {}
+            items_presigned = datapoint.get("itemsPresigned", []) or []
+            name = datapoint.get("name")
+            items = datapoint.get("items", []) or []
+            task_id = item.get("taskId")
             return {
                 "taskId": task_id,
-                "dpId": dp_id,
                 "items": items,
                 "itemsPresigned": items_presigned,
                 "name": name,
@@ -130,7 +130,7 @@ class Learning:
 
     async def _update_tasks(self, cycle: int, tasks: List[Dict]) -> List[Dict]:
         failed = []
-        conn = aiohttp.TCPConnector(limit=30)
+        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [self._update_task(session, cycle, task) for task in tasks]
             temp = await gather_with_concurrency(
@@ -249,18 +249,18 @@ class Learning2:
         )
 
         def _parse_labeled_entry(item: Dict) -> Dict:
-            items_presigned = item["itemsPresigned"]
-            name = item["name"]
-            items = item["items"]
-            dp_id = item["dpId"]
-            task_id = item["task"]["taskId"]
+            items_presigned = item.get("itemsPresigned", []) or []
+            name = item.get("name")
+            items = item.get("items", []) or []
+            task = item.get("task", {}) or {}
+            task_id = task.get("taskId")
+            label_data = item.get("labelData", {}) or {}
             labels = [
                 clean_rb_label(label)
-                for label in json.loads(item["labelData"]["labelsData"])
+                for label in json.loads(label_data.get("labelsData", "[]") or "[]")
             ]
 
             return {
-                "dpId": dp_id,
                 "taskId": task_id,
                 "items": items,
                 "itemsPresigned": items_presigned,
@@ -269,16 +269,15 @@ class Learning2:
             }
 
         def _parse_unlabeled_entry(item: Dict) -> Dict:
-            items_presigned = item["datapoint"]["itemsPresigned"]
-            name = item["datapoint"]["name"]
-            items = item["datapoint"]["items"]
-            dp_id = item["datapoint"]["dpId"]
-            task_id = item["taskId"]
+            datapoint = item.get("datapoint", {}) or {}
+            items_presigned = datapoint.get("itemsPresigned", []) or []
+            name = datapoint.get("name")
+            items = datapoint.get("items", []) or []
+            task_id = item.get("taskId")
             return {
                 "taskId": task_id,
-                "dpId": dp_id,
                 "items": items,
-                "status": item["state"],
+                "status": item.get("state"),
                 "itemsPresigned": items_presigned,
                 "name": name,
             }
@@ -323,7 +322,7 @@ class Learning2:
 
     async def _update_tasks2(self, tasks: List[Dict]) -> List[Dict]:
         failed = []
-        conn = aiohttp.TCPConnector(limit=30)
+        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [self._update_task2(session, task) for task in tasks]
             temp = await gather_with_concurrency(

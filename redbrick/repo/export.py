@@ -9,7 +9,6 @@ from redbrick.common.client import RBClient
 LATEST_TASKDATA_SHARD = """
     latestTaskData {
         dataPoint {
-            dpId
             name
             itemsPresigned: items(presigned: true)
             items(presigned: false)
@@ -95,7 +94,6 @@ class ExportRepo(ExportControllerInterface):
         customGroup(orgId: $orgId, name:$name){
             datapointsPaged(first:$first, after:$cursor) {
             entries {
-                dpId
                 name
                 itemsPresigned:items (presigned:true)
                 items(presigned:false)
@@ -122,12 +120,11 @@ class ExportRepo(ExportControllerInterface):
             "first": first,
         }
 
-        result = self.client.execute_query(query_string, query_variables)
-
-        return (
-            result["customGroup"]["datapointsPaged"]["entries"],
-            result["customGroup"]["datapointsPaged"]["cursor"],
-        )
+        result = self.client.execute_query(query_string, query_variables, False)
+        custom_group = result.get("customGroup", {}) or {}
+        datapoints_paged = custom_group.get("datapointsPaged", {}) or {}
+        entries: List[Dict] = datapoints_paged.get("entries", []) or []  # type: ignore
+        return entries, datapoints_paged.get("cursor")
 
     def datapoints_in_project(self, org_id: str, project_id: str) -> int:
         """Get number of datapoints in project."""
@@ -194,12 +191,10 @@ class ExportRepo(ExportControllerInterface):
             "cursor": cursor,
         }
 
-        result = self.client.execute_query(query_string, query_variables)
-
-        return (
-            result["tasksPaged"]["entries"],
-            result["tasksPaged"]["cursor"],
-        )
+        result = self.client.execute_query(query_string, query_variables, False)
+        tasks_paged = result.get("tasksPaged", {}) or {}
+        entries: List[Dict] = tasks_paged.get("entries", []) or []  # type: ignore
+        return entries, tasks_paged.get("cursor")
 
     def get_datapoint_latest(self, org_id: str, project_id: str, task_id: str) -> Dict:
         """Get the latest labels for a single bdatapoint."""
@@ -227,7 +222,7 @@ class ExportRepo(ExportControllerInterface):
         }
 
         result: Dict[str, Dict] = self.client.execute_query(
-            query_string, query_variables
+            query_string, query_variables, False
         )
 
-        return result["task"]
+        return result.get("task", {}) or {}

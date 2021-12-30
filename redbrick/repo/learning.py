@@ -65,7 +65,6 @@ class LearningRepo(LearningControllerInterface):
                     entries {
                         taskId
                         datapoint {
-                            dpId
                             name
                             itemsPresigned:items (presigned:true)
                             items(presigned:false)
