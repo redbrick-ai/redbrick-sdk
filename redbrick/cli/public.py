@@ -89,7 +89,7 @@ def cli_main(argv: Optional[List[str]] = None) -> None:
         except argparse.ArgumentError:
             parser.print_usage()
         except Exception as error:  # pylint: disable=broad-except
-            if os.environ.get("REDBRICK_DEBUG"):
+            if os.environ.get("REDBRICK_SDK_DEBUG"):
                 raise error
             print_error(error)
             sys.exit(1)
