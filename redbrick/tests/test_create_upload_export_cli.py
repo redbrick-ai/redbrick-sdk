@@ -11,6 +11,7 @@ from uuid import uuid4
 from typing import Generator, Optional, Tuple
 
 import pytest
+import tenacity
 
 from redbrick.common.enums import LabelType, StorageMethod
 from redbrick.project import RBProject
@@ -107,9 +108,15 @@ def label_data(project: RBProject, num_tasks: int) -> None:
     """Label data."""
     categories = ["bus", "bike", "truck", "motor", "car", "train", "rider"]
     while num_tasks:
-        num = min(num_tasks, 50)
-        tasks = project.labeling.get_tasks("Label", num)
-        num_tasks -= num
+        for attempt in tenacity.Retrying(
+            stop=tenacity.stop_after_attempt(10),
+            wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
+            retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+        ):
+            with attempt:
+                tasks = project.labeling.get_tasks("Label", num_tasks)
+                assert tasks
+        num_tasks -= len(tasks)
         project.labeling.put_tasks(
             "Label",
             [
