@@ -23,17 +23,11 @@ from redbrick.common.constants import (
 from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
 
-from redbrick.utils.logging import print_info, print_warning
-from redbrick.repo import (
-    ExportRepo,
-    LabelingRepo,
-    LearningRepo,
-    Learning2Repo,
-    UploadRepo,
-    ProjectRepo,
-)
-from .version_check import __version__
+from redbrick.utils.logging import print_info, handle_exception
 
+from .version_check import version_check
+
+__version__ = "1.0.0"
 
 # if there is a running event loop, apply nest_asyncio
 try:
@@ -47,7 +41,20 @@ except RuntimeError:
     pass
 
 
+version_check(__version__)
+
+
 def _populate_context(context: RBContext) -> RBContext:
+    # pylint: disable=import-outside-toplevel
+    from redbrick.repo import (
+        ExportRepo,
+        LabelingRepo,
+        LearningRepo,
+        Learning2Repo,
+        UploadRepo,
+        ProjectRepo,
+    )
+
     context.export = ExportRepo(context.client)
     context.labeling = LabelingRepo(context.client)
     context.learning = LearningRepo(context.client)
@@ -57,15 +64,7 @@ def _populate_context(context: RBContext) -> RBContext:
     return context
 
 
-print_warning(
-    "For 0.7 onwards, we've made url an optional argument,"
-    + " you'll need to update your code to use the following:"
-    + "\n \t\t get_org(org_id=org_id, api_key=api_key) and"
-    + "\n \t\t get_project(org_id=org_id, project_id=project_id, api_key=api_key),"
-    + "\n https://redbrick-sdk.readthedocs.io/en/stable/#redbrick.get_org"
-)
-
-
+@handle_exception
 def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization:
     """
     Get an existing redbrick organization object.
@@ -96,6 +95,7 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
     return RBOrganization(context, org_id)
 
 
+@handle_exception
 def get_project(
     org_id: str, project_id: str, api_key: str, url: str = DEFAULT_URL
 ) -> RBProject:

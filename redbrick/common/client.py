@@ -5,7 +5,7 @@ import requests
 import aiohttp
 import tenacity
 
-from redbrick.version_check import __version__
+from redbrick import __version__ as sdk_version
 from redbrick.utils.logging import print_error
 from redbrick.common.constants import MAX_RETRY_ATTEMPTS
 
@@ -33,10 +33,7 @@ class RBClient:
     @property
     def headers(self) -> Dict:
         """Get request headers."""
-        return {  # Default: Accept-Encoding = gzip, deflate, br
-            "ApiKey": self.api_key,
-            "RB-SDK-Version": __version__,
-        }
+        return {"ApiKey": self.api_key, "RB-SDK-Version": sdk_version}
 
     @tenacity.retry(
         stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),

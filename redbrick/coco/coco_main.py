@@ -23,7 +23,9 @@ async def _get_image_dimension_map(
     @tenacity.retry(
         stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+        retry=tenacity.retry_if_not_exception_type(
+            (KeyboardInterrupt, PermissionError, ValueError)
+        ),
     )
     async def _get_size(
         session: aiohttp.ClientSession, datapoint: Dict

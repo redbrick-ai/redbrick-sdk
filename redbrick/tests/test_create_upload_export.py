@@ -36,6 +36,7 @@ def create_test_project(
             taxonomy_name=taxonomy,
             reviews=reviews,
         )
+        assert project
         yield project
     finally:
         if project:
@@ -108,7 +109,9 @@ def label_test_data(
     for attempt in tenacity.Retrying(
         stop=tenacity.stop_after_attempt(10),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+        retry=tenacity.retry_if_not_exception_type(
+            (KeyboardInterrupt, PermissionError, ValueError)
+        ),
     ):
         with attempt:
             tasks = project.labeling.get_tasks("Label", num_tasks)

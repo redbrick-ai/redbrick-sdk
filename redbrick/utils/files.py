@@ -30,7 +30,9 @@ async def download_files(files: List[Tuple[str, str]]) -> List[Optional[str]]:
     @tenacity.retry(
         stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+        retry=tenacity.retry_if_not_exception_type(
+            (KeyboardInterrupt, PermissionError, ValueError)
+        ),
     )
     async def _download_file(
         session: aiohttp.ClientSession, url: str, path: str

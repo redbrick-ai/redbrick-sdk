@@ -10,8 +10,7 @@ import copy
 from datetime import datetime
 
 from shapely.geometry import Polygon  # type: ignore
-import skimage
-import skimage.morphology  # type: ignore
+from skimage.morphology import remove_small_holes  # type: ignore
 import numpy as np  # type: ignore
 from matplotlib import cm  # type: ignore
 import tqdm  # type: ignore
@@ -20,7 +19,12 @@ from PIL import Image  # type: ignore
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
 from redbrick.utils.files import uniquify_path, download_files
-from redbrick.utils.logging import print_error, print_info, print_warning
+from redbrick.utils.logging import (
+    print_error,
+    print_info,
+    print_warning,
+    handle_exception,
+)
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
 from redbrick.coco.coco_main import coco_converter
@@ -185,7 +189,7 @@ class Export:
         mask_copy[mask_greater_zero] = 1
 
         # fill holes in copy binary mask
-        mask_copy = skimage.morphology.remove_small_holes(
+        mask_copy = remove_small_holes(
             mask_copy.astype(bool),
             area_threshold=max_hole_size,
         )
@@ -389,6 +393,7 @@ class Export:
         with open(datapoint_map, "w", encoding="utf-8") as file_:
             json.dump(dp_map, file_, indent=2)
 
+    @handle_exception
     def redbrick_png(  # pylint: disable=too-many-locals
         self,
         only_ground_truth: bool = True,
@@ -466,6 +471,7 @@ class Export:
             max_hole_size,
         )
 
+    @handle_exception
     def redbrick_nifti(
         self,
         only_ground_truth: bool = True,
@@ -544,6 +550,7 @@ class Export:
         ) as tasks_file:
             json.dump(tasks, tasks_file, indent=2)
 
+    @handle_exception
     def redbrick_format(
         self,
         only_ground_truth: bool = True,
@@ -592,6 +599,7 @@ class Export:
             for datapoint in datapoints
         ]
 
+    @handle_exception
     def coco_format(
         self,
         only_ground_truth: bool = True,

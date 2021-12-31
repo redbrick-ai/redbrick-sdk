@@ -1,21 +1,12 @@
 """Setup the python module."""
-import os
 from setuptools import setup, find_packages  # type: ignore
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open(
-    os.path.join(os.path.abspath(os.path.dirname(__file__)), "redbrick", "VERSION"),
-    "r",
-    encoding="utf-8",
-) as f:
-    version = f.read().strip()
-
 install_requires = [
     "requests==2.23.0",
     "tqdm==4.50.0",
-    "termcolor==1.1.0",
     "aiohttp==3.7.4",
     "cchardet==2.1.7",
     "aiodns==3.0.0",
@@ -37,7 +28,6 @@ install_requires = [
 setup(
     name="redbrick-sdk",
     url="https://github.com/redbrick-ai/redbrick-sdk",
-    version=version,
     description="RedBrick platform Python SDK!",
     py_modules=["redbrick"],
     python_requires=">=3.7.0, <3.10",

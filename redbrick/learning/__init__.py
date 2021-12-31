@@ -1,3 +1,3 @@
 """Initialize learning module."""
 
-from .public import Learning
+from .public import Learning, Learning2
