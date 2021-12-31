@@ -5,7 +5,7 @@ import requests
 import aiohttp
 import tenacity
 
-from redbrick import __version__ as sdk_version
+from redbrick import __version__ as sdk_version  # pylint: disable=cyclic-import
 from redbrick.utils.logging import print_error
 from redbrick.common.constants import MAX_RETRY_ATTEMPTS
 
