@@ -1,7 +1,9 @@
 """Logging functions."""
-
-from typing import Union
+import os
+import sys
+from typing import Callable, Union, Any
 import logging
+from functools import wraps
 
 
 class Formatter(logging.Formatter):
@@ -69,3 +71,25 @@ def print_warning(text: str) -> None:
 def print_error(text: Union[str, Exception]) -> None:
     """Log errors."""
     logger.error(text)
+
+
+def handle_exception(func: Callable) -> Callable:
+    """Decorate generic exception handler.
+
+    Catch and trace full exception if REDBRICK_SDK_DEBUG is set, else just print the error message.
+    Specifically meant for all user facing methods.
+    """
+
+    @wraps(func)
+    def wrap(*args: Any, **kwargs: Any) -> Any:
+        try:
+            return func(*args, **kwargs)
+        except (KeyboardInterrupt, Exception) as error:  # pylint: disable=broad-except
+            if os.environ.get("REDBRICK_SDK_DEBUG"):
+                raise error
+            print_error(
+                "User interrupted" if isinstance(error, KeyboardInterrupt) else error
+            )
+            sys.exit(1)
+
+    return wrap

@@ -4,7 +4,29 @@ from enum import Enum
 
 
 class LabelType(Enum):
-    """Allowable types for labeling projects."""
+    """Allowable types for labeling projects.
+
+    - IMAGE_CLASSIFY - Classification of images
+    - IMAGE_BBOX - Bounding box detections with images
+    - IMAGE_POINT - Keypoint detections with images
+    - IMAGE_POLYLINE - Polyline shapes with images
+    - IMAGE_POLYGON - Freeform polygon detections with images
+    - IMAGE_ELLIPSE - Ellipse shapes with images
+    - IMAGE_SEGMENTATION - Pixel level segmentation with images
+    - IMAGE_MULTI - All available image labeling types for detection and segmentation
+
+    - VIDEO_BBOX - Bounding box detection and object tracking with video frames
+    - VIDEO_POINT - Keypoint detections and object tracking with video frames
+    - VIDEO_POLYLINE - Polyline shapes and object tracking with video frames
+    - VIDEO_ELLIPSE - Ellipse shapes and object tracking with video frames
+    - VIDEO_CLASSIFY - Frame level Classification of video frames.
+    - VIDEO_POLYGON - Freeform polygon detections and object tracking with video frames
+    - VIDEO_MULTI - All available video labeling types for annotating videos with multiple shapes
+
+    - DOCUMENT_BBOX - Annotate pdf and other documents with work detection and OCR tools
+
+    - DICOM_SEGMENTATION - 3D pixel segmentation of DICOM series data
+    """
 
     IMAGE_ITEMS = "IMAGE_ITEMS"
     IMAGE_CLASSIFY = "IMAGE_CLASSIFY"
@@ -31,7 +53,11 @@ class LabelType(Enum):
 
 
 class StorageMethod:
-    """Special case storage method Ids."""
+    """Special case storage method Ids.
+
+    - PUBLIC - Access files from a public cloud storage service or local storage
+    - REDBRICK - Access files from the RedBrickAI servers
+    """
 
     PUBLIC = "11111111-1111-1111-1111-111111111111"
     REDBRICK = "22222222-2222-2222-2222-222222222222"

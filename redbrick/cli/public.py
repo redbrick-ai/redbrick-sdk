@@ -1,5 +1,4 @@
 """Main file for CLI."""
-import os
 import sys
 import argparse
 from typing import Any, List, Optional
@@ -13,7 +12,7 @@ from redbrick.cli.command import (
     CLIExportController,
     CLIPruneController,
 )
-from redbrick.utils.logging import print_error, print_warning
+from redbrick.utils.logging import print_warning, handle_exception
 
 from .cli_base import CLIInterface
 
@@ -71,6 +70,7 @@ def cli_parser(generate_docs: bool = True) -> Any:
     return parser, cli
 
 
+@handle_exception
 def cli_main(argv: Optional[List[str]] = None) -> None:
     """CLI main handler."""
     parser: argparse.ArgumentParser
@@ -88,8 +88,3 @@ def cli_main(argv: Optional[List[str]] = None) -> None:
             cli.handle_command(args)
         except argparse.ArgumentError:
             parser.print_usage()
-        except Exception as error:  # pylint: disable=broad-except
-            if os.environ.get("REDBRICK_SDK_DEBUG"):
-                raise error
-            print_error(error)
-            sys.exit(1)

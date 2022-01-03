@@ -6,7 +6,7 @@ from tqdm import tqdm  # type: ignore
 from redbrick.common.enums import LabelType
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
-from redbrick.utils.logging import print_error, print_info, print_warning
+from redbrick.utils.logging import print_info, print_warning, handle_exception
 from .basic_project import get_active_learning_project, get_basic_project
 
 
@@ -32,6 +32,7 @@ class RBOrganization:
         org = self.context.project.get_org(self._org_id)
         self._name = org["name"]
 
+    @handle_exception
     def taxonomies(self) -> List[str]:
         """Get a list of taxonomy names in the organization."""
         return self.context.project.get_taxonomies(self._org_id)
@@ -43,6 +44,7 @@ class RBOrganization:
 
         return projects
 
+    @handle_exception
     def projects(self) -> List[RBProject]:
         """Get a list of active projects in the organization."""
         projects = self._all_projects_raw()
@@ -69,6 +71,7 @@ class RBOrganization:
         """Representation of object."""
         return str(self)
 
+    @handle_exception
     def create_project(
         self,
         name: str,
@@ -139,10 +142,9 @@ class RBOrganization:
                 self.org_id, name, stages, label_type.value, taxonomy_name
             )
         except ValueError as error:
-            print_error(
+            raise Exception(
                 "Project with same name exists, try setting exists_okay=True to"
                 + " return this project instead of creating a new one"
-            )
-            raise error
+            ) from error
 
         return RBProject(self.context, self.org_id, project_data["projectId"])

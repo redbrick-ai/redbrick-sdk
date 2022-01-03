@@ -12,7 +12,6 @@ from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
 from redbrick.coco.coco_main import _get_image_dimension_map, coco_converter
 from redbrick.common.enums import LabelType
-from redbrick.export.public import Export
 from redbrick.utils.files import uniquify_path, download_files
 from redbrick.utils.logging import print_info, print_warning, print_error
 
@@ -184,6 +183,9 @@ class CLIExportController(CLIExportInterface):
         os.makedirs(export_dir, exist_ok=True)
 
         if format_type == self.FORMAT_MASK:
+            # pylint: disable=import-outside-toplevel
+            from redbrick.export.public import Export
+
             mask_dir = os.path.join(export_dir, "masks")
             class_map = os.path.join(export_dir, "class_map.json")
             datapoint_map = os.path.join(export_dir, "datapoint_map.json")

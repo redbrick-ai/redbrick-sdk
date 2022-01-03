@@ -2,4 +2,3 @@ include LICENSE
 recursive-include redbrick *.py
 include setup.py
 exclude examples
-include redbrick/VERSION

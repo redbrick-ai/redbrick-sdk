@@ -7,11 +7,6 @@ import tenacity
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
-from redbrick.export import Export
-from redbrick.learning.public import Learning2
-from redbrick.upload import Upload
-from redbrick.learning import Learning
-from redbrick.labeling import Labeling
 from redbrick.utils.logging import print_info
 
 
@@ -40,6 +35,12 @@ class RBProject:
 
     def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
         """Construct RBProject."""
+        # pylint: disable=import-outside-toplevel
+        from redbrick.upload import Upload
+        from redbrick.learning import Learning, Learning2
+        from redbrick.labeling import Labeling
+        from redbrick.export import Export
+
         self.context = context
 
         self._org_id = org_id
@@ -52,11 +53,24 @@ class RBProject:
         # check if project exists on backend to validate
         self._get_project()
 
-        self.export = Export(context, org_id, project_id, self.project_type)
+        self.upload = Upload(context, org_id, project_id, self.project_type)
+
+        self.learning = Learning(self.context, self.org_id, self.project_id)
+        self.learning2 = Learning2(self.context, self.org_id, self.project_id)
+        for stage in self._stages:
+            if stage["brickName"] == "manual-labeling":
+                if json.loads(stage["stageConfig"]).get("isPrimaryStage"):
+                    self.learning2 = Learning2(
+                        self.context, self.org_id, self.project_id, stage["stageName"]
+                    )
+            elif stage["brickName"] == "active-learning":
+                self.learning = Learning(
+                    self.context, self.org_id, self.project_id, stage["stageName"]
+                )
 
         self.labeling = Labeling(context, org_id, project_id)
         self.review = Labeling(context, org_id, project_id, review=True)
-        self.upload = Upload(context, org_id, project_id, self.project_type)
+        self.export = Export(context, org_id, project_id, self.project_type)
 
     @property
     def org_id(self) -> str:
@@ -103,41 +117,14 @@ class RBProject:
         """
         return LabelType(self._td_type)
 
-    @property
-    def learning(self) -> Learning:
-        """Read only, get learning module."""
-        for stage in self._stages:
-            if stage["brickName"] == "active-learning":
-                return Learning(
-                    self.context,
-                    self.org_id,
-                    self.project_id,
-                    stage["stageName"],
-                )
-
-        raise Exception("No active learning stage in this project")
-
-    @property
-    def learning2(self) -> Learning2:
-        """Read only, get learning2 module."""
-        for stage in self._stages:
-            if stage["brickName"] == "manual-labeling":
-                if json.loads(stage["stageConfig"]).get("isPrimaryStage"):
-                    return Learning2(
-                        self.context,
-                        self.org_id,
-                        self.project_id,
-                        stage["stageName"],
-                    )
-
-        raise Exception("No stage available for active learning in this project")
-
     def __wait_for_project_to_finish_creating(self) -> Dict:
         try:
             for attempt in tenacity.Retrying(
                 stop=tenacity.stop_after_attempt(10),
                 wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-                retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+                retry=tenacity.retry_if_not_exception_type(
+                    (KeyboardInterrupt, PermissionError, ValueError)
+                ),
             ):
                 with attempt:
                     project = self.context.project.get_project(

@@ -12,14 +12,14 @@ import tqdm
 import aiofiles
 import aiohttp
 import numpy as np
-import shapely
+from shapely.geometry import MultiPolygon, shape as gen_shape
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.logging import print_error, print_info
+from redbrick.utils.logging import print_error, print_info, handle_exception
 from redbrick.utils.segmentation import get_file_type, check_mask_map_format
 
 
@@ -173,7 +173,7 @@ class Upload:
     @staticmethod
     def _mask_to_polygon(
         mask: np.ndarray,
-    ) -> shapely.geometry.MultiPolygon:
+    ) -> MultiPolygon:
         """Convert masks to polygons."""
         try:
             import rasterio  # pylint: disable=import-error, import-outside-toplevel
@@ -195,15 +195,15 @@ class Upload:
             mask=(mask > 0),
             transform=rasterio.Affine(1.0, 0, 0, 0, 1.0, 0),
         ):
-            all_polygons.append(shapely.geometry.shape(shape))
+            all_polygons.append(gen_shape(shape))
 
-        polygon = shapely.geometry.MultiPolygon(all_polygons)
+        polygon = MultiPolygon(all_polygons)
         if not polygon.is_valid:
             polygon = polygon.buffer(0)
             # Sometimes buffer() converts a simple Multipolygon to just a Polygon,
             # need to keep it a Multi throughout
             if polygon.type == "Polygon":
-                polygon = shapely.geometry.MultiPolygon([polygon])
+                polygon = MultiPolygon([polygon])
         return polygon
 
     @staticmethod
@@ -413,6 +413,7 @@ class Upload:
 
         return entry
 
+    @handle_exception
     def create_datapoints(
         self,
         storage_id: str,
@@ -491,6 +492,7 @@ class Upload:
 
         return asyncio.run(self._create_datapoints(storage_id, points, is_ground_truth))
 
+    @handle_exception
     def create_datapoint_from_masks(
         self,
         storage_id: str,

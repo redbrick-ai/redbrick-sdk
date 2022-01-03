@@ -1,18 +1,19 @@
 """Container for low-level methods to communicate with API."""
 
-from .client import RBClient
-from .export import ExportControllerInterface
-from .upload import UploadControllerInterface
-from .labeling import LabelingControllerInterface
-from .learning import LearningControllerInterface, LearningController2Interface
-from .project import ProjectRepoInterface
-
 
 class RBContext:
     """Basic context for accessing low level functionality."""
 
     def __init__(self, api_key: str, url: str) -> None:
         """Construct RedBrick client singleton."""
+        # pylint: disable=import-outside-toplevel
+        from .client import RBClient
+        from .export import ExportControllerInterface
+        from .upload import UploadControllerInterface
+        from .labeling import LabelingControllerInterface
+        from .learning import LearningControllerInterface, LearningController2Interface
+        from .project import ProjectRepoInterface
+
         self.client = RBClient(api_key, url)
 
         self.export: ExportControllerInterface
