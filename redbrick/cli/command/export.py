@@ -30,9 +30,15 @@ class CLIExportController(CLIExportInterface):
         parser.add_argument(
             "--format",
             "-f",
-            choices=[self.FORMAT_REDBRICK, self.FORMAT_COCO, self.FORMAT_MASK],
+            choices=[
+                self.FORMAT_REDBRICK,
+                self.FORMAT_COCO,
+                self.FORMAT_MASK,
+                self.FORMAT_NIFTI,
+            ],
             help="Export format (Default: "
-            + f"{self.FORMAT_MASK} if project type is {LabelType.IMAGE_SEGMENTATION} "
+            + f"{self.FORMAT_MASK} if project type is {LabelType.IMAGE_SEGMENTATION}, "
+            + f"{self.FORMAT_NIFTI} if project type is {LabelType.DICOM_SEGMENTATION}, "
             + f"else {self.FORMAT_REDBRICK})",
         )
         parser.add_argument(
@@ -80,15 +86,36 @@ class CLIExportController(CLIExportInterface):
     def handle_export(self) -> None:
         """Handle empty sub command."""
         # pylint: disable=too-many-statements, too-many-locals, too-many-branches, protected-access
+
+        from redbrick.export.public import (  # pylint: disable=import-outside-toplevel
+            Export,
+        )
+
         format_type = (
             self.args.format
             if self.args.format
             else (
                 self.FORMAT_MASK
                 if self.project.project.project_type == LabelType.IMAGE_SEGMENTATION
+                else self.FORMAT_NIFTI
+                if self.project.project.project_type == LabelType.DICOM_SEGMENTATION
                 else self.FORMAT_REDBRICK
             )
         )
+        if (
+            format_type == self.FORMAT_MASK
+            and self.project.project.project_type != LabelType.IMAGE_SEGMENTATION
+        ):
+            raise Exception(
+                f"{self.FORMAT_MASK} is available for {LabelType.IMAGE_SEGMENTATION} projects."
+            )
+        if (
+            format_type == self.FORMAT_NIFTI
+            and self.project.project.project_type != LabelType.DICOM_SEGMENTATION
+        ):
+            raise Exception(
+                f"{self.FORMAT_NIFTI} is available for {LabelType.DICOM_SEGMENTATION} projects."
+            )
         if (
             self.args.type not in (self.TYPE_LATEST, self.TYPE_GROUNDTRUTH)
             and re.match(
@@ -182,16 +209,18 @@ class CLIExportController(CLIExportInterface):
 
         os.makedirs(export_dir, exist_ok=True)
 
+        cli_data = [
+            {key: value for key, value in task.items() if key != "itemsPresigned"}
+            for task in data
+        ]
         if format_type == self.FORMAT_MASK:
-            # pylint: disable=import-outside-toplevel
-            from redbrick.export.public import Export
-
             mask_dir = os.path.join(export_dir, "masks")
             class_map = os.path.join(export_dir, "class_map.json")
             datapoint_map = os.path.join(export_dir, "datapoint_map.json")
+            shutil.rmtree(mask_dir, ignore_errors=True)
             os.makedirs(mask_dir, exist_ok=True)
             Export._export_png_mask_data(
-                data,
+                cli_data,
                 taxonomy,
                 mask_dir,
                 class_map,
@@ -202,6 +231,14 @@ class CLIExportController(CLIExportInterface):
             print_info(f"Exported: {class_map}")
             print_info(f"Exported: {datapoint_map}")
             print_info(f"Exported masks to: {mask_dir}")
+        elif format_type == self.FORMAT_NIFTI:
+            nifti_dir = os.path.join(export_dir, "nifti")
+            shutil.rmtree(nifti_dir, ignore_errors=True)
+            os.makedirs(nifti_dir, exist_ok=True)
+            task_map = os.path.join(export_dir, "tasks.json")
+            Export._export_nifti_label_data(cli_data, nifti_dir, task_map)
+            print_info(f"Exported: {task_map}")
+            print_info(f"Exported nifti to: {nifti_dir}")
         else:
             export_path = os.path.join(
                 export_dir,
@@ -216,9 +253,9 @@ class CLIExportController(CLIExportInterface):
                 {
                     key: value
                     for key, value in task.items()
-                    if key not in ("currentStageName", "itemsPresigned", "labelsPath")
+                    if key not in ("currentStageName", "labelsPath")
                 }
-                for task in data
+                for task in cli_data
             ]
             output = (
                 coco_converter(cleaned_data, taxonomy, cached_dimensions)
