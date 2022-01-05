@@ -49,7 +49,7 @@ class UploadRepo(UploadControllerInterface):
         Name must be unique in the project.
         """
         query_string = """
-            mutation(
+            mutation createDatapointSDK(
                 $orgId: UUID!
                 $projectId: UUID!
                 $items: [String!]!
@@ -85,6 +85,57 @@ class UploadRepo(UploadControllerInterface):
             aio_client, query_string, query_variables
         )
         return response.get("createDatapoint", {})
+
+    async def item_upload_async(
+        self,
+        aio_client: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        storage_id: str,
+        data_type: str,
+        task_type: str,
+        file_path: str,
+        file_name: str,
+        file_type: str,
+        is_ground_truth: bool = False,
+    ) -> Dict:
+        """Upload an item."""
+        query_string = """
+            mutation itemListUploadSuccessSDK(
+                $orgId: UUID!
+                $projectId: UUID!
+                $payload: ItemsListUploadSuccessInput!
+            ) {
+                itemListUploadSuccess(
+                    orgId: $orgId
+                    projectId: $projectId
+                    payload: $payload
+                ) {
+                    ok
+                }
+            }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "payload": {
+                "orgId": org_id,
+                "projectId": project_id,
+                "filePath": file_path,
+                "fileName": file_name,
+                "fileType": file_type,
+                "uploadId": project_id,
+                "dataType": data_type,
+                "taskType": task_type,
+                "storageId": storage_id,
+                "isGroundTruth": is_ground_truth,
+            },
+        }
+        response = await self.client.execute_query_async(
+            aio_client, query_string, query_variables
+        )
+        return response.get("itemListUploadSuccess", {})
 
     def items_upload_presign(
         self, org_id: str, project_id: str, files: List[str], file_type: List[str]

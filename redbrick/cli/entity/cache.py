@@ -19,6 +19,7 @@ class CLICache:
     _conf: CLIConfiguration
 
     _cache_name: str
+    _fixed_cache_name: str = "sdk-cache"
 
     CACHE_LIFETIME: int = 86400
 
@@ -45,9 +46,13 @@ class CLICache:
             raise Exception(f"Not a directory {self._cache_dir}")
         return False
 
-    def cache_path(self, *path: str) -> str:
+    def cache_path(self, *path: str, fixed_cache: bool = False) -> str:
         """Get cache file path."""
-        path_dir = os.path.join(self._cache_dir, self._cache_name, *path[:-1])
+        path_dir = os.path.join(
+            self._cache_dir,
+            self._fixed_cache_name if fixed_cache else self._cache_name,
+            *path[:-1],
+        )
         os.makedirs(path_dir, exist_ok=True)
         return os.path.join(path_dir, path[-1])
 
@@ -56,8 +61,11 @@ class CLICache:
         try:
             prev_timestamp = self._conf.get_option(entity, "refresh", "0")
             timestamp = int(datetime.utcnow().timestamp())
+            prev_version = self._conf.get_option(entity, "version")
             if (
                 prev_timestamp
+                and prev_version
+                and prev_version == sdk_version
                 and timestamp - int(prev_timestamp) <= self.CACHE_LIFETIME
             ):
                 cache_file = self.cache_path(f"{entity}.pickle")
@@ -73,6 +81,7 @@ class CLICache:
         self._conf.set_option(
             entity, "refresh", str(int(datetime.utcnow().timestamp()))
         )
+        self._conf.set_option(entity, "version", sdk_version)
 
         cache_file = self.cache_path(f"{entity}.pickle")
 
@@ -83,12 +92,16 @@ class CLICache:
             self._conf.save()
 
     def get_data(
-        self, name: str, cache_hash: Optional[str], json_data: bool = True
+        self,
+        name: str,
+        cache_hash: Optional[str],
+        json_data: bool = True,
+        fixed_cache: bool = False,
     ) -> Optional[Union[str, Dict, List]]:
         """Get cache data."""
         if cache_hash is None:
             return None
-        cache_file = self.cache_path(name)
+        cache_file = self.cache_path(name, fixed_cache=fixed_cache)
         if os.path.isfile(cache_file):
             with open(cache_file, "rb") as file_:
                 data = file_.read()
@@ -97,9 +110,11 @@ class CLICache:
                 return json.loads(data) if json_data else data.decode()
         return None
 
-    def set_data(self, name: str, entity: Union[str, Dict, List]) -> str:
+    def set_data(
+        self, name: str, entity: Union[str, Dict, List], fixed_cache: bool = False
+    ) -> str:
         """Set cache data."""
-        cache_file = self.cache_path(name)
+        cache_file = self.cache_path(name, fixed_cache=fixed_cache)
         data = zlib.compress(
             (entity if isinstance(entity, str) else json.dumps(entity)).encode()
         )
@@ -113,7 +128,12 @@ class CLICache:
         if not self.exists:
             return
 
-        caches = os.listdir(self._cache_dir)
+        caches = list(
+            filter(
+                lambda cache: cache != self._fixed_cache_name,
+                os.listdir(self._cache_dir),
+            )
+        )
         if not all_caches:
             caches = [cache for cache in caches if cache != self._cache_name]
 

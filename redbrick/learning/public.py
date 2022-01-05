@@ -1,7 +1,7 @@
 """Public interface to learning module."""
 import json
 import asyncio
-from typing import Dict, List, Optional, Tuple, Callable, Any, Union
+from typing import Dict, List, Optional, Tuple, Callable, Any, Union, TypeVar, cast
 from functools import partial, wraps
 from copy import deepcopy
 import aiohttp
@@ -20,8 +20,10 @@ from redbrick.utils.logging import (
     handle_exception,
 )
 
+Func = TypeVar("Func", bound=Callable[..., Any])
 
-def check_learning_stage(func: Callable) -> Callable:
+
+def check_learning_stage(func: Func) -> Func:
     """Implement decorator to check if active learning is enabled for current project."""
 
     @wraps(func)
@@ -30,7 +32,7 @@ def check_learning_stage(func: Callable) -> Callable:
             raise Exception("No stage available for active learning in this project.")
         return func(obj, *args, **kwargs)
 
-    return wrap
+    return cast(Func, wrap)
 
 
 class Learning:

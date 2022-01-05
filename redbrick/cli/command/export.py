@@ -242,9 +242,11 @@ class CLIExportController(CLIExportInterface):
             files_dir = os.path.join(export_dir, "images")
         elif project_type.startswith("VIDEO_"):
             files_dir = os.path.join(export_dir, "videos")
+        elif project_type.startswith("DICOM_"):
+            files_dir = os.path.join(export_dir, "dicom")
         else:
             print_warning(
-                "Project data type needs to be IMAGE or VIDEO to export files"
+                "Project data type needs to be IMAGE, VIDEO or DICOM to export files"
             )
             return
 

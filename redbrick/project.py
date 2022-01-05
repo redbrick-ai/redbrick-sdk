@@ -49,6 +49,7 @@ class RBProject:
         self._stages: List[Dict]
         self._td_type: str
         self._taxonomy_name: str
+        self._project_url: str
 
         # check if project exists on backend to validate
         self._get_project()
@@ -98,6 +99,15 @@ class RBProject:
         Retrieves the project name.
         """
         return self._project_name
+
+    @property
+    def url(self) -> str:
+        """
+        Read only property.
+
+        Retrieves the project URL.
+        """
+        return self._project_url
 
     @property
     def taxonomy_name(self) -> str:
@@ -153,6 +163,7 @@ class RBProject:
         self._td_type = project["tdType"]
         self._taxonomy_name = project["taxonomy"]["name"]
         self._stages = self.context.project.get_stages(self.org_id, self.project_id)
+        self._project_url = project["projectUrl"]
 
     def __str__(self) -> str:
         """Get string representation of RBProject object."""

@@ -4,10 +4,11 @@ import uuid
 import asyncio
 import os
 from copy import deepcopy
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import json
 import requests
 
+import tenacity
 import tqdm
 import aiofiles
 import aiohttp
@@ -20,7 +21,8 @@ from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import print_error, print_info, handle_exception
-from redbrick.utils.segmentation import get_file_type, check_mask_map_format
+from redbrick.utils.segmentation import check_mask_map_format
+from redbrick.utils.files import get_file_type
 
 
 class Upload:
@@ -110,6 +112,53 @@ class Upload:
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return tasks
 
+    async def _item_upload(
+        self,
+        session: aiohttp.ClientSession,
+        storage_id: str,
+        file_name: str,
+        file_path: str,
+        is_ground_truth: bool,
+    ) -> Dict:
+        """Try to upload an item."""
+        try:
+            data_type, task_type = str(self.project_type.value).split("_", 1)
+            response = await self.context.upload.item_upload_async(
+                session,
+                self.org_id,
+                self.project_id,
+                storage_id,
+                data_type,
+                task_type,
+                file_path,
+                file_name,
+                get_file_type(file_path)[1],
+                is_ground_truth,
+            )
+            assert response.get("ok"), "Failed to create task"
+            return {"name": file_name, "filePath": file_path, "response": response}
+        except Exception as error:  # pylint:disable=broad-except
+            print_error(error)
+            return {"name": file_name, "filePath": file_path, "error": error}
+
+    async def _items_upload(
+        self, storage_id: str, files: List[Tuple[str, str]], is_ground_truth: bool
+    ) -> List[Dict]:
+        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = [
+                self._item_upload(
+                    session, storage_id, file_name, file_path, is_ground_truth
+                )
+                for file_name, file_path in files
+            ]
+            tasks = await gather_with_concurrency(
+                MAX_CONCURRENCY, coros, "Creating datapoints"
+            )
+
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        return tasks
+
     def _generate_upload_presigned_url(
         self, files: List[str], file_type: List[str]
     ) -> List[Dict]:
@@ -159,15 +208,20 @@ class Upload:
         """
         invalid = []
         if not (isinstance(items, list) and items):
-            error = "`items` must be a list of urls (one for image and multiple for videoframes)"
-            print_error(error)
-            return [error]
+            raise ValueError(
+                "`items` must be a list of urls (one for image and multiple for videoframes)"
+            )
         for item in items:
-            if not (isinstance(item, str) and item and os.path.exists(item)):
+            if not (isinstance(item, str) and item and os.path.isfile(item)):
                 invalid += [item]
+                print_error(f"{item} is an invalid path")
+                continue
+            try:
+                get_file_type(item)
+            except ValueError as error:
+                invalid += [item]
+                print_error(error)
 
-        if invalid:
-            print_error(f"{invalid} is an invalid path(s), skipping.")
         return invalid
 
     @staticmethod
@@ -207,8 +261,13 @@ class Upload:
         return polygon
 
     @staticmethod
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
+        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+    )
     def _upload_image_to_presigned(
-        presigned_url: str, image_filepath: str, file_type: str
+        presigned_url: str, file_path: str, file_type: str
     ) -> None:
         """
         Upload a single image to s3 using the pre-signed url.
@@ -218,75 +277,61 @@ class Upload:
         presigned_url: str
             The URL to upload to.
 
-        image_filepath: str
+        file_path: str
             Local filepath of file to upload.
 
         file_type: str
             MIME filetype.
         """
-        with open(image_filepath, "rb") as file:
-
-            # Put image, re-try 2 times if failure
-            tries = 0
-            while tries < 3:
-                try:
-                    requests.put(
-                        presigned_url,
-                        data=file,
-                        headers={"Content-Type": file_type},
-                    )
-                    break
-                except requests.exceptions.RequestException:
-                    print_error(f"File upload failed {image_filepath}, re-trying")
-                    tries += 1
+        with open(file_path, "rb") as file_:
+            try:
+                requests.put(
+                    presigned_url, data=file_, headers={"Content-Type": file_type}
+                )
+            except requests.exceptions.RequestException as err:
+                raise ValueError(f"Error in uploading {file_path} to RedBrick") from err
 
     @staticmethod
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
+        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+    )
     async def _upload_image_to_presigned_async(
         session: aiohttp.ClientSession,
         presigned_url: str,
-        image_filepath: str,
+        file_path: str,
         file_type: str,
     ) -> None:
         """
-        Upload a single image to s3 using the pre-signed url using asyncio.
+        Upload a single file to s3 using the pre-signed url using asyncio.
 
         Parameters
         ------------
         presigned_url: str
             The URL to upload to.
 
-        image_filepath: str
+        file_path: str
             Local filepath of file to upload.
 
         file_type: str
             MIME filetype.
         """
-        async with aiofiles.open(image_filepath, mode="rb") as file:  # type: ignore
-            contents = await file.read()
+        async with aiofiles.open(file_path, mode="rb") as file_:  # type: ignore
+            contents = await file_.read()
             headers = {"Content-Type": file_type}
 
-            # Put image, re-try 2 times if failure
-            tries = 0
-            while tries < 3:
-                try:
-                    async with session.put(
-                        presigned_url, headers=headers, data=contents
-                    ) as response:
-                        if str(response.status) != "200":
-                            raise ValueError(
-                                f"Error in uploading {image_filepath} to RedBrick"
-                            )
-                    break
-                except (aiohttp.ClientConnectionError, IOError):
-                    print_error(f"{image_filepath} failed to upload, re-trying.")
-                    await asyncio.sleep(1)
-                    tries += 1
+            async with session.put(
+                presigned_url, headers=headers, data=contents
+            ) as response:
+                if response.status != 200:
+                    raise ValueError(f"Error in uploading {file_path} to RedBrick")
 
-    def _upload_image_items_to_s3(self, items: List[str]) -> List[Dict]:
+    async def _upload_items_to_s3(self, items: List[str]) -> List[Dict]:
         """
-        Upload an image items list to RedBrick storage.
+        Upload an items list to RedBrick Storage.
 
-        Creates the presigned url using only the image name (not including
+        Creates the presigned url using only the file name (not including
         any directory path before). This will store the image in remote
         without the directory information in the name.
 
@@ -301,56 +346,28 @@ class Upload:
             Same return value as self._generate_upload_presigned_url
         """
         # Get the presigned url
-        file_type = get_file_type(items[0])
-        upload_items = [
-            os.path.split(items[0])[-1]
-        ]  # create presigned url, with only filename
-        presigned_items = self._generate_upload_presigned_url(
-            upload_items, [file_type[-1]]
-        )
+        file_types = [get_file_type(item)[1] for item in items]
 
-        # Upload the image to s3
-        Upload._upload_image_to_presigned(
-            presigned_items[0]["presignedUrl"], items[0], file_type[-1]
-        )
-        return presigned_items
-
-    async def _upload_video_items_to_s3(self, items: List[str]) -> List[Dict]:
-        """
-        Upload a video items list to RedBrick Storage.
-
-        See Also
-        ---------
-        ``_upload_image_items_to_s3``
-        """
-        # Get the presigned url
-        file_types = []
-        for item in items:
-            file_types += [get_file_type(item)[-1]]
-
-        upload_items = []
-        for item in items:
-            upload_items += [
-                os.path.split(item)[-1]
-            ]  # create presigned url, with only filename
+        # create presigned url (with only filename if full_item_path is False, else full path)
+        upload_items = [os.path.split(item)[-1] for item in items]
 
         presigned_items = self._generate_upload_presigned_url(upload_items, file_types)
 
         conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
-            coros = []
-            # Upload the image frames to s3
-            for i, _ in enumerate(items):
-                coros.append(
-                    Upload._upload_image_to_presigned_async(
-                        session,
-                        presigned_items[i]["presignedUrl"],
-                        items[i],
-                        file_types[i],
-                    )
+            coros = [
+                Upload._upload_image_to_presigned_async(
+                    session,
+                    presigned_items[idx]["presignedUrl"],
+                    item,
+                    file_types[idx],
                 )
-
-            await gather_with_concurrency(20, coros, "Upload video items to RedBrick")
+                for idx, item in enumerate(items)
+            ]
+            # Upload the items to s3
+            await gather_with_concurrency(
+                20, coros, "Uploading items to RedBrick" if len(items) > 1 else None
+            )
 
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return presigned_items
@@ -361,7 +378,7 @@ class Upload:
     ) -> Dict:
         """Convert a mask to rbai datapoint format."""
         # Convert 3D mask into a series of 2D masks for each object
-        mask_2d_stack = np.array([])
+        mask_2d_stack: np.ndarray = np.array([])
         mask_2d_categories = []
         for _, category in enumerate(class_map):
             mask_2d = np.zeros((mask.shape[0], mask.shape[1]))
@@ -458,33 +475,21 @@ class Upload:
             we will assign the "items" path to it.
 
         """
-        if str(self.project_type.value).startswith("IMAGE_"):
-            data_type = "image"
-        elif str(self.project_type.value).startswith("VIDEO_"):
-            data_type = "video"
-        else:
-            raise NotImplementedError(
-                "create_datapoints supports only IMAGE and VIDEO project types"
-            )
         # Check if user wants to do a direct upload
         if storage_id == StorageMethod.REDBRICK:
-            print_info(f"Uploading {data_type} items")
+            print_info("Uploading datapoints")
             for point in tqdm.tqdm(points):
                 # check path of items, if invalid, skip
                 invalid = Upload._check_validity_of_items(point.get("items"))
                 if invalid:
                     continue
 
-                # upload items to s3
-                presigned_items = (
-                    self._upload_image_items_to_s3(point["items"])
-                    if data_type == "image"
-                    else asyncio.run(self._upload_video_items_to_s3(point["items"]))
-                )
-
                 # update points dict with correct information
                 if "name" not in point:
                     point["name"] = point["items"][0]
+
+                # upload items to s3
+                presigned_items = asyncio.run(self._upload_items_to_s3(point["items"]))
 
                 point["items"] = [
                     presigned_item["filePath"] for presigned_item in presigned_items
