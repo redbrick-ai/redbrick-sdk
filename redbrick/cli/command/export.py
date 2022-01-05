@@ -279,9 +279,11 @@ class CLIExportController(CLIExportInterface):
             files_dir = os.path.join(export_dir, "images")
         elif project_type.startswith("VIDEO_"):
             files_dir = os.path.join(export_dir, "videos")
+        elif project_type.startswith("DICOM_"):
+            files_dir = os.path.join(export_dir, "dicom")
         else:
             print_warning(
-                "Project data type needs to be IMAGE or VIDEO to export files"
+                "Project data type needs to be IMAGE, VIDEO or DICOM to export files"
             )
             return
 
@@ -291,34 +293,37 @@ class CLIExportController(CLIExportInterface):
         files = []
         for task in data:
             if project_type.startswith("IMAGE_"):
-                fill_index = 0
                 task_dir = files_dir
-                task_name = os.path.basename(task.get("name", ""))
+                items = [
+                    re.sub(r"[^\w.]+", "-", os.path.basename(task.get("name", "")))
+                    or task["taskId"]
+                ]
+                fill_index = 0
             else:
-                fill_index = len(str(len(task["items"])))
                 task_dir = uniquify_path(
                     os.path.join(
                         files_dir,
                         re.sub(
                             r"\W+",
                             "-",
-                            os.path.splitext(os.path.basename(task.get("name", "")))[0],
+                            os.path.basename(task.get("name", "")).split(".", 1)[0],
                         )
                         or task["taskId"],
                     )
                 )
                 os.makedirs(task_dir, exist_ok=True)
-                task_name = ""
+                items = [
+                    re.sub(r"[^\w.]+", "-", os.path.basename(item))
+                    for item in task["items"]
+                ]
+                fill_index = (
+                    0
+                    if all(items) and len(items) == len(set(items))
+                    else len(str(len(items)))
+                )
 
-            for index, (item, url) in enumerate(
-                zip(task["items"], task["itemsPresigned"])
-            ):
-                if not task_name:
-                    task_name = re.sub(r"[^\w.]+", "-", os.path.basename(item))
-                    if not task_name:
-                        continue
-
-                file_name, file_ext = os.path.splitext(task_name)
+            for index, (item, url) in enumerate(zip(items, task["itemsPresigned"])):
+                file_name, file_ext = os.path.splitext(item)
                 files.append(
                     (
                         url,
@@ -330,7 +335,7 @@ class CLIExportController(CLIExportInterface):
                                 if fill_index
                                 else ""
                             )
-                            + (file_ext if file_ext else ".jpg"),
+                            + file_ext,
                         ),
                     )
                 )
