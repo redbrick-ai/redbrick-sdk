@@ -30,6 +30,7 @@ class ProjectRepo(ProjectRepoInterface):
                     taxonomy {
                         name
                     }
+                    projectUrl
                 }
             }
         """
@@ -82,6 +83,7 @@ class ProjectRepo(ProjectRepoInterface):
                     projectId
                     name
                     desc
+                    projectUrl
                 }
                 stages {
                     stageName
@@ -130,6 +132,7 @@ class ProjectRepo(ProjectRepoInterface):
                     projectId
                     status
                     desc
+                    projectUrl
                 }
             }
         """

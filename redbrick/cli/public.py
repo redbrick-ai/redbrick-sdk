@@ -11,6 +11,7 @@ from redbrick.cli.command import (
     CLIInfoController,
     CLIExportController,
     CLIPruneController,
+    CLIUploadController,
 )
 from redbrick.utils.logging import print_warning, handle_exception
 
@@ -40,6 +41,9 @@ class CLIController(CLIInterface):
         self.prune = CLIPruneController(
             command.add_parser(self.PRUNE, help="Remove old export files")
         )
+        self.upload = CLIUploadController(
+            command.add_parser(self.UPLOAD, help="Upload files to a project")
+        )
 
     def handle_command(self, args: argparse.Namespace) -> None:
         """CLI command main handler."""
@@ -55,6 +59,8 @@ class CLIController(CLIInterface):
             self.export.handler(args)
         elif args.command == self.PRUNE:
             self.prune.handler(args)
+        elif args.command == self.UPLOAD:
+            self.upload.handler(args)
         else:
             raise argparse.ArgumentError(None, "")
 

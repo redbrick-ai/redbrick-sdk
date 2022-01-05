@@ -166,6 +166,21 @@ class CLIPruneInterface(ABC):
         """Handle empty sub command."""
 
 
+class CLIUploadInterface(ABC):
+    """CLI upload interface."""
+
+    args: Namespace
+    project: CLIProject
+
+    @abstractmethod
+    def handler(self, args: Namespace) -> None:
+        """Handle upload command."""
+
+    @abstractmethod
+    def handle_upload(self) -> None:
+        """Handle empty sub command."""
+
+
 class CLIInterface(ABC):
     """Main CLI Interface."""
 
@@ -175,6 +190,7 @@ class CLIInterface(ABC):
     info: CLIInfoInterface
     export: CLIExportInterface
     prune: CLIPruneInterface
+    upload: CLIUploadInterface
 
     CONFIG = "config"
     INIT = "init"
@@ -182,6 +198,7 @@ class CLIInterface(ABC):
     INFO = "info"
     EXPORT = "export"
     PRUNE = "prune"
+    UPLOAD = "upload"
 
     @abstractmethod
     def handle_command(self, args: Namespace) -> None:

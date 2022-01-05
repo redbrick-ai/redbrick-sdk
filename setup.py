@@ -23,6 +23,7 @@ install_requires = [
     "halo==0.0.31",
     "nest-asyncio==1.5.4",
     "tenacity==8.0.1",
+    "natsort==8.0.2",
 ]
 
 setup(

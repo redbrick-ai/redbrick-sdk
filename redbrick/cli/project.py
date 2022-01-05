@@ -148,4 +148,6 @@ class CLIProject:
 
         self.conf.save()
 
-        print_info(f"Successfully initialized {project} in {self.path}")
+        print_info(
+            f"Successfully initialized {project} in {self.path}\nURL: {project.url}"
+        )

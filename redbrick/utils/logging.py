@@ -1,7 +1,7 @@
 """Logging functions."""
 import os
 import sys
-from typing import Callable, Union, Any
+from typing import Callable, Union, Any, TypeVar, cast
 import logging
 from functools import wraps
 
@@ -73,7 +73,10 @@ def print_error(text: Union[str, Exception]) -> None:
     logger.error(text)
 
 
-def handle_exception(func: Callable) -> Callable:
+Func = TypeVar("Func", bound=Callable[..., Any])
+
+
+def handle_exception(func: Func) -> Func:
     """Decorate generic exception handler.
 
     Catch and trace full exception if REDBRICK_SDK_DEBUG is set, else just print the error message.
@@ -92,4 +95,4 @@ def handle_exception(func: Callable) -> Callable:
             )
             sys.exit(1)
 
-    return wrap
+    return cast(Func, wrap)

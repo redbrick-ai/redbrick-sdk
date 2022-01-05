@@ -40,6 +40,7 @@ class CLIInfoController(CLIInfoInterface):
         project_data.append(f"Name: {project.name}")
         project_data.append(f"Type: {project.project_type.value}")
         project_data.append(f"Taxonomy: {project.taxonomy_name}")
+        project_data.append(f"URL: {project.url}")
 
         print_info("Organization:\n" + "\n".join(org_data))
         print_info("Project:\n" + "\n".join(project_data))

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import pytest
 
 from redbrick.common.enums import StorageMethod
-from redbrick.utils.segmentation import get_file_type
+from redbrick.utils.files import get_file_type
 from redbrick.upload.public import Upload
 from redbrick.tests.conftest import *  # pylint: disable=wildcard-import, unused-wildcard-import
 
@@ -75,7 +75,7 @@ def test_file_type_extraction_invalid() -> None:
 def test_items_validity() -> None:
     """Check invalid items."""
     # pylint: disable=protected-access
-    file_name = f"{uuid4()}.txt"
+    file_name = f"{uuid4()}.png"
     with open(file_name, "w", encoding="utf-8") as file_:
         file_.write("test")
 

@@ -1,11 +1,11 @@
 """Segmentation helper functions."""
 
-from typing import Dict, Tuple
+from typing import Dict, Any
 
 import numpy as np
 
 
-def check_mask_map_format(mask: np.ndarray, color_map: Dict):
+def check_mask_map_format(mask: np.ndarray, color_map: Dict) -> Any:
     """
     Validate format of masks.
 
@@ -14,7 +14,7 @@ def check_mask_map_format(mask: np.ndarray, color_map: Dict):
         - If all the values in mask, are present in color_map
     """
     if len(mask.shape) != 3 or mask.shape[2] != 3:
-        raise ValueError("Your mask must have shape (m, n, 3), not %s" % mask.shape)
+        raise ValueError(f"Your mask must have shape (m, n, 3), not {mask.shape}")
 
     if mask.dtype != np.uint8:
         raise ValueError(
@@ -32,28 +32,3 @@ def check_mask_map_format(mask: np.ndarray, color_map: Dict):
         & (mask[:, :, 2] in unique_color_map[:, 2])
     )
     return indexes
-
-
-def get_file_type(image_path: str) -> Tuple[str, str]:
-    """
-    Return the image file types.
-
-    Return
-    ------------
-    [file_ext, file_type]
-        file_ext: .png, .jpeg, .jpg etc.
-        file_type: this is the MIME file type e.g. image/png
-    """
-    file_ext = image_path.split(".")[-1]
-    if file_ext == "png":
-        file_type = "image/png"
-    elif file_ext in ["jpg", "jpeg"]:
-        file_type = "image/jpeg"
-    elif file_ext == "bmp":
-        file_type = "image/bmp"
-    else:
-        raise ValueError(
-            ".%s file type not supported! Only .png, .jpeg, and .jpg are supported. "
-            % file_ext
-        )
-    return file_ext, file_type
