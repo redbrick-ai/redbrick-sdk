@@ -140,6 +140,7 @@ class CLIExportInterface(ABC):
     FORMAT_REDBRICK = "redbrick"
     FORMAT_COCO = "coco"
     FORMAT_MASK = "mask"
+    FORMAT_NIFTI = "nifti"
 
     @abstractmethod
     def handler(self, args: Namespace) -> None:

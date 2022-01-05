@@ -471,6 +471,36 @@ class Export:
             max_hole_size,
         )
 
+    @staticmethod
+    def _export_nifti_label_data(
+        datapoints: List[Dict], nifti_dir: str, task_map: str
+    ) -> None:
+        files = []
+        for datapoint in datapoints:
+            files.append(
+                (
+                    datapoint["labelsPath"],
+                    os.path.join(nifti_dir, f"{datapoint['taskId']}.nii"),
+                )
+            )
+
+        paths: List[Optional[str]] = asyncio.run(download_files(files))
+
+        tasks = [
+            {
+                "filePath": path,
+                **{
+                    key: value
+                    for key, value in datapoint.items()
+                    if key not in ("currentStageName", "labelsPath")
+                },
+            }
+            for datapoint, path in zip(datapoints, paths)
+        ]
+
+        with open(task_map, "w", encoding="utf-8") as tasks_file:
+            json.dump(tasks, tasks_file, indent=2)
+
     @handle_exception
     def redbrick_nifti(
         self,
@@ -521,34 +551,9 @@ class Export:
         nifti_dir = os.path.join(destination, "nifti")
         os.makedirs(nifti_dir, exist_ok=True)
         print_info(f"Saving NIfTI files to {destination} directory")
-
-        files = []
-        for datapoint in datapoints:
-            files.append(
-                (
-                    datapoint["labelsPath"],
-                    os.path.join(nifti_dir, f"{datapoint['taskId']}.nii"),
-                )
-            )
-
-        paths: List[Optional[str]] = asyncio.run(download_files(files))
-
-        tasks = [
-            {
-                "filePath": path,
-                **{
-                    key: value
-                    for key, value in datapoint.items()
-                    if key not in ("currentStageName", "labelsPath")
-                },
-            }
-            for datapoint, path in zip(datapoints, paths)
-        ]
-
-        with open(
-            os.path.join(destination, "tasks.json"), "w", encoding="utf-8"
-        ) as tasks_file:
-            json.dump(tasks, tasks_file, indent=2)
+        Export._export_nifti_label_data(
+            datapoints, nifti_dir, os.path.join(destination, "tasks.json")
+        )
 
     @handle_exception
     def redbrick_format(
