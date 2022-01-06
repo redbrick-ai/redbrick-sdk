@@ -36,6 +36,7 @@ class RBClient:
         return {"ApiKey": self.api_key, "RB-SDK-Version": sdk_version}
 
     @tenacity.retry(
+        reraise=True,
         stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
         retry=tenacity.retry_if_not_exception_type(
@@ -55,6 +56,7 @@ class RBClient:
         return self._process_json_response(response.json(), raise_for_error)
 
     @tenacity.retry(
+        reraise=True,
         stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
         retry=tenacity.retry_if_not_exception_type(

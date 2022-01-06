@@ -107,6 +107,7 @@ def label_test_data(
 
     tasks: List[Dict] = []
     for attempt in tenacity.Retrying(
+        reraise=True,
         stop=tenacity.stop_after_attempt(10),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
         retry=tenacity.retry_if_not_exception_type(

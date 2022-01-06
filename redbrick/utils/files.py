@@ -40,7 +40,7 @@ def get_file_type(file_path: str) -> Tuple[str, str]:
         file_ext: png, jpeg, jpg etc.
         file_type: this is the MIME file type e.g. image/png
     """
-    file_ext = file_path.rsplit(".", 1)[-1].lower()
+    file_ext = file_path.split("?", 1)[0].rstrip("/").rsplit(".", 1)[-1].lower()
 
     if file_ext not in FILE_TYPES:
         raise ValueError(
@@ -53,7 +53,7 @@ def find_files_recursive(
     root: str, file_types: Set[str], multiple: bool = False
 ) -> List[List[str]]:
     """Find files recursively in a directory, that belong to a list of allowed file types."""
-    if not os.path.exists(root):
+    if not os.path.isdir(root):
         return []
 
     items = []
@@ -62,7 +62,6 @@ def find_files_recursive(
 
     for item in os.listdir(root):
         if item.startswith("."):
-            discard_list_items = True
             continue
         path = os.path.join(root, item)
         if os.path.isdir(path):
@@ -102,6 +101,7 @@ async def download_files(files: List[Tuple[str, str]]) -> List[Optional[str]]:
     """Download files from url to local path."""
 
     @tenacity.retry(
+        reraise=True,
         stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
         retry=tenacity.retry_if_not_exception_type(
