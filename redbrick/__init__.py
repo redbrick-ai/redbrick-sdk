@@ -8,7 +8,7 @@ To use the RedBrick SDK you need to create an API key. Please
 see this documentation for accomplishing that.
 https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key
 """
-
+import sys
 import asyncio
 
 import nest_asyncio  # type: ignore
@@ -28,6 +28,17 @@ from redbrick.utils.logging import print_info, handle_exception
 from .version_check import version_check
 
 __version__ = "1.0.0"
+
+# windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
+try:
+    if (
+        sys.version_info[0] == 3
+        and sys.version_info[1] >= 8
+        and sys.platform.startswith("win")
+    ):
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+except Exception:  # pylint: disable=broad-except
+    pass
 
 # if there is a running event loop, apply nest_asyncio
 try:

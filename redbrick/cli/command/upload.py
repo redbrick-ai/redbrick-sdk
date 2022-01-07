@@ -4,7 +4,6 @@ import re
 from argparse import ArgumentParser, Namespace
 
 import asyncio
-import tqdm
 
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIUploadInterface
@@ -90,30 +89,9 @@ class CLIUploadController(CLIUploadInterface):
                 continue
             points.append({"name": item_name, "items": items[:]})
 
-        print_info("Uploading datapoints")
-        for point in tqdm.tqdm(points):
-            # upload items to s3
-
-            presigned_items = asyncio.run(
-                project.upload._upload_items_to_s3(point["items"])
-            )
-
-            point["items"] = [
-                presigned_item["filePath"] for presigned_item in presigned_items
-            ]
-
-        if data_type == "VIDEO" and not multiple:
-            uploads = asyncio.run(
-                project.upload._items_upload(
-                    StorageMethod.REDBRICK,
-                    [(point["name"], point["items"][0]) for point in points],  # type: ignore
-                    False,
-                )
-            )
-        else:
-            uploads = asyncio.run(
-                project.upload._create_datapoints(StorageMethod.REDBRICK, points, False)
-            )
+        uploads = asyncio.run(
+            project.upload._create_tasks(StorageMethod.REDBRICK, points, False)
+        )
 
         for upload in uploads:
             if upload.get("response") or upload.get("error") == "Failed to create task":
