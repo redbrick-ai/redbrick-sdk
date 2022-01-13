@@ -10,7 +10,7 @@ install_requires = [
     "aiohttp==3.7.4",
     "cchardet==2.1.7",
     "aiodns==3.0.0",
-    "Pillow==8.3.2",
+    "Pillow==9.0.0",
     "shapely==1.8.0",
     "numpy>=1.15",
     "matplotlib>=3.2",
