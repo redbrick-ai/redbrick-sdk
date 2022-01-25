@@ -31,52 +31,56 @@ from redbrick.coco.coco_main import coco_converter
 
 
 def _parse_entry_latest(item: Dict) -> Dict:
-    task_id = item.get("taskId", "") or ""
-    task_data = item.get("latestTaskData", {}) or {}
-    datapoint = task_data.get("dataPoint", {}) or {}
-    items_presigned = datapoint.get("itemsPresigned", []) or []
-    items = datapoint.get("items", []) or []
-    name = datapoint.get("name", "") or ""
-    created_by = task_data.get("createdByEmail", "") or ""
-    labels = [
-        clean_rb_label(label)
-        for label in json.loads(task_data.get("labelsData", "[]") or "[]")
-    ]
+    try:
+        task_id = item["taskId"]
+        task_data = item["latestTaskData"]
+        datapoint = task_data["dataPoint"]
+        items_presigned = datapoint["itemsPresigned"]
+        items = datapoint["items"]
+        name = datapoint["name"]
+        created_by = task_data["createdByEmail"]
+        labels = [
+            clean_rb_label(label) for label in json.loads(task_data["labelsData"])
+        ]
 
-    return flat_rb_format(
-        labels,
-        items,
-        items_presigned,
-        name,
-        created_by,
-        task_id,
-        item.get("currentStageName", "") or "",
-        task_data.get("labelsPath"),
-    )
+        return flat_rb_format(
+            labels,
+            items,
+            items_presigned,
+            name,
+            created_by,
+            task_id,
+            item["currentStageName"],
+            task_data["labelsPath"],
+        )
+    except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
+        return {}
 
 
 def parse_output_entry(item: Dict) -> Dict:
     """Parse entry for output data."""
-    items_presigned = item.get("itemsPresigned", []) or []
-    items = item.get("items", []) or []
-    name = item.get("name", "") or ""
-    label_data = item.get("labelData", {}) or {}
-    created_by = label_data.get("createdByEmail", "") or ""
-    labels = [
-        clean_rb_label(label)
-        for label in json.loads(label_data.get("labelsData", "[]") or "[]")
-    ]
-    task = item.get("task", {}) or {}
-    return flat_rb_format(
-        labels,
-        items,
-        items_presigned,
-        name,
-        created_by,
-        task.get("taskId", "") or "",
-        "END",
-        label_data.get("labelsPath"),
-    )
+    try:
+        items_presigned = item["itemsPresigned"]
+        items = item["items"]
+        name = item["name"]
+        label_data = item["labelData"]
+        created_by = label_data["createdByEmail"]
+        labels = [
+            clean_rb_label(label) for label in json.loads(label_data["labelsData"])
+        ]
+        task = item["task"]
+        return flat_rb_format(
+            labels,
+            items,
+            items_presigned,
+            name,
+            created_by,
+            task["taskId"],
+            "END",
+            label_data["labelsPath"],
+        )
+    except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
+        return {}
 
 
 class Export:
@@ -109,7 +113,11 @@ class Export:
         with tqdm.tqdm(
             my_iter, unit=" datapoints", total=general_info["datapointCount"]
         ) as progress:
-            datapoints = [parse_output_entry(val) for val in progress]
+            datapoints = []
+            for val in progress:
+                task = parse_output_entry(val)
+                if task:
+                    datapoints.append(task)
             disable = progress.disable
             progress.disable = False
             progress.update(general_info["datapointCount"] - progress.n)
@@ -134,7 +142,11 @@ class Export:
         print_info("Downloading tasks")
 
         with tqdm.tqdm(my_iter, unit=" datapoints", total=datapoint_count) as progress:
-            datapoints = [_parse_entry_latest(val) for val in progress]
+            datapoints = []
+            for val in progress:
+                task = _parse_entry_latest(val)
+                if task:
+                    datapoints.append(task)
             disable = progress.disable
             progress.disable = False
             progress.update(datapoint_count - progress.n)
@@ -147,7 +159,11 @@ class Export:
         datapoint = self.context.export.get_datapoint_latest(
             self.org_id, self.project_id, task_id
         )
-        return [_parse_entry_latest(datapoint)], general_info["taxonomy"]
+        datapoints = []
+        task = _parse_entry_latest(datapoint)
+        if task:
+            datapoints.append(task)
+        return datapoints, general_info["taxonomy"]
 
     @staticmethod
     def _get_color(class_id: int) -> Any:
