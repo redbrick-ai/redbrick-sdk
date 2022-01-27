@@ -11,8 +11,6 @@ https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key
 import sys
 import asyncio
 
-import nest_asyncio  # type: ignore
-
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType, StorageMethod
 from redbrick.common.constants import (
@@ -38,19 +36,10 @@ try:
         and sys.version_info[1] >= 8
         and sys.platform.startswith("win")
     ):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.set_event_loop_policy(  # type: ignore
+            asyncio.WindowsSelectorEventLoopPolicy()  # pylint: disable=no-member
+        )
 except Exception:  # pylint: disable=broad-except
-    pass
-
-# if there is a running event loop, apply nest_asyncio
-try:
-    asyncio.get_running_loop()
-    nest_asyncio.apply()
-    print_info(
-        "Applying nest-asyncio to a running event loop, this likely means you're in a jupyter"
-        + " notebook and you can safely ignore this."
-    )
-except (RuntimeError, AttributeError):
     pass
 
 

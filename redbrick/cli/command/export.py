@@ -189,6 +189,7 @@ class CLIExportController(CLIExportInterface):
                     break
             data = [task] if task else []
 
+        loop = asyncio.get_event_loop()
         if format_type == self.FORMAT_COCO:
             compute_dims = [
                 task
@@ -197,7 +198,9 @@ class CLIExportController(CLIExportInterface):
                 or cached_dimensions[task["taskId"]] is None
             ]
             if compute_dims:
-                image_dimensions = asyncio.run(_get_image_dimension_map(compute_dims))
+                image_dimensions = loop.run_until_complete(
+                    _get_image_dimension_map(compute_dims)
+                )
                 for task_id, dimension in image_dimensions.items():
                     cached_dimensions[task_id] = dimension
 
@@ -269,7 +272,7 @@ class CLIExportController(CLIExportInterface):
 
         if self.args.with_files:
             try:
-                asyncio.run(self._download_files(data, export_dir))
+                loop.run_until_complete(self._download_files(data, export_dir))
             except Exception:  # pylint: disable=broad-except
                 print_error("Failed to download files")
 

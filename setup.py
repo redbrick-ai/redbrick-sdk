@@ -31,7 +31,6 @@ install_requires = [
     "rasterio==1.2.10; sys_platform=='linux'",
     "InquirerPy>=0.2.1, <=0.3.0",
     "halo==0.0.31",
-    "nest-asyncio==1.5.4",
     "tenacity==8.0.1",
     "natsort==8.0.2",
     "nibabel==3.2.1",

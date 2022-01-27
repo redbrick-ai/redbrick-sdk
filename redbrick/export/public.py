@@ -1,6 +1,4 @@
 """Public API to exporting."""
-
-
 import asyncio
 from typing import List, Dict, Optional, Tuple, Any
 from functools import partial
@@ -499,8 +497,8 @@ class Export:
                     os.path.join(nifti_dir, f"{datapoint['taskId']}.nii"),
                 )
             )
-
-        paths: List[Optional[str]] = asyncio.run(download_files(files))
+        loop = asyncio.get_event_loop()
+        paths: List[Optional[str]] = loop.run_until_complete(download_files(files))
 
         tasks = [
             {

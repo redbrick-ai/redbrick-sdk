@@ -1,9 +1,8 @@
 """CLI upload command."""
 import os
 import re
-from argparse import ArgumentParser, Namespace
-
 import asyncio
+from argparse import ArgumentParser, Namespace
 
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIUploadInterface
@@ -89,7 +88,8 @@ class CLIUploadController(CLIUploadInterface):
                 continue
             points.append({"name": item_name, "items": items[:]})
 
-        uploads = asyncio.run(
+        loop = asyncio.get_event_loop()
+        uploads = loop.run_until_complete(
             project.upload._create_tasks(StorageMethod.REDBRICK, points, False)
         )
 

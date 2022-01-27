@@ -1,5 +1,4 @@
 """Async utils."""
-
 import asyncio
 from typing import Awaitable, List, TypeVar, Optional, Iterable
 import tqdm.asyncio
