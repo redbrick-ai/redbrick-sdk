@@ -1,10 +1,23 @@
 """Repo for accessing export apis."""
+
 from typing import Optional, List, Dict, Tuple
 from datetime import datetime
-
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
-from redbrick.repo.shards import TAXONOMY_SHARD, LATEST_TASKDATA_SHARD
+
+
+LATEST_TASKDATA_SHARD = """
+    latestTaskData {
+        dataPoint {
+            name
+            itemsPresigned: items(presigned: true)
+            items(presigned: false)
+        }
+        createdByEmail
+        labelsData(interpolate: true)
+        labelsPath
+    }
+"""
 
 
 class ExportRepo(ExportControllerInterface):
@@ -27,28 +40,35 @@ class ExportRepo(ExportControllerInterface):
 
     def get_output_info(self, org_id: str, project_id: str) -> Dict:
         """Get info about the output labelset and taxonomy."""
-        query_string = (
-            """
+        query_string = """
         query ($orgId: UUID!, $name: String!){
             customGroup(orgId: $orgId, name:$name){
                 dataType
                 taskType
                 datapointCount
                 taxonomy {
-                    %s
-                    colorMap {
+                    name
+                    version
+                    categories {
                         name
-                        color
-                        classid
-                        trail
-                        taskcategory
+                        children {
+                            name
+                            classId
+                            children {
+                                name
+                                classId
+                                children {
+                                    name
+                                    classId
+                                }
+                            }
+                        }
                     }
                 }
             }
+
         }
         """
-            % TAXONOMY_SHARD
-        )
 
         # EXECUTE THE QUERY
         query_variables = {

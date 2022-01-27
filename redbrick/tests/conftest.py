@@ -40,7 +40,7 @@ def fixture_project_id() -> str:
 @pytest.fixture(name="context")
 def fixture_context(api_key: str, url: str) -> RBContext:
     """Get RBContext."""
-    return _populate_context(RBContext(api_key=api_key, url=url))
+    return _populate_context(RBContext(api_key, url))
 
 
 @pytest.fixture(name="org")

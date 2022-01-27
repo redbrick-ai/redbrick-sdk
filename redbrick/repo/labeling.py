@@ -76,44 +76,6 @@ class LabelingRepo(LabelingControllerInterface):
         tasks: List[Dict] = response["assignLabelingTasks"]
         return tasks
 
-    async def presign_labels_path(
-        self,
-        session: aiohttp.ClientSession,
-        org_id: str,
-        project_id: str,
-        task_id: str,
-        file_type: str,
-    ) -> Dict:
-        """Presign labels path."""
-        query = """
-        query presignLabelsPathSDK(
-            $orgId: UUID!
-            $projectId: UUID!
-            $taskId: UUID!
-            $fileType: String!
-        ) {
-            presignLabelsPath(
-                orgId: $orgId
-                projectId: $projectId
-                taskId: $taskId
-                fileType: $fileType
-            ) {
-                fileName
-                filePath
-                presignedUrl
-            }
-        }
-        """
-        variables = {
-            "orgId": org_id,
-            "projectId": project_id,
-            "taskId": task_id,
-            "fileType": file_type,
-        }
-        response = await self.client.execute_query_async(session, query, variables)
-        presigned: Dict = response["presignLabelsPath"]
-        return presigned
-
     async def put_labeling_results(
         self,
         session: aiohttp.ClientSession,
@@ -122,8 +84,6 @@ class LabelingRepo(LabelingControllerInterface):
         stage_name: str,
         task_id: str,
         labels_data: str,
-        labels_path: Optional[str] = None,
-        finished: bool = True,
     ) -> None:
         """Put Labeling results."""
         query = """
@@ -133,9 +93,8 @@ class LabelingRepo(LabelingControllerInterface):
         $stageName: String!
         $taskId: UUID!
         $elapsedTimeMs: Int!
-        $finished: Boolean!
         $labelsData: String
-        $labelsPath: String
+        $finished: Boolean!
         ) {
             putManualLabelingTaskAndLabels(
                 orgId: $orgId
@@ -143,9 +102,8 @@ class LabelingRepo(LabelingControllerInterface):
                 stageName: $stageName
                 taskId: $taskId
                 elapsedTimeMs: $elapsedTimeMs
-                finished: $finished
                 labelsData: $labelsData
-                labelsPath: $labelsPath
+                finished: $finished
             ) {
                 ok
             }
@@ -158,8 +116,7 @@ class LabelingRepo(LabelingControllerInterface):
             "stageName": stage_name,
             "taskId": task_id,
             "labelsData": labels_data,
-            "labelsPath": labels_path,
-            "finished": finished,
+            "finished": True,
             "elapsedTimeMs": 0,
         }
         await self.client.execute_query_async(session, query, variables)
