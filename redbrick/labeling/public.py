@@ -177,8 +177,7 @@ class Labeling:
         List[Dict]
             A list of tasks that failed the upload.
         """
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self._put_tasks(stage_name, tasks))
+        return asyncio.run(self._put_tasks(stage_name, tasks))
 
     @handle_exception
     def assign_task(self, stage_name: str, task_id: str, email: str) -> None:

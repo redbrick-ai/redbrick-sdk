@@ -173,8 +173,7 @@ class Learning:
 
         Return any tasks that experienced issues.
         """
-        loop = asyncio.get_event_loop()
-        temp = loop.run_until_complete(self._update_tasks(cycle, tasks))
+        temp = asyncio.run(self._update_tasks(cycle, tasks))
 
         # update cycle
         self.context.learning.set_cycle_status(
@@ -383,8 +382,7 @@ class Learning2:
                 task["priority"] = task["score"]
                 del task["score"]
 
-        loop = asyncio.get_event_loop()
-        temp = loop.run_until_complete(self._update_tasks2(tasks))
+        temp = asyncio.run(self._update_tasks2(tasks))
         return temp
 
     @handle_exception

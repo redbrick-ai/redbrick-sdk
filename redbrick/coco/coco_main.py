@@ -60,8 +60,7 @@ def coco_converter(
     coco_categories = rb2coco_categories_format(taxonomy)
 
     if image_dims_map is None:
-        loop = asyncio.get_event_loop()
-        image_dims_map = loop.run_until_complete(_get_image_dimension_map(datapoints))
+        image_dims_map = asyncio.run(_get_image_dimension_map(datapoints))
 
     images: List[Dict] = []
     annotations: List[Dict] = []

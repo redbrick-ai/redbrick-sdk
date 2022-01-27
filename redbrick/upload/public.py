@@ -1,4 +1,5 @@
 """Public interface to upload module."""
+
 import uuid
 import asyncio
 import os
@@ -529,8 +530,7 @@ class Upload:
             filtered_points = list(map(deepcopy, points))  # type: ignore
 
         if filtered_points:
-            loop = asyncio.get_event_loop()
-            created = loop.run_until_complete(
+            created = asyncio.run(
                 self._create_tasks(storage_id, filtered_points, is_ground_truth)
             )
 
@@ -585,7 +585,6 @@ class Upload:
         """
         check_mask_map_format(mask, class_map)
 
-        loop = asyncio.get_event_loop()
         if storage_id == StorageMethod.REDBRICK:
             _, file_type = get_file_type(image_path)
             upload_filename = str(uuid.uuid4())
@@ -606,7 +605,7 @@ class Upload:
             items = presigned_items[0]["filePath"]
             name = image_path
             datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-            return loop.run_until_complete(
+            return asyncio.run(
                 self._create_datapoints(storage_id, [datapoint_entry], False)
             )[0]
 
@@ -616,6 +615,6 @@ class Upload:
 
         # create datapoint
         datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-        return loop.run_until_complete(
+        return asyncio.run(
             self._create_datapoints(storage_id, [datapoint_entry], False)
         )[0]
