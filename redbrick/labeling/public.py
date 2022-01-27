@@ -4,6 +4,9 @@ import asyncio
 from typing import List, Dict, Optional
 from copy import deepcopy
 from functools import partial
+import gzip
+import requests
+
 import aiohttp
 import tqdm
 
@@ -104,6 +107,25 @@ class Labeling:
                     review_val,
                 )
             else:
+                labels_path: Optional[str] = None
+                task_blob = task.get("labelsBlob")
+                if task_blob and isinstance(task_blob, bytes):
+                    presigned = await self.context.labeling.presign_labels_path(
+                        session,
+                        self.org_id,
+                        self.project_id,
+                        task_id,
+                        "application/octet-stream",
+                    )
+                    labels_path = presigned["filePath"]
+                    requests.put(
+                        presigned["presignedUrl"],
+                        headers={
+                            "Content-Encoding": "gzip",
+                            "Content-Type": "application/octet-stream",
+                        },
+                        data=gzip.compress(task_blob),
+                    )
                 labels = task["labels"]
                 await self.context.labeling.put_labeling_results(
                     session,
@@ -112,6 +134,8 @@ class Labeling:
                     stage_name,
                     task_id,
                     json.dumps(labels),
+                    labels_path,
+                    not bool(task.get("draft")),
                 )
 
         except ValueError as error:
@@ -153,7 +177,8 @@ class Labeling:
         List[Dict]
             A list of tasks that failed the upload.
         """
-        return asyncio.run(self._put_tasks(stage_name, tasks))
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self._put_tasks(stage_name, tasks))
 
     @handle_exception
     def assign_task(self, stage_name: str, task_id: str, email: str) -> None:

@@ -15,6 +15,17 @@ class LabelingControllerInterface(ABC):
         """Get labeling tasks."""
 
     @abstractmethod
+    async def presign_labels_path(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_id: str,
+        file_type: str,
+    ) -> Dict:
+        """Presign labels path."""
+
+    @abstractmethod
     async def put_labeling_results(
         self,
         session: aiohttp.ClientSession,
@@ -23,6 +34,8 @@ class LabelingControllerInterface(ABC):
         stage_name: str,
         task_id: str,
         labels_data: str,
+        labels_path: Optional[str] = None,
+        finished: bool = True,
     ) -> None:
         """Put Labeling results."""
 

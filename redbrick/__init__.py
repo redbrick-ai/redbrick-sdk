@@ -11,23 +11,23 @@ https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key
 import sys
 import asyncio
 
-import nest_asyncio  # type: ignore
-
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType, StorageMethod
 from redbrick.common.constants import (
+    DEFAULT_REGION,
     DEFAULT_URL,
     ORG_API_HAS_CHANGED,
     PROJECT_API_HAS_CHANGED,
 )
 from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
+from redbrick.slicer import RBSlicer
 
 from redbrick.utils.logging import print_info, handle_exception
 
 from .version_check import version_check
 
-__version__ = "1.0.0"
+__version__ = "1.1.0b1"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -36,19 +36,10 @@ try:
         and sys.version_info[1] >= 8
         and sys.platform.startswith("win")
     ):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.set_event_loop_policy(  # type: ignore
+            asyncio.WindowsSelectorEventLoopPolicy()  # pylint: disable=no-member
+        )
 except Exception:  # pylint: disable=broad-except
-    pass
-
-# if there is a running event loop, apply nest_asyncio
-try:
-    asyncio.get_running_loop()
-    nest_asyncio.apply()
-    print_info(
-        "Applying nest-asyncio to a running event loop, this likely means you're in a jupyter"
-        + " notebook and you can safely ignore this."
-    )
-except RuntimeError:
     pass
 
 
@@ -101,7 +92,7 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
             "Your second argument looks like a url, " + ORG_API_HAS_CHANGED
         )
 
-    context = _populate_context(RBContext(api_key, url))
+    context = _populate_context(RBContext(api_key=api_key, url=url))
 
     return RBOrganization(context, org_id)
 
@@ -139,5 +130,14 @@ def get_project(
             "Your second argument looks like a url, " + PROJECT_API_HAS_CHANGED
         )
 
-    context = _populate_context(RBContext(api_key, url))
+    context = _populate_context(RBContext(api_key=api_key, url=url))
     return RBProject(context, org_id, project_id)
+
+
+@handle_exception
+def get_slicer(
+    client_id: str, region: str = DEFAULT_REGION, url: str = DEFAULT_URL
+) -> RBSlicer:
+    """Interact with a RedBrick task in 3D Slicer application."""
+    context = _populate_context(RBContext(url=url))
+    return RBSlicer(context, region, client_id, url)

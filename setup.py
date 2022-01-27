@@ -4,6 +4,16 @@ from setuptools import setup, find_packages  # type: ignore
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+# Extract from file as py36 does not support setuptools cfg metadata version
+with open("redbrick/__init__.py", "r", encoding="utf-8") as fh:
+    lines = fh.readlines()
+    for line in lines:
+        if line.strip().replace(" ", "").startswith("__version__="):
+            version = line.split("=")[1].split("#")[0].strip().strip("\"'")
+            break
+    else:
+        raise Exception("Could not find version")
+
 install_requires = [
     "requests==2.23.0",
     "tqdm==4.50.0",
@@ -14,24 +24,26 @@ install_requires = [
     "shapely==1.8.0",
     "numpy>=1.15",
     "matplotlib>=3.2",
-    "scikit-image==0.18.3",
+    "scikit-image>=0.17.2, <=0.18.3",
     "pyparsing==2.4.7",
     "aiofiles==0.8.0",
     "rasterio==1.2.10; sys_platform=='darwin'",
     "rasterio==1.2.10; sys_platform=='linux'",
-    "InquirerPy==0.3.0",
+    "InquirerPy>=0.2.1, <=0.3.0",
     "halo==0.0.31",
-    "nest-asyncio==1.5.4",
     "tenacity==8.0.1",
     "natsort==8.0.2",
+    "nibabel==3.2.1",
+    "boto3==1.20.43",
 ]
 
 setup(
     name="redbrick-sdk",
+    version=version,
     url="https://github.com/redbrick-ai/redbrick-sdk",
     description="RedBrick platform Python SDK!",
     py_modules=["redbrick"],
-    python_requires=">=3.7.0, <3.10",
+    python_requires=">=3.6, <3.10",
     packages=find_packages(),
     long_description=long_description,
     long_description_content_type="text/markdown",
