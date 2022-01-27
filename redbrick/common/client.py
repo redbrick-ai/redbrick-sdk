@@ -1,5 +1,5 @@
 """Graphql Client responsible for make API requests."""
-from typing import Dict
+from typing import Dict, Optional
 import requests
 
 import aiohttp
@@ -7,7 +7,7 @@ import tenacity
 
 from redbrick import __version__ as sdk_version  # pylint: disable=cyclic-import
 from redbrick.utils.logging import print_error
-from redbrick.common.constants import MAX_RETRY_ATTEMPTS
+from redbrick.common.constants import DEFAULT_URL, MAX_RETRY_ATTEMPTS
 
 
 class RBClient:
@@ -15,16 +15,21 @@ class RBClient:
 
     def __init__(
         self,
-        api_key: str,
-        url: str,
+        url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        auth_token: Optional[str] = None,
     ) -> None:
         """Construct RBClient."""
+        self.url = (url or DEFAULT_URL).rstrip("/") + "/graphql/"
         self.session = requests.Session()
-        assert (
-            len(api_key) == 43
-        ), "Invalid Api Key length, make sure you've copied it correctly"
-        self.api_key = api_key
-        self.url = url.rstrip("/") + "/graphql/"
+
+        self.api_key: Optional[str] = api_key
+        self.auth_token: Optional[str] = auth_token
+
+        if self.api_key:
+            assert (
+                len(self.api_key) == 43
+            ), "Invalid Api Key length, make sure you've copied it correctly"
 
     def __del__(self) -> None:
         """Garbage collect and close session."""
@@ -33,7 +38,15 @@ class RBClient:
     @property
     def headers(self) -> Dict:
         """Get request headers."""
-        return {"ApiKey": self.api_key, "RB-SDK-Version": sdk_version}
+        headers = {"RB-SDK-Version": sdk_version}
+        if self.api_key:
+            headers["ApiKey"] = self.api_key
+        elif self.auth_token:
+            headers["Authorization"] = self.auth_token
+        else:
+            raise ValueError("No api key or auth token provided")
+
+        return headers
 
     @tenacity.retry(
         reraise=True,
