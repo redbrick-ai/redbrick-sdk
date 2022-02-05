@@ -1,5 +1,6 @@
 """Handler for file upload/download."""
 import os
+import gzip
 from typing import List, Optional, Tuple, Set
 
 import asyncio
@@ -27,7 +28,17 @@ DICOM_FILE_TYPES = {
     "dcm": "application/dicom",
 }
 
-FILE_TYPES = {**IMAGE_FILE_TYPES, **VIDEO_FILE_TYPES, **DICOM_FILE_TYPES}
+JSON_FILE_TYPES = {"json": "application/json"}
+
+NIFTI_FILE_TYPES = {"nii": "application/octet-stream"}
+
+FILE_TYPES = {
+    **IMAGE_FILE_TYPES,
+    **VIDEO_FILE_TYPES,
+    **DICOM_FILE_TYPES,
+    **JSON_FILE_TYPES,
+    **NIFTI_FILE_TYPES,
+}
 
 
 def get_file_type(file_path: str) -> Tuple[str, str]:
@@ -97,8 +108,58 @@ def uniquify_path(path: str) -> str:
     return path
 
 
-async def download_files(files: List[Tuple[str, str]]) -> List[Optional[str]]:
-    """Download files from url to local path."""
+async def upload_files(
+    files: List[Tuple[str, str, str]],
+    progress_bar_name: Optional[str] = "Uploading files",
+    keep_progress_bar: bool = True,
+) -> List[bool]:
+    """Upload files from local path to url (file path, presigned url, file type)."""
+
+    @tenacity.retry(
+        reraise=True,
+        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
+        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
+        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+        retry_error_callback=lambda _: False,
+    )
+    async def _upload_file(
+        session: aiohttp.ClientSession, path: str, url: str, file_type: str
+    ) -> bool:
+        if not path or not url or not file_type:
+            return False
+        async with aiofiles.open(path, mode="rb") as file_:  # type: ignore
+            data = gzip.compress(await file_.read())
+
+        async with session.put(
+            url,
+            headers={"Content-Type": file_type, "Content-Encoding": "gzip"},
+            data=data,
+        ) as response:
+            if response.status == 200:
+                return True
+            raise ConnectionError(f"Error in uploading {path} to RedBrick")
+
+    # limit to 30, default is 100, cleanup is done by session
+    conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+    async with aiohttp.ClientSession(connector=conn) as session:
+        coros = [
+            _upload_file(session, path, url, file_type)
+            for path, url, file_type in files
+        ]
+        uploaded = await gather_with_concurrency(
+            10, coros, progress_bar_name, keep_progress_bar
+        )
+
+    await asyncio.sleep(0.250)  # give time to close ssl connections
+    return uploaded
+
+
+async def download_files(
+    files: List[Tuple[str, str]],
+    progress_bar_name: Optional[str] = "Downloading files",
+    keep_progress_bar: bool = True,
+) -> List[Optional[str]]:
+    """Download files from url to local path (presigned url, file path)."""
 
     @tenacity.retry(
         reraise=True,
@@ -115,9 +176,15 @@ async def download_files(files: List[Tuple[str, str]]) -> List[Optional[str]]:
             return None
         async with session.get(URL(url, encoded=True)) as response:
             if response.status == 200:
+                data = await response.read()
+                if response.headers.get("Content-Encoding") == "gzip":
+                    try:
+                        data = gzip.decompress(data)
+                    except gzip.BadGzipFile:  # type: ignore
+                        pass
                 path = uniquify_path(path)
                 async with aiofiles.open(path, "wb") as file_:  # type: ignore
-                    await file_.write(await response.read())
+                    await file_.write(data)
                 return path
             return None
 
@@ -125,7 +192,9 @@ async def download_files(files: List[Tuple[str, str]]) -> List[Optional[str]]:
     conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [_download_file(session, url, path) for url, path in files]
-        paths = await gather_with_concurrency(10, coros, "Downloading files")
+        paths = await gather_with_concurrency(
+            10, coros, progress_bar_name, keep_progress_bar
+        )
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
     return paths

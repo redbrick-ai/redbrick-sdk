@@ -172,6 +172,9 @@ class CLIUploadInterface(ABC):
     args: Namespace
     project: CLIProject
 
+    STORAGE_REDBRICK = "redbrick"
+    STORAGE_PUBLIC = "public"
+
     @abstractmethod
     def handler(self, args: Namespace) -> None:
         """Handle upload command."""

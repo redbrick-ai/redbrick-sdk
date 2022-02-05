@@ -1,11 +1,10 @@
 """Public interface to labeling module."""
+import os
 import json
 import asyncio
 from typing import List, Dict, Optional
 from copy import deepcopy
 from functools import partial
-import gzip
-import requests
 
 import aiohttp
 import tqdm
@@ -16,6 +15,7 @@ from redbrick.utils.logging import print_error, print_info, handle_exception
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.rb_label_utils import clean_rb_label
+from redbrick.utils.files import NIFTI_FILE_TYPES, upload_files
 
 
 class Labeling:
@@ -108,32 +108,37 @@ class Labeling:
                 )
             else:
                 labels_path: Optional[str] = None
-                task_blob = task.get("labelsBlob")
-                if task_blob and isinstance(task_blob, bytes):
+                if (
+                    task.get("labelsBlob")
+                    and str(task["labelsBlob"]).endswith(".nii")
+                    and os.path.isfile(task["labelsBlob"])
+                ):
+                    file_type = NIFTI_FILE_TYPES["nii"]
                     presigned = await self.context.labeling.presign_labels_path(
-                        session,
-                        self.org_id,
-                        self.project_id,
-                        task_id,
-                        "application/octet-stream",
+                        session, self.org_id, self.project_id, task_id, file_type
                     )
-                    labels_path = presigned["filePath"]
-                    requests.put(
-                        presigned["presignedUrl"],
-                        headers={
-                            "Content-Encoding": "gzip",
-                            "Content-Type": "application/octet-stream",
-                        },
-                        data=gzip.compress(task_blob),
-                    )
-                labels = task["labels"]
+                    if (
+                        await upload_files(
+                            [
+                                (
+                                    task["labelsBlob"],
+                                    presigned["presignedUrl"],
+                                    file_type,
+                                )
+                            ],
+                            "Uploading labels",
+                            False,
+                        )
+                    )[0]:
+                        labels_path = presigned["filePath"]
+
                 await self.context.labeling.put_labeling_results(
                     session,
                     self.org_id,
                     self.project_id,
                     stage_name,
                     task_id,
-                    json.dumps(labels),
+                    json.dumps(task["labels"]),
                     labels_path,
                     not bool(task.get("draft")),
                 )
