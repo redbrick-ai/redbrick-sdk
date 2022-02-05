@@ -177,13 +177,14 @@ async def download_files(
         async with session.get(URL(url, encoded=True)) as response:
             if response.status == 200:
                 data = await response.read()
+                if response.headers.get("Content-Encoding") == "gzip":
+                    try:
+                        data = gzip.decompress(data)
+                    except gzip.BadGzipFile:  # type: ignore
+                        pass
                 path = uniquify_path(path)
                 async with aiofiles.open(path, "wb") as file_:  # type: ignore
-                    await file_.write(
-                        gzip.decompress(data)
-                        if response.headers.get("Content-Encoding") == "gzip"
-                        else data
-                    )
+                    await file_.write(data)
                 return path
             return None
 

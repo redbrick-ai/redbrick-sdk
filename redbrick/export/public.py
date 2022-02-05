@@ -502,7 +502,7 @@ class Export:
 
         tasks = [
             {
-                "filePath": path,
+                "labelsPath": path,
                 **{
                     key: value
                     for key, value in datapoint.items()

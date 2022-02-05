@@ -106,13 +106,49 @@ class CLIUploadController(CLIUploadInterface):
                         or not all(isinstance(i, str) for i in item["items"])
                     ):
                         print_warning(f"Invalid {item} in {item_group[0]}")
+                        continue
+
                     if "name" not in item:
                         item["name"] = item["items"][0]
                     if item["name"] in upload_cache or item["name"] in uploading:
                         print_info(f"Skipping duplicate item name: {item['name']}")
                         continue
-                    uploading.add(item["name"])
-                    points.append(item)
+
+                    task_dir = os.path.dirname(item_group[0])
+                    if item.get("labelsBlob"):
+                        label_blob_file = str(
+                            item["labelsBlob"]
+                            if os.path.isabs(item["labelsBlob"])
+                            else os.path.join(task_dir, item["labelsBlob"])
+                        )
+                        if (
+                            data_type == "DICOM"
+                            and label_blob_file.endswith(".nii")
+                            and os.path.isfile(label_blob_file)
+                        ):
+                            item["labelsBlob"] = label_blob_file
+                        else:
+                            del item["labelsBlob"]
+
+                    if self.args.storage == self.STORAGE_PUBLIC:
+                        uploading.add(item["name"])
+                        points.append(item)
+                        continue
+
+                    for idx, path in enumerate(item["items"]):
+                        item_path = (
+                            path
+                            if os.path.isabs(path)
+                            else os.path.join(task_dir, path)
+                        )
+                        if os.path.isfile(item_path):
+                            item["items"][idx] = item_path
+                        else:
+                            print_warning(f"{path} from {item_group[0]} does not exist")
+                            break
+                    else:
+                        uploading.add(item["name"])
+                        points.append(item)
         else:
             for item_group in items_list:
                 item_name = (
@@ -131,7 +167,7 @@ class CLIUploadController(CLIUploadInterface):
                 if multiple:
                     items_dir = os.path.dirname(item_group[0])
                     task_dir = os.path.dirname(items_dir)
-                    task_name = os.path.basename(task_dir)
+                    task_name = os.path.basename(items_dir)
                 else:
                     task_dir = os.path.dirname(item_group[0])
                     task_name = os.path.splitext(os.path.basename(task_dir))[0]
@@ -146,8 +182,13 @@ class CLIUploadController(CLIUploadInterface):
 
                 if data_type == "DICOM":
                     if label_data and label_data.get("labelsBlob"):
-                        if os.path.isfile(label_data["labelsBlob"]):
-                            label_blob = label_data["labelsBlob"]
+                        label_blob_file = (
+                            label_data["labelsBlob"]
+                            if os.path.isabs(label_data["labelsBlob"])
+                            else os.path.join(task_dir, label_data["labelsBlob"])
+                        )
+                        if os.path.isfile(label_blob_file):
+                            label_blob = label_blob_file
                     elif os.path.isfile(os.path.join(task_dir, task_name + ".nii")):
                         label_blob = os.path.join(task_dir, task_name + ".nii")
 
