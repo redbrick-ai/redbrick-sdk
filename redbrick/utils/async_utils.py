@@ -12,7 +12,7 @@ async def gather_with_concurrency(
     max_concurrency: int,
     tasks: Iterable[Awaitable[ReturnType]],
     progress_bar_name: Optional[str] = None,
-    keep_progress_bar: Optional[bool] = True,
+    keep_progress_bar: bool = True,
 ) -> List[ReturnType]:
     """Utilizes a Semaphore to limit concurrency to n."""
     if not tasks:

@@ -5,22 +5,25 @@ import os
 from copy import deepcopy
 from typing import List, Dict, Optional
 import json
-import requests
+from uuid import uuid4
 
-import tenacity
-import aiofiles
 import aiohttp
 import numpy as np
 from shapely.geometry import MultiPolygon, shape as gen_shape
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
-from redbrick.common.constants import MAX_CONCURRENCY, MAX_RETRY_ATTEMPTS
+from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import print_error, handle_exception
 from redbrick.utils.segmentation import check_mask_map_format
-from redbrick.utils.files import VIDEO_FILE_TYPES, get_file_type
+from redbrick.utils.files import (
+    NIFTI_FILE_TYPES,
+    VIDEO_FILE_TYPES,
+    get_file_type,
+    upload_files,
+)
 
 
 class Upload:
@@ -41,6 +44,7 @@ class Upload:
         storage_id: str,
         point: Dict,
         is_ground_truth: bool,
+        labels_path: Optional[str] = None,
     ) -> Dict:
         """Try to create a datapoint."""
         try:
@@ -82,6 +86,7 @@ class Upload:
                 point["name"],
                 point["items"],
                 json.dumps(point.get("labels", [])),
+                labels_path,
                 is_ground_truth,
             )
             assert response.get("taskId"), "Failed to create task"
@@ -162,19 +167,16 @@ class Upload:
                     "error": f"Failed to upload {point['name']}",
                 }
 
-            coros = [
-                Upload._upload_image_to_presigned_async(
-                    session,
-                    presigned_items[idx]["presignedUrl"],
+            files = [
+                (
                     item,
+                    presigned_items[idx]["presignedUrl"],
                     file_types[idx],
                 )
                 for idx, item in enumerate(point["items"])
             ]
-            # Upload the items to s3
-            uploaded = await gather_with_concurrency(
-                MAX_CONCURRENCY,
-                coros,
+            uploaded = await upload_files(
+                files,
                 f"Uploading items for {point['name'][:57]}{point['name'][57:] and '...'}"
                 if len(point["items"]) > 1
                 else None,
@@ -189,11 +191,31 @@ class Upload:
                 }
 
             point["items"] = [
-                presigned_item["filePath"] for presigned_item in presigned_items
+                presigned_items[idx]["filePath"] for idx in range(len(point["items"]))
             ]
 
+        labels_path: Optional[str] = None
+        data_type = str(self.project_type.value).split("_", 1)[0]
         if (
-            str(self.project_type.value).startswith("VIDEO_")
+            data_type == "DICOM"
+            and point.get("labelsBlob")
+            and os.path.isfile(point["labelsBlob"])
+        ):
+            file_type = NIFTI_FILE_TYPES["nii"]
+            presigned = await self.context.labeling.presign_labels_path(
+                session, self.org_id, self.project_id, str(uuid4()), file_type
+            )
+            if (
+                await upload_files(
+                    [(point["labelsBlob"], presigned["presignedUrl"], file_type)],
+                    f"Uploading labels for {point['name'][:57]}{point['name'][57:] and '...'}",
+                    False,
+                )
+            )[0]:
+                labels_path = presigned["filePath"]
+
+        elif (
+            data_type == "VIDEO"
             and get_file_type(point["items"][0])[0] in VIDEO_FILE_TYPES
         ):
             return await self._item_upload(
@@ -203,7 +225,10 @@ class Upload:
                 point["items"][0],
                 is_ground_truth,
             )
-        return await self._create_datapoint(session, storage_id, point, is_ground_truth)
+
+        return await self._create_datapoint(
+            session, storage_id, point, is_ground_truth, labels_path
+        )
 
     async def _create_tasks(
         self,
@@ -324,87 +349,6 @@ class Upload:
             if polygon.type == "Polygon":
                 polygon = MultiPolygon([polygon])
         return polygon
-
-    @staticmethod
-    @tenacity.retry(
-        reraise=True,
-        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
-        retry_error_callback=lambda _: False,
-    )
-    def _upload_image_to_presigned(
-        presigned_url: str, file_path: str, file_type: str
-    ) -> bool:
-        """
-        Upload a single image to s3 using the pre-signed url.
-
-        Parameters
-        ------------
-        presigned_url: str
-            The URL to upload to.
-
-        file_path: str
-            Local filepath of file to upload.
-
-        file_type: str
-            MIME filetype.
-
-        Returns
-        ------------
-        True if successful, else False.
-        """
-        with open(file_path, "rb") as file_:
-            try:
-                requests.put(
-                    presigned_url, data=file_, headers={"Content-Type": file_type}
-                )
-                return True
-            except requests.exceptions.RequestException as err:
-                raise ValueError(f"Error in uploading {file_path} to RedBrick") from err
-
-    @staticmethod
-    @tenacity.retry(
-        reraise=True,
-        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
-        retry_error_callback=lambda _: False,
-    )
-    async def _upload_image_to_presigned_async(
-        session: aiohttp.ClientSession,
-        presigned_url: str,
-        file_path: str,
-        file_type: str,
-    ) -> bool:
-        """
-        Upload a single file to s3 using the pre-signed url using asyncio.
-
-        Parameters
-        ------------
-        presigned_url: str
-            The URL to upload to.
-
-        file_path: str
-            Local filepath of file to upload.
-
-        file_type: str
-            MIME filetype.
-
-        Returns
-        ------------
-        True if successful, else False.
-        """
-        async with aiofiles.open(file_path, mode="rb") as file_:  # type: ignore
-            contents = await file_.read()
-            headers = {"Content-Type": file_type}
-
-            async with session.put(
-                presigned_url, headers=headers, data=contents
-            ) as response:
-                if response.status == 200:
-                    return True
-                raise ConnectionError(f"Error in uploading {file_path} to RedBrick")
 
     @staticmethod
     def mask_to_rbai(  # pylint: disable=too-many-locals
@@ -596,10 +540,17 @@ class Upload:
             )
 
             # upload to s3
-            Upload._upload_image_to_presigned(
-                presigned_items[0]["presignedUrl"],
-                image_path,  # filename on local machine
-                file_type,
+            loop.run_until_complete(
+                upload_files(
+                    [
+                        (
+                            image_path,  # filename on local machine
+                            presigned_items[0]["presignedUrl"],
+                            file_type,
+                        )
+                    ],
+                    None,
+                )
             )
 
             # create datapoint

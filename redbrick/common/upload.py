@@ -37,6 +37,7 @@ class UploadControllerInterface(ABC):
         name: str,
         items: List[str],
         labels_data: Optional[str],
+        labels_path: Optional[str] = None,
         is_ground_truth: bool = False,
     ) -> Dict:
         """

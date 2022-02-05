@@ -1,16 +1,19 @@
 """CLI upload command."""
 import os
 import re
+import json
 import asyncio
 from argparse import ArgumentParser, Namespace
+from typing import List, Dict, Optional
 
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIUploadInterface
 from redbrick.common.enums import StorageMethod
-from redbrick.utils.logging import print_info
+from redbrick.utils.logging import print_info, print_warning
 from redbrick.utils.files import (
     DICOM_FILE_TYPES,
     IMAGE_FILE_TYPES,
+    JSON_FILE_TYPES,
     VIDEO_FILE_TYPES,
     find_files_recursive,
 )
@@ -27,6 +30,22 @@ class CLIUploadController(CLIUploadInterface):
         )
         parser.add_argument(
             "--as-frames", action="store_true", help="Upload video from image frames"
+        )
+        parser.add_argument(
+            "--json",
+            action="store_true",
+            help="Upload json files with list of task objects",
+        )
+        parser.add_argument(
+            "--storage",
+            "-s",
+            choices=[self.STORAGE_REDBRICK, self.STORAGE_PUBLIC],
+            default=self.STORAGE_REDBRICK,
+            help=f"StorageMethod [{self.STORAGE_REDBRICK}, {self.STORAGE_PUBLIC}] "
+            + f"(Default: {self.STORAGE_REDBRICK})",
+        )
+        parser.add_argument(
+            "--ground-truth", action="store_true", help="Upload tasks to ground truth"
         )
 
     def handler(self, args: Namespace) -> None:
@@ -51,7 +70,9 @@ class CLIUploadController(CLIUploadInterface):
 
         file_types = IMAGE_FILE_TYPES
         multiple = False
-        if data_type == "VIDEO":
+        if self.args.json:
+            file_types = JSON_FILE_TYPES
+        elif data_type == "VIDEO":
             if self.args.as_frames:
                 multiple = True
             else:
@@ -66,35 +87,97 @@ class CLIUploadController(CLIUploadInterface):
 
         print_info(f"Searching for items recursively in {directory}")
         items_list = find_files_recursive(directory, set(file_types.keys()), multiple)
-        print_info(f"Found {len(items_list)} items")
 
         upload_cache_hash = self.project.conf.get_option("uploads", "cache")
         upload_cache = set(
             self.project.cache.get_data("uploads", upload_cache_hash, True, True) or []
         )
 
-        points = []
-        for items in items_list:
-            item_name = (
-                re.sub(
-                    r"^" + re.escape(directory + os.path.sep) + r"?",
-                    "",
-                    (os.path.dirname(items[0]) if multiple else items[0]),
-                )
-                or directory
-            ).replace(os.path.sep, "/")
-            if item_name in upload_cache:
-                print_info(f"Skipping duplicate item name: {item_name}")
-                continue
-            points.append({"name": item_name, "items": items[:]})
+        points: List[Dict] = []
+        uploading = set()
+        if self.args.json:
+            for item_group in items_list:
+                with open(item_group[0], "r", encoding="utf-8") as file_:
+                    file_data = json.load(file_)
+                for item in file_data:
+                    if (
+                        not isinstance(item.get("items"), list)
+                        or not item["items"]
+                        or not all(isinstance(i, str) for i in item["items"])
+                    ):
+                        print_warning(f"Invalid {item} in {item_group[0]}")
+                    if "name" not in item:
+                        item["name"] = item["items"][0]
+                    if item["name"] in upload_cache or item["name"] in uploading:
+                        print_info(f"Skipping duplicate item name: {item['name']}")
+                        continue
+                    uploading.add(item["name"])
+                    points.append(item)
+        else:
+            for item_group in items_list:
+                item_name = (
+                    re.sub(
+                        r"^" + re.escape(directory + os.path.sep) + r"?",
+                        "",
+                        (os.path.dirname(item_group[0]) if multiple else item_group[0]),
+                    )
+                    or directory
+                ).replace(os.path.sep, "/")
+                if item_name in upload_cache or item_name in uploading:
+                    print_info(f"Skipping duplicate item name: {item_name}")
+                    continue
+
+                uploading.add(item_name)
+                if multiple:
+                    items_dir = os.path.dirname(item_group[0])
+                    task_dir = os.path.dirname(items_dir)
+                    task_name = os.path.basename(task_dir)
+                else:
+                    task_dir = os.path.dirname(item_group[0])
+                    task_name = os.path.splitext(os.path.basename(task_dir))[0]
+
+                label_blob: Optional[str] = None
+                label_data: Optional[Dict] = None
+
+                label_file = os.path.join(task_dir, task_name + ".json")
+                if os.path.isfile(label_file):
+                    with open(label_file, "r", encoding="utf-8") as file_:
+                        label_data = json.load(file_)
+
+                if data_type == "DICOM":
+                    if label_data and label_data.get("labelsBlob"):
+                        if os.path.isfile(label_data["labelsBlob"]):
+                            label_blob = label_data["labelsBlob"]
+                    elif os.path.isfile(os.path.join(task_dir, task_name + ".nii")):
+                        label_blob = os.path.join(task_dir, task_name + ".nii")
+
+                item = {"name": item_name, "items": item_group[:]}
+                if (
+                    label_data
+                    and isinstance(label_data.get("labels"), list)
+                    and (data_type != "DICOM" or label_blob)
+                ):
+                    item["labels"] = label_data["labels"]
+                    if label_blob:
+                        item["labelsBlob"] = label_blob
+                points.append(item)
+
+        print_info(f"Found {len(points)} items")
 
         loop = asyncio.get_event_loop()
         uploads = loop.run_until_complete(
-            project.upload._create_tasks(StorageMethod.REDBRICK, points, False)
+            project.upload._create_tasks(
+                {
+                    self.STORAGE_REDBRICK: StorageMethod.REDBRICK,
+                    self.STORAGE_PUBLIC: StorageMethod.PUBLIC,
+                }[self.args.storage],
+                points,
+                self.args.ground_truth,
+            )
         )
 
         for upload in uploads:
-            if upload.get("response") or upload.get("error") == "Failed to create task":
+            if upload.get("response"):
                 upload_cache.add(upload["name"])
 
         self.project.conf.set_option(

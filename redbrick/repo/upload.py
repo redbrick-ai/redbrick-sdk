@@ -41,6 +41,7 @@ class UploadRepo(UploadControllerInterface):
         name: str,
         items: List[str],
         labels_data: Optional[str],
+        labels_path: Optional[str] = None,
         is_ground_truth: bool = False,
     ) -> Dict:
         """
@@ -56,6 +57,7 @@ class UploadRepo(UploadControllerInterface):
                 $name: String!
                 $storageId: UUID!
                 $labelsData: String
+                $labelsPath: String
                 $isGroundTruth: Boolean!
             ) {
                 createDatapoint(
@@ -65,6 +67,7 @@ class UploadRepo(UploadControllerInterface):
                     name: $name
                     storageId: $storageId
                     labelsData: $labelsData
+                    labelsPath: $labelsPath
                     isGroundTruth: $isGroundTruth
                 ) {
                     taskId
@@ -79,6 +82,7 @@ class UploadRepo(UploadControllerInterface):
             "name": name,
             "storageId": storage_id,
             "labelsData": labels_data,
+            "labelsPath": labels_path,
             "isGroundTruth": is_ground_truth,
         }
         response = await self.client.execute_query_async(

@@ -98,7 +98,11 @@ class CLIProject:
         """Get org object."""
         if not self._org:
             org = self.cache.get_object("org")
-            if isinstance(org, RBOrganization):
+            if (
+                isinstance(org, RBOrganization)
+                and org.context.client.url == self.context.client.url
+                and org.context.client.api_key == self.context.client.api_key
+            ):
                 self._org = org
             else:
                 with Halo(text="Fetching organization", spinner="dots") as spinner:
@@ -116,7 +120,11 @@ class CLIProject:
         """Get project object."""
         if not self._project:
             project = self.cache.get_object("project")
-            if isinstance(project, RBProject):
+            if (
+                isinstance(project, RBProject)
+                and project.context.client.url == self.context.client.url
+                and project.context.client.api_key == self.context.client.api_key
+            ):
                 self._project = project
             else:
                 with Halo(text="Fetching project", spinner="dots") as spinner:
