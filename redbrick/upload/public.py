@@ -397,10 +397,14 @@ class Upload:
             ]
             label_entry["pixel"]["regions"] = []
             label_entry["pixel"]["holes"] = []
-            for polygon in polygons:
-                label_entry["pixel"]["regions"] += [list(polygon.exterior.coords)]
+            for polygon in polygons.geoms:
+                label_entry["pixel"]["regions"].append(
+                    [list(map(int, coords)) for coords in polygon.exterior.coords]
+                )
                 for interior in polygon.interiors:
-                    label_entry["pixel"]["holes"] += [list(interior.coords)]
+                    label_entry["pixel"]["holes"].append(
+                        [list(map(int, coords)) for coords in interior.coords]
+                    )
 
             entry["labels"] += [label_entry]
 
