@@ -59,7 +59,7 @@ class CLIUploadController(CLIUploadInterface):
 
     def handle_upload(self) -> None:
         """Handle empty sub command."""
-        # pylint: disable=protected-access, too-many-branches, too-many-locals
+        # pylint: disable=protected-access, too-many-branches, too-many-locals, too-many-statements
         project = self.project.project
 
         directory = os.path.normpath(self.args.directory)
