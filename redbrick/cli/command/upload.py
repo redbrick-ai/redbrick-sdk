@@ -129,20 +129,20 @@ class CLIUploadController(CLIUploadInterface):
                         continue
 
                     task_dir = os.path.dirname(item_group[0])
-                    if item.get("labelsBlob"):
+                    if item.get("labelsPath"):
                         label_blob_file = str(
-                            item["labelsBlob"]
-                            if os.path.isabs(item["labelsBlob"])
-                            else os.path.join(task_dir, item["labelsBlob"])
+                            item["labelsPath"]
+                            if os.path.isabs(item["labelsPath"])
+                            else os.path.join(task_dir, item["labelsPath"])
                         )
                         if (
                             data_type == "DICOM"
                             and label_blob_file.endswith(".nii")
                             and os.path.isfile(label_blob_file)
                         ):
-                            item["labelsBlob"] = label_blob_file
+                            item["labelsPath"] = label_blob_file
                         else:
-                            del item["labelsBlob"]
+                            del item["labelsPath"]
 
                     if storage_id != str(StorageMethod.REDBRICK):
                         uploading.add(item["name"])
@@ -195,11 +195,11 @@ class CLIUploadController(CLIUploadInterface):
                         label_data = json.load(file_)
 
                 if data_type == "DICOM":
-                    if label_data and label_data.get("labelsBlob"):
+                    if label_data and label_data.get("labelsPath"):
                         label_blob_file = (
-                            label_data["labelsBlob"]
-                            if os.path.isabs(label_data["labelsBlob"])
-                            else os.path.join(task_dir, label_data["labelsBlob"])
+                            label_data["labelsPath"]
+                            if os.path.isabs(label_data["labelsPath"])
+                            else os.path.join(task_dir, label_data["labelsPath"])
                         )
                         if os.path.isfile(label_blob_file):
                             label_blob = label_blob_file
@@ -214,7 +214,7 @@ class CLIUploadController(CLIUploadInterface):
                 ):
                     item["labels"] = label_data["labels"]
                     if label_blob:
-                        item["labelsBlob"] = label_blob
+                        item["labelsPath"] = label_blob
                 points.append(item)
 
         print_info(f"Found {len(points)} items")
