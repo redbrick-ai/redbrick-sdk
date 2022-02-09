@@ -3,7 +3,7 @@ import os
 import re
 import json
 import asyncio
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import List, Dict, Optional
 
 from redbrick.cli.project import CLIProject
@@ -39,10 +39,9 @@ class CLIUploadController(CLIUploadInterface):
         parser.add_argument(
             "--storage",
             "-s",
-            choices=[self.STORAGE_REDBRICK, self.STORAGE_PUBLIC],
             default=self.STORAGE_REDBRICK,
-            help=f"StorageMethod [{self.STORAGE_REDBRICK}, {self.STORAGE_PUBLIC}] "
-            + f"(Default: {self.STORAGE_REDBRICK})",
+            help="Storage method: "
+            + f"({self.STORAGE_REDBRICK} [default], {self.STORAGE_PUBLIC}, <storage id>)",
         )
         parser.add_argument(
             "--ground-truth", action="store_true", help="Upload tasks to ground truth"
@@ -67,6 +66,18 @@ class CLIUploadController(CLIUploadInterface):
             raise Exception(f"{directory} is not a valid directory")
 
         data_type = str(project.project_type.value).split("_", 1)[0]
+
+        if self.args.storage == self.STORAGE_REDBRICK:
+            storage_id = str(StorageMethod.REDBRICK)
+        elif self.args.storage == self.STORAGE_PUBLIC:
+            storage_id = str(StorageMethod.PUBLIC)
+        elif re.match(
+            r"^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$",
+            self.args.storage.strip().lower(),
+        ):
+            storage_id = str(self.args.storage).strip().lower()
+        else:
+            raise ArgumentError(None, "")
 
         file_types = IMAGE_FILE_TYPES
         multiple = False
@@ -99,6 +110,9 @@ class CLIUploadController(CLIUploadInterface):
             for item_group in items_list:
                 with open(item_group[0], "r", encoding="utf-8") as file_:
                     file_data = json.load(file_)
+                if not isinstance(file_data, list):
+                    print_warning(f"{item_group[0]} is not a list of tasks")
+                    continue
                 for item in file_data:
                     if (
                         not isinstance(item.get("items"), list)
@@ -130,7 +144,7 @@ class CLIUploadController(CLIUploadInterface):
                         else:
                             del item["labelsBlob"]
 
-                    if self.args.storage == self.STORAGE_PUBLIC:
+                    if storage_id != str(StorageMethod.REDBRICK):
                         uploading.add(item["name"])
                         points.append(item)
                         continue
@@ -170,7 +184,7 @@ class CLIUploadController(CLIUploadInterface):
                     task_name = os.path.basename(items_dir)
                 else:
                     task_dir = os.path.dirname(item_group[0])
-                    task_name = os.path.splitext(os.path.basename(task_dir))[0]
+                    task_name = os.path.splitext(os.path.basename(item_group[0]))[0]
 
                 label_blob: Optional[str] = None
                 label_data: Optional[Dict] = None
@@ -207,14 +221,7 @@ class CLIUploadController(CLIUploadInterface):
 
         loop = asyncio.get_event_loop()
         uploads = loop.run_until_complete(
-            project.upload._create_tasks(
-                {
-                    self.STORAGE_REDBRICK: StorageMethod.REDBRICK,
-                    self.STORAGE_PUBLIC: StorageMethod.PUBLIC,
-                }[self.args.storage],
-                points,
-                self.args.ground_truth,
-            )
+            project.upload._create_tasks(storage_id, points, self.args.ground_truth)
         )
 
         for upload in uploads:
