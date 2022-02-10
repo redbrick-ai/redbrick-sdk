@@ -198,9 +198,9 @@ class Upload:
         data_type = str(self.project_type.value).split("_", 1)[0]
         if (
             data_type == "DICOM"
-            and point.get("labelsBlob")
-            and str(point["labelsBlob"]).endswith(".nii")
-            and os.path.isfile(point["labelsBlob"])
+            and point.get("labelsPath")
+            and str(point["labelsPath"]).endswith(".nii")
+            and os.path.isfile(point["labelsPath"])
         ):
             file_type = NIFTI_FILE_TYPES["nii"]
             presigned = await self.context.labeling.presign_labels_path(
@@ -208,7 +208,7 @@ class Upload:
             )
             if (
                 await upload_files(
-                    [(point["labelsBlob"], presigned["presignedUrl"], file_type)],
+                    [(point["labelsPath"], presigned["presignedUrl"], file_type)],
                     f"Uploading labels for {point['name'][:57]}{point['name'][57:] and '...'}",
                     False,
                 )

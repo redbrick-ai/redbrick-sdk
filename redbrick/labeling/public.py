@@ -109,9 +109,9 @@ class Labeling:
             else:
                 labels_path: Optional[str] = None
                 if (
-                    task.get("labelsBlob")
-                    and str(task["labelsBlob"]).endswith(".nii")
-                    and os.path.isfile(task["labelsBlob"])
+                    task.get("labelsPath")
+                    and str(task["labelsPath"]).endswith(".nii")
+                    and os.path.isfile(task["labelsPath"])
                 ):
                     file_type = NIFTI_FILE_TYPES["nii"]
                     presigned = await self.context.labeling.presign_labels_path(
@@ -121,7 +121,7 @@ class Labeling:
                         await upload_files(
                             [
                                 (
-                                    task["labelsBlob"],
+                                    task["labelsPath"],
                                     presigned["presignedUrl"],
                                     file_type,
                                 )

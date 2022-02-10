@@ -172,6 +172,7 @@ async def download_files(
     async def _download_file(
         session: aiohttp.ClientSession, url: str, path: str
     ) -> Optional[str]:
+        # pylint: disable=no-member
         if not url or not path:
             return None
         async with session.get(URL(url, encoded=True)) as response:
