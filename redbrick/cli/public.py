@@ -3,7 +3,7 @@ import sys
 import argparse
 from typing import Any, List, Optional
 
-
+import redbrick
 from redbrick.cli.command import (
     CLIConfigController,
     CLIInitController,
@@ -68,6 +68,9 @@ class CLIController(CLIInterface):
 def cli_parser(generate_docs: bool = True) -> Any:
     """Initialize argument parser."""
     parser = argparse.ArgumentParser(description="RedBrick AI")
+    parser.add_argument(
+        "-v", "--version", action="version", version=f"v{redbrick.__version__}"
+    )
     cli = CLIController(parser.add_subparsers(title="Commands", dest="command"))
 
     if generate_docs:
