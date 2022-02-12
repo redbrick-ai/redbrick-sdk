@@ -4,8 +4,9 @@ from datetime import datetime
 import random
 from uuid import uuid4
 from typing import Dict, Generator, List, Optional, Tuple
-import pytest
+import time
 
+import pytest
 import tenacity
 
 import redbrick
@@ -118,7 +119,7 @@ def label_test_data(
             tasks = project.labeling.get_tasks("Label", num_tasks)
             assert len(tasks) == num_tasks
 
-    to_label = random.randint(0, num_tasks)
+    to_label = random.randint(1, num_tasks)
     cur_batch = [
         {
             **task,
@@ -153,7 +154,19 @@ def review_test_data(project: RBProject, labeled_tasks: List[Dict]) -> List[Dict
     """Review test data."""
     reviewed_tasks = []
 
-    tasks = project.review.get_tasks("Review_1", random.randint(0, len(labeled_tasks)))
+    for attempt in tenacity.Retrying(
+        reraise=True,
+        stop=tenacity.stop_after_attempt(10),
+        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
+        retry=tenacity.retry_if_not_exception_type(
+            (KeyboardInterrupt, PermissionError, ValueError)
+        ),
+    ):
+        with attempt:
+            tasks = project.review.get_tasks(
+                "Review_1", random.randint(1, len(labeled_tasks))
+            )
+            assert tasks
 
     cur_batch = [
         {
@@ -243,6 +256,8 @@ def test_classify_project(
         groundtruth_task_ids = [
             task["taskId"] for task in reviewed_tasks if task["reviewVal"]
         ]
+
+        time.sleep(10)  # give time for tasks to travel across the queues
 
         validate_export_data_redbrick(project, tasks_map, groundtruth_task_ids)
         if label_type in (LabelType.IMAGE_POLYGON,):
