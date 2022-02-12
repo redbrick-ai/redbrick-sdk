@@ -77,3 +77,13 @@ class LabelingControllerInterface(ABC):
         for_active_learning: bool = False,
     ) -> int:
         """Get the length of the task queue for showing loading."""
+
+    @abstractmethod
+    async def move_task_to_start(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_id: str,
+    ) -> None:
+        """Move groundtruth task back to start."""

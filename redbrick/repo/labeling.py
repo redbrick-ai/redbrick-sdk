@@ -343,3 +343,31 @@ class LabelingRepo(LabelingControllerInterface):
                 + summary["inProgressCount"]
             )
         )
+
+    async def move_task_to_start(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_id: str,
+    ) -> None:
+        """Move groundtruth task back to start."""
+        query = """
+        mutation moveTaskToStart(
+            $orgId: UUID!
+            $projectId: UUID!
+            $taskId: UUID!
+        ) {
+            moveTaskToStart(
+                orgId: $orgId
+                projectId: $projectId
+                taskId: $taskId
+            ) {
+                ok
+            }
+        }
+        """
+
+        variables = {"orgId": org_id, "projectId": project_id, "taskId": task_id}
+
+        await self.client.execute_query_async(session, query, variables)

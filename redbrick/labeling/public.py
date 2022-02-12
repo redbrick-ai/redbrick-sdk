@@ -219,3 +219,21 @@ class Labeling:
             _parse_entry(val)
             for val in tqdm.tqdm(my_iter, unit=" datapoints", total=count)
         ]
+
+    async def _tasks_to_start(self, task_ids: List[str]) -> None:
+        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = [
+                self.context.labeling.move_task_to_start(
+                    session, self.org_id, self.project_id, task_id
+                )
+                for task_id in task_ids
+            ]
+            await gather_with_concurrency(10, coros, "Moving tasks to Start")
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+
+    @handle_exception
+    def move_tasks_to_start(self, task_ids: List[str]) -> None:
+        """Move groundtruth tasks back to start."""
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self._tasks_to_start(task_ids))
