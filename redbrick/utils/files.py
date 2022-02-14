@@ -181,7 +181,7 @@ async def download_files(
                 if response.headers.get("Content-Encoding") == "gzip":
                     try:
                         data = gzip.decompress(data)
-                    except gzip.BadGzipFile:  # type: ignore
+                    except Exception:  # pylint: disable=broad-except
                         pass
                 path = uniquify_path(path)
                 async with aiofiles.open(path, "wb") as file_:  # type: ignore
