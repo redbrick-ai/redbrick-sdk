@@ -1,13 +1,10 @@
 """Container for low-level methods to communicate with API."""
-from typing import Optional
 
 
 class RBContext:
     """Basic context for accessing low level functionality."""
 
-    def __init__(
-        self, api_key: Optional[str] = None, url: Optional[str] = None
-    ) -> None:
+    def __init__(self, api_key: str, url: str) -> None:
         """Construct RedBrick client singleton."""
         # pylint: disable=import-outside-toplevel
         from .client import RBClient
@@ -29,5 +26,5 @@ class RBContext:
     def __str__(self) -> str:
         """Get string representation."""
         return repr(self) + (
-            "***" + self.client.api_key[-4:-1] if self.client.api_key else ""
+            "***" + self.client.api_key[-3:] if self.client.api_key else ""
         )
