@@ -110,6 +110,7 @@ class CLIConfigController(CLIConfigInterface):
                 (color, f"{Separator('-'*len(profile)*2)}\n"),
             ]
             for key, value in self.project.creds.get_profile(profile).items():
+                value = ("***" + value[-3:]) if key == "key" else value
                 info = f"{key}={value}"
                 max_length = max(max_length, len(info))
                 cur_data.append((color, f"{info}\n"))
