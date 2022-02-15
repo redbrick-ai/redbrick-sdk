@@ -7,6 +7,7 @@ import json
 import copy
 from datetime import datetime, timezone
 
+import aiohttp
 from shapely.geometry import Polygon  # type: ignore
 from skimage.morphology import remove_small_holes  # type: ignore
 import numpy as np  # type: ignore
@@ -14,8 +15,10 @@ from matplotlib import cm  # type: ignore
 import tqdm  # type: ignore
 from PIL import Image  # type: ignore
 
+from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
+from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.files import uniquify_path, download_files
 from redbrick.utils.logging import (
     print_error,
@@ -76,7 +79,7 @@ class Export:
         self,
         concurrency: int,
         only_ground_truth: bool = False,
-        from_timestamp: Optional[int] = None,
+        from_timestamp: Optional[float] = None,
     ) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_latest
         stage_name = "END" if only_ground_truth else None
@@ -119,6 +122,77 @@ class Export:
             progress.disable = disable
 
         return datapoints, general_info["taxonomy"]
+
+    async def _get_input_labels(self, dp_ids: List[str]) -> List[Dict]:
+        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = [
+                self.context.export.get_labels(
+                    session, self.org_id, self.project_id, dp_id
+                )
+                for dp_id in dp_ids
+            ]
+            input_data = await gather_with_concurrency(MAX_CONCURRENCY, coros)
+
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        labels = [
+            [clean_rb_label(label) for label in json.loads(data["labelsData"])]
+            for data in input_data
+        ]
+        return [
+            {**data, "inputLabels": label} for data, label in zip(input_data, labels)
+        ]
+
+    def get_latest_data(
+        self,
+        concurrency: int,
+        only_ground_truth: bool = False,
+        from_timestamp: Optional[float] = None,
+        get_input_labels: bool = False,
+    ) -> Tuple[List[Dict], float]:
+        """Export latest data."""
+        # pylint: disable=too-many-locals
+        stage_name = "END" if only_ground_truth else None
+        cache_time = (
+            datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
+            if from_timestamp is not None
+            else None
+        )
+        print_info(
+            f"Downloading {'groundtruth' if only_ground_truth else 'all'} tasks"
+            + (
+                f" updated since {datetime.fromtimestamp(from_timestamp)}"
+                if from_timestamp is not None
+                else ""
+            )
+        )
+        tasks = []
+        cursor = None
+        new_cache_time = cache_time
+        dp_ids = []
+        while True:
+            entries, cursor, new_cache_time = self.context.export.get_datapoints_latest(
+                self.org_id,
+                self.project_id,
+                stage_name,
+                cache_time,
+                concurrency,
+                cursor,
+            )
+            for val in entries:
+                tasks.append(_parse_entry_latest(val))
+                dp_ids.append(val["dpId"])
+
+            if cursor is None:
+                break
+
+        if get_input_labels:
+            loop = asyncio.get_event_loop()
+            input_labels = loop.run_until_complete(self._get_input_labels(dp_ids))
+            for idx, input_label in enumerate(input_labels):
+                tasks[idx] = {**tasks[idx], "inputLabels": input_label["inputLabels"]}
+
+        return tasks, (new_cache_time.timestamp() if new_cache_time else 0)
 
     def _get_raw_data_single(self, task_id: str) -> Tuple[List[Dict], Dict]:
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
@@ -383,7 +457,7 @@ class Export:
         task_id: Optional[str] = None,
         fill_holes: bool = False,
         max_hole_size: int = 30,
-        from_timestamp: Optional[int] = None,
+        from_timestamp: Optional[float] = None,
     ) -> None:
         """
         Export segmentation labels as masks.
@@ -416,7 +490,7 @@ class Export:
             If fill_holes = True, this parameter defines the maximum
             size hole, in pixels, to fill.
 
-        from_timestamp: Optional[int] = None
+        from_timestamp: Optional[float] = None
             If the timestamp is mentioned, will only export tasks
             that were labeled/updated since the given timestamp.
 
@@ -494,7 +568,7 @@ class Export:
         only_ground_truth: bool = True,
         concurrency: int = 10,
         task_id: Optional[str] = None,
-        from_timestamp: Optional[int] = None,
+        from_timestamp: Optional[float] = None,
     ) -> None:
         """
         Export dicom segmentation labels in NIfTI-1 format.
@@ -515,7 +589,7 @@ class Export:
             If the unique task_id is mentioned, only a single
             datapoint will be exported.
 
-        from_timestamp: Optional[int] = None
+        from_timestamp: Optional[float] = None
             If the timestamp is mentioned, will only export tasks
             that were labeled/updated since the given timestamp.
 
@@ -553,7 +627,7 @@ class Export:
         only_ground_truth: bool = True,
         concurrency: int = 10,
         task_id: Optional[str] = None,
-        from_timestamp: Optional[int] = None,
+        from_timestamp: Optional[float] = None,
     ) -> List[Dict]:
         """
         Export data into redbrick format.
@@ -574,7 +648,7 @@ class Export:
             If the unique task_id is mentioned, only a single
             datapoint will be exported.
 
-        from_timestamp: Optional[int] = None
+        from_timestamp: Optional[float] = None
             If the timestamp is mentioned, will only export tasks
             that were labeled/updated since the given timestamp.
 
@@ -606,7 +680,7 @@ class Export:
         only_ground_truth: bool = True,
         concurrency: int = 10,
         task_id: Optional[str] = None,
-        from_timestamp: Optional[int] = None,
+        from_timestamp: Optional[float] = None,
     ) -> Dict:
         """
         Export project into coco format.
@@ -627,7 +701,7 @@ class Export:
             If the unique task_id is mentioned, only a single
             datapoint will be exported.
 
-        from_timestamp: Optional[int] = None
+        from_timestamp: Optional[float] = None
             If the timestamp is mentioned, will only export tasks
             that were labeled/updated since the given timestamp.
 

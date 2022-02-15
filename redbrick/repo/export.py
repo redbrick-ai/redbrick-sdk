@@ -1,6 +1,9 @@
 """Repo for accessing export apis."""
 from typing import Optional, List, Dict, Tuple
 from datetime import datetime
+from dateutil import parser
+
+import aiohttp
 
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
@@ -142,7 +145,7 @@ class ExportRepo(ExportControllerInterface):
         cache_time: Optional[datetime] = None,
         first: int = 50,
         cursor: Optional[str] = None,
-    ) -> Tuple[List[Dict], Optional[str]]:
+    ) -> Tuple[List[Dict], Optional[str], Optional[datetime]]:
         """Get the latest datapoints."""
         query_string = (
             """
@@ -164,10 +167,12 @@ class ExportRepo(ExportControllerInterface):
             ) {
                 entries {
                     taskId
+                    dpId
                     currentStageName
                     %s
                 }
                 cursor
+                cacheTime
             }
             }
         """
@@ -186,7 +191,12 @@ class ExportRepo(ExportControllerInterface):
         result = self.client.execute_query(query_string, query_variables, False)
         tasks_paged = result.get("tasksPaged", {}) or {}
         entries: List[Dict] = tasks_paged.get("entries", []) or []  # type: ignore
-        return entries, tasks_paged.get("cursor")
+        new_cache_time: Optional[str] = tasks_paged.get("cacheTime")
+        return (
+            entries,
+            tasks_paged.get("cursor"),
+            parser.parse(new_cache_time) if new_cache_time else None,
+        )
 
     def get_datapoint_latest(self, org_id: str, project_id: str, task_id: str) -> Dict:
         """Get the latest labels for a single bdatapoint."""
@@ -218,3 +228,32 @@ class ExportRepo(ExportControllerInterface):
         )
 
         return result.get("task", {}) or {}
+
+    async def get_labels(
+        self, session: aiohttp.ClientSession, org_id: str, project_id: str, dp_id: str
+    ) -> Dict:
+        """Get input labels."""
+        query = """
+        query dataPoint(
+            $orgId: UUID!
+            $dpId: UUID!
+            $name: String!
+        ) {
+            dataPoint(orgId: $orgId, dpId: $dpId) {
+                labelData(customGroupName: $name) {
+                    dpId
+                    labelsData
+                }
+            }
+        }
+        """
+
+        variables = {
+            "orgId": org_id,
+            "dpId": dp_id,
+            "name": f"{project_id}-input",
+        }
+
+        response = await self.client.execute_query_async(session, query, variables)
+        label_data: Dict = response.get("dataPoint", {}).get("labelData", {})
+        return label_data

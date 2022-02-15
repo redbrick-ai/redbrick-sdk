@@ -4,6 +4,8 @@ from typing import Optional, List, Dict, Tuple
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+import aiohttp
+
 
 class ExportControllerInterface(ABC):
     """Abstract interface to define methods for Export."""
@@ -41,9 +43,15 @@ class ExportControllerInterface(ABC):
         cache_time: Optional[datetime] = None,
         first: int = 50,
         cursor: Optional[str] = None,
-    ) -> Tuple[List[Dict], Optional[str]]:
+    ) -> Tuple[List[Dict], Optional[str], Optional[datetime]]:
         """Get the latest datapoints."""
 
     @abstractmethod
     def get_datapoint_latest(self, org_id: str, project_id: str, task_id: str) -> Dict:
         """Get the latest labels for a single datapoint."""
+
+    @abstractmethod
+    async def get_labels(
+        self, session: aiohttp.ClientSession, org_id: str, project_id: str, dp_id: str
+    ) -> Dict:
+        """Get input labels."""

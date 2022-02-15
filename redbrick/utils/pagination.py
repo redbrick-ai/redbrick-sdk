@@ -6,9 +6,7 @@ from typing import Any, Dict, List, Optional, Callable, Tuple
 class PaginationIterator:
     """Construct Labelset Iterator."""
 
-    def __init__(
-        self, func: Callable[[Optional[str]], Tuple[List[Dict], Optional[str]]]
-    ) -> None:
+    def __init__(self, func: Callable[[Optional[str]], Tuple[Any, ...]]) -> None:
         """Construct LabelsetIterator."""
         self.cursor: Optional[str] = None
         self.datapoints_batch: Optional[List[Dict]] = None
@@ -43,10 +41,12 @@ class PaginationIterator:
             self.datapoints_batch is None
             or len(self.datapoints_batch) == self.datapoints_batch_index
         ):
-
-            self.datapoints_batch, self.cursor = self.func(self.cursor)
+            datapoints_batch: List[Dict]
+            cursor: Optional[str]
+            datapoints_batch, cursor, *_ = self.func(self.cursor)
+            self.datapoints_batch = datapoints_batch
+            self.cursor = cursor
             self.datapoints_batch_index = 0
-
             self.total += len(self.datapoints_batch)
 
         # Current entry to return
