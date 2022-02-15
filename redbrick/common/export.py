@@ -27,7 +27,9 @@ class ExportControllerInterface(ABC):
         """Get datapoints that have made it to the output of the project."""
 
     @abstractmethod
-    def datapoints_in_project(self, org_id: str, project_id: str) -> int:
+    def datapoints_in_project(
+        self, org_id: str, project_id: str, stage_name: Optional[str] = None
+    ) -> int:
         """Get number of datapoints in project."""
 
     @abstractmethod
@@ -35,6 +37,7 @@ class ExportControllerInterface(ABC):
         self,
         org_id: str,
         project_id: str,
+        stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
         first: int = 50,
         cursor: Optional[str] = None,

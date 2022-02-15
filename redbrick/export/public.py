@@ -5,7 +5,7 @@ from functools import partial
 import os
 import json
 import copy
-from datetime import datetime
+from datetime import datetime, timezone
 
 from shapely.geometry import Polygon  # type: ignore
 from skimage.morphology import remove_small_holes  # type: ignore
@@ -55,32 +55,6 @@ def _parse_entry_latest(item: Dict) -> Dict:
         return {}
 
 
-def parse_output_entry(item: Dict) -> Dict:
-    """Parse entry for output data."""
-    try:
-        items_presigned = item["itemsPresigned"]
-        items = item["items"]
-        name = item["name"]
-        label_data = item["labelData"]
-        created_by = label_data["createdByEmail"]
-        labels = [
-            clean_rb_label(label) for label in json.loads(label_data["labelsData"])
-        ]
-        task = item["task"]
-        return flat_rb_format(
-            labels,
-            items,
-            items_presigned,
-            name,
-            created_by,
-            task["taskId"],
-            "END",
-            label_data["labelsPath"],
-        )
-    except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
-        return {}
-
-
 class Export:
     """
     Primary interface to handling export from a project.
@@ -98,46 +72,40 @@ class Export:
         self.project_id = project_id
         self.project_type = project_type
 
-    def _get_raw_data_ground_truth(self, concurrency: int) -> Tuple[List[Dict], Dict]:
-        temp = self.context.export.get_datapoints_output
-
-        my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, concurrency)
-        )
-
-        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
-
-        print_info("Downloading tasks")
-        with tqdm.tqdm(
-            my_iter, unit=" datapoints", total=general_info["datapointCount"]
-        ) as progress:
-            datapoints = []
-            for val in progress:
-                task = parse_output_entry(val)
-                if task:
-                    datapoints.append(task)
-            disable = progress.disable
-            progress.disable = False
-            progress.update(general_info["datapointCount"] - progress.n)
-            progress.disable = disable
-
-        return datapoints, general_info["taxonomy"]
-
     def _get_raw_data_latest(
-        self, concurrency: int, cache_time: Optional[datetime] = None
+        self,
+        concurrency: int,
+        only_ground_truth: bool = False,
+        from_timestamp: Optional[int] = None,
     ) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_latest
-
+        stage_name = "END" if only_ground_truth else None
         my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, cache_time, concurrency)
+            partial(
+                temp,
+                self.org_id,
+                self.project_id,
+                stage_name,
+                datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
+                if from_timestamp is not None
+                else None,
+                concurrency,
+            )
         )
 
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
         datapoint_count = self.context.export.datapoints_in_project(
-            self.org_id, self.project_id
+            self.org_id, self.project_id, stage_name
         )
 
-        print_info("Downloading tasks")
+        print_info(
+            f"Downloading {'groundtruth' if only_ground_truth else 'all'} tasks"
+            + (
+                f" updated since {datetime.fromtimestamp(from_timestamp)}"
+                if from_timestamp is not None
+                else ""
+            )
+        )
 
         with tqdm.tqdm(my_iter, unit=" datapoints", total=datapoint_count) as progress:
             datapoints = []
@@ -415,6 +383,7 @@ class Export:
         task_id: Optional[str] = None,
         fill_holes: bool = False,
         max_hole_size: int = 30,
+        from_timestamp: Optional[int] = None,
     ) -> None:
         """
         Export segmentation labels as masks.
@@ -447,6 +416,10 @@ class Export:
             If fill_holes = True, this parameter defines the maximum
             size hole, in pixels, to fill.
 
+        from_timestamp: Optional[int] = None
+            If the timestamp is mentioned, will only export tasks
+            that were labeled/updated since the given timestamp.
+
         Warnings
         ----------
         redbrick_png only works for the following types - IMAGE_SEGMENTATION, IMAGE_MULTI
@@ -464,10 +437,10 @@ class Export:
 
         if task_id:
             datapoints, taxonomy = self._get_raw_data_single(task_id)
-        elif only_ground_truth:
-            datapoints, taxonomy = self._get_raw_data_ground_truth(concurrency)
         else:
-            datapoints, taxonomy = self._get_raw_data_latest(concurrency)
+            datapoints, taxonomy = self._get_raw_data_latest(
+                concurrency, only_ground_truth, from_timestamp
+            )
 
         # Create output directory
         output_dir = uniquify_path(self.project_id)
@@ -521,6 +494,7 @@ class Export:
         only_ground_truth: bool = True,
         concurrency: int = 10,
         task_id: Optional[str] = None,
+        from_timestamp: Optional[int] = None,
     ) -> None:
         """
         Export dicom segmentation labels in NIfTI-1 format.
@@ -541,6 +515,10 @@ class Export:
             If the unique task_id is mentioned, only a single
             datapoint will be exported.
 
+        from_timestamp: Optional[int] = None
+            If the timestamp is mentioned, will only export tasks
+            that were labeled/updated since the given timestamp.
+
         Warnings
         ----------
         redbrick_nifti only works for the following types - DICOM_SEGMENTATION
@@ -555,10 +533,10 @@ class Export:
 
         if task_id:
             datapoints, _ = self._get_raw_data_single(task_id)
-        elif only_ground_truth:
-            datapoints, _ = self._get_raw_data_ground_truth(concurrency)
         else:
-            datapoints, _ = self._get_raw_data_latest(concurrency)
+            datapoints, _ = self._get_raw_data_latest(
+                concurrency, only_ground_truth, from_timestamp
+            )
 
         # Create output directory
         destination = uniquify_path(self.project_id)
@@ -575,6 +553,7 @@ class Export:
         only_ground_truth: bool = True,
         concurrency: int = 10,
         task_id: Optional[str] = None,
+        from_timestamp: Optional[int] = None,
     ) -> List[Dict]:
         """
         Export data into redbrick format.
@@ -595,6 +574,10 @@ class Export:
             If the unique task_id is mentioned, only a single
             datapoint will be exported.
 
+        from_timestamp: Optional[int] = None
+            If the timestamp is mentioned, will only export tasks
+            that were labeled/updated since the given timestamp.
+
         Returns:
         -----------------
         List[Dict]
@@ -603,11 +586,10 @@ class Export:
         """
         if task_id:
             datapoints, _ = self._get_raw_data_single(task_id)
-
-        elif only_ground_truth:
-            datapoints, _ = self._get_raw_data_ground_truth(concurrency)
         else:
-            datapoints, _ = self._get_raw_data_latest(concurrency)
+            datapoints, _ = self._get_raw_data_latest(
+                concurrency, only_ground_truth, from_timestamp
+            )
 
         return [
             {
@@ -624,6 +606,7 @@ class Export:
         only_ground_truth: bool = True,
         concurrency: int = 10,
         task_id: Optional[str] = None,
+        from_timestamp: Optional[int] = None,
     ) -> Dict:
         """
         Export project into coco format.
@@ -644,6 +627,10 @@ class Export:
             If the unique task_id is mentioned, only a single
             datapoint will be exported.
 
+        from_timestamp: Optional[int] = None
+            If the timestamp is mentioned, will only export tasks
+            that were labeled/updated since the given timestamp.
+
         Returns
         -----------
         List[Dict]
@@ -663,9 +650,9 @@ class Export:
 
         if task_id:
             datapoints, taxonomy = self._get_raw_data_single(task_id)
-        elif only_ground_truth:
-            datapoints, taxonomy = self._get_raw_data_ground_truth(concurrency)
         else:
-            datapoints, taxonomy = self._get_raw_data_latest(concurrency)
+            datapoints, taxonomy = self._get_raw_data_latest(
+                concurrency, only_ground_truth, from_timestamp
+            )
 
         return coco_converter(datapoints, taxonomy)
