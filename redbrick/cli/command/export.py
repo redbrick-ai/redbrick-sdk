@@ -144,19 +144,9 @@ class CLIExportController(CLIExportInterface):
         if isinstance(cached_dim, dict):
             cached_dimensions = cached_dim
 
-        cache_time = None
-        if cache_timestamp is not None:
-            cache_time = datetime.fromtimestamp(cache_timestamp, tz=timezone.utc)
-            print_info(
-                "Refreshing cache with tasks updated after: "
-                + str(datetime.fromtimestamp(cache_timestamp))
-            )
-        else:
-            print_info("Refreshing cache with all tasks")
-
         current_timestamp = int(datetime.now(timezone.utc).timestamp())
         datapoints, taxonomy = self.project.project.export._get_raw_data_latest(
-            self.args.concurrency, cache_time
+            self.args.concurrency, False, cache_timestamp
         )
 
         print_info(f"Refreshed {len(datapoints)} newly updated tasks")

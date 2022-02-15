@@ -106,13 +106,16 @@ class ExportRepo(ExportControllerInterface):
         entries: List[Dict] = datapoints_paged.get("entries", []) or []  # type: ignore
         return entries, datapoints_paged.get("cursor")
 
-    def datapoints_in_project(self, org_id: str, project_id: str) -> int:
+    def datapoints_in_project(
+        self, org_id: str, project_id: str, stage_name: Optional[str] = None
+    ) -> int:
         """Get number of datapoints in project."""
         query_string = """
-        query($orgId: UUID!, $projectId: UUID!, $first: Int) {
+        query($orgId: UUID!, $projectId: UUID!, $stageName: String, $first: Int) {
             tasksPaged(
                 orgId: $orgId
                 projectId: $projectId
+                stageName: $stageName
                 first: $first
             ) {
                 count
@@ -120,7 +123,12 @@ class ExportRepo(ExportControllerInterface):
         }
         """
         # EXECUTE THE QUERY
-        query_variables = {"orgId": org_id, "projectId": project_id, "first": 0}
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+            "first": 0,
+        }
 
         result = self.client.execute_query(query_string, query_variables)
 
@@ -130,6 +138,7 @@ class ExportRepo(ExportControllerInterface):
         self,
         org_id: str,
         project_id: str,
+        stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
         first: int = 50,
         cursor: Optional[str] = None,
@@ -140,6 +149,7 @@ class ExportRepo(ExportControllerInterface):
         query(
             $orgId: UUID!,
             $projectId: UUID!,
+            $stageName: String,
             $cacheTime: DateTime,
             $first: Int,
             $cursor: String
@@ -147,6 +157,7 @@ class ExportRepo(ExportControllerInterface):
             tasksPaged(
                 orgId: $orgId
                 projectId: $projectId
+                stageName: $stageName
                 cacheTime: $cacheTime
                 first: $first
                 after: $cursor
@@ -166,6 +177,7 @@ class ExportRepo(ExportControllerInterface):
         query_variables = {
             "orgId": org_id,
             "projectId": project_id,
+            "stageName": stage_name,
             "cacheTime": None if cache_time is None else cache_time.isoformat(),
             "first": first,
             "cursor": cursor,

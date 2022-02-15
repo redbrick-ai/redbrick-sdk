@@ -23,7 +23,7 @@ api_key = "<>"
 url = "https://api.redbrickai.com"
 org_id = "<>"
 project_id = "<>"
-project = redbrick.get_project(api_key, url, org_id, project_id)
+project = redbrick.get_project(org_id=org_id, project_id=project_id, api_key=api_key, url=url)
 
 
 ```
