@@ -67,13 +67,19 @@ class Export:
     """
 
     def __init__(
-        self, context: RBContext, org_id: str, project_id: str, project_type: LabelType
+        self,
+        context: RBContext,
+        org_id: str,
+        project_id: str,
+        project_type: LabelType,
+        output_stage_name: str,
     ) -> None:
         """Construct Export object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
         self.project_type = project_type
+        self.output_stage_name = output_stage_name
 
     def _get_raw_data_latest(
         self,
@@ -466,7 +472,7 @@ class Export:
         Please visit https://docs.redbrickai.com/python-sdk/reference#png-mask-formats
         to see an overview of the format of the exported masks.
 
-        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
         >>> project.export.redbrick_png()
 
         Parameters
@@ -493,6 +499,7 @@ class Export:
         from_timestamp: Optional[float] = None
             If the timestamp is mentioned, will only export tasks
             that were labeled/updated since the given timestamp.
+            Format - output from datetime.timestamp()
 
         Warnings
         ----------
@@ -573,7 +580,7 @@ class Export:
         """
         Export dicom segmentation labels in NIfTI-1 format.
 
-        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
         >>> project.export.redbrick_nifti()
 
         Parameters
@@ -592,6 +599,7 @@ class Export:
         from_timestamp: Optional[float] = None
             If the timestamp is mentioned, will only export tasks
             that were labeled/updated since the given timestamp.
+            Format - output from datetime.timestamp()
 
         Warnings
         ----------
@@ -632,7 +640,7 @@ class Export:
         """
         Export data into redbrick format.
 
-        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
         >>> result = project.export.redbrick_format()
 
         Parameters
@@ -651,6 +659,7 @@ class Export:
         from_timestamp: Optional[float] = None
             If the timestamp is mentioned, will only export tasks
             that were labeled/updated since the given timestamp.
+            Format - output from datetime.timestamp()
 
         Returns:
         -----------------
@@ -685,7 +694,7 @@ class Export:
         """
         Export project into coco format.
 
-        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
         >>> result = project.export.coco_format()
 
         Parameters
@@ -704,6 +713,7 @@ class Export:
         from_timestamp: Optional[float] = None
             If the timestamp is mentioned, will only export tasks
             that were labeled/updated since the given timestamp.
+            Format - output from datetime.timestamp()
 
         Returns
         -----------
@@ -730,3 +740,57 @@ class Export:
             )
 
         return coco_converter(datapoints, taxonomy)
+
+    def search_tasks(
+        self,
+        only_ground_truth: bool = True,
+        concurrency: int = 10,
+        name: Optional[str] = None,
+    ) -> List[Dict]:
+        """
+        Export project into coco format.
+
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
+        >>> result = project.export.search_tasks()
+
+        Parameters
+        -----------
+        only_ground_truth: bool = True
+            If set to True, will return all tasks
+            that have been completed in your workflow.
+
+        concurrency: int = 10
+
+        name: Optional[str] = None
+            If present, will return task with the given task_id
+            or tasks with names that begin with the given name.
+
+        Returns
+        -----------
+        List[Dict]
+            {"taskId", "name", "createdAt"}
+        """
+        my_iter = PaginationIterator(
+            partial(
+                self.context.export.task_search,
+                self.org_id,
+                self.project_id,
+                self.output_stage_name if only_ground_truth else None,
+                name,
+                concurrency,
+            )
+        )
+
+        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
+            datapoints = [
+                {
+                    "taskId": task["taskId"],
+                    "name": task["datapoint"]["name"],
+                    "createdAt": task["createdAt"],
+                }
+                for task in progress
+                if (task.get("datapoint", {}) or {}).get("name")
+                and (not only_ground_truth or task["currentStageName"] == "END")
+            ]
+
+        return datapoints

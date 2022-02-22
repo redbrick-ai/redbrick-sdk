@@ -4,6 +4,7 @@ from typing import List, Dict
 
 from redbrick.common.client import RBClient
 from redbrick.common.project import ProjectRepoInterface
+from redbrick.repo.shards import TAXONOMY_SHARD
 
 
 class ProjectRepo(ProjectRepoInterface):
@@ -141,20 +142,22 @@ class ProjectRepo(ProjectRepoInterface):
         )
         return response["projects"]
 
-    def get_taxonomies(self, org_id: str) -> List[str]:
+    def get_taxonomies(self, org_id: str) -> List[Dict]:
         """Get a list of taxonomies."""
-        query = """
+        query = (
+            """
             query getTaxonomiesSDK($orgId: UUID!) {
                 taxonomies(orgId: $orgId) {
-                    orgId
-                    name
+                    %s
                 }
             }
         """
-        response: Dict[str, List[Dict[str, str]]] = self.client.execute_query(
+            % TAXONOMY_SHARD
+        )
+        response: Dict[str, List[Dict]] = self.client.execute_query(
             query, {"orgId": org_id}
         )
-        return [tax["name"] for tax in response["taxonomies"]]
+        return response["taxonomies"]
 
     def delete_project(self, org_id: str, project_id: str) -> None:
         """Delete Project."""

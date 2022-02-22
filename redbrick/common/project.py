@@ -34,7 +34,7 @@ class ProjectRepoInterface(ABC):
         """Get all projects in organization."""
 
     @abstractmethod
-    def get_taxonomies(self, org_id: str) -> List[str]:
+    def get_taxonomies(self, org_id: str) -> List[Dict]:
         """Get a list of taxonomies."""
 
     @abstractmethod

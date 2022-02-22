@@ -25,7 +25,7 @@ from redbrick.utils.logging import print_info, handle_exception
 
 from .version_check import version_check
 
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:

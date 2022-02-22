@@ -1,28 +1,36 @@
 """Partial queries to prevent duplication."""
 
 TAXONOMY_SHARD = """
+orgId
 name
 version
+createdAt
 categories {
     name
     children {
         name
         classId
+        disabled
         children {
             name
             classId
+            disabled
             children {
                 name
                 classId
+                disabled
                 children {
                     name
                     classId
+                    disabled
                     children {
                         name
                         classId
+                        disabled
                         children {
                             name
                             classId
+                            disabled
                         }
                     }
                 }
@@ -30,6 +38,59 @@ categories {
         }
     }
 }
+attributes {
+    name
+    attrType
+    whitelist
+    disabled
+}
+taskCategories {
+    name
+    children {
+        name
+        classId
+        disabled
+        children {
+            name
+            classId
+            disabled
+            children {
+                name
+                classId
+                disabled
+                children {
+                    name
+                    classId
+                    disabled
+                    children {
+                        name
+                        classId
+                        disabled
+                        children {
+                            name
+                            classId
+                            disabled
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+taskAttributes {
+    name
+    attrType
+    whitelist
+    disabled
+}
+colorMap {
+    name
+    color
+    classid
+    trail
+    taskcategory
+}
+archived
 """
 
 LATEST_TASKDATA_SHARD = """
