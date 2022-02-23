@@ -34,7 +34,7 @@ class RBOrganization:
 
     @handle_exception
     def taxonomies(self, only_name: bool = True) -> Union[List[str], List[Dict]]:
-        """Get a list of taxonomy names in the organization."""
+        """Get a list of taxonomy names/objects in the organization."""
         taxonomies = self.context.project.get_taxonomies(self._org_id)
         if only_name:
             return [tax["name"] for tax in taxonomies]
