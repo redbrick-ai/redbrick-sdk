@@ -4,7 +4,6 @@ from datetime import datetime
 import random
 from uuid import uuid4
 from typing import Dict, Generator, List, Optional, Tuple
-import time
 
 import pytest
 import tenacity
@@ -202,7 +201,10 @@ def validate_export_data_redbrick(
 
     # Groundtruth
     exported_data = project.export.redbrick_format()
-    assert set({task["taskId"] for task in exported_data}) == set(groundtruth_task_ids)
+    assert (
+        len(set({task["taskId"] for task in exported_data}) - set(groundtruth_task_ids))
+        == 0
+    )
     validate_redbrick_labels(tasks, exported_data)
 
     # TaskId
@@ -256,8 +258,6 @@ def test_classify_project(
         groundtruth_task_ids = [
             task["taskId"] for task in reviewed_tasks if task["reviewVal"]
         ]
-
-        time.sleep(10)  # give time for tasks to travel across the queues
 
         validate_export_data_redbrick(project, tasks_map, groundtruth_task_ids)
         if label_type in (LabelType.IMAGE_POLYGON,):

@@ -748,7 +748,7 @@ class Export:
         name: Optional[str] = None,
     ) -> List[Dict]:
         """
-        Export project into coco format.
+        Search tasks by task_id/name in groundtruth or entire project.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key, url)
         >>> result = project.export.search_tasks()
