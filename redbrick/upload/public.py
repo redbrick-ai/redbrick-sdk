@@ -425,7 +425,7 @@ class Upload:
 
         Optionally you can upload labels with your data.
 
-        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
         >>> project.upload.create_datapoints(...)
 
         Parameters
@@ -496,7 +496,7 @@ class Upload:
         """
         Create a single datapoint with mask.
 
-        >>> project = redbrick.get_project(api_key, url, org_id, project_id)
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
         >>> project.upload.create_datapoint_from_masks(...)
 
         Parameters

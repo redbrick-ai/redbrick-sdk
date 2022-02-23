@@ -257,3 +257,58 @@ class ExportRepo(ExportControllerInterface):
         response = await self.client.execute_query_async(session, query, variables)
         label_data: Dict = response.get("dataPoint", {}).get("labelData", {})
         return label_data
+
+    def task_search(
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: Optional[str] = None,
+        task_search: Optional[str] = None,
+        first: int = 50,
+        after: Optional[str] = None,
+    ) -> Tuple[List[Dict], Optional[str]]:
+        """Task search."""
+        query_string = """
+        query tasksList(
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String
+            $taskSearch: String
+            $first: Int
+            $after: String
+        ) {
+            genericTasks(
+                orgId: $orgId
+                projectId: $projectId
+                stageName: $stageName
+                taskSearch: $taskSearch
+                first: $first
+                after: $after
+            ) {
+                entries {
+                    taskId
+                    datapoint {
+                        name
+                    }
+                    currentStageName
+                    createdAt
+                }
+                cursor
+            }
+        }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+            "taskSearch": task_search,
+            "first": first,
+            "after": after,
+        }
+
+        result = self.client.execute_query(query_string, query_variables, False)
+        generic_tasks = result.get("genericTasks", {}) or {}
+        entries: List[Dict] = generic_tasks.get("entries", []) or []  # type: ignore
+
+        return entries, generic_tasks.get("cursor")

@@ -1,6 +1,6 @@
 """Organization class."""
 
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Union
 from tqdm import tqdm  # type: ignore
 
 from redbrick.common.enums import LabelType
@@ -33,9 +33,12 @@ class RBOrganization:
         self._name = org["name"]
 
     @handle_exception
-    def taxonomies(self) -> List[str]:
+    def taxonomies(self, only_name: bool = True) -> Union[List[str], List[Dict]]:
         """Get a list of taxonomy names in the organization."""
-        return self.context.project.get_taxonomies(self._org_id)
+        taxonomies = self.context.project.get_taxonomies(self._org_id)
+        if only_name:
+            return [tax["name"] for tax in taxonomies]
+        return taxonomies
 
     def _all_projects_raw(self) -> List[Dict]:
         """Get and filter entries from server."""

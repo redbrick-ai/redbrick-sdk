@@ -56,6 +56,7 @@ class RBProject:
 
         self.upload = Upload(context, org_id, project_id, self.project_type)
 
+        self.output_stage_name: str = "Output"
         self.learning = Learning(self.context, self.org_id, self.project_id)
         self.learning2 = Learning2(self.context, self.org_id, self.project_id)
         for stage in self._stages:
@@ -68,10 +69,14 @@ class RBProject:
                 self.learning = Learning(
                     self.context, self.org_id, self.project_id, stage["stageName"]
                 )
+            elif stage["brickName"] == "labelset-output":
+                self.output_stage_name = stage["stageName"]
 
         self.labeling = Labeling(context, org_id, project_id)
         self.review = Labeling(context, org_id, project_id, review=True)
-        self.export = Export(context, org_id, project_id, self.project_type)
+        self.export = Export(
+            context, org_id, project_id, self.project_type, self.output_stage_name
+        )
 
     @property
     def org_id(self) -> str:

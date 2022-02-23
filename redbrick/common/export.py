@@ -55,3 +55,15 @@ class ExportControllerInterface(ABC):
         self, session: aiohttp.ClientSession, org_id: str, project_id: str, dp_id: str
     ) -> Dict:
         """Get input labels."""
+
+    @abstractmethod
+    def task_search(
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: Optional[str] = None,
+        task_search: Optional[str] = None,
+        first: int = 50,
+        after: Optional[str] = None,
+    ) -> Tuple[List[Dict], Optional[str]]:
+        """Task search."""
