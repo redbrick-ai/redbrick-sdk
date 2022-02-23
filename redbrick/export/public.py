@@ -762,8 +762,8 @@ class Export:
         concurrency: int = 10
 
         name: Optional[str] = None
-            If present, will return task with the given task_id
-            or tasks with names that begin with the given name.
+            If present, will return the task with task_id == name.
+            If no match found, will return the task with task name == name
 
         Returns
         -----------
