@@ -44,7 +44,8 @@ except Exception:  # pylint: disable=broad-except
 
 # if there is a running event loop, apply nest_asyncio
 try:
-    asyncio.get_running_loop()
+    if asyncio._get_running_loop() is None:  # pylint: disable=protected-access
+        raise RuntimeError
     nest_asyncio.apply()
     print_info(
         "Applying nest-asyncio to a running event loop, this likely means you're in a jupyter"
