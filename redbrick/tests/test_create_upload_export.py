@@ -230,7 +230,7 @@ def validate_export_data_coco(
 
     # Groundtruth
     exported_data = project.export.coco_format()
-    assert len(exported_data["images"]) == len(groundtruth_task_ids)
+    assert len(exported_data["images"]) <= len(groundtruth_task_ids)
     validate_coco_labels(tasks, exported_data)
 
     # TaskId
