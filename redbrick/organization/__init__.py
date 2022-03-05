@@ -1,5 +1,6 @@
 """Organization class."""
-
+from datetime import datetime
+from functools import partial
 from typing import List, Optional, Dict, Union
 from tqdm import tqdm  # type: ignore
 
@@ -7,6 +8,7 @@ from redbrick.common.enums import LabelType
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
 from redbrick.utils.logging import print_info, print_warning, handle_exception
+from redbrick.utils.pagination import PaginationIterator
 from .basic_project import get_active_learning_project, get_basic_project
 
 
@@ -151,3 +153,32 @@ class RBOrganization:
             ) from error
 
         return RBProject(self.context, self.org_id, project_data["projectId"])
+
+    @handle_exception
+    def labeling_time(
+        self, start_date: datetime, end_date: datetime, concurrency: int = 50
+    ) -> List[Dict]:
+        """Get information of tasks labeled between two dates (both inclusive)."""
+        tasks: List[Dict]
+        my_iter = PaginationIterator(
+            partial(
+                self.context.project.get_labeling_information,
+                self._org_id,
+                start_date,
+                end_date,
+                concurrency,
+            )
+        )
+        with tqdm(my_iter, unit=" tasks") as progress:
+            tasks = [
+                {
+                    "projectId": task["project"]["projectId"],
+                    "taskId": task["taskId"],
+                    "completedBy": task["user"]["email"],
+                    "timeSpent": task["timeSpent"],
+                    "completedAt": task["date"],
+                }
+                for task in progress
+            ]
+
+        return tasks
