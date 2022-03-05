@@ -1,6 +1,7 @@
 """Handlers to access APIs for getting projects."""
 import json
-from typing import List, Dict
+from typing import List, Dict, Tuple, Optional
+from datetime import datetime
 
 from redbrick.common.client import RBClient
 from redbrick.common.project import ProjectRepoInterface
@@ -144,16 +145,13 @@ class ProjectRepo(ProjectRepoInterface):
 
     def get_taxonomies(self, org_id: str) -> List[Dict]:
         """Get a list of taxonomies."""
-        query = (
-            """
-            query getTaxonomiesSDK($orgId: UUID!) {
-                taxonomies(orgId: $orgId) {
-                    %s
-                }
-            }
+        query = f"""
+            query getTaxonomiesSDK($orgId: UUID!) {{
+                taxonomies(orgId: $orgId) {{
+                    {TAXONOMY_SHARD}
+                }}
+            }}
         """
-            % TAXONOMY_SHARD
-        )
         response: Dict[str, List[Dict]] = self.client.execute_query(
             query, {"orgId": org_id}
         )
@@ -169,3 +167,54 @@ class ProjectRepo(ProjectRepoInterface):
             }
         """
         self.client.execute_query(query, {"orgId": org_id, "projectId": project_id})
+
+    def get_labeling_information(
+        self,
+        org_id: str,
+        start_date: datetime,
+        end_date: datetime,
+        first: int,
+        cursor: Optional[str] = None,
+    ) -> Tuple[List[Dict], Optional[str]]:
+        """Get org labeling information."""
+        query_string = """
+        query firstLabelingTimeSDK(
+            $orgId: UUID!
+            $startDate: DateTime!
+            $endDate: DateTime!
+            $first: Int
+            $after: String
+        ) {
+            firstLabelingTime(
+                orgId: $orgId
+                startDate: $startDate
+                endDate: $endDate
+                first: $first
+                after: $after
+            ) {
+                entries {
+                    project {
+                        projectId
+                    }
+                    taskId
+                    user {
+                        email
+                    }
+                    timeSpent
+                    date
+                }
+                cursor
+            }
+        }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "startDate": start_date.isoformat(),
+            "endDate": end_date.isoformat(),
+            "first": first,
+            "after": cursor,
+        }
+        result = self.client.execute_query(query_string, query_variables)
+        tasks_paged = result.get("firstLabelingTime", {}) or {}
+        entries: List[Dict] = tasks_paged.get("entries", []) or []  # type: ignore
+        return entries, tasks_paged.get("cursor")

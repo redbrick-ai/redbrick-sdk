@@ -1,6 +1,6 @@
 """Interface for getting basic information about a project."""
-
-from typing import Dict, List
+from datetime import datetime
+from typing import Dict, List, Tuple, Optional
 from abc import ABC, abstractmethod
 
 
@@ -40,3 +40,14 @@ class ProjectRepoInterface(ABC):
     @abstractmethod
     def delete_project(self, org_id: str, project_id: str) -> None:
         """Delete Project."""
+
+    @abstractmethod
+    def get_labeling_information(
+        self,
+        org_id: str,
+        start_date: datetime,
+        end_date: datetime,
+        first: int,
+        cursor: Optional[str] = None,
+    ) -> Tuple[List[Dict], Optional[str]]:
+        """Get org labeling information."""
