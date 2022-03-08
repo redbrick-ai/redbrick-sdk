@@ -20,13 +20,9 @@ IMAGE_FILE_TYPES = {
     "bmp": "image/bmp",
 }
 
-VIDEO_FILE_TYPES = {
-    "mp4": "video/mp4",
-}
+VIDEO_FILE_TYPES = {"mp4": "video/mp4"}
 
-DICOM_FILE_TYPES = {
-    "dcm": "application/dicom",
-}
+DICOM_FILE_TYPES = {"dcm": "application/dicom", "ima": "application/dicom"}
 
 JSON_FILE_TYPES = {"json": "application/json"}
 
