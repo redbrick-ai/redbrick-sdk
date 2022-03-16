@@ -51,3 +51,15 @@ class ProjectRepoInterface(ABC):
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get org labeling information."""
+
+    @abstractmethod
+    def create_taxonomy(
+        self,
+        org_id: str,
+        name: str,
+        categories: List[Dict],
+        attributes: Optional[List[Dict]],
+        task_categories: Optional[List[Dict]],
+        task_attributes: Optional[List[Dict]],
+    ) -> bool:
+        """Create taxonomy."""

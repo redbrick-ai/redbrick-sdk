@@ -182,3 +182,29 @@ class RBOrganization:
             ]
 
         return tasks
+
+    @handle_exception
+    def create_taxonomy(
+        self,
+        name: str,
+        categories: List[Dict],
+        attributes: Optional[List[Dict]] = None,
+        task_categories: Optional[List[Dict]] = None,
+        task_attributes: Optional[List[Dict]] = None,
+    ) -> None:
+        """Create Taxonomy.
+
+        Format reference for categories and attributes objects:
+        https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
+        """
+        if self.context.project.create_taxonomy(
+            self.org_id,
+            name,
+            [{"name": "object", "children": categories}],
+            attributes,
+            [{"name": "object", "children": task_categories}]
+            if task_categories
+            else task_categories,
+            task_attributes,
+        ):
+            print_info(f"Successfully created taxonomy: {name}")
