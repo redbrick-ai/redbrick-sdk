@@ -47,7 +47,10 @@ def get_file_type(file_path: str) -> Tuple[str, str]:
         file_ext: png, jpeg, jpg etc.
         file_type: this is the MIME file type e.g. image/png
     """
-    file_ext = file_path.split("?", 1)[0].rstrip("/").rsplit(".", 1)[-1].lower()
+    file_ext = file_path.split("?", 1)[0].rstrip("/").lower()
+    if file_ext.endswith(".gz"):
+        file_ext = file_ext[:-3]
+    file_ext = file_ext.rsplit(".", 1)[-1].lower()
 
     if file_ext not in FILE_TYPES:
         raise ValueError(
@@ -74,7 +77,14 @@ def find_files_recursive(
         if os.path.isdir(path):
             items.extend(find_files_recursive(path, file_types, multiple))
             discard_list_items = True
-        elif os.path.isfile(path) and item.rsplit(".", 1)[-1].lower() in file_types:
+        elif os.path.isfile(path) and (
+            item.rsplit(".", 1)[-1].lower() in file_types
+            or (
+                "." in item
+                and item.rsplit(".", 1)[-1].lower() == "gz"
+                and item.rsplit(".", 2)[-2].lower() in file_types
+            )
+        ):
             if multiple:
                 if not discard_list_items:
                     list_items.append(path)
@@ -124,12 +134,12 @@ async def upload_files(
         if not path or not url or not file_type:
             return False
         async with aiofiles.open(path, mode="rb") as file_:  # type: ignore
-            data = gzip.compress(await file_.read())
+            data = await file_.read()
 
         async with session.put(
             url,
             headers={"Content-Type": file_type, "Content-Encoding": "gzip"},
-            data=data,
+            data=data if path.endswith(".gz") else gzip.compress(data),
         ) as response:
             if response.status == 200:
                 return True

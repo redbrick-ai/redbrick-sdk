@@ -14,6 +14,7 @@ from redbrick.utils.files import (
     DICOM_FILE_TYPES,
     IMAGE_FILE_TYPES,
     JSON_FILE_TYPES,
+    NIFTI_FILE_TYPES,
     VIDEO_FILE_TYPES,
     find_files_recursive,
 )
@@ -30,6 +31,9 @@ class CLIUploadController(CLIUploadInterface):
         )
         parser.add_argument(
             "--as-frames", action="store_true", help="Upload video from image frames"
+        )
+        parser.add_argument(
+            "--as-nifti", action="store_true", help="Upload dicom as nifti files"
         )
         parser.add_argument(
             "--json",
@@ -89,8 +93,11 @@ class CLIUploadController(CLIUploadInterface):
             else:
                 file_types = VIDEO_FILE_TYPES
         elif data_type == "DICOM":
-            multiple = True
-            file_types = DICOM_FILE_TYPES
+            if self.args.as_nifti:
+                file_types = NIFTI_FILE_TYPES
+            else:
+                multiple = True
+                file_types = DICOM_FILE_TYPES
         elif data_type != "IMAGE":
             raise Exception(
                 "Project data type needs to be IMAGE, VIDEO or DICOM to upload files"
@@ -137,7 +144,10 @@ class CLIUploadController(CLIUploadInterface):
                         )
                         if (
                             data_type == "DICOM"
-                            and label_blob_file.endswith(".nii")
+                            and (
+                                label_blob_file.endswith(".nii")
+                                or label_blob_file.endswith(".nii.gz")
+                            )
                             and os.path.isfile(label_blob_file)
                         ):
                             item["labelsPath"] = label_blob_file
@@ -201,9 +211,18 @@ class CLIUploadController(CLIUploadInterface):
                             if os.path.isabs(label_data["labelsPath"])
                             else os.path.join(task_dir, label_data["labelsPath"])
                         )
-                        if os.path.isfile(label_blob_file):
+                        if (
+                            label_blob_file.endswith(".nii")
+                            or label_blob_file.endswith(".nii.gz")
+                        ) and os.path.isfile(label_blob_file):
                             label_blob = label_blob_file
-                    elif os.path.isfile(os.path.join(task_dir, task_name + ".nii")):
+                    elif multiple and os.path.isfile(
+                        os.path.join(task_dir, task_name + ".nii.gz")
+                    ):
+                        label_blob = os.path.join(task_dir, task_name + ".nii.gz")
+                    elif multiple and os.path.isfile(
+                        os.path.join(task_dir, task_name + ".nii")
+                    ):
                         label_blob = os.path.join(task_dir, task_name + ".nii")
 
                 item = {"name": item_name, "items": item_group[:]}
