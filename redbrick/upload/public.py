@@ -199,7 +199,10 @@ class Upload:
         if (
             data_type == "DICOM"
             and point.get("labelsPath")
-            and str(point["labelsPath"]).endswith(".nii")
+            and (
+                str(point["labelsPath"]).endswith(".nii")
+                or str(point["labelsPath"]).endswith(".nii.gz")
+            )
             and os.path.isfile(point["labelsPath"])
         ):
             file_type = NIFTI_FILE_TYPES["nii"]

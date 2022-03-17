@@ -110,7 +110,10 @@ class Labeling:
                 labels_path: Optional[str] = None
                 if (
                     task.get("labelsPath")
-                    and str(task["labelsPath"]).endswith(".nii")
+                    and (
+                        str(task["labelsPath"]).endswith(".nii")
+                        or str(task["labelsPath"]).endswith(".nii.gz")
+                    )
                     and os.path.isfile(task["labelsPath"])
                 ):
                     file_type = NIFTI_FILE_TYPES["nii"]
