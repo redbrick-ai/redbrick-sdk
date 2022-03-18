@@ -19,7 +19,7 @@ def create_test_project(
     api_key: str,
     url: str,
     label_type: LabelType,
-    taxonomy: str = "DEFAULT::Berkeley Deep Drive (BDD)",
+    taxonomy: str = "Berkeley Deep Drive (BDD)",
     reviews: int = 1,
 ) -> Generator[RBProject, None, None]:
     """Create project."""

@@ -20,7 +20,7 @@ IMAGE_FILE_TYPES = {
     "bmp": "image/bmp",
 }
 
-VIDEO_FILE_TYPES = {"mp4": "video/mp4"}
+VIDEO_FILE_TYPES = {"mp4": "video/mp4", "avi": "video/x-msvideo"}
 
 DICOM_FILE_TYPES = {"dcm": "application/dicom", "ima": "application/dicom"}
 

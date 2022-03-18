@@ -41,13 +41,15 @@ class PaginationIterator:
             self.datapoints_batch is None
             or len(self.datapoints_batch) == self.datapoints_batch_index
         ):
-            datapoints_batch: List[Dict]
-            cursor: Optional[str]
-            datapoints_batch, cursor, *_ = self.func(self.cursor)
-            self.datapoints_batch = datapoints_batch
-            self.cursor = cursor
-            self.datapoints_batch_index = 0
-            self.total += len(self.datapoints_batch)
+            # When no data is returned in the current iteration,
+            # but there is still more data, go for the next iteration
+            while True:
+                self.datapoints_batch, self.cursor, *_ = self.func(self.cursor)
+                if not self.datapoints_batch and self.cursor:
+                    continue
+                self.datapoints_batch_index = 0
+                self.total += len(self.datapoints_batch)  # type: ignore
+                break
 
         # Current entry to return
         if self.datapoints_batch and self.datapoints_batch_index is not None:
