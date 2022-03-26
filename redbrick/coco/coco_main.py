@@ -118,7 +118,14 @@ def coco_converter(
                 skipped_labels += 1
 
         if skipped_labels:
-            print_warning(f"Skipped {skipped_labels} labels for {data['taskId']}")
+            if labels == skipped_labels:
+                print_warning(
+                    f"No bbox/polygon labels found for task {data['taskId']}, skipping"
+                )
+            else:
+                print_warning(
+                    f"Skipped {skipped_labels} non bbox/polygon labels for {data['taskId']}"
+                )
 
     return {
         "images": images,

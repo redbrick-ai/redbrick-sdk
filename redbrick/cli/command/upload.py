@@ -105,6 +105,13 @@ class CLIUploadController(CLIUploadInterface):
 
         print_info(f"Searching for items recursively in {directory}")
         items_list = find_files_recursive(directory, set(file_types.keys()), multiple)
+        valid_file_types = ", ".join(f".{type}[.gz]" for type in file_types)
+        if multiple and not items_list:
+            print_info(
+                "No items found. Please make sure your directories contain files of the same type"
+                + f" within them, i.e. any one of the following: ({valid_file_types})"
+            )
+            return
 
         upload_cache_hash = self.project.conf.get_option("uploads", "cache")
         upload_cache = set(
@@ -236,20 +243,25 @@ class CLIUploadController(CLIUploadInterface):
                         item["labelsPath"] = label_blob
                 points.append(item)
 
-        print_info(f"Found {len(points)} items")
+        if points:
+            print_info(f"Found {len(points)} items")
+            loop = asyncio.get_event_loop()
+            uploads = loop.run_until_complete(
+                project.upload._create_tasks(storage_id, points, self.args.ground_truth)
+            )
 
-        loop = asyncio.get_event_loop()
-        uploads = loop.run_until_complete(
-            project.upload._create_tasks(storage_id, points, self.args.ground_truth)
-        )
+            for upload in uploads:
+                if upload.get("response"):
+                    upload_cache.add(upload["name"])
 
-        for upload in uploads:
-            if upload.get("response"):
-                upload_cache.add(upload["name"])
-
-        self.project.conf.set_option(
-            "uploads",
-            "cache",
-            self.project.cache.set_data("uploads", list(upload_cache), True),
-        )
-        self.project.conf.save()
+            self.project.conf.set_option(
+                "uploads",
+                "cache",
+                self.project.cache.set_data("uploads", list(upload_cache), True),
+            )
+            self.project.conf.save()
+        elif not items_list:
+            print_info(
+                "No items found. Please make sure your directories contain files of valid type,"
+                + f" i.e. any one of the following: ({valid_file_types})"
+            )

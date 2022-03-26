@@ -212,32 +212,50 @@ class Export:
         return datapoints, general_info["taxonomy"]
 
     @staticmethod
-    def _get_color(class_id: int) -> Any:
+    def _get_color(class_id: int, color_hex: Optional[str] = None) -> Any:
         """Get a color from class id."""
-        if class_id > 20:
-            color = (
-                np.array(cm.tab20b(int(class_id))) * 255  # pylint: disable=no-member
+        # pylint: disable=no-member
+        if color_hex:
+            color_hex = color_hex.lstrip("#")
+            return [int(color_hex[i : i + 2], 16) for i in (0, 2, 4)]
+        color = (
+            np.array(
+                cm.tab20b(int(class_id)) if class_id > 20 else cm.tab20c(int(class_id))
             )
-            return color.astype(np.uint8)
-
-        color = np.array(cm.tab20c(int(class_id))) * 255  # pylint: disable=no-member
-        return color.astype(np.uint8)
+            * 255
+        )
+        return color.astype(np.uint8)[0:3].tolist()
 
     @staticmethod
     def tax_class_id_mapping(
-        taxonomy: Dict, class_id: Dict, color_map: Optional[Dict] = None
+        parent: List,
+        children: Dict,
+        class_id: Dict,
+        color_map: Dict,
+        taxonomy_color: Optional[List] = None,
     ) -> None:
         """Create a class mapping from taxonomy categories to class_id."""
-        for category in taxonomy:
-            class_id[category["name"]] = category["classId"] + 1
-
-            # Create a color map
-            if color_map is not None:
-                color_map[category["name"]] = Export._get_color(category["classId"])[
-                    0:3
-                ].tolist()  # not doing +1 here.
-
-            Export.tax_class_id_mapping(category["children"], class_id, color_map)
+        for category in children:
+            trail = parent + [category["name"]]
+            key = "::".join(trail[1:])
+            class_id[key] = category["classId"] + 1
+            color_map[key] = Export._get_color(
+                category["classId"],
+                next(
+                    (
+                        color.get("color")
+                        for color in taxonomy_color
+                        if not color.get("taskcategory")
+                        and color.get("trail", []) == trail
+                    ),
+                    None,
+                )
+                if taxonomy_color
+                else None,
+            )
+            Export.tax_class_id_mapping(
+                trail, category["children"], class_id, color_map, taxonomy_color
+            )
 
     @staticmethod
     def fill_mask_holes(mask: np.ndarray, max_hole_size: int) -> np.ndarray:
@@ -298,6 +316,7 @@ class Export:
     def convert_rbai_mask(  # pylint: disable=too-many-locals
         labels: List,
         class_id_map: Dict,
+        color_map: Dict,
         fill_holes: bool = False,
         max_hole_size: int = 30,
     ) -> np.ndarray:
@@ -319,9 +338,11 @@ class Export:
         imagesize = np.round(imagesize).astype(int)  # type: ignore
 
         mask = np.zeros([imagesize[1], imagesize[0]])
-
+        class_id_reverse = {
+            class_id: category for category, class_id in class_id_map.items()
+        }
         for label in labels:
-            class_id = class_id_map[label["category"][0][-1]]
+            class_id = class_id_map["::".join(label["category"][0][1:])]
             regions = copy.deepcopy(label["pixel"]["regions"])
             holes = copy.deepcopy(label["pixel"]["holes"])
             imagesize = label["pixel"]["imagesize"]
@@ -403,7 +424,7 @@ class Export:
                     # don't add color to background
                     continue
                 indexes = np.where(mask == i)
-                color_mask[indexes] = Export._get_color(i - 1)[0:3]
+                color_mask[indexes] = color_map[class_id_reverse[i]]
 
         return color_mask
 
@@ -423,7 +444,11 @@ class Export:
         class_id_map: Dict = {}
         color_map: Dict = {}
         Export.tax_class_id_mapping(
-            taxonomy["categories"][0]["children"], class_id_map, color_map
+            [taxonomy["categories"][0]["name"]],  # object
+            taxonomy["categories"][0]["children"],  # categories
+            class_id_map,
+            color_map,
+            taxonomy.get("colorMap"),
         )
 
         # Convert rbai to png masks and save output
@@ -442,7 +467,7 @@ class Export:
             dp_map[filename] = datapoint["items"][0]
 
             color_mask = Export.convert_rbai_mask(
-                labels, class_id_map, fill_holes, max_hole_size
+                labels, class_id_map, color_map, fill_holes, max_hole_size
             )
 
             # save png as 3 channel np.uint8 image
