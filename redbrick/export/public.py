@@ -401,12 +401,12 @@ class Export:
             region_mask -= hole_mask
 
             # cleanup:
-            # - remove overlapping region values
-            neg_idxs = np.where(region_mask < 0)
-            region_mask[neg_idxs] = 100
             # - remove negative values from overlapping holes
+            neg_idxs = np.where(region_mask < 0)
+            region_mask[neg_idxs] = 0
+            # - remove overlapping region values
             overlap_indexes = np.where(region_mask > class_id)
-            region_mask[overlap_indexes] = 100
+            region_mask[overlap_indexes] = class_id
 
             # merge current object to main mask
             class_idx_not_zero = np.where(region_mask != 0)
