@@ -94,7 +94,7 @@ class CLIConfigController(CLIConfigInterface):
                     return
             self.project.creds.remove()
 
-        self.handle_add(True)
+        self.handle_add()
 
     def handle_list(self) -> None:
         """Handle list sub command."""
@@ -131,7 +131,7 @@ class CLIConfigController(CLIConfigInterface):
         self.project.creds.set_default(profile)
         self.project.creds.save()
 
-    def handle_add(self, set_default: bool = False) -> None:
+    def handle_add(self) -> None:
         """Handle add sub command."""
         org_id = CLIInputUUID(self.args.org, "Org ID").get()
         api_key = CLIInputAPIKey(self.args.key).get()
@@ -143,8 +143,7 @@ class CLIConfigController(CLIConfigInterface):
         self.project.creds.add_profile(profile, api_key, org_id, url)
         self.handle_verify(profile)
 
-        if set_default:
-            self.project.creds.set_default(profile)
+        self.project.creds.set_default(profile)
         self.project.creds.save()
 
     def handle_remove(self) -> None:

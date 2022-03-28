@@ -212,7 +212,11 @@ class CLIUploadController(CLIUploadInterface):
                         label_data = json.load(file_)
 
                 if data_type == "DICOM":
-                    if label_data and label_data.get("labelsPath"):
+                    if (
+                        label_data
+                        and isinstance(label_data, dict)
+                        and label_data.get("labelsPath")
+                    ):
                         label_blob_file = (
                             label_data["labelsPath"]
                             if os.path.isabs(label_data["labelsPath"])

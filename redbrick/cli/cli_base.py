@@ -67,7 +67,7 @@ class CLIConfigInterface(ABC):
         """Handle set sub command."""
 
     @abstractmethod
-    def handle_add(self, set_default: bool = False) -> None:
+    def handle_add(self) -> None:
         """Handle add sub command."""
 
     @abstractmethod

@@ -177,9 +177,7 @@ class Upload:
             ]
             uploaded = await upload_files(
                 files,
-                f"Uploading items for {point['name'][:57]}{point['name'][57:] and '...'}"
-                if len(point["items"]) > 1
-                else None,
+                f"Uploading items for {point['name'][:57]}{point['name'][57:] and '...'}",
                 False,
             )
 
