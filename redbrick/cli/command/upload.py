@@ -66,7 +66,9 @@ class CLIUploadController(CLIUploadInterface):
         project = self.project.project
 
         directory = os.path.normpath(self.args.directory)
-        if not os.path.isdir(directory):
+        if directory.endswith(".json") and os.path.isfile(directory):
+            self.args.json = True
+        elif not os.path.isdir(directory):
             raise Exception(f"{directory} is not a valid directory")
 
         data_type = str(project.project_type.value).split("_", 1)[0]
@@ -103,15 +105,20 @@ class CLIUploadController(CLIUploadInterface):
                 "Project data type needs to be IMAGE, VIDEO or DICOM to upload files"
             )
 
-        print_info(f"Searching for items recursively in {directory}")
-        items_list = find_files_recursive(directory, set(file_types.keys()), multiple)
         valid_file_types = ", ".join(f".{type}[.gz]" for type in file_types)
-        if multiple and not items_list:
-            print_info(
-                "No items found. Please make sure your directories contain files of the same type"
-                + f" within them, i.e. any one of the following: ({valid_file_types})"
+        if self.args.json and directory.endswith(".json") and os.path.isfile(directory):
+            items_list = [[os.path.abspath(directory)]]
+        else:
+            print_info(f"Searching for items recursively in {directory}")
+            items_list = find_files_recursive(
+                directory, set(file_types.keys()), multiple
             )
-            return
+            if multiple and not items_list:
+                print_info(
+                    "No items found. Please make sure your directories contain files of the same"
+                    + f" type within them, i.e. any one of the following: ({valid_file_types})"
+                )
+                return
 
         upload_cache_hash = self.project.conf.get_option("uploads", "cache")
         upload_cache = set(
