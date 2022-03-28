@@ -56,7 +56,7 @@ class CLIInputProfile(CLIInputParams):
                     invalid_message=self.error_message,
                 ).execute()
             elif self.profiles:
-                self.entity = inquirer.rawlist(
+                self.entity = inquirer.fuzzy(
                     qmark=">",
                     amark=">",
                     message="Profile name:",
