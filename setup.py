@@ -51,7 +51,6 @@ setup(
     long_description_content_type="text/markdown",
     include_package_data=True,
     install_requires=install_requires,
-    dependency_links=["http://github.com/user/repo/tarball/master#egg=package-1.0"],
     entry_points={
         "console_scripts": ["redbrick=redbrick.cli:cli_main"],
     },
