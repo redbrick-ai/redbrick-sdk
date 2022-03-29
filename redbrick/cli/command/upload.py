@@ -66,7 +66,9 @@ class CLIUploadController(CLIUploadInterface):
         project = self.project.project
 
         directory = os.path.normpath(self.args.directory)
-        if not os.path.isdir(directory):
+        if directory.endswith(".json") and os.path.isfile(directory):
+            self.args.json = True
+        elif not os.path.isdir(directory):
             raise Exception(f"{directory} is not a valid directory")
 
         data_type = str(project.project_type.value).split("_", 1)[0]
@@ -103,8 +105,20 @@ class CLIUploadController(CLIUploadInterface):
                 "Project data type needs to be IMAGE, VIDEO or DICOM to upload files"
             )
 
-        print_info(f"Searching for items recursively in {directory}")
-        items_list = find_files_recursive(directory, set(file_types.keys()), multiple)
+        valid_file_types = ", ".join(f".{type}[.gz]" for type in file_types)
+        if self.args.json and directory.endswith(".json") and os.path.isfile(directory):
+            items_list = [[os.path.abspath(directory)]]
+        else:
+            print_info(f"Searching for items recursively in {directory}")
+            items_list = find_files_recursive(
+                directory, set(file_types.keys()), multiple
+            )
+            if multiple and not items_list:
+                print_info(
+                    "No items found. Please make sure your directories contain files of the same"
+                    + f" type within them, i.e. any one of the following: ({valid_file_types})"
+                )
+                return
 
         upload_cache_hash = self.project.conf.get_option("uploads", "cache")
         upload_cache = set(
@@ -205,7 +219,11 @@ class CLIUploadController(CLIUploadInterface):
                         label_data = json.load(file_)
 
                 if data_type == "DICOM":
-                    if label_data and label_data.get("labelsPath"):
+                    if (
+                        label_data
+                        and isinstance(label_data, dict)
+                        and label_data.get("labelsPath")
+                    ):
                         label_blob_file = (
                             label_data["labelsPath"]
                             if os.path.isabs(label_data["labelsPath"])
@@ -236,20 +254,25 @@ class CLIUploadController(CLIUploadInterface):
                         item["labelsPath"] = label_blob
                 points.append(item)
 
-        print_info(f"Found {len(points)} items")
+        if points:
+            print_info(f"Found {len(points)} items")
+            loop = asyncio.get_event_loop()
+            uploads = loop.run_until_complete(
+                project.upload._create_tasks(storage_id, points, self.args.ground_truth)
+            )
 
-        loop = asyncio.get_event_loop()
-        uploads = loop.run_until_complete(
-            project.upload._create_tasks(storage_id, points, self.args.ground_truth)
-        )
+            for upload in uploads:
+                if upload.get("response"):
+                    upload_cache.add(upload["name"])
 
-        for upload in uploads:
-            if upload.get("response"):
-                upload_cache.add(upload["name"])
-
-        self.project.conf.set_option(
-            "uploads",
-            "cache",
-            self.project.cache.set_data("uploads", list(upload_cache), True),
-        )
-        self.project.conf.save()
+            self.project.conf.set_option(
+                "uploads",
+                "cache",
+                self.project.cache.set_data("uploads", list(upload_cache), True),
+            )
+            self.project.conf.save()
+        elif not items_list:
+            print_info(
+                "No items found. Please make sure your directories contain files of valid type,"
+                + f" i.e. any one of the following: ({valid_file_types})"
+            )

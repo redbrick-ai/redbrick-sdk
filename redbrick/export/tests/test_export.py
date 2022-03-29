@@ -39,18 +39,21 @@ tax_map_1 = {
     "traffic light": 2,
     "traffic sign": 3,
     "person": 4,
-    "bike": 5,
-    "truck": 6,
-    "motor": 7,
+    "person::bike": 5,
+    "person::truck": 6,
+    "bus::motor": 7,
 }
 
 
 def test_tax_class_id_map() -> None:
     """Test taxonomy classid map."""
-    tax_map: Dict = {}
-    tax = taxonomy_1["categories"][0]["children"]
-    Export.tax_class_id_mapping(tax, tax_map)  # type: ignore
-    assert tax_map == tax_map_1
+    class_id: Dict = {}
+    color_map: Dict = {}
+    tax: Dict = taxonomy_1["categories"][0]["children"]  # type: ignore
+    Export.tax_class_id_mapping(
+        [taxonomy_1["categories"][0]["name"]], tax, class_id, color_map
+    )
+    assert class_id == tax_map_1
 
 
 def test_png_convert_simple() -> None:
@@ -71,7 +74,10 @@ def test_png_convert_simple() -> None:
     class_id_map: Dict = {}
     color_map: Dict = {}
     Export.tax_class_id_mapping(
-        taxonomy["categories"][0]["children"], class_id_map, color_map  # type: ignore
+        [taxonomy["categories"][0]["name"]],
+        taxonomy["categories"][0]["children"],  # type: ignore
+        class_id_map,
+        color_map,
     )
 
     task = {
@@ -86,7 +92,9 @@ def test_png_convert_simple() -> None:
             }
         ]
     }
-    color_mask = Export.convert_rbai_mask(task["labels"], class_id_map, False, 30)
+    color_mask = Export.convert_rbai_mask(
+        task["labels"], class_id_map, color_map, False, 30
+    )
     assert (color_mask[1:8, 1:8, :] / color_map["bus"] == np.ones((7, 7, 3))).all()
 
 

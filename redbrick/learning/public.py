@@ -1,13 +1,16 @@
 """Public interface to learning module."""
+import os
 import json
 import asyncio
 from typing import Dict, List, Optional, Tuple, Callable, Any, Union, TypeVar, cast
 from functools import partial, wraps
 from copy import deepcopy
+
 import aiohttp
 import tqdm
-from redbrick.common.constants import MAX_CONCURRENCY
 
+from redbrick.common.constants import MAX_CONCURRENCY
+from redbrick.utils.files import NIFTI_FILE_TYPES, upload_files
 from redbrick.common.context import RBContext
 from redbrick.common.enums import TaskStates
 from redbrick.utils.pagination import PaginationIterator
@@ -296,6 +299,7 @@ class Learning2:
                 "itemsPresigned": items_presigned,
                 "name": name,
                 "labels": labels,
+                "labelsPath": label_data.get("labelsPath"),
             }
 
         def _parse_unlabeled_entry(item: Dict) -> Dict:
@@ -340,8 +344,38 @@ class Learning2:
     ) -> Optional[Dict]:
         """Attempt to update task."""
         try:
+            task_input = deepcopy(task)
+            if "labels" in task_input:
+                task_input["labelsData"] = json.dumps(task_input["labels"])
+                del task_input["labels"]
+
+            labels_path: Optional[str] = None
+            if "labelsPath" in task_input:
+                labels_path = task_input["labelsPath"]
+                del task_input["labelsPath"]
+            if (
+                labels_path
+                and (labels_path.endswith(".nii") or labels_path.endswith(".nii.gz"))
+                and os.path.isfile(labels_path)
+            ):
+                file_type = NIFTI_FILE_TYPES["nii"]
+                presigned = await self.context.labeling.presign_labels_path(
+                    session,
+                    self.org_id,
+                    self.project_id,
+                    task_input["taskId"],
+                    file_type,
+                )
+                if (
+                    await upload_files(
+                        [(labels_path, presigned["presignedUrl"], file_type)],
+                        "Uploading labels",
+                        False,
+                    )
+                )[0]:
+                    task_input["labelsPath"] = presigned["filePath"]
             await self.context.learning2.update_prelabels_and_priorities(
-                session, self.org_id, self.project_id, self.stage_name, [task]
+                session, self.org_id, self.project_id, self.stage_name, [task_input]
             )
         except ValueError as error:
             print_error(error)
