@@ -57,6 +57,12 @@ class CLIExportController(CLIExportInterface):
             help="Concurrency value (Default: 10)",
         )
         parser.add_argument(
+            "--stage",
+            "-s",
+            help="Export tasks that are currently in the given stage. "
+            + f"Applicable for only type = {self.TYPE_LATEST}",
+        )
+        parser.add_argument(
             "--fill-holes",
             action="store_true",
             help=f"Fill holes (for {self.FORMAT_MASK} export format)",
@@ -167,7 +173,12 @@ class CLIExportController(CLIExportInterface):
         data = list(cached_datapoints.values())
 
         if self.args.type == self.TYPE_LATEST:
-            pass
+            if self.args.stage:
+                data = [
+                    task
+                    for task in data
+                    if task["currentStageName"].lower() == self.args.stage.lower()
+                ]
         elif self.args.type == self.TYPE_GROUNDTRUTH:
             data = [task for task in data if task["currentStageName"] == "END"]
         else:
@@ -246,7 +257,7 @@ class CLIExportController(CLIExportInterface):
                 {
                     key: value
                     for key, value in task.items()
-                    if key not in ("currentStageName", "labelsPath")
+                    if key not in ("labelsPath",)
                 }
                 for task in cli_data
             ]

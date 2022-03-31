@@ -585,7 +585,7 @@ class Export:
                 **{
                     key: value
                     for key, value in datapoint.items()
-                    if key not in ("currentStageName", "labelsPath")
+                    if key not in ("labelsPath",)
                 },
             }
             for datapoint, path in zip(datapoints, paths)
@@ -703,7 +703,7 @@ class Export:
             {
                 key: value
                 for key, value in datapoint.items()
-                if key not in ("currentStageName", "labelsPath")
+                if key not in ("labelsPath",)
             }
             for datapoint in datapoints
         ]
