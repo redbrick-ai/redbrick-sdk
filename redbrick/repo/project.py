@@ -260,3 +260,33 @@ class ProjectRepo(ProjectRepoInterface):
         }
         result = self.client.execute_query(query_string, query_variables, False)
         return bool(result and result.get("createTaxonomy", {}).get("ok"))
+
+    def set_label_storage(
+        self, org_id: str, project_id: str, storage_id: str, path: str
+    ) -> bool:
+        """Set label storage method for a project."""
+        query_string = """
+        mutation updateLabelStorageSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $storageId: UUID!
+            $path: String!
+        ) {
+            updateLabelStorage(
+                orgId: $orgId
+                projectId: $projectId
+                storageId: $storageId
+                path: $path
+            ) {
+                ok
+            }
+        }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "storageId": storage_id,
+            "path": path,
+        }
+        result = self.client.execute_query(query_string, query_variables, False)
+        return bool(result and result.get("updateLabelStorage", {}).get("ok"))

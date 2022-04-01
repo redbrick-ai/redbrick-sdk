@@ -6,8 +6,8 @@ from typing import Dict, List
 import tenacity
 
 from redbrick.common.context import RBContext
-from redbrick.common.enums import LabelType
-from redbrick.utils.logging import print_info
+from redbrick.common.enums import LabelType, StorageMethod
+from redbrick.utils.logging import handle_exception, print_info
 
 
 class RBProject:
@@ -178,3 +178,15 @@ class RBProject:
     def __repr__(self) -> str:
         """Representation of object."""
         return str(self)
+
+    @handle_exception
+    def set_label_storage(self, storage_id: str, path: str) -> None:
+        """Set label storage method for a project."""
+        path = (
+            f"{self.org_id}/{self.project_id}"
+            if storage_id == StorageMethod.REDBRICK
+            else path.rstrip("/")
+        )
+        self.context.project.set_label_storage(
+            self.org_id, self.project_id, storage_id, path
+        )
