@@ -63,3 +63,9 @@ class ProjectRepoInterface(ABC):
         task_attributes: Optional[List[Dict]],
     ) -> bool:
         """Create taxonomy."""
+
+    @abstractmethod
+    def set_label_storage(
+        self, org_id: str, project_id: str, storage_id: str, path: str
+    ) -> bool:
+        """Set label storage method for a project."""
