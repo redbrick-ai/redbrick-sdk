@@ -60,7 +60,7 @@ setup(
             "wheel==0.35.1",
             "pytest-mock==3.3.1",
             "pytest==6.1.2",
-            "black==21.7b0",
+            "black==22.3.0",
             "mypy==0.790",
             "mypy-extensions==0.4.3",
             "pylint==2.11.1",

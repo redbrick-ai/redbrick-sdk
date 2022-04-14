@@ -65,6 +65,10 @@ class ProjectRepoInterface(ABC):
         """Create taxonomy."""
 
     @abstractmethod
+    def get_label_storage(self, org_id: str, project_id: str) -> Tuple[str, str]:
+        """Get label storage method for a project."""
+
+    @abstractmethod
     def set_label_storage(
         self, org_id: str, project_id: str, storage_id: str, path: str
     ) -> bool:
