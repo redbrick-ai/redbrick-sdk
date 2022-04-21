@@ -194,7 +194,7 @@ class RBProject:
         return str(self)
 
     @handle_exception
-    def set_label_storage(self, storage_id: str, path: str) -> None:
+    def set_label_storage(self, storage_id: str, path: str) -> Tuple[str, str]:
         """Set label storage method for a project."""
         path = (
             f"{self.org_id}/{self.project_id}"
@@ -205,3 +205,4 @@ class RBProject:
             self.org_id, self.project_id, storage_id, path
         )
         self._label_storage = (storage_id, path)
+        return self.label_storage

@@ -119,9 +119,19 @@ class CLIInfoInterface(ABC):
     args: Namespace
     project: CLIProject
 
+    SETTING_LABELSTORAGE = "labelstorage"
+
     @abstractmethod
     def handler(self, args: Namespace) -> None:
         """Handle info command."""
+
+    @abstractmethod
+    def handle_get(self) -> None:
+        """Handle get sub command."""
+
+    @abstractmethod
+    def handle_set(self) -> None:
+        """Handle set sub command."""
 
     @abstractmethod
     def handle_info(self) -> None:
