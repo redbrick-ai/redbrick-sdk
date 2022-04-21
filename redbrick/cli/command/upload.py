@@ -154,15 +154,16 @@ class CLIUploadController(CLIUploadInterface):
                         label_blob_file = str(
                             item["labelsPath"]
                             if os.path.isabs(item["labelsPath"])
-                            else os.path.join(task_dir, item["labelsPath"])
-                        )
-                        if (
-                            data_type == "DICOM"
-                            and (
-                                label_blob_file.endswith(".nii")
-                                or label_blob_file.endswith(".nii.gz")
+                            or not os.path.isfile(
+                                os.path.join(task_dir, item["labelsPath"])
                             )
-                            and os.path.isfile(label_blob_file)
+                            else os.path.abspath(
+                                os.path.join(task_dir, item["labelsPath"])
+                            )
+                        )
+                        if data_type == "DICOM" and (
+                            label_blob_file.endswith(".nii")
+                            or label_blob_file.endswith(".nii.gz")
                         ):
                             item["labelsPath"] = label_blob_file
                         else:
@@ -227,21 +228,29 @@ class CLIUploadController(CLIUploadInterface):
                         label_blob_file = (
                             label_data["labelsPath"]
                             if os.path.isabs(label_data["labelsPath"])
-                            else os.path.join(task_dir, label_data["labelsPath"])
+                            or not os.path.isfile(
+                                os.path.join(task_dir, label_data["labelsPath"])
+                            )
+                            else os.path.abspath(
+                                os.path.join(task_dir, label_data["labelsPath"])
+                            )
                         )
-                        if (
-                            label_blob_file.endswith(".nii")
-                            or label_blob_file.endswith(".nii.gz")
-                        ) and os.path.isfile(label_blob_file):
+                        if label_blob_file.endswith(".nii") or label_blob_file.endswith(
+                            ".nii.gz"
+                        ):
                             label_blob = label_blob_file
                     elif multiple and os.path.isfile(
                         os.path.join(task_dir, task_name + ".nii.gz")
                     ):
-                        label_blob = os.path.join(task_dir, task_name + ".nii.gz")
+                        label_blob = os.path.abspath(
+                            os.path.join(task_dir, task_name + ".nii.gz")
+                        )
                     elif multiple and os.path.isfile(
                         os.path.join(task_dir, task_name + ".nii")
                     ):
-                        label_blob = os.path.join(task_dir, task_name + ".nii")
+                        label_blob = os.path.abspath(
+                            os.path.join(task_dir, task_name + ".nii")
+                        )
 
                 item = {"name": item_name, "items": item_group[:]}
                 if (

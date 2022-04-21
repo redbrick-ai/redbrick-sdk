@@ -28,7 +28,7 @@ class CLICache:
         self._cache_dir = cache_dir
         self._conf = conf
 
-        self._cache_name = sdk_version.rsplit(".", 1)[0].replace(".", "-")
+        self._cache_name = "cache-" + sdk_version.split(".", 1)[0]
 
         if self._conf.exists and self._cache_name != self._conf.get_option(
             "cache", "name"

@@ -1,7 +1,7 @@
 """Main object for RedBrick SDK."""
 
 import json
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import tenacity
 
@@ -50,6 +50,7 @@ class RBProject:
         self._td_type: str
         self._taxonomy_name: str
         self._project_url: str
+        self._label_storage: Optional[Tuple[str, str]] = None
 
         # check if project exists on backend to validate
         self._get_project()
@@ -132,6 +133,19 @@ class RBProject:
         """
         return LabelType(self._td_type)
 
+    @property
+    def label_storage(self) -> Tuple[str, str]:
+        """
+        Read only label_storage property.
+
+        Retrieves the label storage id and path.
+        """
+        if not self._label_storage:
+            self._label_storage = self.context.project.get_label_storage(
+                self.org_id, self.project_id
+            )
+        return self._label_storage
+
     def __wait_for_project_to_finish_creating(self) -> Dict:
         try:
             for attempt in tenacity.Retrying(
@@ -180,7 +194,7 @@ class RBProject:
         return str(self)
 
     @handle_exception
-    def set_label_storage(self, storage_id: str, path: str) -> None:
+    def set_label_storage(self, storage_id: str, path: str) -> Tuple[str, str]:
         """Set label storage method for a project."""
         path = (
             f"{self.org_id}/{self.project_id}"
@@ -190,3 +204,5 @@ class RBProject:
         self.context.project.set_label_storage(
             self.org_id, self.project_id, storage_id, path
         )
+        self._label_storage = (storage_id, path)
+        return self.label_storage

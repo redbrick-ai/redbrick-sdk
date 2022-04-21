@@ -201,20 +201,22 @@ class Upload:
                 str(point["labelsPath"]).endswith(".nii")
                 or str(point["labelsPath"]).endswith(".nii.gz")
             )
-            and os.path.isfile(point["labelsPath"])
         ):
-            file_type = NIFTI_FILE_TYPES["nii"]
-            presigned = await self.context.labeling.presign_labels_path(
-                session, self.org_id, self.project_id, str(uuid4()), file_type
-            )
-            if (
-                await upload_files(
-                    [(point["labelsPath"], presigned["presignedUrl"], file_type)],
-                    f"Uploading labels for {point['name'][:57]}{point['name'][57:] and '...'}",
-                    False,
+            if os.path.isfile(point["labelsPath"]):
+                file_type = NIFTI_FILE_TYPES["nii"]
+                presigned = await self.context.labeling.presign_labels_path(
+                    session, self.org_id, self.project_id, str(uuid4()), file_type
                 )
-            )[0]:
-                labels_path = presigned["filePath"]
+                if (
+                    await upload_files(
+                        [(point["labelsPath"], presigned["presignedUrl"], file_type)],
+                        f"Uploading labels for {point['name'][:57]}{point['name'][57:] and '...'}",
+                        False,
+                    )
+                )[0]:
+                    labels_path = presigned["filePath"]
+            else:
+                labels_path = point["labelsPath"]
 
         elif (
             data_type == "VIDEO"

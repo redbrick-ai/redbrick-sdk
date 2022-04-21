@@ -1,4 +1,5 @@
 """CLI config command."""
+import os
 from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import Optional
 import functools
@@ -110,7 +111,11 @@ class CLIConfigController(CLIConfigInterface):
                 (color, f"{Separator('-'*len(profile)*2)}\n"),
             ]
             for key, value in self.project.creds.get_profile(profile).items():
-                value = ("***" + value[-3:]) if key == "key" else value
+                value = (
+                    ("***" + value[-3:])
+                    if key == "key" and not os.environ.get("REDBRICK_SDK_DEBUG")
+                    else value
+                )
                 info = f"{key}={value}"
                 max_length = max(max_length, len(info))
                 cur_data.append((color, f"{info}\n"))

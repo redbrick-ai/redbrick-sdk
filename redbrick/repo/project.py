@@ -261,6 +261,23 @@ class ProjectRepo(ProjectRepoInterface):
         result = self.client.execute_query(query_string, query_variables, False)
         return bool(result and result.get("createTaxonomy", {}).get("ok"))
 
+    def get_label_storage(self, org_id: str, project_id: str) -> Tuple[str, str]:
+        """Get label storage method for a project."""
+        query_string = """
+        query getLabelStorageSDK($orgId: UUID!, $projectId: UUID!) {
+            getLabelStorage(orgId: $orgId, projectId: $projectId) {
+                storageId
+                path
+            }
+        }
+        """
+        query_variables = {"orgId": org_id, "projectId": project_id}
+        result = self.client.execute_query(query_string, query_variables)
+        return (
+            result["getLabelStorage"]["storageId"],
+            result["getLabelStorage"]["path"],
+        )
+
     def set_label_storage(
         self, org_id: str, project_id: str, storage_id: str, path: str
     ) -> bool:
