@@ -56,6 +56,7 @@ setup(
     },
     extras_require={
         "dev": [
+            "Jinja2<3.1",
             "twine==3.1.1",
             "wheel==0.35.1",
             "pytest-mock==3.3.1",
