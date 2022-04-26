@@ -386,6 +386,10 @@ class Upload:
 
         entry: Dict = {}
         entry["labels"] = []
+
+        if len(mask_2d_stack.shape) == 2:
+            mask_2d_stack = np.expand_dims(mask_2d_stack, axis=2)  # type: ignore
+
         for depth in range(mask_2d_stack.shape[-1]):
             mask_depth = mask_2d_stack[:, :, depth]
             polygons = Upload._mask_to_polygon(mask_depth)
