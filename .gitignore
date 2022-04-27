@@ -197,4 +197,5 @@ Temporary Items
 venv370/
 venv386/
 LOCAL
+LOCAL*
 .vscode

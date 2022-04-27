@@ -21,7 +21,7 @@ class CLIInfoController(CLIInfoInterface):
             "--get",
             "-g",
             choices=[self.SETTING_LABELSTORAGE],
-            help="Get a project setting info",
+            help="Get a project's setting information",
         )
         parser.add_argument(
             "--set",

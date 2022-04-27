@@ -792,7 +792,8 @@ class Export:
 
         Returns
         -----------
-        List[Dict] - [{"taskId", "name", "createdAt"}]
+        List[Dict]
+            [{"taskId", "name", "createdAt"}]
         """
         my_iter = PaginationIterator(
             partial(
