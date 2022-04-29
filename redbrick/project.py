@@ -197,19 +197,20 @@ class RBProject:
     def set_label_storage(self, storage_id: str, path: str) -> Tuple[str, str]:
         """
         Set label storage method for a project.
-        
-        By default, all annotations get stored in RedBrick AI's storage i.e. redbrick.StorageMethod.REDBRICK.
-        Set a custom external storage, within which RedBrick AI will write all annotations. 
+
+        By default, all annotations get stored in RedBrick AI's storage
+        i.e. redbrick.StorageMethod.REDBRICK.
+        Set a custom external storage, within which RedBrick AI will write all annotations.
 
         Parameters
         ------------
         storage_id: str
-            The unique ID of your RedBrick AI storage method integration. Found on the storage method tab
-            on the left sidebar. 
-        
+            The unique ID of your RedBrick AI storage method integration.
+            Found on the storage method tab on the left sidebar.
+
         path: str
-            A prefix path within which the annotations will be written. 
-        
+            A prefix path within which the annotations will be written.
+
         Returns
         --------------
         Tuple[str, str]
@@ -217,9 +218,9 @@ class RBProject:
 
         Warnings
         ------------
-        - You can only set external storage for DICOM_SEGMENTATION projects. 
-        - You only need to run this command once per project. 
-        
+        - You can only set external storage for DICOM_SEGMENTATION projects.
+        - You only need to run this command once per project.
+
         """
         path = (
             f"{self.org_id}/{self.project_id}"

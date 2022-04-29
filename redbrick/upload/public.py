@@ -246,9 +246,7 @@ class Upload:
                 self._create_task(session, storage_id, point, is_ground_truth)
                 for point in points
             ]
-            tasks = await gather_with_concurrency(
-                MAX_CONCURRENCY, coros, "Creating tasks"
-            )
+            tasks = await gather_with_concurrency(10, coros, "Creating tasks")
 
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return tasks

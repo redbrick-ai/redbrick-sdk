@@ -568,6 +568,9 @@ class Export:
     def _export_nifti_label_data(
         datapoints: List[Dict], nifti_dir: str, task_map: str
     ) -> None:
+        # pylint: disable=import-outside-toplevel
+        from redbrick.utils.dicom import process_nifti_download
+
         files = []
         for datapoint in datapoints:
             files.append(
@@ -579,8 +582,15 @@ class Export:
         loop = asyncio.get_event_loop()
         paths: List[Optional[str]] = loop.run_until_complete(download_files(files))
 
-        tasks = [
-            {
+        tasks = []
+
+        for datapoint, path in tqdm.tqdm(
+            zip(datapoints, paths),
+            desc="Processing nifti files",
+            total=len(datapoints),
+            unit="file",
+        ):
+            task = {
                 "labelsPath": path,
                 **{
                     key: value
@@ -588,8 +598,8 @@ class Export:
                     if key not in ("labelsPath",)
                 },
             }
-            for datapoint, path in zip(datapoints, paths)
-        ]
+            task["labelsPath"] = process_nifti_download(task)
+            tasks.append(task)
 
         with open(task_map, "w", encoding="utf-8") as tasks_file:
             json.dump(tasks, tasks_file, indent=2)
