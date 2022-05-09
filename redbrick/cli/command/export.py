@@ -307,12 +307,7 @@ class CLIExportController(CLIExportInterface):
                 task_dir = uniquify_path(
                     os.path.join(
                         files_dir,
-                        re.sub(
-                            r"\W+",
-                            "-",
-                            os.path.basename(task.get("name", "")).split(".", 1)[0],
-                        )
-                        or task["taskId"],
+                        re.sub(r"\W+", "-", task.get("name", "")) or task["taskId"],
                     )
                 )
                 os.makedirs(task_dir, exist_ok=True)

@@ -18,9 +18,14 @@ IMAGE_FILE_TYPES = {
     "jpg": "image/jpeg",
     "jpeg": "image/jpeg",
     "bmp": "image/bmp",
+    "dcm": "application/dicom",
 }
 
-VIDEO_FILE_TYPES = {"mp4": "video/mp4", "avi": "video/x-msvideo"}
+VIDEO_FILE_TYPES = {
+    "mp4": "video/mp4",
+    "avi": "video/x-msvideo",
+    "dcm": "application/dicom",
+}
 
 DICOM_FILE_TYPES = {"dcm": "application/dicom", "ima": "application/dicom"}
 

@@ -67,3 +67,9 @@ class ExportControllerInterface(ABC):
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Task search."""
+
+    @abstractmethod
+    def presign_items(
+        self, org_id: str, storage_id: str, items: List[str]
+    ) -> List[str]:
+        """Presign download items."""
