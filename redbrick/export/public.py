@@ -590,15 +590,8 @@ class Export:
             total=len(datapoints),
             unit="file",
         ):
-            task = {
-                "labelsPath": path,
-                **{
-                    key: value
-                    for key, value in datapoint.items()
-                    if key not in ("labelsPath",)
-                },
-            }
-            task["labelsPath"] = process_nifti_download(task)
+            task = copy.deepcopy(datapoint)
+            task["labelsPath"] = process_nifti_download(task, path)
             tasks.append(task)
 
         with open(task_map, "w", encoding="utf-8") as tasks_file:

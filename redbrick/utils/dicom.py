@@ -9,9 +9,10 @@ from redbrick.utils.files import uniquify_path
 from redbrick.utils.logging import print_error
 
 
-def process_nifti_download(task: Dict) -> Optional[Union[str, List[str]]]:
+def process_nifti_download(
+    task: Dict, labels_path: Optional[str]
+) -> Optional[Union[str, List[str]]]:
     """Process nifti download file."""
-    labels_path: Optional[str] = task.get("labelsPath")
     try:
         if not (
             labels_path
