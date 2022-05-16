@@ -47,7 +47,7 @@ class Upload:
         storage_id: str,
         point: Dict,
         is_ground_truth: bool,
-        labels_path: Optional[str] = None,
+        labels_map: Optional[List[Dict]] = None,
     ) -> Dict:
         """Try to create a datapoint."""
         try:
@@ -89,7 +89,7 @@ class Upload:
                 point["name"],
                 point["items"],
                 json.dumps(point.get("labels", [])),
-                labels_path,
+                labels_map,
                 is_ground_truth,
             )
             assert response.get("taskId"), "Failed to create task"
@@ -159,7 +159,7 @@ class Upload:
         is_ground_truth: bool,
         label_storage_id: str,
     ) -> Dict:
-        # pylint: disable=too-many-locals, too-many-branches
+        # pylint: disable=too-many-locals, too-many-branches, too-many-nested-blocks
         # pylint: disable=import-outside-toplevel, too-many-statements
         from redbrick.utils.dicom import process_nifti_upload
 
@@ -204,91 +204,113 @@ class Upload:
                 presigned_items[idx]["filePath"] for idx in range(len(point["items"]))
             ]
 
-        labels_path: Optional[str] = None
+        labels_map: List[Dict] = []
         data_type = str(self.project_type.value).split("_", 1)[0]
-        if data_type == "DICOM" and point.get("labelsPath"):
-            input_labels_path = point["labelsPath"]
-            if isinstance(input_labels_path, list):
-                if not input_labels_path or any(
-                    not isinstance(input_path, str) for input_path in input_labels_path
-                ):
-                    input_labels_path = None
-                else:
-                    external_paths = [
-                        input_path
-                        for input_path in input_labels_path
-                        if not os.path.isfile(input_path)
-                    ]
-                    downloaded_paths = []
-                    if external_paths:
-                        presigned_paths = self.context.export.presign_items(
-                            self.org_id, label_storage_id, external_paths
-                        )
-                        download_dir = os.path.join(
-                            os.path.expanduser("~"), ".redbrickai", "temp"
-                        )
-                        if not os.path.exists(download_dir):
-                            os.makedirs(download_dir)
+        if data_type == "DICOM":
+            if "labelsMap" not in point and point.get("labelsPath"):
+                point["labelsMap"] = [
+                    {"labelName": point["labelsPath"], "imageIndex": 0}
+                ]
+                del point["labelsPath"]
 
-                        download_paths = [
-                            os.path.join(download_dir, f"{uuid4()}.nii")
-                            for _ in range(len(external_paths))
-                        ]
-                        downloaded_paths = await download_files(
-                            list(zip(presigned_paths, download_paths))
-                        )
-                    if any(not downloaded_path for downloaded_path in downloaded_paths):
+            labels_map = point.get("labelsMap", []) or []  # type: ignore
+            for label_map in labels_map:
+                input_labels_path = label_map["labelName"]
+                if isinstance(input_labels_path, list):
+                    if not input_labels_path or any(
+                        not isinstance(input_path, str)
+                        for input_path in input_labels_path
+                    ):
                         input_labels_path = None
                     else:
-                        input_labels_path = [
+                        external_paths = [
                             input_path
                             for input_path in input_labels_path
-                            if os.path.isfile(input_path)
-                        ] + downloaded_paths
+                            if not os.path.isfile(input_path)
+                        ]
+                        downloaded_paths = []
+                        if external_paths:
+                            presigned_paths = self.context.export.presign_items(
+                                self.org_id, label_storage_id, external_paths
+                            )
+                            download_dir = os.path.join(
+                                os.path.expanduser("~"), ".redbrickai", "temp"
+                            )
+                            if not os.path.exists(download_dir):
+                                os.makedirs(download_dir)
 
-            elif os.path.isdir(input_labels_path):
-                input_labels_path = [
-                    os.path.join(input_labels_path, input_file)
-                    for input_file in os.listdir(input_labels_path)
-                ]
-                if any(
-                    not os.path.isfile(input_path) for input_path in input_labels_path
-                ):
-                    input_labels_path = None
-
-            if input_labels_path:
-                if isinstance(input_labels_path, list):
-                    input_labels_path, group_map = process_nifti_upload(
-                        input_labels_path
-                    )
-
-                    labels = point.get("labels", [])
-                    for label in labels:
-                        if label.get("dicom", {}).get("instanceid") in group_map:
-                            label["dicom"]["groupids"] = group_map[
-                                label["dicom"]["instanceid"]
+                            download_paths = [
+                                os.path.join(download_dir, f"{uuid4()}.nii")
+                                for _ in range(len(external_paths))
                             ]
+                            downloaded_paths = await download_files(
+                                list(zip(presigned_paths, download_paths))
+                            )
+                        if any(
+                            not downloaded_path for downloaded_path in downloaded_paths
+                        ):
+                            input_labels_path = None
+                        else:
+                            input_labels_path = [
+                                input_path
+                                for input_path in input_labels_path
+                                if os.path.isfile(input_path)
+                            ] + downloaded_paths
 
-                if input_labels_path and os.path.isfile(input_labels_path):
-                    file_type = NIFTI_FILE_TYPES["nii"]
-                    presigned = await self.context.labeling.presign_labels_path(
-                        session, self.org_id, self.project_id, str(uuid4()), file_type
-                    )
-                    if (
-                        await upload_files(
-                            [(input_labels_path, presigned["presignedUrl"], file_type)],
-                            "Uploading labels for "
-                            + f"{point['name'][:57]}{point['name'][57:] and '...'}",
-                            False,
+                elif os.path.isdir(input_labels_path):
+                    input_labels_path = [
+                        os.path.join(input_labels_path, input_file)
+                        for input_file in os.listdir(input_labels_path)
+                    ]
+                    if any(
+                        not os.path.isfile(input_path)
+                        for input_path in input_labels_path
+                    ):
+                        input_labels_path = None
+
+                if input_labels_path:
+                    if isinstance(input_labels_path, list):
+                        input_labels_path, group_map = process_nifti_upload(
+                            input_labels_path
                         )
-                    )[0]:
-                        labels_path = presigned["filePath"]
-                elif input_labels_path:
-                    labels_path = input_labels_path
+
+                        labels = point.get("labels", [])
+                        for label in labels:
+                            if label.get("dicom", {}).get("instanceid") in group_map:
+                                label["dicom"]["groupids"] = group_map[
+                                    label["dicom"]["instanceid"]
+                                ]
+
+                    if input_labels_path and os.path.isfile(input_labels_path):
+                        file_type = NIFTI_FILE_TYPES["nii"]
+                        presigned = await self.context.labeling.presign_labels_path(
+                            session,
+                            self.org_id,
+                            self.project_id,
+                            str(uuid4()),
+                            file_type,
+                        )
+                        if (
+                            await upload_files(
+                                [
+                                    (
+                                        input_labels_path,
+                                        presigned["presignedUrl"],
+                                        file_type,
+                                    )
+                                ],
+                                "Uploading labels for "
+                                + f"{point['name'][:57]}{point['name'][57:] and '...'}",
+                                False,
+                            )
+                        )[0]:
+                            label_map["labelName"] = presigned["filePath"]
+                    elif input_labels_path:
+                        label_map["labelName"] = input_labels_path
+                    else:
+                        return {}
                 else:
                     return {}
-            else:
-                return {}
 
         elif (
             data_type == "VIDEO"
@@ -303,7 +325,7 @@ class Upload:
             )
 
         return await self._create_datapoint(
-            session, storage_id, point, is_ground_truth, labels_path
+            session, storage_id, point, is_ground_truth, labels_map or None
         )
 
     async def _create_tasks(

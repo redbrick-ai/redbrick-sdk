@@ -19,7 +19,7 @@ def flat_rb_format(
     created_by: str,
     task_id: str,
     current_stage_name: str,
-    labels_path: Optional[str],
+    labels_map: Optional[List[Dict]],
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
     return {
@@ -30,5 +30,5 @@ def flat_rb_format(
         "taskId": task_id,
         "createdBy": created_by,
         "currentStageName": current_stage_name,
-        "labelsPath": labels_path,
+        "labelsMap": labels_map,
     }

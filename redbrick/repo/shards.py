@@ -102,6 +102,11 @@ LATEST_TASKDATA_SHARD = """
         }
         createdByEmail
         labelsData(interpolate: true)
-        labelsPath
+        labelsMap {
+            labelName
+            imageIndex
+            imageName
+            seriesId
+        }
     }
 """

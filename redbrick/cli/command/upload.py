@@ -63,6 +63,7 @@ class CLIUploadController(CLIUploadInterface):
     def handle_upload(self) -> None:
         """Handle empty sub command."""
         # pylint: disable=protected-access, too-many-branches, too-many-locals, too-many-statements
+        # pylint: disable=too-many-nested-blocks
         project = self.project.project
 
         directory = os.path.normpath(self.args.directory)
@@ -150,22 +151,32 @@ class CLIUploadController(CLIUploadInterface):
                         continue
 
                     task_dir = os.path.dirname(item_group[0])
-                    if item.get("labelsPath"):
-                        if data_type == "DICOM":
-                            item["labelsPath"] = (
-                                item["labelsPath"]
-                                if isinstance(item["labelsPath"], list)
-                                or os.path.isabs(item["labelsPath"])
-                                or not os.path.exists(
-                                    os.path.join(task_dir, item["labelsPath"])
-                                )
-                                else os.path.abspath(
-                                    os.path.join(task_dir, item["labelsPath"])
-                                )
-                            )
+                    if "labelsPath" in item:
+                        if "labelsMap" not in item:
+                            item["labelsMap"] = [
+                                {
+                                    "labelName": item["labelsPath"],
+                                    "imageIndex": 0,
+                                }
+                            ]
+                        del item["labelsPath"]
 
+                    if item.get("labelsMap"):
+                        if data_type == "DICOM":
+                            for label_map in item["labelsMap"]:
+                                label_map["labelName"] = (
+                                    label_map["labelName"]
+                                    if isinstance(label_map["labelName"], list)
+                                    or os.path.isabs(label_map["labelName"])
+                                    or not os.path.exists(
+                                        os.path.join(task_dir, label_map["labelName"])
+                                    )
+                                    else os.path.abspath(
+                                        os.path.join(task_dir, label_map["labelName"])
+                                    )
+                                )
                         else:
-                            del item["labelsPath"]
+                            del item["labelsMap"]
 
                     if storage_id != str(StorageMethod.REDBRICK):
                         uploading.add(item["name"])
@@ -188,19 +199,6 @@ class CLIUploadController(CLIUploadInterface):
                         points.append(item)
         else:
             for item_group in items_list:
-                item_name = (
-                    re.sub(
-                        r"^" + re.escape(directory + os.path.sep) + r"?",
-                        "",
-                        (os.path.dirname(item_group[0]) if multiple else item_group[0]),
-                    )
-                    or directory
-                ).replace(os.path.sep, "/")
-                if item_name in upload_cache or item_name in uploading:
-                    print_info(f"Skipping duplicate item name: {item_name}")
-                    continue
-
-                uploading.add(item_name)
                 if multiple:
                     items_dir = os.path.dirname(item_group[0])
                     task_dir = os.path.dirname(items_dir)
@@ -209,7 +207,6 @@ class CLIUploadController(CLIUploadInterface):
                     task_dir = os.path.dirname(item_group[0])
                     task_name = os.path.splitext(os.path.basename(item_group[0]))[0]
 
-                label_blob: Optional[str] = None
                 label_data: Optional[Dict] = None
 
                 label_file = os.path.join(task_dir, task_name + ".json")
@@ -217,49 +214,104 @@ class CLIUploadController(CLIUploadInterface):
                     with open(label_file, "r", encoding="utf-8") as file_:
                         label_data = json.load(file_)
 
-                if data_type == "DICOM":
-                    if (
-                        label_data
-                        and isinstance(label_data, dict)
-                        and label_data.get("labelsPath")
-                    ):
-                        label_blob = (
-                            label_data["labelsPath"]
-                            if isinstance(label_data["labelsPath"], list)
-                            or os.path.isabs(label_data["labelsPath"])
-                            or not os.path.exists(
-                                os.path.join(task_dir, label_data["labelsPath"])
-                            )
-                            else os.path.abspath(
-                                os.path.join(task_dir, label_data["labelsPath"])
-                            )
+                item_name = (
+                    label_data["name"]
+                    if label_data and label_data.get("name")
+                    else (
+                        re.sub(
+                            r"^" + re.escape(directory + os.path.sep) + r"?",
+                            "",
+                            (
+                                os.path.dirname(item_group[0])
+                                if multiple
+                                else item_group[0]
+                            ),
                         )
+                        or directory
+                    ).replace(os.path.sep, "/")
+                )
+                if item_name in upload_cache or item_name in uploading:
+                    print_info(f"Skipping duplicate item name: {item_name}")
+                    continue
+
+                uploading.add(item_name)
+
+                item = {
+                    "name": item_name,
+                    "items": item_group[:],
+                    "labels": label_data.get("labels", []) if label_data else [],
+                }
+                if data_type == "DICOM":
+                    if label_data and isinstance(label_data, dict):
+                        if (
+                            label_data.get("labelsPath")
+                            and "labelsMap" not in label_data
+                        ):
+                            label_data["labelsMap"] = [
+                                {
+                                    "labelName": label_data["labelsPath"],
+                                    "imageIndex": 0,
+                                }
+                            ]
+                        if label_data.get("labelsMap"):
+                            item["labelsMap"] = []
+                            for label_map in label_data["labelsMap"]:
+                                item["labelsMap"].append(
+                                    {
+                                        "labelName": (
+                                            label_map["labelName"]
+                                            if isinstance(label_map["labelName"], list)
+                                            or os.path.isabs(label_map["labelName"])
+                                            or not os.path.exists(
+                                                os.path.join(
+                                                    task_dir, label_map["labelName"]
+                                                )
+                                            )
+                                            else os.path.abspath(
+                                                os.path.join(
+                                                    task_dir, label_map["labelName"]
+                                                )
+                                            )
+                                        ),
+                                        "imageIndex": label_map["imageIndex"],
+                                        "imageName": label_map.get("imageName"),
+                                        "seriesId": label_map.get("seriesId"),
+                                    }
+                                )
                     elif not multiple and os.path.isdir(
                         os.path.join(task_dir, task_name)
                     ):
-                        label_blob = os.path.abspath(os.path.join(task_dir, task_name))
+                        item["labelsMap"] = [
+                            {
+                                "labelName": os.path.abspath(
+                                    os.path.join(task_dir, task_name)
+                                ),
+                                "imageIndex": 0,
+                            }
+                        ]
                     elif multiple and os.path.isfile(
                         os.path.join(task_dir, task_name + ".nii.gz")
                     ):
-                        label_blob = os.path.abspath(
-                            os.path.join(task_dir, task_name + ".nii.gz")
-                        )
+                        item["labelsMap"] = [
+                            {
+                                "labelName": os.path.abspath(
+                                    os.path.join(task_dir, task_name + ".nii.gz")
+                                ),
+                                "imageIndex": 0,
+                            }
+                        ]
                     elif multiple and os.path.isfile(
                         os.path.join(task_dir, task_name + ".nii")
                     ):
-                        label_blob = os.path.abspath(
-                            os.path.join(task_dir, task_name + ".nii")
-                        )
+                        item["labelsMap"] = [
+                            {
+                                "labelName": os.path.abspath(
+                                    os.path.join(task_dir, task_name + ".nii")
+                                ),
+                                "imageIndex": 0,
+                            }
+                        ]
 
-                item = {"name": item_name, "items": item_group[:]}
-                if (
-                    label_data
-                    and isinstance(label_data.get("labels"), list)
-                    and (data_type != "DICOM" or label_blob)
-                ):
-                    item["labels"] = label_data["labels"]
-                    if label_blob:
-                        item["labelsPath"] = label_blob
                 points.append(item)
 
         if points:

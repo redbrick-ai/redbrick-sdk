@@ -86,7 +86,12 @@ class ExportRepo(ExportControllerInterface):
                 labelData(customGroupName: $name){
                     createdByEmail
                     labelsData(interpolate: true)
-                    labelsPath
+                    labelsMap {
+                        labelName
+                        imageIndex
+                        imageName
+                        seriesId
+                    }
                 }
             }
             cursor

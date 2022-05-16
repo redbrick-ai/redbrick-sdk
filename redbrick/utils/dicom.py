@@ -40,9 +40,9 @@ def process_nifti_download(
 
         for label in task["labels"]:
             if label.get("dicom"):
-                instances: List[int] = [label["dicom"]["instanceid"]] + label[
-                    "dicom"
-                ].get("groupids", [])
+                instances: List[int] = [label["dicom"]["instanceid"]] + (
+                    label["dicom"].get("groupids", []) or []
+                )
                 filename = uniquify_path(
                     os.path.join(dirname, f"{label['dicom']['instanceid']}.nii")
                 )
