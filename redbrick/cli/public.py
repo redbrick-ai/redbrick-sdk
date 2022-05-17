@@ -30,7 +30,9 @@ class CLIController(CLIInterface):
             command.add_parser(self.INIT, help="Create a new project")
         )
         self.clone = CLICloneController(
-            command.add_parser(self.CLONE, help="Clone an existing remote project to local")
+            command.add_parser(
+                self.CLONE, help="Clone an existing remote project to local"
+            )
         )
         self.info = CLIInfoController(
             command.add_parser(self.INFO, help="Get a project's information")

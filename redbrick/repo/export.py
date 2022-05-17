@@ -86,7 +86,12 @@ class ExportRepo(ExportControllerInterface):
                 labelData(customGroupName: $name){
                     createdByEmail
                     labelsData(interpolate: true)
-                    labelsPath
+                    labelsMap {
+                        labelName
+                        imageIndex
+                        imageName
+                        seriesId
+                    }
                 }
             }
             cursor
@@ -312,3 +317,23 @@ class ExportRepo(ExportControllerInterface):
         entries: List[Dict] = generic_tasks.get("entries", []) or []  # type: ignore
 
         return entries, generic_tasks.get("cursor")
+
+    def presign_items(
+        self, org_id: str, storage_id: str, items: List[str]
+    ) -> List[str]:
+        """Presign download items."""
+        query = """
+        query presignItems(
+            $orgId: UUID!
+            $storageId: UUID!
+            $items: [String!]!
+        ) {
+            presignItems(orgId: $orgId, storageId: $storageId, items: $items)
+        }
+        """
+
+        variables = {"orgId": org_id, "dpId": storage_id, "items": items}
+
+        response = self.client.execute_query(query, variables)
+        presigned_items: List[str] = response.get("presignItems", [])
+        return presigned_items

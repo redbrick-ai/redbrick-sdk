@@ -52,7 +52,7 @@ def _parse_entry_latest(item: Dict) -> Dict:
             created_by,
             task_id,
             item["currentStageName"],
-            task_data["labelsPath"],
+            task_data["labelsMap"],
         )
     except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
         return {}
@@ -565,31 +565,45 @@ class Export:
         )
 
     @staticmethod
+    async def _download_and_process_nifti(datapoint: Dict, nifti_dir: str) -> Dict:
+        # pylint: disable=import-outside-toplevel
+        from redbrick.utils.dicom import process_nifti_download
+
+        task = copy.deepcopy(datapoint)
+        files: List[Tuple[str, str]] = []
+        for label in task.get("labelsMap", []):
+            files.append(
+                (
+                    label["labelName"],
+                    os.path.join(
+                        nifti_dir,
+                        f"{task['taskId']}{f'_{len(files)}' if files else ''}.nii",
+                    ),
+                )
+            )
+
+        paths = await download_files(files, "Downloading nifti labels", False)
+
+        for label, path in zip(task.get("labelsMap", []), paths):
+            label["labelName"] = process_nifti_download(task, path)
+
+        return task
+
+    @staticmethod
     def _export_nifti_label_data(
         datapoints: List[Dict], nifti_dir: str, task_map: str
     ) -> None:
-        files = []
-        for datapoint in datapoints:
-            files.append(
-                (
-                    datapoint["labelsPath"],
-                    os.path.join(nifti_dir, f"{datapoint['taskId']}.nii"),
-                )
-            )
         loop = asyncio.get_event_loop()
-        paths: List[Optional[str]] = loop.run_until_complete(download_files(files))
-
-        tasks = [
-            {
-                "labelsPath": path,
-                **{
-                    key: value
-                    for key, value in datapoint.items()
-                    if key not in ("labelsPath",)
-                },
-            }
-            for datapoint, path in zip(datapoints, paths)
-        ]
+        tasks = loop.run_until_complete(
+            gather_with_concurrency(
+                MAX_CONCURRENCY,
+                [
+                    Export._download_and_process_nifti(datapoint, nifti_dir)
+                    for datapoint in datapoints
+                ],
+                "Processing nifti labels",
+            )
+        )
 
         with open(task_map, "w", encoding="utf-8") as tasks_file:
             json.dump(tasks, tasks_file, indent=2)
@@ -703,7 +717,7 @@ class Export:
             {
                 key: value
                 for key, value in datapoint.items()
-                if key not in ("labelsPath",)
+                if key not in ("labelsMap",)
             }
             for datapoint in datapoints
         ]

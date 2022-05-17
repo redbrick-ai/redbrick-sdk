@@ -299,7 +299,7 @@ class Learning2:
                 "itemsPresigned": items_presigned,
                 "name": name,
                 "labels": labels,
-                "labelsPath": label_data.get("labelsPath"),
+                "labelsMap": label_data.get("labelsMap"),
             }
 
         def _parse_unlabeled_entry(item: Dict) -> Dict:
@@ -390,7 +390,7 @@ class Learning2:
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [self._update_task2(session, task) for task in tasks]
             temp = await gather_with_concurrency(
-                30, coros, "Updating tasks with priorities"
+                10, coros, "Updating tasks with priorities"
             )
 
             for val in temp:
