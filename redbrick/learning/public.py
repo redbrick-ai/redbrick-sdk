@@ -299,7 +299,7 @@ class Learning2:
                 "itemsPresigned": items_presigned,
                 "name": name,
                 "labels": labels,
-                "labelsMap": label_data.get("labelsMap"),
+                "labelsMap": label_data.get("labelsMap", []) or [],
             }
 
         def _parse_unlabeled_entry(item: Dict) -> Dict:

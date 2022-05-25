@@ -30,5 +30,5 @@ def flat_rb_format(
         "taskId": task_id,
         "createdBy": created_by,
         "currentStageName": current_stage_name,
-        "labelsMap": labels_map,
+        "labelsMap": labels_map or [],
     }
