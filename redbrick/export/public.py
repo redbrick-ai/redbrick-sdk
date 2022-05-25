@@ -52,7 +52,7 @@ def _parse_entry_latest(item: Dict) -> Dict:
             created_by,
             task_id,
             item["currentStageName"],
-            task_data["labelsMap"],
+            task_data.get("labelsMap", []) or [],
         )
     except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
         return {}
