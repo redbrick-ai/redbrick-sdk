@@ -571,7 +571,8 @@ class Export:
 
         task = copy.deepcopy(datapoint)
         files: List[Tuple[str, str]] = []
-        for label in task.get("labelsMap", []):
+        labels_map = task.get("labelsMap", []) or []
+        for label in labels_map:
             files.append(
                 (
                     label["labelName"],
@@ -584,7 +585,7 @@ class Export:
 
         paths = await download_files(files, "Downloading nifti labels", False)
 
-        for label, path in zip(task.get("labelsMap", []), paths):
+        for label, path in zip(labels_map, paths):
             label["labelName"] = process_nifti_download(task, path)
 
         return task
