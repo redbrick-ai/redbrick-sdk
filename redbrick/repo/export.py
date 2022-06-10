@@ -332,7 +332,7 @@ class ExportRepo(ExportControllerInterface):
         }
         """
 
-        variables = {"orgId": org_id, "dpId": storage_id, "items": items}
+        variables = {"orgId": org_id, "storageId": storage_id, "items": items}
 
         response = self.client.execute_query(query, variables)
         presigned_items: List[str] = response.get("presignItems", [])

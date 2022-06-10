@@ -164,17 +164,21 @@ class CLIUploadController(CLIUploadInterface):
                     if item.get("labelsMap"):
                         if data_type == "DICOM":
                             for label_map in item["labelsMap"]:
-                                label_map["labelName"] = (
-                                    label_map["labelName"]
-                                    if isinstance(label_map["labelName"], list)
-                                    or os.path.isabs(label_map["labelName"])
+                                if not isinstance(label_map["labelName"], list):
+                                    label_map["labelName"] = [label_map["labelName"]]
+                                label_map["labelName"] = [
+                                    label_name
+                                    if os.path.isabs(label_name)
                                     or not os.path.exists(
-                                        os.path.join(task_dir, label_map["labelName"])
+                                        os.path.join(task_dir, label_name)
                                     )
                                     else os.path.abspath(
-                                        os.path.join(task_dir, label_map["labelName"])
+                                        os.path.join(task_dir, label_name)
                                     )
-                                )
+                                    for label_name in label_map["labelName"]
+                                ]
+                                if len(label_map["labelName"]) == 1:
+                                    label_map["labelName"] = label_map["labelName"][0]
                         else:
                             del item["labelsMap"]
 
@@ -256,23 +260,24 @@ class CLIUploadController(CLIUploadInterface):
                         if label_data.get("labelsMap"):
                             item["labelsMap"] = []
                             for label_map in label_data["labelsMap"]:
+                                if not isinstance(label_map["labelName"], list):
+                                    label_map["labelName"] = [label_map["labelName"]]
+                                label_map["labelName"] = [
+                                    label_name
+                                    if os.path.isabs(label_name)
+                                    or not os.path.exists(
+                                        os.path.join(task_dir, label_name)
+                                    )
+                                    else os.path.abspath(
+                                        os.path.join(task_dir, label_name)
+                                    )
+                                    for label_name in label_map["labelName"]
+                                ]
+                                if len(label_map["labelName"]) == 1:
+                                    label_map["labelName"] = label_map["labelName"][0]
                                 item["labelsMap"].append(
                                     {
-                                        "labelName": (
-                                            label_map["labelName"]
-                                            if isinstance(label_map["labelName"], list)
-                                            or os.path.isabs(label_map["labelName"])
-                                            or not os.path.exists(
-                                                os.path.join(
-                                                    task_dir, label_map["labelName"]
-                                                )
-                                            )
-                                            else os.path.abspath(
-                                                os.path.join(
-                                                    task_dir, label_map["labelName"]
-                                                )
-                                            )
-                                        ),
+                                        "labelName": label_map["labelName"],
                                         "imageIndex": label_map["imageIndex"],
                                         "imageName": label_map.get("imageName"),
                                         "seriesId": label_map.get("seriesId"),
