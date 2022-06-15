@@ -63,7 +63,7 @@ class CLIUploadController(CLIUploadInterface):
 
         self.handle_upload()
 
-    def handle_upload(self) -> None:
+    def handle_upload(self) -> None:  # noqa: ignore=C901
         """Handle empty sub command."""
         # pylint: disable=protected-access, too-many-branches, too-many-locals, too-many-statements
         # pylint: disable=too-many-nested-blocks
