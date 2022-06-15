@@ -158,6 +158,7 @@ class Upload:
         point: Dict,
         is_ground_truth: bool,
         label_storage_id: str,
+        label_storage_path: str,
     ) -> Dict:
         # pylint: disable=too-many-locals, too-many-branches, too-many-nested-blocks
         # pylint: disable=import-outside-toplevel, too-many-statements
@@ -207,7 +208,17 @@ class Upload:
         labels_map: List[Dict] = []
         data_type = str(self.project_type.value).split("_", 1)[0]
         if data_type == "DICOM":
-            if "labelsMap" not in point and point.get("labelsPath"):
+            if (
+                "labelsMap" not in point
+                and point.get("segmentations")
+                and len(point["segmentations"]) == len(point["items"])
+            ):
+                point["labelsMap"] = [
+                    {"labelName": segmentation, "imageIndex": idx}
+                    for idx, segmentation in enumerate(point["segmentations"])
+                ]
+                del point["segmentations"]
+            elif "labelsMap" not in point and point.get("labelsPath"):
                 point["labelsMap"] = [
                     {"labelName": point["labelsPath"], "imageIndex": 0}
                 ]
@@ -231,7 +242,17 @@ class Upload:
                         downloaded_paths = []
                         if external_paths:
                             presigned_paths = self.context.export.presign_items(
-                                self.org_id, label_storage_id, external_paths
+                                self.org_id,
+                                label_storage_id,
+                                [
+                                    (
+                                        f"{label_storage_path}/"
+                                        if label_storage_path
+                                        else ""
+                                    )
+                                    + external_path
+                                    for external_path in external_paths
+                                ],
                             )
                             download_dir = os.path.join(
                                 os.path.expanduser("~"), ".redbrickai", "temp"
@@ -267,6 +288,15 @@ class Upload:
                         for input_path in input_labels_path
                     ):
                         input_labels_path = None
+
+                elif (
+                    isinstance(input_labels_path, str)
+                    and input_labels_path
+                    and not os.path.isfile(input_labels_path)
+                ):
+                    input_labels_path = (
+                        f"{label_storage_path}/" if label_storage_path else ""
+                    ) + input_labels_path
 
                 if input_labels_path:
                     if isinstance(input_labels_path, list):
@@ -332,16 +362,63 @@ class Upload:
         self,
         storage_id: str,
         points: List[Dict],
+        segmentation_mapping: Dict,
         is_ground_truth: bool,
     ) -> List[Dict]:
-        label_storage_id, _label_storage_path = self.context.project.get_label_storage(
+        # pylint: disable=too-many-locals
+        rb_segmentations = []
+        for class_id, category in segmentation_mapping.items():
+            instance_id = int(class_id)
+            if isinstance(category, int):
+                rb_segmentations.append(
+                    {"categoryclass": category, "dicom": {"instanceid": instance_id}}
+                )
+            elif isinstance(category, str):
+                rb_segmentations.append(
+                    {"categoryname": [category], "dicom": {"instanceid": instance_id}}
+                )
+            elif (
+                isinstance(category, list)
+                and len(category) == 1
+                and isinstance(category[0], list)
+                and category[0]
+                and all(isinstance(item, str) for item in category[0])
+            ):
+                rb_segmentations.append(
+                    {"category": category, "dicom": {"instanceid": instance_id}}
+                )
+            elif (
+                isinstance(category, list)
+                and category
+                and all(isinstance(item, str) for item in category)
+            ):
+                rb_segmentations.append(
+                    {"categoryname": category, "dicom": {"instanceid": instance_id}}
+                )
+            else:
+                print_error(f"Upload failed: Invalid category {category}")
+                return points
+
+        if (
+            rb_segmentations
+            and str(self.project_type.value).split("_", 1)[0] == "DICOM"
+        ):
+            for point in points:
+                point["labels"] = point.get("labels", []) + rb_segmentations
+
+        label_storage_id, label_storage_path = self.context.project.get_label_storage(
             self.org_id, self.project_id
         )
         conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
                 self._create_task(
-                    session, storage_id, point, is_ground_truth, label_storage_id
+                    session,
+                    storage_id,
+                    point,
+                    is_ground_truth,
+                    label_storage_id,
+                    label_storage_path,
                 )
                 for point in points
             ]
@@ -532,6 +609,7 @@ class Upload:
         storage_id: str,
         points: List[Dict],
         is_ground_truth: bool = False,
+        segmentation_mapping: Optional[Dict] = None,
     ) -> List[Dict]:
         """
         Create datapoints in project.
@@ -555,6 +633,9 @@ class Upload:
         is_ground_truth: bool = False
             If labels are provided in points above, and this parameters is set to true, the labels
             will be added to the Ground Truth stage. This is mainly useful for Active Learning.
+
+        segmentation_mapping: Optional[Dict] = None
+            Optional mapping of semantic segmentation class ids and RedBrick categories.
 
         Returns
         -------------
@@ -593,7 +674,12 @@ class Upload:
         if filtered_points:
             loop = asyncio.get_event_loop()
             created = loop.run_until_complete(
-                self._create_tasks(storage_id, filtered_points, is_ground_truth)
+                self._create_tasks(
+                    storage_id,
+                    filtered_points,
+                    segmentation_mapping or {},
+                    is_ground_truth,
+                )
             )
 
         return skipped + created
