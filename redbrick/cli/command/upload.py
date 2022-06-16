@@ -41,6 +41,9 @@ class CLIUploadController(CLIUploadInterface):
             help="Upload json files with list of task objects",
         )
         parser.add_argument(
+            "--segment-map", "-m", help="Segmentation mapping file path"
+        )
+        parser.add_argument(
             "--storage",
             "-s",
             default=self.STORAGE_REDBRICK,
@@ -60,7 +63,7 @@ class CLIUploadController(CLIUploadInterface):
 
         self.handle_upload()
 
-    def handle_upload(self) -> None:
+    def handle_upload(self) -> None:  # noqa: ignore=C901
         """Handle empty sub command."""
         # pylint: disable=protected-access, too-many-branches, too-many-locals, too-many-statements
         # pylint: disable=too-many-nested-blocks
@@ -151,7 +154,18 @@ class CLIUploadController(CLIUploadInterface):
                         continue
 
                     task_dir = os.path.dirname(item_group[0])
-                    if "labelsPath" in item:
+                    if "segmentations" in item:
+                        if "labelsMap" not in item and len(
+                            item["segmentations"]
+                        ) == len(item["items"]):
+                            item["labelsMap"] = [
+                                {"labelName": segmentation, "imageIndex": idx}
+                                for idx, segmentation in enumerate(
+                                    item["segmentations"]
+                                )
+                            ]
+                        del item["segmentations"]
+                    elif "labelsPath" in item:
                         if "labelsMap" not in item:
                             item["labelsMap"] = [
                                 {
@@ -248,8 +262,18 @@ class CLIUploadController(CLIUploadInterface):
                 if data_type == "DICOM":
                     if label_data and isinstance(label_data, dict):
                         if (
-                            label_data.get("labelsPath")
+                            "segmentations" in label_data
                             and "labelsMap" not in label_data
+                            and len(label_data["segmentations"]) == len(item["items"])
+                        ):
+                            label_data["labelsMap"] = [
+                                {"labelName": segmentation, "imageIndex": idx}
+                                for idx, segmentation in enumerate(
+                                    label_data["segmentations"]
+                                )
+                            ]
+                        elif (
+                            "labelsPath" in label_data and "labelsMap" not in label_data
                         ):
                             label_data["labelsMap"] = [
                                 {
@@ -322,8 +346,14 @@ class CLIUploadController(CLIUploadInterface):
         if points:
             print_info(f"Found {len(points)} items")
             loop = asyncio.get_event_loop()
+            segmentation_mapping = {}
+            if self.args.segment_map:
+                with open(self.args.segment_map, "r", encoding="utf-8") as file_:
+                    segmentation_mapping = json.load(file_)
             uploads = loop.run_until_complete(
-                project.upload._create_tasks(storage_id, points, self.args.ground_truth)
+                project.upload._create_tasks(
+                    storage_id, points, segmentation_mapping, self.args.ground_truth
+                )
             )
 
             for upload in uploads:
