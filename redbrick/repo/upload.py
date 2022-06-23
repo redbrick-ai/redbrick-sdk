@@ -186,3 +186,29 @@ class UploadRepo(UploadControllerInterface):
     ) -> str:
         """Upload a local image and add labels."""
         raise NotImplementedError()
+
+    def delete_tasks(self, org_id: str, project_id: str, task_ids: List[str]) -> bool:
+        """Delete tasks in a project."""
+        query_string = """
+        mutation($orgId: UUID!, $projectId: UUID!, $taskIds: [UUID!]!) {
+            deleteTasks(
+                orgId: $orgId
+                projectId: $projectId
+                taskIds: $taskIds
+            ) {
+                ok
+            }
+        }
+        """
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "taskIds": task_ids,
+        }
+
+        result: Dict[str, Dict] = self.client.execute_query(
+            query_string, query_variables
+        )
+
+        return (result.get("deleteTasks", {}) or {}).get("ok", False)

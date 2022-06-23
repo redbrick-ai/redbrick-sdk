@@ -774,3 +774,22 @@ class Upload:
         return loop.run_until_complete(
             self._create_datapoints(storage_id, [datapoint_entry], False)
         )[0]
+
+    @handle_exception
+    def delete_tasks(self, task_ids: List[str]) -> bool:
+        """Delete project tasks based on task ids.
+
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
+        >>> project.upload.delete_tasks([...])
+
+        Parameters
+        --------------
+        task_ids: List[str]
+            List of task ids to delete.
+
+        Returns
+        -------------
+        bool
+            True if successful, else False.
+        """
+        return self.context.upload.delete_tasks(self.org_id, self.project_id, task_ids)
