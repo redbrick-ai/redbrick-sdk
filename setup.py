@@ -36,7 +36,8 @@ install_requires = [
     "nest-asyncio==1.5.5",
     "tenacity==8.0.1",
     "natsort==8.1.0",
-    "nibabel==4.0.1",
+    "nibabel==3.2.2; python_version=='3.6'",
+    "nibabel==4.0.1; python_version>'3.6'",
     "boto3==1.24.16",
 ]
 
