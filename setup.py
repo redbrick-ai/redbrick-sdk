@@ -59,7 +59,8 @@ setup(
     },
     extras_require={
         "dev": [
-            "twine==4.0.1",
+            "twine==3.8.0; python_version=='3.6'",
+            "twine==4.0.1; python_version>'3.6'",
             "wheel==0.37.1",
             "pytest-mock==3.7.0",
             "pytest==7.1.2",
