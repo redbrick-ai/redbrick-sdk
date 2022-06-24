@@ -11,7 +11,7 @@ from uuid import uuid4
 import aiohttp
 import tenacity
 import numpy as np
-from shapely.geometry import MultiPolygon, shape as gen_shape
+from shapely.geometry import MultiPolygon, shape as gen_shape  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
@@ -358,14 +358,8 @@ class Upload:
             session, storage_id, point, is_ground_truth, labels_map or None
         )
 
-    async def _create_tasks(
-        self,
-        storage_id: str,
-        points: List[Dict],
-        segmentation_mapping: Dict,
-        is_ground_truth: bool,
-    ) -> List[Dict]:
-        # pylint: disable=too-many-locals
+    @staticmethod
+    def _map_segmentation_category(segmentation_mapping: Dict) -> List[Dict]:
         rb_segmentations = []
         for class_id, category in segmentation_mapping.items():
             instance_id = int(class_id)
@@ -396,15 +390,45 @@ class Upload:
                     {"categoryname": category, "dicom": {"instanceid": instance_id}}
                 )
             else:
-                print_error(f"Upload failed: Invalid category {category}")
-                return points
+                raise ValueError(f"Upload failed: Invalid category {category}")
 
-        if (
-            rb_segmentations
-            and str(self.project_type.value).split("_", 1)[0] == "DICOM"
-        ):
+        return rb_segmentations
+
+    async def _create_tasks(
+        self,
+        storage_id: str,
+        points: List[Dict],
+        segmentation_mapping: Dict,
+        is_ground_truth: bool,
+    ) -> List[Dict]:
+        # pylint: disable=too-many-locals
+        try:
+            global_segmentations = Upload._map_segmentation_category(
+                segmentation_mapping
+            )
             for point in points:
-                point["labels"] = point.get("labels", []) + rb_segmentations
+                local_segmentations: List[Dict] = []
+                if point.get("segmentMap"):
+                    local_segmentations = Upload._map_segmentation_category(
+                        point["segmentMap"]
+                    )
+                if local_segmentations or global_segmentations:
+                    labels = point.get("labels", [])
+                    for label in labels:
+                        if label.get("dicom", {}).get("instanceid"):
+                            print_error(
+                                "Cannot have dicom segmentations in `labels` "
+                                + f" when segmentMap is given: {point}"
+                            )
+                            return points
+                    point["labels"] = labels + (
+                        local_segmentations
+                        if local_segmentations
+                        else global_segmentations
+                    )
+        except ValueError as err:
+            print_error(err)
+            return points
 
         label_storage_id, label_storage_path = self.context.project.get_label_storage(
             self.org_id, self.project_id
@@ -506,11 +530,10 @@ class Upload:
         mask: np.ndarray,
     ) -> MultiPolygon:
         """Convert masks to polygons."""
+        # pylint: disable=import-error, import-outside-toplevel
         try:
-            import rasterio  # pylint: disable=import-error, import-outside-toplevel
-            from rasterio import (  # pylint: disable=import-error, import-outside-toplevel
-                features,
-            )
+            import rasterio  # type: ignore
+            from rasterio import features  # type: ignore
         except Exception as error:
             print_error(
                 "For windows users, please follow the rasterio "

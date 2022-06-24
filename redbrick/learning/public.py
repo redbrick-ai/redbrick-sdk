@@ -7,7 +7,7 @@ from functools import partial, wraps
 from copy import deepcopy
 
 import aiohttp
-import tqdm
+import tqdm  # type: ignore
 
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.utils.files import NIFTI_FILE_TYPES, upload_files

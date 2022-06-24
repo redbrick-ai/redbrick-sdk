@@ -27,7 +27,11 @@ from redbrick.utils.logging import (
     handle_exception,
 )
 from redbrick.utils.pagination import PaginationIterator
-from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format
+from redbrick.utils.rb_label_utils import (
+    clean_rb_label,
+    dicom_rb_format,
+    flat_rb_format,
+)
 from redbrick.coco.coco_main import coco_converter
 
 
@@ -313,7 +317,7 @@ class Export:
         return mask
 
     @staticmethod
-    def convert_rbai_mask(  # pylint: disable=too-many-locals
+    def convert_rbai_mask(
         labels: List,
         class_id_map: Dict,
         color_map: Dict,
@@ -321,8 +325,9 @@ class Export:
         max_hole_size: int = 30,
     ) -> np.ndarray:
         """Convert rbai datapoint to a numpy mask."""
+        # pylint: disable=import-error, import-outside-toplevel, disable=too-many-locals
         try:
-            import rasterio.features  # pylint: disable=import-error, import-outside-toplevel
+            import rasterio.features  # type: ignore
         except Exception as error:
             print_error(
                 "For windows users, please follow the rasterio "
@@ -588,7 +593,7 @@ class Export:
         for label, path in zip(labels_map, paths):
             label["labelName"] = process_nifti_download(task, path)
 
-        return task
+        return dicom_rb_format(task)
 
     @staticmethod
     def _export_nifti_label_data(

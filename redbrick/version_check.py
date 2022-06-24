@@ -11,7 +11,7 @@ from .utils.logging import print_warning  # pylint: disable=cyclic-import
 def get_latest_version() -> str:
     """Get latest version from PyPI."""
     # pylint: disable=import-outside-toplevel
-    import requests
+    import requests  # type: ignore
 
     url = "https://pypi.org/pypi/redbrick-sdk/json"
     data = requests.get(url).json()

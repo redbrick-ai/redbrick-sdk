@@ -155,14 +155,19 @@ class CLIUploadController(CLIUploadInterface):
 
                     task_dir = os.path.dirname(item_group[0])
                     if "segmentations" in item:
-                        if "labelsMap" not in item and len(
-                            item["segmentations"]
-                        ) == len(item["items"]):
-                            item["labelsMap"] = [
-                                {"labelName": segmentation, "imageIndex": idx}
+                        if isinstance(item["segmentations"], list):
+                            item["segmentations"] = {
+                                str(idx): segmentation
                                 for idx, segmentation in enumerate(
                                     item["segmentations"]
                                 )
+                            }
+                        if "labelsMap" not in item and isinstance(
+                            item["segmentations"], dict
+                        ):
+                            item["labelsMap"] = [
+                                {"labelName": segmentation, "imageIndex": int(idx)}
+                                for idx, segmentation in item["segmentations"].items()
                             ]
                         del item["segmentations"]
                     elif "labelsPath" in item:
@@ -259,19 +264,29 @@ class CLIUploadController(CLIUploadInterface):
                     "items": item_group[:],
                     "labels": label_data.get("labels", []) if label_data else [],
                 }
+                if label_data and label_data.get("segmentMap"):
+                    item["segmentMap"] = label_data["segmentMap"]
                 if data_type == "DICOM":
                     if label_data and isinstance(label_data, dict):
                         if (
                             "segmentations" in label_data
                             and "labelsMap" not in label_data
-                            and len(label_data["segmentations"]) == len(item["items"])
+                            and isinstance(label_data["segmentations"], (list, dict))
                         ):
-                            label_data["labelsMap"] = [
-                                {"labelName": segmentation, "imageIndex": idx}
-                                for idx, segmentation in enumerate(
-                                    label_data["segmentations"]
-                                )
-                            ]
+                            if isinstance(label_data["segmentations"], list):
+                                label_data["segmentations"] = {
+                                    str(idx): segmentation
+                                    for idx, segmentation in enumerate(
+                                        label_data["segmentations"]
+                                    )
+                                }
+                            if isinstance(label_data["segmentations"], dict):
+                                label_data["labelsMap"] = [
+                                    {"labelName": segmentation, "imageIndex": int(idx)}
+                                    for idx, segmentation in label_data[
+                                        "segmentations"
+                                    ].items()
+                                ]
                         elif (
                             "labelsPath" in label_data and "labelsMap" not in label_data
                         ):
@@ -302,7 +317,7 @@ class CLIUploadController(CLIUploadInterface):
                                 item["labelsMap"].append(
                                     {
                                         "labelName": label_map["labelName"],
-                                        "imageIndex": label_map["imageIndex"],
+                                        "imageIndex": int(label_map["imageIndex"]),
                                         "imageName": label_map.get("imageName"),
                                         "seriesId": label_map.get("seriesId"),
                                     }
@@ -350,6 +365,7 @@ class CLIUploadController(CLIUploadInterface):
             if self.args.segment_map:
                 with open(self.args.segment_map, "r", encoding="utf-8") as file_:
                     segmentation_mapping = json.load(file_)
+
             uploads = loop.run_until_complete(
                 project.upload._create_tasks(
                     storage_id, points, segmentation_mapping, self.args.ground_truth
