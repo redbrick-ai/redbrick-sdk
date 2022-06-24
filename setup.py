@@ -15,7 +15,8 @@ with open("redbrick/__init__.py", "r", encoding="utf-8") as fh:
         raise Exception("Could not find version")
 
 install_requires = [
-    "requests==2.28.0",
+    "requests==2.27.1; python_version=='3.6'",
+    "requests==2.28.0; python_version>'3.6'",
     "tqdm==4.64.0",
     "aiohttp==3.8.1",
     "cchardet==2.1.7",
