@@ -81,12 +81,15 @@ setup(
             "pytest-asyncio==0.16.0; python_version=='3.6'",
             "pytest-asyncio==0.18.3; python_version>'3.6'",
             "pytest-eradicate==0.0.5",
-            "pytest-pycodestyle==2.3.0",
-            "pytest-pydocstyle==2.3.0",
+            "pytest-pycodestyle==2.2.0; python_version=='3.6'",
+            "pytest-pycodestyle==2.3.0; python_version>'3.6'",
+            "pytest-pydocstyle==2.2.0; python_version=='3.6'",
+            "pytest-pydocstyle==2.3.0; python_version>'3.6'",
             "pytest-black==0.3.12",
             "pytest-pylint==0.18.0",
             "pytest-mypy==0.9.1",
-            "pytest-flake8==1.1.1",
+            "pytest-flake8==1.0.7; python_version=='3.6'"
+            "pytest-flake8==1.1.1; python_version>'3.6'",
             "pytest-randomly==3.12.0",
         ]
     },
