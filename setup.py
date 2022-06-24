@@ -88,7 +88,7 @@ setup(
             "pytest-black==0.3.12",
             "pytest-pylint==0.18.0",
             "pytest-mypy==0.9.1",
-            "pytest-flake8==1.0.7; python_version=='3.6'"
+            "pytest-flake8==1.0.7; python_version=='3.6'",
             "pytest-flake8==1.1.1; python_version>'3.6'",
             "pytest-randomly==3.12.0",
         ]
