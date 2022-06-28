@@ -85,3 +85,7 @@ class UploadControllerInterface(ABC):
         self, org_id: str, project_id: str, files: List[str], file_type: List[str]
     ) -> List[Dict[Any, Any]]:
         """Get a presigned url for uploading items."""
+
+    @abstractmethod
+    def delete_tasks(self, org_id: str, project_id: str, task_ids: List[str]) -> bool:
+        """Delete tasks in a project."""

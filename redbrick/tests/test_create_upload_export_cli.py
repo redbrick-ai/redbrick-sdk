@@ -177,6 +177,6 @@ def test_cli_export(org_id: str, api_key: str, url: str) -> None:
             ) as file_:
                 tasks = json.load(file_)
 
-            assert sum([1 if task["labels"] else 0 for task in tasks]) == labeled
+            assert sum(1 if task["labels"] else 0 for task in tasks) == labeled
 
             files = new_files

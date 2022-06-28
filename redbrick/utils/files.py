@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple, Set
 
 import asyncio
 import aiohttp
-import aiofiles
+import aiofiles  # type: ignore
 from yarl import URL
 import tenacity
 from natsort import natsorted, ns

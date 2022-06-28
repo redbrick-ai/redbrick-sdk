@@ -1,7 +1,7 @@
 """Repo for accessing export apis."""
 from typing import Optional, List, Dict, Tuple
 from datetime import datetime
-from dateutil import parser
+from dateutil import parser  # type: ignore
 
 import aiohttp
 

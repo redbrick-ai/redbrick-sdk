@@ -7,7 +7,7 @@ from copy import deepcopy
 from functools import partial
 
 import aiohttp
-import tqdm
+import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.constants import MAX_CONCURRENCY

@@ -1,11 +1,11 @@
 """Async utils."""
 import asyncio
 from typing import Awaitable, Coroutine, List, Tuple, TypeVar, Optional, Iterable
-import tqdm.asyncio
+import tqdm.asyncio  # type: ignore
 
 from redbrick.common.constants import MAX_CONCURRENCY
 
-ReturnType = TypeVar("ReturnType")
+ReturnType = TypeVar("ReturnType")  # pylint: disable=invalid-name
 
 
 async def gather_with_concurrency(

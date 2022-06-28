@@ -29,7 +29,7 @@ Export
 Upload
 ----------------------
 .. autoclass:: redbrick.upload.Upload
-   :members: create_datapoints, create_datapoint_from_masks
+   :members: create_datapoints, create_datapoint_from_masks, delete_tasks
    :show-inheritance:
 
 Labeling

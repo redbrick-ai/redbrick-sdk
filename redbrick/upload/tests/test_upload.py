@@ -4,7 +4,7 @@ import sys
 from typing import List, Dict
 
 from uuid import uuid4
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # type: ignore
 import pytest
 
 from redbrick.common.enums import StorageMethod

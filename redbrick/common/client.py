@@ -1,6 +1,6 @@
 """Graphql Client responsible for make API requests."""
 from typing import Dict
-import requests
+import requests  # type: ignore
 
 import aiohttp
 import tenacity

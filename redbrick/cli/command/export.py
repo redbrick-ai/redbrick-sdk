@@ -132,7 +132,11 @@ class CLIExportController(CLIExportInterface):
         ):
             raise ArgumentError(None, "")
 
-        if self.args.clear_cache or self.args.with_files:
+        if (
+            self.args.clear_cache
+            or self.args.with_files
+            or format_type == self.FORMAT_NIFTI
+        ):
             self.project.cache.clear_cache(True)
 
         cached_datapoints: Dict = {}
