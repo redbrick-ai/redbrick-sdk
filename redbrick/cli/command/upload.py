@@ -51,6 +51,11 @@ class CLIUploadController(CLIUploadInterface):
             + f"({self.STORAGE_REDBRICK} [default], {self.STORAGE_PUBLIC}, <storage id>)",
         )
         parser.add_argument(
+            "--label-storage",
+            help="Label Storage method: (same as items storage (--storage) [default],"
+            + f" {self.STORAGE_REDBRICK}, {self.STORAGE_PUBLIC}, <storage id>)",
+        )
+        parser.add_argument(
             "--ground-truth", action="store_true", help="Upload tasks to ground truth"
         )
 
@@ -86,6 +91,20 @@ class CLIUploadController(CLIUploadInterface):
             self.args.storage.strip().lower(),
         ):
             storage_id = str(self.args.storage).strip().lower()
+        else:
+            raise ArgumentError(None, "")
+
+        if not self.args.label_storage:
+            label_storage_id = storage_id
+        elif self.args.label_storage == self.STORAGE_REDBRICK:
+            label_storage_id = str(StorageMethod.REDBRICK)
+        elif self.args.label_storage == self.STORAGE_PUBLIC:
+            label_storage_id = str(StorageMethod.PUBLIC)
+        elif re.match(
+            r"^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$",
+            self.args.label_storage.strip().lower(),
+        ):
+            label_storage_id = str(self.args.label_storage).strip().lower()
         else:
             raise ArgumentError(None, "")
 
@@ -138,6 +157,22 @@ class CLIUploadController(CLIUploadInterface):
                 if not isinstance(file_data, list):
                     print_warning(f"{item_group[0]} is not a list of tasks")
                     continue
+
+                if data_type == "DICOM":
+                    output = (
+                        self.project.context.upload.validate_and_convert_tasks_format(
+                            json.dumps(file_data), True
+                        )
+                    )
+                    if not output.get("isValid"):
+                        print_warning(
+                            output.get("error", f"Invalid format: {item_group[0]}")
+                        )
+                        continue
+
+                    if output.get("isNew") and output.get("converted"):
+                        file_data = json.loads(output["converted"])
+
                 for item in file_data:
                     if (
                         not isinstance(item.get("items"), list)
@@ -368,7 +403,11 @@ class CLIUploadController(CLIUploadInterface):
 
             uploads = loop.run_until_complete(
                 project.upload._create_tasks(
-                    storage_id, points, segmentation_mapping, self.args.ground_truth
+                    storage_id,
+                    points,
+                    segmentation_mapping,
+                    self.args.ground_truth,
+                    label_storage_id,
                 )
             )
 

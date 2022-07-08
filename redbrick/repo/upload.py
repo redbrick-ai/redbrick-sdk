@@ -42,6 +42,8 @@ class UploadRepo(UploadControllerInterface):
         items: List[str],
         labels_data: Optional[str],
         labels_map: Optional[List[Dict]] = None,
+        items_indices: Optional[str] = None,
+        meta_data: Optional[str] = None,
         is_ground_truth: bool = False,
     ) -> Dict:
         """
@@ -58,6 +60,8 @@ class UploadRepo(UploadControllerInterface):
                 $storageId: UUID!
                 $labelsData: String
                 $labelsMap: [LabelMapInput!]
+                $itemsIndices: String
+                $metaData: String
                 $isGroundTruth: Boolean!
             ) {
                 createDatapoint(
@@ -68,6 +72,8 @@ class UploadRepo(UploadControllerInterface):
                     storageId: $storageId
                     labelsData: $labelsData
                     labelsMap: $labelsMap
+                    itemsIndices: $itemsIndices
+                    metaData: $metaData
                     isGroundTruth: $isGroundTruth
                 ) {
                     taskId
@@ -83,6 +89,8 @@ class UploadRepo(UploadControllerInterface):
             "storageId": storage_id,
             "labelsData": labels_data,
             "labelsMap": labels_map,
+            "itemsIndices": items_indices,
+            "metaData": meta_data,
             "isGroundTruth": is_ground_truth,
         }
         response = await self.client.execute_query_async(
@@ -212,3 +220,28 @@ class UploadRepo(UploadControllerInterface):
         )
 
         return (result.get("deleteTasks", {}) or {}).get("ok", False)
+
+    def validate_and_convert_tasks_format(
+        self, original: str, convert: Optional[bool] = None
+    ) -> Dict:
+        """Validate and convert tasks format."""
+        query_string = """
+        query validateAndConvertTasksFormat($original: JSONString!, $convert: Boolean) {
+            validateAndConvertTasksFormat(
+                original: $original
+                convert: $convert
+            ) {
+                isValid
+                isNew
+                error
+                converted
+            }
+        }
+        """
+        query_variables = {"original": original, "convert": convert}
+
+        result: Dict[str, Dict] = self.client.execute_query(
+            query_string, query_variables
+        )
+
+        return result.get("validateAndConvertTasksFormat", {}) or {}

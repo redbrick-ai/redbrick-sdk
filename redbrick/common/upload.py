@@ -38,6 +38,8 @@ class UploadControllerInterface(ABC):
         items: List[str],
         labels_data: Optional[str],
         labels_map: Optional[List[Dict]] = None,
+        items_indices: Optional[str] = None,
+        meta_data: Optional[str] = None,
         is_ground_truth: bool = False,
     ) -> Dict:
         """
@@ -89,3 +91,9 @@ class UploadControllerInterface(ABC):
     @abstractmethod
     def delete_tasks(self, org_id: str, project_id: str, task_ids: List[str]) -> bool:
         """Delete tasks in a project."""
+
+    @abstractmethod
+    def validate_and_convert_tasks_format(
+        self, original: str, convert: Optional[bool] = None
+    ) -> Dict:
+        """Validate and convert tasks format."""

@@ -90,6 +90,10 @@ class Upload:
                 point["items"],
                 json.dumps(point.get("labels", [])),
                 labels_map,
+                json.dumps(point["itemsIndices"])
+                if point.get("itemsIndices")
+                else None,
+                json.dumps(point["metaData"]) if point.get("metaData") else None,
                 is_ground_truth,
             )
             assert response.get("taskId"), "Failed to create task"
@@ -158,7 +162,6 @@ class Upload:
         point: Dict,
         is_ground_truth: bool,
         label_storage_id: str,
-        label_storage_path: str,
     ) -> Dict:
         # pylint: disable=too-many-locals, too-many-branches, too-many-nested-blocks
         # pylint: disable=import-outside-toplevel, too-many-statements
@@ -244,15 +247,7 @@ class Upload:
                             presigned_paths = self.context.export.presign_items(
                                 self.org_id,
                                 label_storage_id,
-                                [
-                                    (
-                                        f"{label_storage_path}/"
-                                        if label_storage_path
-                                        else ""
-                                    )
-                                    + external_path
-                                    for external_path in external_paths
-                                ],
+                                external_paths,
                             )
                             download_dir = os.path.join(
                                 os.path.expanduser("~"), ".redbrickai", "temp"
@@ -288,15 +283,6 @@ class Upload:
                         for input_path in input_labels_path
                     ):
                         input_labels_path = None
-
-                elif (
-                    isinstance(input_labels_path, str)
-                    and input_labels_path
-                    and not os.path.isfile(input_labels_path)
-                ):
-                    input_labels_path = (
-                        f"{label_storage_path}/" if label_storage_path else ""
-                    ) + input_labels_path
 
                 if input_labels_path:
                     if isinstance(input_labels_path, list):
@@ -400,6 +386,7 @@ class Upload:
         points: List[Dict],
         segmentation_mapping: Dict,
         is_ground_truth: bool,
+        label_storage_id: str,
     ) -> List[Dict]:
         # pylint: disable=too-many-locals
         try:
@@ -430,9 +417,6 @@ class Upload:
             print_error(err)
             return points
 
-        label_storage_id, label_storage_path = self.context.project.get_label_storage(
-            self.org_id, self.project_id
-        )
         conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
@@ -442,7 +426,6 @@ class Upload:
                     point,
                     is_ground_truth,
                     label_storage_id,
-                    label_storage_path,
                 )
                 for point in points
             ]
@@ -633,6 +616,7 @@ class Upload:
         points: List[Dict],
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
+        label_storage_id: Optional[str] = None,
     ) -> List[Dict]:
         """
         Create datapoints in project.
@@ -659,6 +643,10 @@ class Upload:
 
         segmentation_mapping: Optional[Dict] = None
             Optional mapping of semantic segmentation class ids and RedBrick categories.
+
+        label_storage_id: Optional[str] = None
+            Optional label storage id to reference nifti segmentations.
+            Defaults to items storage_id if not specified.
 
         Returns
         -------------
@@ -702,6 +690,7 @@ class Upload:
                     filtered_points,
                     segmentation_mapping or {},
                     is_ground_truth,
+                    label_storage_id or storage_id,
                 )
             )
 

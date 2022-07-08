@@ -258,7 +258,11 @@ class CLIExportController(CLIExportInterface):
             )
 
             cleaned_data = [
-                {key: value for key, value in task.items() if key not in ("labelsMap",)}
+                {
+                    key: value
+                    for key, value in task.items()
+                    if key not in ("labelsMap", "itemsIndices")
+                }
                 for task in cli_data
             ]
             output = (

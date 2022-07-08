@@ -19,7 +19,9 @@ def flat_rb_format(
     created_by: str,
     task_id: str,
     current_stage_name: str,
-    labels_map: Optional[List[Dict]],
+    labels_map: List[Dict],
+    items_indices: Optional[Dict[str, List[int]]],
+    meta_data: Optional[Dict],
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
     return {
@@ -30,13 +32,18 @@ def flat_rb_format(
         "taskId": task_id,
         "createdBy": created_by,
         "currentStageName": current_stage_name,
-        "labelsMap": labels_map or [],
+        "labelsMap": labels_map,
+        "itemsIndices": items_indices,
+        "metaData": meta_data,
     }
 
 
 def dicom_rb_format(task: Dict) -> Dict:
     """Get new dicom rb task format."""
     # pylint: disable=too-many-branches
+    if not task.get("itemsIndices"):
+        return task
+
     output = {"taskId": task["taskId"]}
 
     if task.get("name"):
@@ -50,48 +57,55 @@ def dicom_rb_format(task: Dict) -> Dict:
     if task.get("currentStageName"):
         output["currentStageName"] = task["currentStageName"]
 
-    if task.get("items"):
-        output["items"] = task["items"]
+    if task.get("metaData"):
+        output["metaData"] = task["metaData"]
 
-    if task.get("itemsPresigned"):
-        output["itemsPresigned"] = task["itemsPresigned"]
+    output["series"] = [{} for _ in range(len(task["itemsIndices"]))]
+    for volume_index, indices in task["itemsIndices"].items():
+        output["series"][int(volume_index)]["items"] = list(
+            map(lambda idx: task["items"][idx], indices)  # type: ignore
+        )
 
-    if task.get("labelsMap"):
-        input_labels_map = task["labelsMap"]
-        segmentations = {
-            str(label_map["imageIndex"]): label_map["labelName"]
-            for label_map in input_labels_map
-            if label_map["labelName"]
-        }
-        keys = list(map(int, segmentations.keys()))
+    for label_map in task.get("labelsMap", []) or []:
+        if label_map.get("labelName"):
+            output["series"][label_map["imageIndex"]]["segmentations"] = label_map[
+                "labelName"
+            ]
 
-        if sorted(keys) == list(range(len(input_labels_map))):
-            output["segmentations"] = [None for _ in keys]
-            for label_map in input_labels_map:
-                output["segmentations"][label_map["imageIndex"]] = label_map[
-                    "labelName"
-                ]
-        elif keys:
-            output["segmentations"] = segmentations
+    for label in task.get("labels", []) or []:
+        category = (
+            label["category"][0][1]
+            if len(label["category"][0]) == 2
+            else label["category"][0][1:]
+        )
+        if label.get("dicom", {}).get("instanceid"):
+            output["segmentMap"] = output.get("segmentMap", {})
+            output["segmentMap"][str(label["dicom"]["instanceid"])] = category
+            continue
 
-    if task.get("labels"):
-        input_labels = task["labels"]
-        segment_map = {}
-        labels = []
-        for label in input_labels:
-            if label.get("dicom", {}).get("instanceid"):
-                segment_map[str(label["dicom"]["instanceid"])] = (
-                    label["category"][0][1]
-                    if len(label["category"][0]) == 2
-                    else label["category"][0][1:]
-                )
-            else:
-                labels.append(clean_rb_label(label))
-
-        if segment_map:
-            output["segmentMap"] = segment_map
-
-        if labels:
-            output["labels"] = labels
+        volume = output["series"][label.get("volumeindex", 0)]
+        if label.get("point3d"):
+            volume["landmarks"] = volume.get("landmarks", [])
+            volume["landmarks"].append(
+                {
+                    "x": label["point3d"]["pointx"],
+                    "y": label["point3d"]["pointy"],
+                    "z": label["point3d"]["pointz"],
+                    "classification": category,
+                }
+            )
+        elif label.get("bbox3d"):
+            volume["boundingBox"] = volume.get("boundingBox", [])
+            volume["boundingBox"].append(
+                {
+                    "x": label["bbox3d"]["pointx"],
+                    "y": label["bbox3d"]["pointy"],
+                    "z": label["bbox3d"]["pointz"],
+                    "width": label["bbox3d"]["deltax"],
+                    "height": label["bbox3d"]["deltay"],
+                    "depth": label["bbox3d"]["deltaz"],
+                    "classification": category,
+                }
+            )
 
     return output
