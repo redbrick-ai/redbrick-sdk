@@ -90,9 +90,7 @@ class Upload:
                 point["items"],
                 json.dumps(point.get("labels", [])),
                 labels_map,
-                json.dumps(point["itemsIndices"])
-                if point.get("itemsIndices")
-                else None,
+                point.get("seriesInfo"),
                 json.dumps(point["metaData"]) if point.get("metaData") else None,
                 is_ground_truth,
             )

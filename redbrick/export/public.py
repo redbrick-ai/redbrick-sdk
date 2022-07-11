@@ -57,9 +57,7 @@ def _parse_entry_latest(item: Dict) -> Dict:
             task_id,
             item["currentStageName"],
             task_data.get("labelsMap", []) or [],
-            json.loads(datapoint["itemsIndices"])
-            if datapoint.get("itemsIndices")
-            else None,
+            datapoint.get("seriesInfo"),
             json.loads(datapoint["metaData"]) if datapoint.get("metaData") else None,
         )
     except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
@@ -727,7 +725,7 @@ class Export:
             {
                 key: value
                 for key, value in datapoint.items()
-                if key not in ("labelsMap", "itemsIndices")
+                if key not in ("labelsMap", "seriesInfo")
             }
             for datapoint in datapoints
         ]

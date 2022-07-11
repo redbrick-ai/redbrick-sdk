@@ -42,7 +42,7 @@ class UploadRepo(UploadControllerInterface):
         items: List[str],
         labels_data: Optional[str],
         labels_map: Optional[List[Dict]] = None,
-        items_indices: Optional[str] = None,
+        series_info: Optional[List[Dict]] = None,
         meta_data: Optional[str] = None,
         is_ground_truth: bool = False,
     ) -> Dict:
@@ -60,7 +60,7 @@ class UploadRepo(UploadControllerInterface):
                 $storageId: UUID!
                 $labelsData: String
                 $labelsMap: [LabelMapInput!]
-                $itemsIndices: String
+                $seriesInfo: [SeriesInfoInput!]
                 $metaData: String
                 $isGroundTruth: Boolean!
             ) {
@@ -72,7 +72,7 @@ class UploadRepo(UploadControllerInterface):
                     storageId: $storageId
                     labelsData: $labelsData
                     labelsMap: $labelsMap
-                    itemsIndices: $itemsIndices
+                    seriesInfo: $seriesInfo
                     metaData: $metaData
                     isGroundTruth: $isGroundTruth
                 ) {
@@ -89,7 +89,7 @@ class UploadRepo(UploadControllerInterface):
             "storageId": storage_id,
             "labelsData": labels_data,
             "labelsMap": labels_map,
-            "itemsIndices": items_indices,
+            "seriesInfo": series_info,
             "metaData": meta_data,
             "isGroundTruth": is_ground_truth,
         }

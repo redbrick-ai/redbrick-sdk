@@ -261,7 +261,7 @@ class CLIExportController(CLIExportInterface):
                 {
                     key: value
                     for key, value in task.items()
-                    if key not in ("labelsMap", "itemsIndices")
+                    if key not in ("labelsMap", "seriesInfo")
                 }
                 for task in cli_data
             ]

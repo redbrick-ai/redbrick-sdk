@@ -38,7 +38,7 @@ class UploadControllerInterface(ABC):
         items: List[str],
         labels_data: Optional[str],
         labels_map: Optional[List[Dict]] = None,
-        items_indices: Optional[str] = None,
+        series_info: Optional[List[Dict]] = None,
         meta_data: Optional[str] = None,
         is_ground_truth: bool = False,
     ) -> Dict:

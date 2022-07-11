@@ -20,7 +20,7 @@ def flat_rb_format(
     task_id: str,
     current_stage_name: str,
     labels_map: List[Dict],
-    items_indices: Optional[Dict[str, List[int]]],
+    series_info: Optional[List[Dict]],
     meta_data: Optional[Dict],
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
@@ -33,7 +33,7 @@ def flat_rb_format(
         "createdBy": created_by,
         "currentStageName": current_stage_name,
         "labelsMap": labels_map,
-        "itemsIndices": items_indices,
+        "seriesInfo": series_info,
         "metaData": meta_data,
     }
 
@@ -41,7 +41,12 @@ def flat_rb_format(
 def dicom_rb_format(task: Dict) -> Dict:
     """Get new dicom rb task format."""
     # pylint: disable=too-many-branches
-    if not task.get("itemsIndices"):
+    if sum(
+        map(
+            lambda val: len(val.get("itemsIndices", [])),
+            task.get("seriesInfo", []),
+        )
+    ) != len(task.get("items", [])):
         return task
 
     output = {"taskId": task["taskId"]}
@@ -60,10 +65,10 @@ def dicom_rb_format(task: Dict) -> Dict:
     if task.get("metaData"):
         output["metaData"] = task["metaData"]
 
-    output["series"] = [{} for _ in range(len(task["itemsIndices"]))]
-    for volume_index, indices in task["itemsIndices"].items():
-        output["series"][int(volume_index)]["items"] = list(
-            map(lambda idx: task["items"][idx], indices)  # type: ignore
+    output["series"] = [{} for _ in range(len(task["seriesInfo"]))]
+    for volume_index, series_info in enumerate(task["seriesInfo"]):
+        output["series"][volume_index]["items"] = list(
+            map(lambda idx: task["items"][idx], series_info["itemsIndices"])  # type: ignore
         )
 
     for label_map in task.get("labelsMap", []) or []:

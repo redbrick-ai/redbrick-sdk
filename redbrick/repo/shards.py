@@ -100,7 +100,12 @@ LATEST_TASKDATA_SHARD = """
             itemsPresigned: items(presigned: true)
             items(presigned: false)
             metaData
-            itemsIndices
+            seriesInfo {
+                name
+                itemsIndices
+                dataType
+                numFrames
+            }
         }
         createdByEmail
         labelsData(interpolate: true)
