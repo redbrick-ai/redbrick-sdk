@@ -1,6 +1,7 @@
 """Dicom/nifti related functions."""
 import os
 from typing import Dict, List, Optional, Tuple, Union
+import shutil
 
 import nibabel  # type: ignore
 import numpy
@@ -34,8 +35,9 @@ def process_nifti_download(
         header = img.header
         data = img.get_fdata()
 
-        dirname = uniquify_path(os.path.splitext(labels_path)[0])
-        os.mkdir(dirname)
+        dirname = os.path.splitext(labels_path)[0]
+        shutil.rmtree(dirname, ignore_errors=True)
+        os.makedirs(dirname, exist_ok=True)
         files: List[str] = []
 
         for label in task["labels"]:

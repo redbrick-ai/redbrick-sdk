@@ -7,7 +7,7 @@ import aiohttp
 
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
-from redbrick.repo.shards import TAXONOMY_SHARD, LATEST_TASKDATA_SHARD
+from redbrick.repo.shards import TAXONOMY_SHARD, TASK_SHARD
 
 
 class ExportRepo(ExportControllerInterface):
@@ -167,10 +167,7 @@ class ExportRepo(ExportControllerInterface):
                 after: $cursor
             ) {{
                 entries {{
-                    taskId
-                    dpId
-                    currentStageName
-                    {LATEST_TASKDATA_SHARD}
+                    {TASK_SHARD}
                 }}
                 cursor
                 cacheTime
@@ -206,9 +203,7 @@ class ExportRepo(ExportControllerInterface):
                 projectId: $projectId
                 taskId: $taskId
             ) {{
-                taskId
-                currentStageName
-                {LATEST_TASKDATA_SHARD}
+                {TASK_SHARD}
             }}
         }}
         """

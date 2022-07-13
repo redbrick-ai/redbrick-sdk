@@ -169,6 +169,7 @@ async def download_files(
     files: List[Tuple[str, str]],
     progress_bar_name: Optional[str] = "Downloading files",
     keep_progress_bar: bool = True,
+    overwrite: bool = False,
 ) -> List[Optional[str]]:
     """Download files from url to local path (presigned url, file path)."""
 
@@ -194,7 +195,8 @@ async def download_files(
                         data = gzip.decompress(data)
                     except Exception:  # pylint: disable=broad-except
                         pass
-                path = uniquify_path(path)
+                if not overwrite:
+                    path = uniquify_path(path)
                 async with aiofiles.open(path, "wb") as file_:  # type: ignore
                     await file_.write(data)
                 return path

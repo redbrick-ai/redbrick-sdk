@@ -93,12 +93,18 @@ colorMap {
 archived
 """
 
-LATEST_TASKDATA_SHARD = """
+TASK_SHARD = """
+    taskId
+    dpId
+    currentStageName
     latestTaskData {
         dataPoint {
             name
-            itemsPresigned: items(presigned: true)
             items(presigned: false)
+            createdAt
+            createdByEntity {
+                email
+            }
             metaData
             seriesInfo {
                 name
@@ -106,10 +112,17 @@ LATEST_TASKDATA_SHARD = """
                 dataType
                 numFrames
             }
+            storageMethod {
+                storageId
+            }
         }
+        createdAt
         createdByEmail
         labelsData(interpolate: true)
-        labelsMap {
+        labelsStorage {
+            storageId
+        }
+        labelsMap(presigned: false) {
             labelName
             imageIndex
             imageName

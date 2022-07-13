@@ -40,25 +40,33 @@ def _parse_entry_latest(item: Dict) -> Dict:
         task_id = item["taskId"]
         task_data = item["latestTaskData"]
         datapoint = task_data["dataPoint"]
-        items_presigned = datapoint["itemsPresigned"]
         items = datapoint["items"]
         name = datapoint["name"]
-        created_by = task_data["createdByEmail"]
+        created_by = (datapoint.get("createdByEntity", {}) or {}).get("email")
+        created_at = datapoint["createdAt"]
+        updated_by = task_data["createdByEmail"]
+        updated_at = task_data["createdAt"]
         labels = [
             clean_rb_label(label) for label in json.loads(task_data["labelsData"])
         ]
+        storage_id = datapoint["storageMethod"]["storageId"]
+        label_storage_id = task_data["labelsStorage"]["storageId"]
 
         return flat_rb_format(
             labels,
             items,
-            items_presigned,
             name,
             created_by,
+            created_at,
+            updated_by,
+            updated_at,
             task_id,
             item["currentStageName"],
             task_data.get("labelsMap", []) or [],
             datapoint.get("seriesInfo"),
             json.loads(datapoint["metaData"]) if datapoint.get("metaData") else None,
+            storage_id,
+            label_storage_id,
         )
     except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
         return {}
@@ -128,10 +136,6 @@ class Export:
                 task = _parse_entry_latest(val)
                 if task:
                     datapoints.append(task)
-            disable = progress.disable
-            progress.disable = False
-            progress.update(datapoint_count - progress.n)
-            progress.disable = disable
 
         return datapoints, general_info["taxonomy"]
 
@@ -571,18 +575,27 @@ class Export:
             max_hole_size,
         )
 
-    @staticmethod
-    async def _download_and_process_nifti(datapoint: Dict, nifti_dir: str) -> Dict:
+    async def download_and_process_nifti(self, datapoint: Dict, nifti_dir: str) -> Dict:
+        """Download and process label maps."""
         # pylint: disable=import-outside-toplevel
         from redbrick.utils.dicom import process_nifti_download
 
         task = copy.deepcopy(datapoint)
         files: List[Tuple[str, str]] = []
         labels_map = task.get("labelsMap", []) or []
-        for label in labels_map:
+        presigned = self.context.export.presign_items(
+            self.org_id,
+            task["labelStorageId"],
+            [
+                label_map.get("labelName") if label_map else None
+                for label_map in labels_map
+            ],
+        )
+
+        for url, label in zip(presigned, labels_map):
             files.append(
                 (
-                    label["labelName"],
+                    url,
                     os.path.join(
                         nifti_dir,
                         f"{task['taskId']}{f'_{len(files)}' if files else ''}.nii",
@@ -590,23 +603,23 @@ class Export:
                 )
             )
 
-        paths = await download_files(files, "Downloading nifti labels", False)
+        paths = await download_files(files, "Downloading nifti labels", False, True)
 
         for label, path in zip(labels_map, paths):
             label["labelName"] = process_nifti_download(task, path)
 
         return dicom_rb_format(task)
 
-    @staticmethod
-    def _export_nifti_label_data(
-        datapoints: List[Dict], nifti_dir: str, task_map: str
+    def export_nifti_label_data(
+        self, datapoints: List[Dict], nifti_dir: str, task_map: str
     ) -> None:
+        """Export nifti label maps."""
         loop = asyncio.get_event_loop()
         tasks = loop.run_until_complete(
             gather_with_concurrency(
                 MAX_CONCURRENCY,
                 [
-                    Export._download_and_process_nifti(datapoint, nifti_dir)
+                    self.download_and_process_nifti(datapoint, nifti_dir)
                     for datapoint in datapoints
                 ],
                 "Processing nifti labels",
@@ -672,7 +685,7 @@ class Export:
         nifti_dir = os.path.join(destination, "nifti")
         os.makedirs(nifti_dir, exist_ok=True)
         print_info(f"Saving NIfTI files to {destination} directory")
-        Export._export_nifti_label_data(
+        self.export_nifti_label_data(
             datapoints, nifti_dir, os.path.join(destination, "tasks.json")
         )
 
@@ -725,7 +738,7 @@ class Export:
             {
                 key: value
                 for key, value in datapoint.items()
-                if key not in ("labelsMap", "seriesInfo")
+                if key not in ("labelsMap", "seriesInfo", "storageId", "labelStorageId")
             }
             for datapoint in datapoints
         ]

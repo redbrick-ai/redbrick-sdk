@@ -5,15 +5,17 @@ import re
 import json
 from datetime import datetime, timezone
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import shutil
+
+import tqdm  # type: ignore
 
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
 from redbrick.coco.coco_main import _get_image_dimension_map, coco_converter
 from redbrick.common.enums import LabelType
 from redbrick.utils.files import uniquify_path, download_files
-from redbrick.utils.logging import print_info, print_warning, print_error
+from redbrick.utils.logging import print_info, print_error
 
 
 class CLIExportController(CLIExportInterface):
@@ -132,11 +134,7 @@ class CLIExportController(CLIExportInterface):
         ):
             raise ArgumentError(None, "")
 
-        if (
-            self.args.clear_cache
-            or self.args.with_files
-            or format_type == self.FORMAT_NIFTI
-        ):
+        if self.args.clear_cache:
             self.project.cache.clear_cache(True)
 
         cached_datapoints: Dict = {}
@@ -217,10 +215,12 @@ class CLIExportController(CLIExportInterface):
 
         os.makedirs(export_dir, exist_ok=True)
 
-        cli_data = [
-            {key: value for key, value in task.items() if key != "itemsPresigned"}
-            for task in data
-        ]
+        if self.args.with_files:
+            try:
+                loop.run_until_complete(self._download_files(data, export_dir))
+            except Exception:  # pylint: disable=broad-except
+                print_error("Failed to download files")
+
         if format_type == self.FORMAT_MASK:
             mask_dir = os.path.join(export_dir, "masks")
             class_map = os.path.join(export_dir, "class_map.json")
@@ -228,7 +228,7 @@ class CLIExportController(CLIExportInterface):
             shutil.rmtree(mask_dir, ignore_errors=True)
             os.makedirs(mask_dir, exist_ok=True)
             Export._export_png_mask_data(
-                cli_data,
+                data,
                 taxonomy,
                 mask_dir,
                 class_map,
@@ -240,11 +240,12 @@ class CLIExportController(CLIExportInterface):
             print_info(f"Exported: {datapoint_map}")
             print_info(f"Exported masks to: {mask_dir}")
         elif format_type == self.FORMAT_NIFTI:
-            nifti_dir = os.path.join(export_dir, "nifti")
-            shutil.rmtree(nifti_dir, ignore_errors=True)
+            nifti_dir = os.path.join(export_dir, "segmentations")
             os.makedirs(nifti_dir, exist_ok=True)
             task_map = os.path.join(export_dir, "tasks.json")
-            Export._export_nifti_label_data(cli_data, nifti_dir, task_map)
+            self.project.project.export.export_nifti_label_data(
+                data, nifti_dir, task_map
+            )
             print_info(f"Exported: {task_map}")
             print_info(f"Exported nifti to: {nifti_dir}")
         else:
@@ -261,9 +262,10 @@ class CLIExportController(CLIExportInterface):
                 {
                     key: value
                     for key, value in task.items()
-                    if key not in ("labelsMap", "seriesInfo")
+                    if key
+                    not in ("labelsMap", "seriesInfo", "storageId", "labelStorageId")
                 }
-                for task in cli_data
+                for task in data
             ]
             output = (
                 coco_converter(cleaned_data, taxonomy, cached_dimensions)
@@ -275,63 +277,73 @@ class CLIExportController(CLIExportInterface):
 
             print_info(f"Exported successfully to: {export_path}")
 
-        if self.args.with_files:
-            try:
-                loop.run_until_complete(self._download_files(data, export_dir))
-            except Exception:  # pylint: disable=broad-except
-                print_error("Failed to download files")
-
     async def _download_files(self, data: List[Dict], export_dir: str) -> None:
-        project_type = str(self.project.project.project_type.value)
-        if project_type.startswith("IMAGE_"):
-            files_dir = os.path.join(export_dir, "images")
-        elif project_type.startswith("VIDEO_"):
-            files_dir = os.path.join(export_dir, "videos")
-        elif project_type.startswith("DICOM_"):
-            files_dir = os.path.join(export_dir, "dicom")
-        else:
-            print_warning(
-                "Project data type needs to be IMAGE, VIDEO or DICOM to export files"
-            )
-            return
+        # pylint: disable=too-many-locals
+        parent_dir = os.path.join(export_dir, "tasks")
+        os.makedirs(parent_dir, exist_ok=True)
 
-        shutil.rmtree(files_dir, ignore_errors=True)
-        os.makedirs(files_dir, exist_ok=True)
+        path_pattern = re.compile(r"[^\w.]+")
 
-        files = []
-        for task in data:
-            if project_type.startswith("IMAGE_"):
-                task_dir = files_dir
-                items = [
-                    re.sub(r"[^\w.]+", "-", os.path.basename(task.get("name", "")))
-                    or task["taskId"]
-                ]
-                fill_index = 0
-            else:
-                task_dir = uniquify_path(
-                    os.path.join(
-                        files_dir,
-                        re.sub(r"\W+", "-", task.get("name", "")) or task["taskId"],
-                    )
+        files: List[Tuple[str, str]] = []
+        tasks_indices: List[List[int]] = []
+
+        print_info("Preparing to download files")
+        for task in tqdm.tqdm(data):
+            task_dir = uniquify_path(
+                os.path.join(
+                    parent_dir,
+                    re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"],
                 )
+            )
+            series_dirs: List[str] = []
+            series_items_indices: List[List[int]] = []
+            if sum(
+                map(
+                    lambda val: len(val.get("itemsIndices", []) or []) if val else 0,
+                    task.get("seriesInfo", []) or [],
+                )
+            ) == len(task["items"]) and (
+                len(task["seriesInfo"]) > 1 or task["seriesInfo"][0].get("name")
+            ):
                 os.makedirs(task_dir, exist_ok=True)
-                items = [
-                    re.sub(r"[^\w.]+", "-", os.path.basename(item))
-                    for item in task["items"]
+                for series_idx, series in enumerate(task["seriesInfo"]):
+                    series_dir = uniquify_path(
+                        os.path.join(
+                            task_dir,
+                            re.sub(path_pattern, "-", series.get("name", ""))
+                            or chr(series_idx + ord("A")),
+                        )
+                    )
+                    shutil.rmtree(series_dir, ignore_errors=True)
+                    os.makedirs(series_dir, exist_ok=True)
+                    series_dirs.append(series_dir)
+                    series_items_indices.append(series["itemsIndices"])
+            else:
+                shutil.rmtree(task_dir, ignore_errors=True)
+                os.makedirs(task_dir, exist_ok=True)
+                series_dirs.append(task_dir)
+                series_items_indices.append(list(range(len(task["items"]))))
+
+            to_presign = []
+            local_files = []
+            tasks_indices.append([])
+            for series_dir, items_indices in zip(series_dirs, series_items_indices):
+                paths = [task["items"][item_idx] for item_idx in items_indices]
+                file_names = [
+                    re.sub(path_pattern, "-", os.path.basename(path)) for path in paths
                 ]
                 fill_index = (
                     0
-                    if all(items) and len(items) == len(set(items))
-                    else len(str(len(items)))
+                    if all(file_names) and len(file_names) == len(set(file_names))
+                    else len(str(len(file_names)))
                 )
-
-            for index, (item, url) in enumerate(zip(items, task["itemsPresigned"])):
-                file_name, file_ext = os.path.splitext(item)
-                files.append(
-                    (
-                        url,
+                to_presign.extend(paths)
+                tasks_indices[-1].extend(items_indices)
+                for index, item in enumerate(file_names):
+                    file_name, file_ext = os.path.splitext(item)
+                    local_files.append(
                         os.path.join(
-                            task_dir,
+                            series_dir,
                             file_name
                             + (
                                 ("-" + str(index).zfill(fill_index))
@@ -339,8 +351,22 @@ class CLIExportController(CLIExportInterface):
                                 else ""
                             )
                             + file_ext,
-                        ),
+                        )
                     )
-                )
 
-        await download_files(files)
+            presigned = self.project.context.export.presign_items(
+                self.project.org_id, task["storageId"], to_presign
+            )
+            files.extend(list(zip(presigned, local_files)))
+
+        downloaded = await download_files(files)
+        task_idx = 0
+        index_idx = 0
+        for (url, _), file_path in zip(files, downloaded):
+            data[task_idx]["items"][tasks_indices[task_idx][index_idx]] = (
+                file_path or url
+            )
+            index_idx += 1
+            if index_idx == len(tasks_indices[task_idx]):
+                task_idx += 1
+                index_idx = 0

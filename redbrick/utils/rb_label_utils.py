@@ -1,5 +1,4 @@
 """Utilities for working with label objects."""
-
 from typing import Dict, List, Optional
 
 
@@ -14,40 +13,61 @@ def clean_rb_label(label: Dict) -> Dict:
 def flat_rb_format(
     labels: List[Dict],
     items: List[str],
-    items_presigned: List[str],
     name: str,
-    created_by: str,
+    created_by: Optional[str],
+    created_at: str,
+    updated_by: str,
+    updated_at: str,
     task_id: str,
     current_stage_name: str,
-    labels_map: List[Dict],
+    labels_map: List[Optional[Dict]],
     series_info: Optional[List[Dict]],
     meta_data: Optional[Dict],
+    storage_id: str,
+    label_storage_id: str,
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
     return {
-        "labels": labels,
-        "items": items,
-        "itemsPresigned": items_presigned,
-        "name": name,
         "taskId": task_id,
-        "createdBy": created_by,
+        "name": name,
+        "items": items,
         "currentStageName": current_stage_name,
+        "createdBy": created_by,
+        "createdAt": created_at,
+        "updatedBy": updated_by,
+        "updatedAt": updated_at,
+        "labels": labels,
         "labelsMap": labels_map,
         "seriesInfo": series_info,
         "metaData": meta_data,
+        "storageId": storage_id,
+        "labelStorageId": label_storage_id,
     }
 
 
 def dicom_rb_format(task: Dict) -> Dict:
     """Get new dicom rb task format."""
-    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-branches, too-many-statements
     if sum(
         map(
             lambda val: len(val.get("itemsIndices", []) or []) if val else 0,
             task.get("seriesInfo", []) or [],
         )
     ) != len(task.get("items", []) or []):
-        return {key: value for key, value in task.items() if key not in ("seriesInfo",)}
+        keys = ["seriesInfo", "storageId", "labelStorageId"]
+        for key in [
+            "currentStageName",
+            "createdBy",
+            "createdAt",
+            "updatedBy",
+            "updatedAt",
+            "labels",
+            "labelsMap",
+            "metaData",
+        ]:
+            if not task.get(key):
+                keys.append(key)
+        return {key: value for key, value in task.items() if key not in keys}
 
     output = {"taskId": task["taskId"]}
 
@@ -56,11 +76,20 @@ def dicom_rb_format(task: Dict) -> Dict:
     elif task.get("items"):
         output["name"] = task["items"][0]
 
+    if task.get("currentStageName"):
+        output["currentStageName"] = task["currentStageName"]
+
     if task.get("createdBy"):
         output["createdBy"] = task["createdBy"]
 
-    if task.get("currentStageName"):
-        output["currentStageName"] = task["currentStageName"]
+    if task.get("createdAt"):
+        output["createdAt"] = task["createdAt"]
+
+    if task.get("updatedBy"):
+        output["updatedBy"] = task["updatedBy"]
+
+    if task.get("updatedAt"):
+        output["updatedAt"] = task["updatedAt"]
 
     if task.get("metaData"):
         output["metaData"] = task["metaData"]
@@ -74,31 +103,57 @@ def dicom_rb_format(task: Dict) -> Dict:
         )
 
     for volume_index, label_map in enumerate(task.get("labelsMap", []) or []):
-        if label_map.get("labelName"):
+        if label_map and label_map.get("labelName"):
             output["series"][volume_index]["segmentations"] = label_map["labelName"]
 
     for label in task.get("labels", []) or []:
-        category = (
-            label["category"][0][1]
+        label_obj = {
+            "category": label["category"][0][1]
             if len(label["category"][0]) == 2
             else label["category"][0][1:]
-        )
+        }
+        attributes = {}
+        for attribute in label.get("attributes", []) or []:
+            attributes[attribute["name"]] = (
+                True
+                if attribute["value"].lower() == "true"
+                else False
+                if attribute["value"].lower() == "false"
+                else attribute["value"]
+            )
+        if attributes:
+            label_obj["attributes"] = attributes
+
+        if label.get("tasklevelclassify"):
+            output["classification"] = label_obj["category"]
+            continue
+
         if label.get("dicom", {}).get("instanceid"):
-            output["segmentMap"] = output.get("segmentMap", {})
-            output["segmentMap"][str(label["dicom"]["instanceid"])] = category
+            volume_indices = (
+                [label["volumeindex"]]
+                if isinstance(label.get("volumeindex"), int)
+                and 0 <= label["volumeindex"] < len(output["series"])
+                else list(range(len(output["series"])))
+            )
+            for volume_index in volume_indices:
+                output["series"][volume_index]["segmentMap"] = output["series"][
+                    volume_index
+                ].get("segmentMap", {})
+                output["series"][volume_index]["segmentMap"][
+                    str(label["dicom"]["instanceid"])
+                ] = {**label_obj}
             continue
 
         volume = output["series"][label.get("volumeindex", 0)]
-        if label.get("tasklevelclassify"):
-            output["classification"] = category
-        elif label.get("point3d"):
+
+        if label.get("point3d"):
             volume["landmarks"] = volume.get("landmarks", [])
             volume["landmarks"].append(
                 {
                     "x": label["point3d"]["pointx"],
                     "y": label["point3d"]["pointy"],
                     "z": label["point3d"]["pointz"],
-                    "category": category,
+                    **label_obj,
                 }
             )
         elif label.get("bbox3d"):
@@ -111,7 +166,7 @@ def dicom_rb_format(task: Dict) -> Dict:
                     "width": label["bbox3d"]["deltax"],
                     "height": label["bbox3d"]["deltay"],
                     "depth": label["bbox3d"]["deltaz"],
-                    "category": category,
+                    **label_obj,
                 }
             )
         elif label.get("length3d"):
@@ -123,7 +178,7 @@ def dicom_rb_format(task: Dict) -> Dict:
                     "point2": label["length3d"]["point2"],
                     "normal": label["length3d"]["normal"],
                     "length": label["length3d"]["computedlength"],
-                    "category": category,
+                    **label_obj,
                 }
             )
         elif label.get("angle3d"):
@@ -136,7 +191,7 @@ def dicom_rb_format(task: Dict) -> Dict:
                     "vertex": label["angle3d"]["point3"],
                     "normal": label["angle3d"]["normal"],
                     "angle": label["angle3d"]["computedangledeg"],
-                    "category": category,
+                    **label_obj,
                 }
             )
 
