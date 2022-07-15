@@ -134,7 +134,7 @@ class CLIExportController(CLIExportInterface):
         ):
             raise ArgumentError(None, "")
 
-        if self.args.clear_cache:
+        if self.args.clear_cache or format_type == self.FORMAT_COCO:
             self.project.cache.clear_cache(True)
 
         cached_datapoints: Dict = {}
@@ -154,7 +154,10 @@ class CLIExportController(CLIExportInterface):
 
         current_timestamp = int(datetime.now(timezone.utc).timestamp())
         datapoints, taxonomy = self.project.project.export._get_raw_data_latest(
-            self.args.concurrency, False, cache_timestamp
+            self.args.concurrency,
+            False,
+            cache_timestamp,
+            format_type == self.FORMAT_COCO,
         )
 
         print_info(f"Refreshed {len(datapoints)} newly updated tasks")

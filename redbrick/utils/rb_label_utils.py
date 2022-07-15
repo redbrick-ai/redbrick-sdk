@@ -13,6 +13,7 @@ def clean_rb_label(label: Dict) -> Dict:
 def flat_rb_format(
     labels: List[Dict],
     items: List[str],
+    items_presigned: List[str],
     name: str,
     created_by: Optional[str],
     created_at: str,
@@ -31,6 +32,7 @@ def flat_rb_format(
         "taskId": task_id,
         "name": name,
         "items": items,
+        "itemsPresigned": items_presigned,
         "currentStageName": current_stage_name,
         "createdBy": created_by,
         "createdAt": created_at,
@@ -54,7 +56,7 @@ def dicom_rb_format(task: Dict) -> Dict:
             task.get("seriesInfo", []) or [],
         )
     ) != len(task.get("items", []) or []):
-        keys = ["seriesInfo", "storageId", "labelStorageId"]
+        keys = ["itemsPresigned", "seriesInfo", "storageId", "labelStorageId"]
         for key in [
             "currentStageName",
             "createdBy",
@@ -134,8 +136,8 @@ def dicom_rb_format(task: Dict) -> Dict:
         if label.get("tasklevelclassify"):
             output["classification"] = {**label_obj}
         elif label.get("multiclassify"):
-            classifications = volume.get("classifications", []) or []
-            classifications.append(
+            volume["classifications"] = volume.get("classifications", []) or []
+            volume["classifications"].append(
                 {
                     "keyFrame": label.get("keyframe", True),
                     "endTrack": label.get("end", True),
@@ -158,33 +160,38 @@ def dicom_rb_format(task: Dict) -> Dict:
                     str(label["dicom"]["instanceid"])
                 ] = {**label_obj}
         elif label.get("length3d"):
-            measurements = volume.get("measurements", [])
-            measurements.append(
+            volume["measurements"] = volume.get("measurements", [])
+            volume["measurements"].append(
                 {
                     "type": "length",
                     "point1": label["length3d"]["point1"],
                     "point2": label["length3d"]["point2"],
+                    "absolutePoint1": label["length3d"]["computedpoint1world"],
+                    "absolutePoint2": label["length3d"]["computedpoint2world"],
                     "normal": label["length3d"]["normal"],
                     "length": label["length3d"]["computedlength"],
                     **label_obj,
                 }
             )
         elif label.get("angle3d"):
-            measurements = volume.get("measurements", [])
-            measurements.append(
+            volume["measurements"] = volume.get("measurements", [])
+            volume["measurements"].append(
                 {
                     "type": "angle",
                     "point1": label["angle3d"]["point1"],
-                    "point2": label["angle3d"]["point2"],
-                    "vertex": label["angle3d"]["point3"],
+                    "vertex": label["angle3d"]["point2"],
+                    "point2": label["angle3d"]["point3"],
+                    "absolutePoint1": label["angle3d"]["computedpoint1world"],
+                    "absoluteVertex": label["angle3d"]["computedpoint2world"],
+                    "absolutePoint2": label["angle3d"]["computedpoint3world"],
                     "normal": label["angle3d"]["normal"],
                     "angle": label["angle3d"]["computedangledeg"],
                     **label_obj,
                 }
             )
         elif label.get("point"):
-            landmarks = volume.get("landmarks", [])
-            landmarks.append(
+            volume["landmarks"] = volume.get("landmarks", [])
+            volume["landmarks"].append(
                 {
                     "x": label["point"]["xnorm"],
                     "y": label["point"]["ynorm"],
@@ -195,8 +202,8 @@ def dicom_rb_format(task: Dict) -> Dict:
                 }
             )
         elif label.get("point3d"):
-            landmarks3d = volume.get("landmarks3d", [])
-            landmarks3d.append(
+            volume["landmarks3d"] = volume.get("landmarks3d", [])
+            volume["landmarks3d"].append(
                 {
                     "x": label["point3d"]["pointx"],
                     "y": label["point3d"]["pointy"],
@@ -205,8 +212,8 @@ def dicom_rb_format(task: Dict) -> Dict:
                 }
             )
         elif label.get("polyline"):
-            polylines = volume.get("polylines", [])
-            polylines.append(
+            volume["polylines"] = volume.get("polylines", [])
+            volume["polylines"].append(
                 {
                     "points": [
                         {"x": point["xnorm"], "y": point["ynorm"]}
@@ -219,8 +226,8 @@ def dicom_rb_format(task: Dict) -> Dict:
                 }
             )
         elif label.get("bbox2d"):
-            bboxes = volume.get("boundingBoxes", [])
-            bboxes.append(
+            volume["boundingBoxes"] = volume.get("boundingBoxes", [])
+            volume["boundingBoxes"].append(
                 {
                     "x": label["bbox2d"]["xnorm"],
                     "y": label["bbox2d"]["ynorm"],
@@ -233,8 +240,8 @@ def dicom_rb_format(task: Dict) -> Dict:
                 }
             )
         elif label.get("bbox3d"):
-            bboxes3d = volume.get("boundingBoxes3d", [])
-            bboxes3d.append(
+            volume["boundingBoxes3d"] = volume.get("boundingBoxes3d", [])
+            volume["boundingBoxes3d"].append(
                 {
                     "x": label["bbox3d"]["pointx"],
                     "y": label["bbox3d"]["pointy"],
@@ -246,8 +253,8 @@ def dicom_rb_format(task: Dict) -> Dict:
                 }
             )
         elif label.get("polygon"):
-            polygons = volume.get("polygons", [])
-            polygons.append(
+            volume["polygons"] = volume.get("polygons", [])
+            volume["polygons"].append(
                 {
                     "points": [
                         {"x": point["xnorm"], "y": point["ynorm"]}

@@ -97,36 +97,37 @@ TASK_SHARD = """
     taskId
     dpId
     currentStageName
-    latestTaskData {
-        dataPoint {
+    latestTaskData {{
+        dataPoint {{
             name
             items(presigned: false)
+            {}
             createdAt
-            createdByEntity {
+            createdByEntity {{
                 email
-            }
+            }}
             metaData
-            seriesInfo {
+            seriesInfo {{
                 name
                 itemsIndices
                 dataType
                 numFrames
-            }
-            storageMethod {
+            }}
+            storageMethod {{
                 storageId
-            }
-        }
+            }}
+        }}
         createdAt
         createdByEmail
         labelsData(interpolate: true)
-        labelsStorage {
+        labelsStorage {{
             storageId
-        }
-        labelsMap(presigned: false) {
+        }}
+        labelsMap(presigned: false) {{
             labelName
             imageIndex
             imageName
             seriesId
-        }
-    }
+        }}
+    }}
 """

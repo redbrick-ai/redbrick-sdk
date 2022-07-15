@@ -145,6 +145,7 @@ class ExportRepo(ExportControllerInterface):
         project_id: str,
         stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
+        presign_items: bool = False,
         first: int = 50,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str], Optional[datetime]]:
@@ -167,7 +168,9 @@ class ExportRepo(ExportControllerInterface):
                 after: $cursor
             ) {{
                 entries {{
-                    {TASK_SHARD}
+                    {TASK_SHARD.format(
+                        "itemsPresigned:items(presigned: true)" if presign_items else ""
+                    )}
                 }}
                 cursor
                 cacheTime

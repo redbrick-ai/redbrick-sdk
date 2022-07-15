@@ -41,6 +41,7 @@ def _parse_entry_latest(item: Dict) -> Dict:
         task_data = item["latestTaskData"]
         datapoint = task_data["dataPoint"]
         items = datapoint["items"]
+        items_presigned = datapoint.get("itemsPresigned", []) or []
         name = datapoint["name"]
         created_by = (datapoint.get("createdByEntity", {}) or {}).get("email")
         created_at = datapoint["createdAt"]
@@ -55,6 +56,7 @@ def _parse_entry_latest(item: Dict) -> Dict:
         return flat_rb_format(
             labels,
             items,
+            items_presigned,
             name,
             created_by,
             created_at,
@@ -100,6 +102,7 @@ class Export:
         concurrency: int,
         only_ground_truth: bool = False,
         from_timestamp: Optional[float] = None,
+        presign_items: bool = False,
     ) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_latest
         stage_name = "END" if only_ground_truth else None
@@ -112,6 +115,7 @@ class Export:
                 datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
                 if from_timestamp is not None
                 else None,
+                presign_items,
                 concurrency,
             )
         )
@@ -199,6 +203,7 @@ class Export:
                 self.project_id,
                 stage_name,
                 cache_time,
+                False,
                 concurrency,
                 cursor,
             )
@@ -738,7 +743,7 @@ class Export:
             datapoints, _ = self._get_raw_data_single(task_id)
         else:
             datapoints, _ = self._get_raw_data_latest(
-                concurrency, only_ground_truth, from_timestamp
+                concurrency, only_ground_truth, from_timestamp, True
             )
 
         return [
@@ -803,7 +808,7 @@ class Export:
             datapoints, taxonomy = self._get_raw_data_single(task_id)
         else:
             datapoints, taxonomy = self._get_raw_data_latest(
-                concurrency, only_ground_truth, from_timestamp
+                concurrency, only_ground_truth, from_timestamp, True
             )
 
         return coco_converter(datapoints, taxonomy)
