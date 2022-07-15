@@ -136,6 +136,13 @@ class Export:
                 task = _parse_entry_latest(val)
                 if task:
                     datapoints.append(task)
+            try:
+                disable = progress.disable
+                progress.disable = False
+                progress.update(datapoint_count - progress.n)
+                progress.disable = disable
+            except Exception:  # pylint: disable=broad-except
+                pass
 
         return datapoints, general_info["taxonomy"]
 
