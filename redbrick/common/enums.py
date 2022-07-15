@@ -71,3 +71,13 @@ class TaskStates(Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     PROBLEM = "PROBLEM"
+
+
+class ImportTypes(Enum):
+    """Enumerate the different supported upload types."""
+
+    DICOM3D = "DICOM3D"
+    NIFTI3D = "NIFTI3D"
+    IMAGE2D = "IMAGE2D"
+    VIDEO = "VIDEO"
+    VIDEOFRAMES = "VIDEOFRAMES"

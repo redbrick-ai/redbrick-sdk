@@ -221,15 +221,50 @@ class UploadRepo(UploadControllerInterface):
 
         return (result.get("deleteTasks", {}) or {}).get("ok", False)
 
-    def validate_and_convert_tasks_format(
-        self, original: str, convert: Optional[bool] = None
+    def generate_items_list(
+        self, files: List[str], import_type: str, as_study: bool = False
+    ) -> str:
+        """Generate direct upload items list."""
+        query_string = """
+            query generateItemsList(
+                $importType: ImportType!
+                $files: [String]!
+                $groupedByStudy: Boolean!
+            ) {
+                generateItemsList(
+                    importType: $importType
+                    files: $files
+                    groupedByStudy: $groupedByStudy
+                )
+            }
+        """
+
+        query_variables = {
+            "importType": import_type,
+            "files": files,
+            "groupedByStudy": as_study,
+        }
+        result = self.client.execute_query(query_string, query_variables)
+        items_list: str = result["generateItemsList"]
+        return items_list
+
+    def validate_and_convert_to_import_format(
+        self,
+        original: str,
+        convert: Optional[bool] = None,
+        storage_id: Optional[str] = None,
     ) -> Dict:
         """Validate and convert tasks format."""
         query_string = """
-        query validateAndConvertTasksFormat($original: JSONString!, $convert: Boolean) {
-            validateAndConvertTasksFormat(
+        query validateAndConvertToImportFormat(
+            $original: String!
+            $convert: Boolean
+            $storageId: UUID
+        ) {
+            validateAndConvertToImportFormat(
                 original: $original
                 convert: $convert
+                storageId: $storageId
             ) {
                 isValid
                 isNew
@@ -238,10 +273,14 @@ class UploadRepo(UploadControllerInterface):
             }
         }
         """
-        query_variables = {"original": original, "convert": convert}
+        query_variables = {
+            "original": original,
+            "convert": convert,
+            "storageId": storage_id,
+        }
 
         result: Dict[str, Dict] = self.client.execute_query(
             query_string, query_variables
         )
 
-        return result.get("validateAndConvertTasksFormat", {}) or {}
+        return result.get("validateAndConvertToImportFormat", {}) or {}

@@ -93,7 +93,16 @@ class UploadControllerInterface(ABC):
         """Delete tasks in a project."""
 
     @abstractmethod
-    def validate_and_convert_tasks_format(
-        self, original: str, convert: Optional[bool] = None
+    def generate_items_list(
+        self, files: List[str], import_type: str, as_study: bool = False
+    ) -> str:
+        """Generate direct upload items list."""
+
+    @abstractmethod
+    def validate_and_convert_to_import_format(
+        self,
+        original: str,
+        convert: Optional[bool] = None,
+        storage_id: Optional[str] = None,
     ) -> Dict:
         """Validate and convert tasks format."""

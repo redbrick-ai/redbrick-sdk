@@ -47,7 +47,7 @@ def flat_rb_format(
 
 def dicom_rb_format(task: Dict) -> Dict:
     """Get new dicom rb task format."""
-    # pylint: disable=too-many-branches, too-many-statements
+    # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     if sum(
         map(
             lambda val: len(val.get("itemsIndices", []) or []) if val else 0,
@@ -96,17 +96,24 @@ def dicom_rb_format(task: Dict) -> Dict:
 
     output["series"] = [{} for _ in range(len(task["seriesInfo"]))]
     for volume_index, series_info in enumerate(task["seriesInfo"]):
+        series = output["series"][volume_index]
         if series_info.get("name"):
-            output["series"][volume_index]["name"] = series_info["name"]
-        output["series"][volume_index]["items"] = list(
+            series["name"] = series_info["name"]
+        if series_info.get("dataType"):
+            series["dataType"] = series_info["dataType"]
+        if series_info.get("numFrames"):
+            series["numFrames"] = series_info["numFrames"]
+        series["items"] = list(
             map(lambda idx: task["items"][idx], series_info["itemsIndices"])  # type: ignore
         )
 
     for volume_index, label_map in enumerate(task.get("labelsMap", []) or []):
         if label_map and label_map.get("labelName"):
             output["series"][volume_index]["segmentations"] = label_map["labelName"]
+            output["series"][volume_index]["segmentMap"] = {}
 
     for label in task.get("labels", []) or []:
+        volume = output["series"][label.get("volumeindex", 0)]
         label_obj = {
             "category": label["category"][0][1]
             if len(label["category"][0]) == 2
@@ -125,10 +132,18 @@ def dicom_rb_format(task: Dict) -> Dict:
             label_obj["attributes"] = attributes
 
         if label.get("tasklevelclassify"):
-            output["classification"] = label_obj["category"]
-            continue
-
-        if label.get("dicom", {}).get("instanceid"):
+            output["classification"] = {**label_obj}
+        elif label.get("multiclassify"):
+            classifications = volume.get("classifications", []) or []
+            classifications.append(
+                {
+                    "keyFrame": label.get("keyframe", True),
+                    "endTrack": label.get("end", True),
+                    "frameIndex": label.get("frameindex", 0),
+                    **label_obj,
+                }
+            )
+        elif label.get("dicom", {}).get("instanceid"):
             volume_indices = (
                 [label["volumeindex"]]
                 if isinstance(label.get("volumeindex"), int)
@@ -142,36 +157,9 @@ def dicom_rb_format(task: Dict) -> Dict:
                 output["series"][volume_index]["segmentMap"][
                     str(label["dicom"]["instanceid"])
                 ] = {**label_obj}
-            continue
-
-        volume = output["series"][label.get("volumeindex", 0)]
-
-        if label.get("point3d"):
-            volume["landmarks"] = volume.get("landmarks", [])
-            volume["landmarks"].append(
-                {
-                    "x": label["point3d"]["pointx"],
-                    "y": label["point3d"]["pointy"],
-                    "z": label["point3d"]["pointz"],
-                    **label_obj,
-                }
-            )
-        elif label.get("bbox3d"):
-            volume["boundingBox"] = volume.get("boundingBox", [])
-            volume["boundingBox"].append(
-                {
-                    "x": label["bbox3d"]["pointx"],
-                    "y": label["bbox3d"]["pointy"],
-                    "z": label["bbox3d"]["pointz"],
-                    "width": label["bbox3d"]["deltax"],
-                    "height": label["bbox3d"]["deltay"],
-                    "depth": label["bbox3d"]["deltaz"],
-                    **label_obj,
-                }
-            )
         elif label.get("length3d"):
-            volume["measurements"] = volume.get("measurements", [])
-            volume["measurements"].append(
+            measurements = volume.get("measurements", [])
+            measurements.append(
                 {
                     "type": "length",
                     "point1": label["length3d"]["point1"],
@@ -182,8 +170,8 @@ def dicom_rb_format(task: Dict) -> Dict:
                 }
             )
         elif label.get("angle3d"):
-            volume["measurements"] = volume.get("measurements", [])
-            volume["measurements"].append(
+            measurements = volume.get("measurements", [])
+            measurements.append(
                 {
                     "type": "angle",
                     "point1": label["angle3d"]["point1"],
@@ -191,6 +179,83 @@ def dicom_rb_format(task: Dict) -> Dict:
                     "vertex": label["angle3d"]["point3"],
                     "normal": label["angle3d"]["normal"],
                     "angle": label["angle3d"]["computedangledeg"],
+                    **label_obj,
+                }
+            )
+        elif label.get("point"):
+            landmarks = volume.get("landmarks", [])
+            landmarks.append(
+                {
+                    "x": label["point"]["xnorm"],
+                    "y": label["point"]["ynorm"],
+                    "keyFrame": label.get("keyframe", True),
+                    "endTrack": label.get("end", True),
+                    "frameIndex": label.get("frameindex", 0),
+                    **label_obj,
+                }
+            )
+        elif label.get("point3d"):
+            landmarks3d = volume.get("landmarks3d", [])
+            landmarks3d.append(
+                {
+                    "x": label["point3d"]["pointx"],
+                    "y": label["point3d"]["pointy"],
+                    "z": label["point3d"]["pointz"],
+                    **label_obj,
+                }
+            )
+        elif label.get("polyline"):
+            polylines = volume.get("polylines", [])
+            polylines.append(
+                {
+                    "points": [
+                        {"x": point["xnorm"], "y": point["ynorm"]}
+                        for point in label["polyline"]
+                    ],
+                    "keyFrame": label.get("keyframe", True),
+                    "endTrack": label.get("end", True),
+                    "frameIndex": label.get("frameindex", 0),
+                    **label_obj,
+                }
+            )
+        elif label.get("bbox2d"):
+            bboxes = volume.get("boundingBoxes", [])
+            bboxes.append(
+                {
+                    "x": label["bbox2d"]["xnorm"],
+                    "y": label["bbox2d"]["ynorm"],
+                    "width": label["bbox2d"]["wnorm"],
+                    "height": label["bbox2d"]["hnorm"],
+                    "keyFrame": label.get("keyframe", True),
+                    "endTrack": label.get("end", True),
+                    "frameIndex": label.get("frameindex", 0),
+                    **label_obj,
+                }
+            )
+        elif label.get("bbox3d"):
+            bboxes3d = volume.get("boundingBoxes3d", [])
+            bboxes3d.append(
+                {
+                    "x": label["bbox3d"]["pointx"],
+                    "y": label["bbox3d"]["pointy"],
+                    "z": label["bbox3d"]["pointz"],
+                    "width": label["bbox3d"]["deltax"],
+                    "height": label["bbox3d"]["deltay"],
+                    "depth": label["bbox3d"]["deltaz"],
+                    **label_obj,
+                }
+            )
+        elif label.get("polygon"):
+            polygons = volume.get("polygons", [])
+            polygons.append(
+                {
+                    "points": [
+                        {"x": point["xnorm"], "y": point["ynorm"]}
+                        for point in label["polygon"]
+                    ],
+                    "keyFrame": label.get("keyframe", True),
+                    "endTrack": label.get("end", True),
+                    "frameIndex": label.get("frameindex", 0),
                     **label_obj,
                 }
             )
