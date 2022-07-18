@@ -313,7 +313,7 @@ class CLIExportController(CLIExportInterface):
                     series_dir = uniquify_path(
                         os.path.join(
                             task_dir,
-                            re.sub(path_pattern, "-", series.get("name", ""))
+                            re.sub(path_pattern, "-", series.get("name", "") or "")
                             or chr(series_idx + ord("A")),
                         )
                     )

@@ -192,7 +192,7 @@ class CLIUploadController(CLIUploadInterface):
                             + output.get(
                                 "error",
                                 "Error: Invalid format\nDocs: "
-                                + "https://docs.redbrickai.com/python-sdk/reference/tasks-import",
+                                + "https://docs.redbrickai.com/python-sdk/reference/taskobject",
                             )
                         )
                         continue

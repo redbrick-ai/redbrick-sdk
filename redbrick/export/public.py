@@ -1,6 +1,7 @@
 """Public API to exporting."""
 import asyncio
-from typing import List, Dict, Optional, Tuple, Any
+import re
+from typing import List, Dict, Optional, Set, Tuple, Any
 from functools import partial
 import os
 import json
@@ -589,7 +590,7 @@ class Export:
 
     async def download_and_process_nifti(self, datapoint: Dict, nifti_dir: str) -> Dict:
         """Download and process label maps."""
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel, too-many-locals
         from redbrick.utils.dicom import process_nifti_download
 
         task = copy.deepcopy(datapoint)
@@ -604,16 +605,40 @@ class Export:
             ],
         )
 
-        for url, label in zip(presigned, labels_map):
-            files.append(
-                (
-                    url,
-                    os.path.join(
-                        nifti_dir,
-                        f"{task['taskId']}{f'_{len(files)}' if files else ''}.nii",
-                    ),
-                )
+        path_pattern = re.compile(r"[^\w.]+")
+        task_name = os.path.join(
+            nifti_dir,
+            re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"],
+        )
+        series_names: List[str] = []
+        if sum(
+            map(
+                lambda val: len(val.get("itemsIndices", []) or []) if val else 0,
+                task.get("seriesInfo", []) or [],
             )
+        ) == len(task["items"]) and (
+            len(task["seriesInfo"]) > 1 or task["seriesInfo"][0].get("name")
+        ):
+            os.makedirs(task_name, exist_ok=True)
+            for series_idx, series in enumerate(task["seriesInfo"]):
+                series_name = os.path.join(
+                    task_name,
+                    re.sub(path_pattern, "-", series.get("name", "") or "")
+                    or chr(series_idx + ord("A")),
+                )
+                series_names.append(series_name)
+        else:
+            series_names = [task_name] * len(labels_map)
+
+        added: Set[str] = set()
+
+        for url, series_name in zip(presigned, series_names):
+            counter = 1
+            while series_name in added:
+                series_name = f"{series_name}_{counter}"
+                counter += 1
+            added.add(series_name)
+            files.append((url, f"{series_name}.nii"))
 
         paths = await download_files(files, "Downloading nifti labels", False, True)
 
@@ -626,6 +651,7 @@ class Export:
         self, datapoints: List[Dict], nifti_dir: str, task_map: str
     ) -> None:
         """Export nifti label maps."""
+        os.makedirs(nifti_dir, exist_ok=True)
         loop = asyncio.get_event_loop()
         tasks = loop.run_until_complete(
             gather_with_concurrency(
