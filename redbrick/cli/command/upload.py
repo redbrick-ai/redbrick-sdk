@@ -4,6 +4,7 @@ import re
 import json
 import asyncio
 from argparse import ArgumentError, ArgumentParser, Namespace
+import sys
 from typing import List, Dict, Optional, Union
 
 import tqdm  # type: ignore
@@ -163,9 +164,10 @@ class CLIUploadController(CLIUploadInterface):
             ).get()
             items_list = json.loads(
                 self.project.context.upload.generate_items_list(
-                    [item.replace("\\", "/") for items in items_list for item in items],
+                    [item for items in items_list for item in items],
                     import_file_type,
                     self.args.as_study,
+                    sys.platform.startswith("win"),
                 )
             )
 
@@ -182,6 +184,19 @@ class CLIUploadController(CLIUploadInterface):
                     print_warning(f"{item_group[0]} is not a list of task objects")
                     continue
 
+                for item in file_data:
+                    if (
+                        item.get("items")
+                        and isinstance(item.get("segmentations"), list)
+                        and len(item["segmentations"]) > 1
+                    ):
+                        print_warning(
+                            f"{item_group[0]} contains multiple segmentations."
+                            + " Please use new import format: https://docs.redbrickai.com"
+                            + "/python-sdk/reference/annotation-format-nifti#items-json"
+                        )
+                        continue
+
                 if data_type == "DICOM":
                     output = self.project.context.upload.validate_and_convert_to_import_format(
                         json.dumps(file_data), True, storage_id
@@ -191,13 +206,14 @@ class CLIUploadController(CLIUploadInterface):
                             f"File: {item_group[0]}\n"
                             + output.get(
                                 "error",
-                                "Error: Invalid format\nDocs: "
-                                + "https://docs.redbrickai.com/python-sdk/reference/taskobject",
+                                "Error: Invalid format\n"
+                                + "Docs: https://docs.redbrickai.com/python-sdk/reference"
+                                + "/annotation-format-nifti#items-json",
                             )
                         )
                         continue
 
-                    if output.get("isNew") and output.get("converted"):
+                    if output.get("converted"):
                         file_data = json.loads(output["converted"])
 
                 for item in file_data:

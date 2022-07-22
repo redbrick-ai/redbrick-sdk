@@ -2,6 +2,8 @@
 
 import json
 from typing import Dict, List, Optional, Tuple
+from datetime import datetime, timezone
+from dateutil import parser  # type: ignore
 
 import tenacity
 
@@ -50,6 +52,7 @@ class RBProject:
         self._td_type: str
         self._taxonomy_name: str
         self._project_url: str
+        self._created_at: datetime
         self._label_storage: Optional[Tuple[str, str]] = None
 
         # check if project exists on backend to validate
@@ -76,7 +79,12 @@ class RBProject:
         self.labeling = Labeling(context, org_id, project_id)
         self.review = Labeling(context, org_id, project_id, review=True)
         self.export = Export(
-            context, org_id, project_id, self.project_type, self.output_stage_name
+            context,
+            org_id,
+            project_id,
+            self.project_type,
+            self.output_stage_name,
+            self.export_new_format,
         )
 
     @property
@@ -146,6 +154,15 @@ class RBProject:
             )
         return self._label_storage
 
+    @property
+    def export_new_format(self) -> bool:
+        """
+        Whether to use new task format for default export.
+
+        True for tasks created since 2022-08-01
+        """
+        return self._created_at >= datetime(2022, 8, 1, tzinfo=timezone.utc)
+
     def __wait_for_project_to_finish_creating(self) -> Dict:
         try:
             for attempt in tenacity.Retrying(
@@ -190,6 +207,7 @@ class RBProject:
         self._taxonomy_name = project["taxonomy"]["name"]
         self._stages = self.context.project.get_stages(self.org_id, self.project_id)
         self._project_url = project["projectUrl"]
+        self._created_at = parser.parse(project["createdAt"])
 
     def __str__(self) -> str:
         """Get string representation of RBProject object."""

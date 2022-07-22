@@ -189,10 +189,16 @@ class Labeling:
         return loop.run_until_complete(self._put_tasks(stage_name, tasks))
 
     @handle_exception
-    def assign_task(self, stage_name: str, task_id: str, email: str) -> None:
-        """Assign task to specified email."""
-        self.context.labeling.assign_task(
-            self.org_id, self.project_id, stage_name, task_id, email
+    def assign_task(
+        self,
+        stage_name: str,
+        task_id: str,
+        email: Optional[str] = None,
+        current_user: bool = False,
+    ) -> None:
+        """Assign tasks to specified email or current API key."""
+        self.context.labeling.assign_tasks(
+            self.org_id, self.project_id, stage_name, [task_id], email, current_user
         )
 
     @handle_exception

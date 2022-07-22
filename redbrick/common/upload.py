@@ -94,7 +94,11 @@ class UploadControllerInterface(ABC):
 
     @abstractmethod
     def generate_items_list(
-        self, files: List[str], import_type: str, as_study: bool = False
+        self,
+        files: List[str],
+        import_type: str,
+        as_study: bool = False,
+        windows: bool = False,
     ) -> str:
         """Generate direct upload items list."""
 

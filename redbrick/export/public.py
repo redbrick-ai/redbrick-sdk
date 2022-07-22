@@ -90,6 +90,7 @@ class Export:
         project_id: str,
         project_type: LabelType,
         output_stage_name: str,
+        new_format: bool,
     ) -> None:
         """Construct Export object."""
         self.context = context
@@ -97,6 +98,7 @@ class Export:
         self.project_id = project_id
         self.project_type = project_type
         self.output_stage_name = output_stage_name
+        self.new_format = new_format
 
     def _get_raw_data_latest(
         self,
@@ -588,7 +590,9 @@ class Export:
             max_hole_size,
         )
 
-    async def download_and_process_nifti(self, datapoint: Dict, nifti_dir: str) -> Dict:
+    async def download_and_process_nifti(
+        self, datapoint: Dict, nifti_dir: str, old_format: bool
+    ) -> Dict:
         """Download and process label maps."""
         # pylint: disable=import-outside-toplevel, too-many-locals
         from redbrick.utils.dicom import process_nifti_download
@@ -645,10 +649,10 @@ class Export:
         for label, path in zip(labels_map, paths):
             label["labelName"] = process_nifti_download(task, path)
 
-        return dicom_rb_format(task)
+        return dicom_rb_format(task, old_format)
 
     def export_nifti_label_data(
-        self, datapoints: List[Dict], nifti_dir: str, task_map: str
+        self, datapoints: List[Dict], nifti_dir: str, task_map: str, old_format: bool
     ) -> None:
         """Export nifti label maps."""
         os.makedirs(nifti_dir, exist_ok=True)
@@ -657,7 +661,7 @@ class Export:
             gather_with_concurrency(
                 MAX_CONCURRENCY,
                 [
-                    self.download_and_process_nifti(datapoint, nifti_dir)
+                    self.download_and_process_nifti(datapoint, nifti_dir, old_format)
                     for datapoint in datapoints
                 ],
                 "Processing nifti labels",
@@ -674,6 +678,7 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
+        old_format: Optional[bool] = None,
     ) -> None:
         """
         Export dicom segmentation labels in NIfTI-1 format.
@@ -698,6 +703,11 @@ class Export:
             If the timestamp is mentioned, will only export tasks
             that were labeled/updated since the given timestamp.
             Format - output from datetime.timestamp()
+
+        old_format: Optional[bool] = None
+            Whether to export tasks in old format.
+            If None, will default to old format for projects
+            that are created before 2022-08-01 else new format.
 
         Warnings
         ----------
@@ -724,7 +734,10 @@ class Export:
         os.makedirs(nifti_dir, exist_ok=True)
         print_info(f"Saving NIfTI files to {destination} directory")
         self.export_nifti_label_data(
-            datapoints, nifti_dir, os.path.join(destination, "tasks.json")
+            datapoints,
+            nifti_dir,
+            os.path.join(destination, "tasks.json"),
+            old_format if old_format is not None else not self.new_format,
         )
 
     @handle_exception

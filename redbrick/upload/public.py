@@ -257,7 +257,9 @@ class Upload:
                                 for _ in range(len(external_paths))
                             ]
                             downloaded_paths = await download_files(
-                                list(zip(presigned_paths, download_paths))
+                                list(zip(presigned_paths, download_paths)),
+                                f"Downloading labels for {point.get('name') or point['items'][0]}",
+                                False,
                             )
                         if any(
                             not downloaded_path for downloaded_path in downloaded_paths
@@ -309,7 +311,9 @@ class Upload:
                                         presigned_path,
                                         os.path.join(download_dir, f"{uuid4()}.nii"),
                                     )
-                                ]
+                                ],
+                                f"Downloading labels for {point.get('name') or point['items'][0]}",
+                                False,
                             )
                         )[0]
 

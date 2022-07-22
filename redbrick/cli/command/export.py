@@ -49,6 +49,11 @@ class CLIExportController(CLIExportInterface):
             help="Export with files (e.g. images/video frames)",
         )
         parser.add_argument(
+            "--old-format",
+            action="store_true",
+            help="Export tasks in old format",
+        )
+        parser.add_argument(
             "--clear-cache", action="store_true", help="Clear local cache"
         )
         parser.add_argument(
@@ -247,7 +252,12 @@ class CLIExportController(CLIExportInterface):
             os.makedirs(nifti_dir, exist_ok=True)
             task_map = os.path.join(export_dir, "tasks.json")
             self.project.project.export.export_nifti_label_data(
-                data, nifti_dir, task_map
+                data,
+                nifti_dir,
+                task_map,
+                self.args.old_format
+                if self.args.old_format
+                else not self.project.project.export_new_format,
             )
             print_info(f"Exported: {task_map}")
             print_info(f"Exported nifti to: {nifti_dir}")

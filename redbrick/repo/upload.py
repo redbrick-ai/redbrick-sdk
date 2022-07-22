@@ -222,7 +222,11 @@ class UploadRepo(UploadControllerInterface):
         return (result.get("deleteTasks", {}) or {}).get("ok", False)
 
     def generate_items_list(
-        self, files: List[str], import_type: str, as_study: bool = False
+        self,
+        files: List[str],
+        import_type: str,
+        as_study: bool = False,
+        windows: bool = False,
     ) -> str:
         """Generate direct upload items list."""
         query_string = """
@@ -230,11 +234,13 @@ class UploadRepo(UploadControllerInterface):
                 $importType: ImportType!
                 $files: [String]!
                 $groupedByStudy: Boolean!
+                $windows: Boolean
             ) {
                 generateItemsList(
                     importType: $importType
                     files: $files
                     groupedByStudy: $groupedByStudy
+                    windows: $windows
                 )
             }
         """
@@ -243,6 +249,7 @@ class UploadRepo(UploadControllerInterface):
             "importType": import_type,
             "files": files,
             "groupedByStudy": as_study,
+            "windows": windows,
         }
         result = self.client.execute_query(query_string, query_variables)
         items_list: str = result["generateItemsList"]
@@ -267,7 +274,6 @@ class UploadRepo(UploadControllerInterface):
                 storageId: $storageId
             ) {
                 isValid
-                isNew
                 error
                 converted
             }

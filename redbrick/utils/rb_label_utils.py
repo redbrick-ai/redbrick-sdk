@@ -47,15 +47,10 @@ def flat_rb_format(
     }
 
 
-def dicom_rb_format(task: Dict) -> Dict:
+def dicom_rb_format(task: Dict, old_format: bool) -> Dict:
     """Get new dicom rb task format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
-    if sum(
-        map(
-            lambda val: len(val.get("itemsIndices", []) or []) if val else 0,
-            task.get("seriesInfo", []) or [],
-        )
-    ) != len(task.get("items", []) or []):
+    if old_format:
         keys = ["itemsPresigned", "seriesInfo", "storageId", "labelStorageId"]
         for key in [
             "currentStageName",
@@ -70,6 +65,9 @@ def dicom_rb_format(task: Dict) -> Dict:
             if not task.get(key):
                 keys.append(key)
         return {key: value for key, value in task.items() if key not in keys}
+
+    if not task.get("seriesInfo"):
+        task["seriesInfo"] = [{"itemsIndices": list(range(len(task["items"])))}]
 
     output = {"taskId": task["taskId"]}
 
@@ -101,8 +99,6 @@ def dicom_rb_format(task: Dict) -> Dict:
         series = output["series"][volume_index]
         if series_info.get("name"):
             series["name"] = series_info["name"]
-        if series_info.get("dataType"):
-            series["dataType"] = series_info["dataType"]
         if series_info.get("numFrames"):
             series["numFrames"] = series_info["numFrames"]
         series["items"] = list(
@@ -110,9 +106,20 @@ def dicom_rb_format(task: Dict) -> Dict:
         )
 
     for volume_index, label_map in enumerate(task.get("labelsMap", []) or []):
+        if volume_index >= len(output["series"]):
+            output["series"].extend(
+                [{} for _ in range(volume_index - len(output["series"]))]
+            )
         if label_map and label_map.get("labelName"):
             output["series"][volume_index]["segmentations"] = label_map["labelName"]
             output["series"][volume_index]["segmentMap"] = {}
+
+    for label in task.get("labels", []) or []:
+        volume_index = label.get("volumeindex", 0)
+        if volume_index >= len(output["series"]):
+            output["series"].extend(
+                [{} for _ in range(volume_index - len(output["series"]))]
+            )
 
     for label in task.get("labels", []) or []:
         volume = output["series"][label.get("volumeindex", 0)]
