@@ -90,6 +90,8 @@ class Upload:
                 point["items"],
                 json.dumps(point.get("labels", [])),
                 labels_map,
+                point.get("seriesInfo"),
+                json.dumps(point["metaData"]) if point.get("metaData") else None,
                 is_ground_truth,
             )
             assert response.get("taskId"), "Failed to create task"
@@ -158,7 +160,7 @@ class Upload:
         point: Dict,
         is_ground_truth: bool,
         label_storage_id: str,
-        label_storage_path: str,
+        project_label_storage_id: str,
     ) -> Dict:
         # pylint: disable=too-many-locals, too-many-branches, too-many-nested-blocks
         # pylint: disable=import-outside-toplevel, too-many-statements
@@ -225,6 +227,9 @@ class Upload:
                 del point["labelsPath"]
 
             labels_map = point.get("labelsMap", []) or []  # type: ignore
+            download_dir = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
+            if not os.path.exists(download_dir):
+                os.makedirs(download_dir)
             for label_map in labels_map:
                 input_labels_path = label_map["labelName"]
                 if isinstance(input_labels_path, list):
@@ -244,28 +249,17 @@ class Upload:
                             presigned_paths = self.context.export.presign_items(
                                 self.org_id,
                                 label_storage_id,
-                                [
-                                    (
-                                        f"{label_storage_path}/"
-                                        if label_storage_path
-                                        else ""
-                                    )
-                                    + external_path
-                                    for external_path in external_paths
-                                ],
+                                external_paths,
                             )
-                            download_dir = os.path.join(
-                                os.path.expanduser("~"), ".redbrickai", "temp"
-                            )
-                            if not os.path.exists(download_dir):
-                                os.makedirs(download_dir)
 
                             download_paths = [
                                 os.path.join(download_dir, f"{uuid4()}.nii")
                                 for _ in range(len(external_paths))
                             ]
                             downloaded_paths = await download_files(
-                                list(zip(presigned_paths, download_paths))
+                                list(zip(presigned_paths, download_paths)),
+                                f"Downloading labels for {point.get('name') or point['items'][0]}",
+                                False,
                             )
                         if any(
                             not downloaded_path for downloaded_path in downloaded_paths
@@ -289,15 +283,6 @@ class Upload:
                     ):
                         input_labels_path = None
 
-                elif (
-                    isinstance(input_labels_path, str)
-                    and input_labels_path
-                    and not os.path.isfile(input_labels_path)
-                ):
-                    input_labels_path = (
-                        f"{label_storage_path}/" if label_storage_path else ""
-                    ) + input_labels_path
-
                 if input_labels_path:
                     if isinstance(input_labels_path, list):
                         input_labels_path, group_map = process_nifti_upload(
@@ -310,6 +295,27 @@ class Upload:
                                 label["dicom"]["groupids"] = group_map[
                                     label["dicom"]["instanceid"]
                                 ]
+
+                    if (
+                        input_labels_path
+                        and not os.path.isfile(input_labels_path)
+                        and label_storage_id != project_label_storage_id
+                    ):
+                        presigned_path = self.context.export.presign_items(
+                            self.org_id, label_storage_id, [input_labels_path]
+                        )[0]
+                        input_labels_path = (
+                            await download_files(
+                                [
+                                    (
+                                        presigned_path,
+                                        os.path.join(download_dir, f"{uuid4()}.nii"),
+                                    )
+                                ],
+                                f"Downloading labels for {point.get('name') or point['items'][0]}",
+                                False,
+                            )
+                        )[0]
 
                     if input_labels_path and os.path.isfile(input_labels_path):
                         file_type = NIFTI_FILE_TYPES["nii"]
@@ -361,15 +367,29 @@ class Upload:
     @staticmethod
     def _map_segmentation_category(segmentation_mapping: Dict) -> List[Dict]:
         rb_segmentations = []
-        for class_id, category in segmentation_mapping.items():
+        for class_id, cat in segmentation_mapping.items():
+            if isinstance(cat, dict):
+                category = cat["category"]
+                attributes = cat.get("attributes", []) or []
+            else:
+                category = cat
+                attributes = []
             instance_id = int(class_id)
             if isinstance(category, int):
                 rb_segmentations.append(
-                    {"categoryclass": category, "dicom": {"instanceid": instance_id}}
+                    {
+                        "categoryclass": category,
+                        "attributes": attributes,
+                        "dicom": {"instanceid": instance_id},
+                    }
                 )
             elif isinstance(category, str):
                 rb_segmentations.append(
-                    {"categoryname": [category], "dicom": {"instanceid": instance_id}}
+                    {
+                        "categoryname": [category],
+                        "attributes": attributes,
+                        "dicom": {"instanceid": instance_id},
+                    }
                 )
             elif (
                 isinstance(category, list)
@@ -379,7 +399,11 @@ class Upload:
                 and all(isinstance(item, str) for item in category[0])
             ):
                 rb_segmentations.append(
-                    {"category": category, "dicom": {"instanceid": instance_id}}
+                    {
+                        "category": category,
+                        "attributes": attributes,
+                        "dicom": {"instanceid": instance_id},
+                    }
                 )
             elif (
                 isinstance(category, list)
@@ -387,7 +411,11 @@ class Upload:
                 and all(isinstance(item, str) for item in category)
             ):
                 rb_segmentations.append(
-                    {"categoryname": category, "dicom": {"instanceid": instance_id}}
+                    {
+                        "categoryname": category,
+                        "attributes": attributes,
+                        "dicom": {"instanceid": instance_id},
+                    }
                 )
             else:
                 raise ValueError(f"Upload failed: Invalid category {category}")
@@ -400,6 +428,7 @@ class Upload:
         points: List[Dict],
         segmentation_mapping: Dict,
         is_ground_truth: bool,
+        label_storage_id: str,
     ) -> List[Dict]:
         # pylint: disable=too-many-locals
         try:
@@ -430,9 +459,10 @@ class Upload:
             print_error(err)
             return points
 
-        label_storage_id, label_storage_path = self.context.project.get_label_storage(
+        project_label_storage_id, _ = self.context.project.get_label_storage(
             self.org_id, self.project_id
         )
+
         conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
@@ -442,7 +472,7 @@ class Upload:
                     point,
                     is_ground_truth,
                     label_storage_id,
-                    label_storage_path,
+                    project_label_storage_id,
                 )
                 for point in points
             ]
@@ -633,6 +663,7 @@ class Upload:
         points: List[Dict],
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
+        label_storage_id: Optional[str] = None,
     ) -> List[Dict]:
         """
         Create datapoints in project.
@@ -659,6 +690,10 @@ class Upload:
 
         segmentation_mapping: Optional[Dict] = None
             Optional mapping of semantic segmentation class ids and RedBrick categories.
+
+        label_storage_id: Optional[str] = None
+            Optional label storage id to reference nifti segmentations.
+            Defaults to items storage_id if not specified.
 
         Returns
         -------------
@@ -702,6 +737,7 @@ class Upload:
                     filtered_points,
                     segmentation_mapping or {},
                     is_ground_truth,
+                    label_storage_id or storage_id,
                 )
             )
 

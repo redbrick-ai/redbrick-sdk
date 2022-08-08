@@ -7,7 +7,7 @@ import aiohttp
 
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
-from redbrick.repo.shards import TAXONOMY_SHARD, LATEST_TASKDATA_SHARD
+from redbrick.repo.shards import TAXONOMY_SHARD, TASK_SHARD
 
 
 class ExportRepo(ExportControllerInterface):
@@ -30,28 +30,25 @@ class ExportRepo(ExportControllerInterface):
 
     def get_output_info(self, org_id: str, project_id: str) -> Dict:
         """Get info about the output labelset and taxonomy."""
-        query_string = (
-            """
-        query ($orgId: UUID!, $name: String!){
-            customGroup(orgId: $orgId, name:$name){
+        query_string = f"""
+        query ($orgId: UUID!, $name: String!){{
+            customGroup(orgId: $orgId, name:$name){{
                 dataType
                 taskType
                 datapointCount
-                taxonomy {
-                    %s
-                    colorMap {
+                taxonomy {{
+                    {TAXONOMY_SHARD}
+                    colorMap {{
                         name
                         color
                         classid
                         trail
                         taskcategory
-                    }
-                }
-            }
-        }
+                    }}
+                }}
+            }}
+        }}
         """
-            % TAXONOMY_SHARD
-        )
 
         # EXECUTE THE QUERY
         query_variables = {
@@ -148,12 +145,12 @@ class ExportRepo(ExportControllerInterface):
         project_id: str,
         stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
+        presign_items: bool = False,
         first: int = 50,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str], Optional[datetime]]:
         """Get the latest datapoints."""
-        query_string = (
-            """
+        query_string = f"""
         query(
             $orgId: UUID!,
             $projectId: UUID!,
@@ -161,7 +158,7 @@ class ExportRepo(ExportControllerInterface):
             $cacheTime: DateTime,
             $first: Int,
             $cursor: String
-        ) {
+        ) {{
             tasksPaged(
                 orgId: $orgId
                 projectId: $projectId
@@ -169,20 +166,17 @@ class ExportRepo(ExportControllerInterface):
                 cacheTime: $cacheTime
                 first: $first
                 after: $cursor
-            ) {
-                entries {
-                    taskId
-                    dpId
-                    currentStageName
-                    %s
-                }
+            ) {{
+                entries {{
+                    {TASK_SHARD.format(
+                        "itemsPresigned:items(presigned: true)" if presign_items else ""
+                    )}
+                }}
                 cursor
                 cacheTime
-            }
-            }
+            }}
+        }}
         """
-            % LATEST_TASKDATA_SHARD
-        )
         # EXECUTE THE QUERY
         query_variables = {
             "orgId": org_id,
@@ -205,22 +199,17 @@ class ExportRepo(ExportControllerInterface):
 
     def get_datapoint_latest(self, org_id: str, project_id: str, task_id: str) -> Dict:
         """Get the latest labels for a single bdatapoint."""
-        query_string = (
-            """
-        query($orgId: UUID!, $projectId: UUID!, $taskId: UUID!) {
+        query_string = f"""
+        query($orgId: UUID!, $projectId: UUID!, $taskId: UUID!) {{
             task(
                 orgId: $orgId
                 projectId: $projectId
                 taskId: $taskId
-            ) {
-                taskId
-                currentStageName
-                %s
-            }
-            }
+            ) {{
+                {TASK_SHARD}
+            }}
+        }}
         """
-            % LATEST_TASKDATA_SHARD
-        )
         # EXECUTE THE QUERY
         query_variables = {
             "orgId": org_id,

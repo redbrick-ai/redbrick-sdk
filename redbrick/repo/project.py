@@ -33,6 +33,7 @@ class ProjectRepo(ProjectRepoInterface):
                         name
                     }
                     projectUrl
+                    createdAt
                 }
             }
         """
@@ -86,6 +87,7 @@ class ProjectRepo(ProjectRepoInterface):
                     name
                     desc
                     projectUrl
+                    createdAt
                 }
                 stages {
                     stageName
@@ -135,6 +137,7 @@ class ProjectRepo(ProjectRepoInterface):
                     status
                     desc
                     projectUrl
+                    createdAt
                 }
             }
         """

@@ -1,6 +1,7 @@
 """Public API to exporting."""
 import asyncio
-from typing import List, Dict, Optional, Tuple, Any
+import re
+from typing import List, Dict, Optional, Set, Tuple, Any
 from functools import partial
 import os
 import json
@@ -40,13 +41,18 @@ def _parse_entry_latest(item: Dict) -> Dict:
         task_id = item["taskId"]
         task_data = item["latestTaskData"]
         datapoint = task_data["dataPoint"]
-        items_presigned = datapoint["itemsPresigned"]
         items = datapoint["items"]
+        items_presigned = datapoint.get("itemsPresigned", []) or []
         name = datapoint["name"]
-        created_by = task_data["createdByEmail"]
+        created_by = (datapoint.get("createdByEntity", {}) or {}).get("email")
+        created_at = datapoint["createdAt"]
+        updated_by = task_data["createdByEmail"]
+        updated_at = task_data["createdAt"]
         labels = [
             clean_rb_label(label) for label in json.loads(task_data["labelsData"])
         ]
+        storage_id = datapoint["storageMethod"]["storageId"]
+        label_storage_id = task_data["labelsStorage"]["storageId"]
 
         return flat_rb_format(
             labels,
@@ -54,9 +60,16 @@ def _parse_entry_latest(item: Dict) -> Dict:
             items_presigned,
             name,
             created_by,
+            created_at,
+            updated_by,
+            updated_at,
             task_id,
             item["currentStageName"],
             task_data.get("labelsMap", []) or [],
+            datapoint.get("seriesInfo"),
+            json.loads(datapoint["metaData"]) if datapoint.get("metaData") else None,
+            storage_id,
+            label_storage_id,
         )
     except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
         return {}
@@ -77,6 +90,7 @@ class Export:
         project_id: str,
         project_type: LabelType,
         output_stage_name: str,
+        new_format: bool,
     ) -> None:
         """Construct Export object."""
         self.context = context
@@ -84,12 +98,14 @@ class Export:
         self.project_id = project_id
         self.project_type = project_type
         self.output_stage_name = output_stage_name
+        self.new_format = new_format
 
     def _get_raw_data_latest(
         self,
         concurrency: int,
         only_ground_truth: bool = False,
         from_timestamp: Optional[float] = None,
+        presign_items: bool = False,
     ) -> Tuple[List[Dict], Dict]:
         temp = self.context.export.get_datapoints_latest
         stage_name = "END" if only_ground_truth else None
@@ -102,6 +118,7 @@ class Export:
                 datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
                 if from_timestamp is not None
                 else None,
+                presign_items,
                 concurrency,
             )
         )
@@ -126,10 +143,13 @@ class Export:
                 task = _parse_entry_latest(val)
                 if task:
                     datapoints.append(task)
-            disable = progress.disable
-            progress.disable = False
-            progress.update(datapoint_count - progress.n)
-            progress.disable = disable
+            try:
+                disable = progress.disable
+                progress.disable = False
+                progress.update(datapoint_count - progress.n)
+                progress.disable = disable
+            except Exception:  # pylint: disable=broad-except
+                pass
 
         return datapoints, general_info["taxonomy"]
 
@@ -186,6 +206,7 @@ class Export:
                 self.project_id,
                 stage_name,
                 cache_time,
+                False,
                 concurrency,
                 cursor,
             )
@@ -569,42 +590,78 @@ class Export:
             max_hole_size,
         )
 
-    @staticmethod
-    async def _download_and_process_nifti(datapoint: Dict, nifti_dir: str) -> Dict:
-        # pylint: disable=import-outside-toplevel
+    async def download_and_process_nifti(
+        self, datapoint: Dict, nifti_dir: str, old_format: bool
+    ) -> Dict:
+        """Download and process label maps."""
+        # pylint: disable=import-outside-toplevel, too-many-locals
         from redbrick.utils.dicom import process_nifti_download
 
         task = copy.deepcopy(datapoint)
         files: List[Tuple[str, str]] = []
         labels_map = task.get("labelsMap", []) or []
-        for label in labels_map:
-            files.append(
-                (
-                    label["labelName"],
-                    os.path.join(
-                        nifti_dir,
-                        f"{task['taskId']}{f'_{len(files)}' if files else ''}.nii",
-                    ),
-                )
-            )
+        presigned = self.context.export.presign_items(
+            self.org_id,
+            task["labelStorageId"],
+            [
+                label_map.get("labelName") if label_map else None
+                for label_map in labels_map
+            ],
+        )
 
-        paths = await download_files(files, "Downloading nifti labels", False)
+        path_pattern = re.compile(r"[^\w.]+")
+        task_name = os.path.join(
+            nifti_dir,
+            re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"],
+        )
+        series_names: List[str] = []
+        if sum(
+            map(
+                lambda val: len(val.get("itemsIndices", []) or []) if val else 0,
+                task.get("seriesInfo", []) or [],
+            )
+        ) == len(task["items"]) and (
+            len(task["seriesInfo"]) > 1 or task["seriesInfo"][0].get("name")
+        ):
+            os.makedirs(task_name, exist_ok=True)
+            for series_idx, series in enumerate(task["seriesInfo"]):
+                series_name = os.path.join(
+                    task_name,
+                    re.sub(path_pattern, "-", series.get("name", "") or "")
+                    or chr(series_idx + ord("A")),
+                )
+                series_names.append(series_name)
+        else:
+            series_names = [task_name] * len(labels_map)
+
+        added: Set[str] = set()
+
+        for url, series_name in zip(presigned, series_names):
+            counter = 1
+            while series_name in added:
+                series_name = f"{series_name}_{counter}"
+                counter += 1
+            added.add(series_name)
+            files.append((url, f"{series_name}.nii"))
+
+        paths = await download_files(files, "Downloading nifti labels", False, True)
 
         for label, path in zip(labels_map, paths):
             label["labelName"] = process_nifti_download(task, path)
 
-        return dicom_rb_format(task)
+        return dicom_rb_format(task, old_format)
 
-    @staticmethod
-    def _export_nifti_label_data(
-        datapoints: List[Dict], nifti_dir: str, task_map: str
+    def export_nifti_label_data(
+        self, datapoints: List[Dict], nifti_dir: str, task_map: str, old_format: bool
     ) -> None:
+        """Export nifti label maps."""
+        os.makedirs(nifti_dir, exist_ok=True)
         loop = asyncio.get_event_loop()
         tasks = loop.run_until_complete(
             gather_with_concurrency(
                 MAX_CONCURRENCY,
                 [
-                    Export._download_and_process_nifti(datapoint, nifti_dir)
+                    self.download_and_process_nifti(datapoint, nifti_dir, old_format)
                     for datapoint in datapoints
                 ],
                 "Processing nifti labels",
@@ -621,6 +678,7 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
+        old_format: Optional[bool] = None,
     ) -> None:
         """
         Export dicom segmentation labels in NIfTI-1 format.
@@ -646,6 +704,11 @@ class Export:
             that were labeled/updated since the given timestamp.
             Format - output from datetime.timestamp()
 
+        old_format: Optional[bool] = None
+            Whether to export tasks in old format.
+            If None, will default to old format for projects
+            that are created before 2022-08-01 else new format.
+
         Warnings
         ----------
         redbrick_nifti only works for the following types - DICOM_SEGMENTATION
@@ -670,8 +733,11 @@ class Export:
         nifti_dir = os.path.join(destination, "nifti")
         os.makedirs(nifti_dir, exist_ok=True)
         print_info(f"Saving NIfTI files to {destination} directory")
-        Export._export_nifti_label_data(
-            datapoints, nifti_dir, os.path.join(destination, "tasks.json")
+        self.export_nifti_label_data(
+            datapoints,
+            nifti_dir,
+            os.path.join(destination, "tasks.json"),
+            old_format if old_format is not None else not self.new_format,
         )
 
     @handle_exception
@@ -716,14 +782,14 @@ class Export:
             datapoints, _ = self._get_raw_data_single(task_id)
         else:
             datapoints, _ = self._get_raw_data_latest(
-                concurrency, only_ground_truth, from_timestamp
+                concurrency, only_ground_truth, from_timestamp, True
             )
 
         return [
             {
                 key: value
                 for key, value in datapoint.items()
-                if key not in ("labelsMap",)
+                if key not in ("labelsMap", "seriesInfo", "storageId", "labelStorageId")
             }
             for datapoint in datapoints
         ]
@@ -781,7 +847,7 @@ class Export:
             datapoints, taxonomy = self._get_raw_data_single(task_id)
         else:
             datapoints, taxonomy = self._get_raw_data_latest(
-                concurrency, only_ground_truth, from_timestamp
+                concurrency, only_ground_truth, from_timestamp, True
             )
 
         return coco_converter(datapoints, taxonomy)

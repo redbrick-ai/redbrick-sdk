@@ -4,7 +4,7 @@ RedBrick AI SDK
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_project, get_org, LabelType, StorageMethod
+   :members: get_project, get_org, LabelType, StorageMethod, ImportTypes
    :show-inheritance:
 
 Project

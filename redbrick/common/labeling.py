@@ -52,10 +52,16 @@ class LabelingControllerInterface(ABC):
         """Put review result for task."""
 
     @abstractmethod
-    def assign_task(
-        self, org_id: str, project_id: str, stage_name: str, task_id: str, email: str
+    def assign_tasks(
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
+        task_ids: List[str],
+        email: Optional[str] = None,
+        current_user: bool = False,
     ) -> None:
-        """Assign task to specified email."""
+        """Assign tasks to specified email or current API key."""
 
     @abstractmethod
     def get_tasks_queue(

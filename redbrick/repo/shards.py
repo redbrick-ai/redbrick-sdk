@@ -93,20 +93,41 @@ colorMap {
 archived
 """
 
-LATEST_TASKDATA_SHARD = """
-    latestTaskData {
-        dataPoint {
+TASK_SHARD = """
+    taskId
+    dpId
+    currentStageName
+    latestTaskData {{
+        dataPoint {{
             name
-            itemsPresigned: items(presigned: true)
             items(presigned: false)
-        }
+            {}
+            createdAt
+            createdByEntity {{
+                email
+            }}
+            metaData
+            seriesInfo {{
+                name
+                itemsIndices
+                dataType
+                numFrames
+            }}
+            storageMethod {{
+                storageId
+            }}
+        }}
+        createdAt
         createdByEmail
         labelsData(interpolate: true)
-        labelsMap {
+        labelsStorage {{
+            storageId
+        }}
+        labelsMap(presigned: false) {{
             labelName
             imageIndex
             imageName
             seriesId
-        }
-    }
+        }}
+    }}
 """

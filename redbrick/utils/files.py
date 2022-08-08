@@ -41,6 +41,8 @@ FILE_TYPES = {
     **NIFTI_FILE_TYPES,
 }
 
+ALL_FILE_TYPES = {"*": "*/*"}
+
 
 def get_file_type(file_path: str) -> Tuple[str, str]:
     """
@@ -82,12 +84,15 @@ def find_files_recursive(
         if os.path.isdir(path):
             items.extend(find_files_recursive(path, file_types, multiple))
             discard_list_items = True
-        elif os.path.isfile(path) and (
-            item.rsplit(".", 1)[-1].lower() in file_types
+        elif os.path.isfile(path) and (  # pylint: disable=too-many-boolean-expressions
+            "*" in file_types
             or (
-                "." in item
-                and item.rsplit(".", 1)[-1].lower() == "gz"
-                and item.rsplit(".", 2)[-2].lower() in file_types
+                item.rsplit(".", 1)[-1].lower() in file_types
+                or (
+                    "." in item
+                    and item.rsplit(".", 1)[-1].lower() == "gz"
+                    and item.rsplit(".", 2)[-2].lower() in file_types
+                )
             )
         ):
             if multiple:
@@ -169,6 +174,7 @@ async def download_files(
     files: List[Tuple[str, str]],
     progress_bar_name: Optional[str] = "Downloading files",
     keep_progress_bar: bool = True,
+    overwrite: bool = False,
 ) -> List[Optional[str]]:
     """Download files from url to local path (presigned url, file path)."""
 
@@ -194,7 +200,8 @@ async def download_files(
                         data = gzip.decompress(data)
                     except Exception:  # pylint: disable=broad-except
                         pass
-                path = uniquify_path(path)
+                if not overwrite:
+                    path = uniquify_path(path)
                 async with aiofiles.open(path, "wb") as file_:  # type: ignore
                     await file_.write(data)
                 return path

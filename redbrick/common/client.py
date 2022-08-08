@@ -1,4 +1,5 @@
 """Graphql Client responsible for make API requests."""
+import time
 from typing import Dict
 import requests  # type: ignore
 
@@ -37,19 +38,26 @@ class RBClient:
         stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
         retry=tenacity.retry_if_not_exception_type(
-            (KeyboardInterrupt, PermissionError, ValueError)
+            (
+                KeyboardInterrupt,
+                PermissionError,
+                TimeoutError,
+                ConnectionError,
+                ValueError,
+            )
         ),
     )
     def execute_query(
         self, query: str, variables: Dict, raise_for_error: bool = True
     ) -> Dict:
         """Execute a graphql query."""
+        start_time = time.time()
         response = self.session.post(
             self.url,
             headers=self.headers,
             json={"query": query, "variables": variables},
         )
-        self._check_status_msg(response.status_code)
+        self._check_status_msg(response.status_code, start_time)
         return self._process_json_response(response.json(), raise_for_error)
 
     @tenacity.retry(
@@ -57,7 +65,13 @@ class RBClient:
         stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
         retry=tenacity.retry_if_not_exception_type(
-            (KeyboardInterrupt, PermissionError, ValueError)
+            (
+                KeyboardInterrupt,
+                PermissionError,
+                TimeoutError,
+                ConnectionError,
+                ValueError,
+            )
         ),
     )
     async def execute_query_async(
@@ -68,17 +82,22 @@ class RBClient:
         raise_for_error: bool = True,
     ) -> Dict:
         """Execute a graphql query using asyncio."""
+        start_time = time.time()
         async with aio_session.post(
             self.url,
             headers=self.headers,
             json={"query": query, "variables": variables},
         ) as response:
-            self._check_status_msg(response.status)
+            self._check_status_msg(response.status, start_time)
             return self._process_json_response(await response.json(), raise_for_error)
 
     @staticmethod
-    def _check_status_msg(response_status: int) -> None:
+    def _check_status_msg(response_status: int, start_time: float) -> None:
         if response_status >= 500:
+            if time.time() - start_time >= 24:
+                raise TimeoutError(
+                    "Request timed out. Please consider using lower concurrency"
+                )
             raise ConnectionError(
                 "Internal Server Error: You are probably using an invalid API key"
             )

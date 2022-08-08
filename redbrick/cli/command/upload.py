@@ -4,18 +4,21 @@ import re
 import json
 import asyncio
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import List, Dict, Optional
+import sys
+from typing import List, Dict, Optional, Union
 
+import tqdm  # type: ignore
+
+from redbrick.cli.input.select import CLIInputSelect
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIUploadInterface
-from redbrick.common.enums import StorageMethod
+from redbrick.common.enums import StorageMethod, ImportTypes
 from redbrick.utils.logging import print_info, print_warning
 from redbrick.utils.files import (
-    DICOM_FILE_TYPES,
-    IMAGE_FILE_TYPES,
     JSON_FILE_TYPES,
-    NIFTI_FILE_TYPES,
+    IMAGE_FILE_TYPES,
     VIDEO_FILE_TYPES,
+    ALL_FILE_TYPES,
     find_files_recursive,
 )
 
@@ -33,7 +36,15 @@ class CLIUploadController(CLIUploadInterface):
             "--as-frames", action="store_true", help="Upload video from image frames"
         )
         parser.add_argument(
-            "--as-nifti", action="store_true", help="Upload dicom as nifti files"
+            "--type",
+            "-t",
+            nargs="?",
+            default=ImportTypes.DICOM3D.value,
+            help=f"Import file type {[import_type.value for import_type in ImportTypes]} "
+            + f"(Default: {ImportTypes.DICOM3D.value}) *Applicable for Medical project",
+        )
+        parser.add_argument(
+            "--as-study", action="store_true", help="Group files by study"
         )
         parser.add_argument(
             "--json",
@@ -49,6 +60,11 @@ class CLIUploadController(CLIUploadInterface):
             default=self.STORAGE_REDBRICK,
             help="Storage method: "
             + f"({self.STORAGE_REDBRICK} [default], {self.STORAGE_PUBLIC}, <storage id>)",
+        )
+        parser.add_argument(
+            "--label-storage",
+            help="Label Storage method: (same as items storage (--storage) [default],"
+            + f" {self.STORAGE_REDBRICK}, {self.STORAGE_PUBLIC}, <storage id>)",
         )
         parser.add_argument(
             "--ground-truth", action="store_true", help="Upload tasks to ground truth"
@@ -89,6 +105,20 @@ class CLIUploadController(CLIUploadInterface):
         else:
             raise ArgumentError(None, "")
 
+        if not self.args.label_storage:
+            label_storage_id = storage_id
+        elif self.args.label_storage == self.STORAGE_REDBRICK:
+            label_storage_id = str(StorageMethod.REDBRICK)
+        elif self.args.label_storage == self.STORAGE_PUBLIC:
+            label_storage_id = str(StorageMethod.PUBLIC)
+        elif re.match(
+            r"^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$",
+            self.args.label_storage.strip().lower(),
+        ):
+            label_storage_id = str(self.args.label_storage).strip().lower()
+        else:
+            raise ArgumentError(None, "")
+
         file_types = IMAGE_FILE_TYPES
         multiple = False
         if self.args.json:
@@ -99,17 +129,14 @@ class CLIUploadController(CLIUploadInterface):
             else:
                 file_types = VIDEO_FILE_TYPES
         elif data_type == "DICOM":
-            if self.args.as_nifti:
-                file_types = NIFTI_FILE_TYPES
-            else:
-                multiple = True
-                file_types = DICOM_FILE_TYPES
+            file_types = ALL_FILE_TYPES
         elif data_type != "IMAGE":
             raise Exception(
                 "Project data type needs to be IMAGE, VIDEO or DICOM to upload files"
             )
 
-        valid_file_types = ", ".join(f".{type}[.gz]" for type in file_types)
+        valid_file_types = ", ".join(f".{type_}[.gz]" for type_ in file_types)
+        items_list: Union[List[List[str]], List[Dict]]
         if self.args.json and directory.endswith(".json") and os.path.isfile(directory):
             items_list = [[os.path.abspath(directory)]]
         else:
@@ -129,15 +156,66 @@ class CLIUploadController(CLIUploadInterface):
             self.project.cache.get_data("uploads", upload_cache_hash, True, True) or []
         )
 
+        if "*" in file_types and items_list:
+            import_file_type = CLIInputSelect(
+                self.args.type,
+                "Import file type",
+                [import_type.value for import_type in ImportTypes],
+            ).get()
+            items_list = json.loads(
+                self.project.context.upload.generate_items_list(
+                    [item for items in items_list for item in items],
+                    import_file_type,
+                    self.args.as_study,
+                    sys.platform.startswith("win"),
+                )
+            )
+
         points: List[Dict] = []
         uploading = set()
         if self.args.json:
-            for item_group in items_list:
+            print_info("Validating files")
+            for item_group in tqdm.tqdm(items_list):
                 with open(item_group[0], "r", encoding="utf-8") as file_:
                     file_data = json.load(file_)
-                if not isinstance(file_data, list):
-                    print_warning(f"{item_group[0]} is not a list of tasks")
+                if not isinstance(file_data, list) or any(
+                    not isinstance(obj, dict) for obj in file_data
+                ):
+                    print_warning(f"{item_group[0]} is not a list of task objects")
                     continue
+
+                for item in file_data:
+                    if (
+                        item.get("items")
+                        and isinstance(item.get("segmentations"), list)
+                        and len(item["segmentations"]) > 1
+                    ):
+                        print_warning(
+                            f"{item_group[0]} contains multiple segmentations."
+                            + " Please use new import format: https://docs.redbrickai.com"
+                            + "/python-sdk/reference/annotation-format-nifti#items-json"
+                        )
+                        continue
+
+                if data_type == "DICOM":
+                    output = self.project.context.upload.validate_and_convert_to_import_format(
+                        json.dumps(file_data), True, storage_id
+                    )
+                    if not output.get("isValid"):
+                        print_warning(
+                            f"File: {item_group[0]}\n"
+                            + output.get(
+                                "error",
+                                "Error: Invalid format\n"
+                                + "Docs: https://docs.redbrickai.com/python-sdk/reference"
+                                + "/annotation-format-nifti#items-json",
+                            )
+                        )
+                        continue
+
+                    if output.get("converted"):
+                        file_data = json.loads(output["converted"])
+
                 for item in file_data:
                     if (
                         not isinstance(item.get("items"), list)
@@ -167,6 +245,8 @@ class CLIUploadController(CLIUploadInterface):
                         ):
                             item["labelsMap"] = [
                                 {"labelName": segmentation, "imageIndex": int(idx)}
+                                if segmentation
+                                else None
                                 for idx, segmentation in item["segmentations"].items()
                             ]
                         del item["segmentations"]
@@ -221,8 +301,20 @@ class CLIUploadController(CLIUploadInterface):
                         uploading.add(item["name"])
                         points.append(item)
         else:
-            for item_group in items_list:
-                if multiple:
+            for igroup in items_list:
+                if isinstance(igroup, dict):
+                    item_name = igroup.get("name")
+                    item_group = list(
+                        map(os.path.normpath, igroup.get("items", []) or [])
+                    )
+                else:
+                    item_name = None
+                    item_group = igroup
+
+                if not item_group:
+                    continue
+
+                if len(item_group) > 1:
                     items_dir = os.path.dirname(item_group[0])
                     task_dir = os.path.dirname(items_dir)
                     task_name = os.path.basename(items_dir)
@@ -240,13 +332,15 @@ class CLIUploadController(CLIUploadInterface):
                 item_name = (
                     label_data["name"]
                     if label_data and label_data.get("name")
+                    else item_name
+                    if item_name
                     else (
                         re.sub(
                             r"^" + re.escape(directory + os.path.sep) + r"?",
                             "",
                             (
                                 os.path.dirname(item_group[0])
-                                if multiple
+                                if len(item_group) > 1
                                 else item_group[0]
                             ),
                         )
@@ -283,6 +377,8 @@ class CLIUploadController(CLIUploadInterface):
                             if isinstance(label_data["segmentations"], dict):
                                 label_data["labelsMap"] = [
                                     {"labelName": segmentation, "imageIndex": int(idx)}
+                                    if segmentation
+                                    else None
                                     for idx, segmentation in label_data[
                                         "segmentations"
                                     ].items()
@@ -322,39 +418,6 @@ class CLIUploadController(CLIUploadInterface):
                                         "seriesId": label_map.get("seriesId"),
                                     }
                                 )
-                    elif not multiple and os.path.isdir(
-                        os.path.join(task_dir, task_name)
-                    ):
-                        item["labelsMap"] = [
-                            {
-                                "labelName": os.path.abspath(
-                                    os.path.join(task_dir, task_name)
-                                ),
-                                "imageIndex": 0,
-                            }
-                        ]
-                    elif multiple and os.path.isfile(
-                        os.path.join(task_dir, task_name + ".nii.gz")
-                    ):
-                        item["labelsMap"] = [
-                            {
-                                "labelName": os.path.abspath(
-                                    os.path.join(task_dir, task_name + ".nii.gz")
-                                ),
-                                "imageIndex": 0,
-                            }
-                        ]
-                    elif multiple and os.path.isfile(
-                        os.path.join(task_dir, task_name + ".nii")
-                    ):
-                        item["labelsMap"] = [
-                            {
-                                "labelName": os.path.abspath(
-                                    os.path.join(task_dir, task_name + ".nii")
-                                ),
-                                "imageIndex": 0,
-                            }
-                        ]
 
                 points.append(item)
 
@@ -368,7 +431,11 @@ class CLIUploadController(CLIUploadInterface):
 
             uploads = loop.run_until_complete(
                 project.upload._create_tasks(
-                    storage_id, points, segmentation_mapping, self.args.ground_truth
+                    storage_id,
+                    points,
+                    segmentation_mapping,
+                    self.args.ground_truth,
+                    label_storage_id,
                 )
             )
 
