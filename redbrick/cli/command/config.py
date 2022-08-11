@@ -1,13 +1,12 @@
 """CLI config command."""
 import os
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import Optional
-import functools
+from typing import List, Optional
 
 from InquirerPy import inquirer  # type: ignore
-from InquirerPy.utils import color_print  # type: ignore
-from InquirerPy.separator import Separator  # type: ignore
 from halo import Halo  # type: ignore
+from rich.console import Console
+from rich.table import Table
 
 from redbrick import _populate_context
 from redbrick.cli.input import (
@@ -100,32 +99,43 @@ class CLIConfigController(CLIConfigInterface):
     def handle_list(self) -> None:
         """Handle list sub command."""
         assert self.project.creds.exists, "Credentials file does not exist"
-        default_profile = self.project.creds.selected_profile
-        profiles = self.project.creds.profile_names
-        data = []
-        max_length = 0
+        default_profile: str = self.project.creds.selected_profile
+        profiles: List[str] = self.project.creds.profile_names
+        debug_mode = bool(os.environ.get("REDBRICK_SDK_DEBUG"))
+        rows: List[List[str]] = []
+        table = Table(title="RedBrick AI Profiles", expand=True)
+        columns_set = False
         for profile in profiles:
-            color = "green" if profile == default_profile else ""
-            cur_data = [
-                (color, f"{'*' if profile == default_profile else ''}{profile}\n"),
-                (color, f"{Separator('-'*len(profile)*2)}\n"),
-            ]
+            if not columns_set:
+                table.add_column("Name")
+            row: List[str] = [profile]
             for key, value in self.project.creds.get_profile(profile).items():
-                value = (
-                    ("***" + value[-3:])
-                    if key == "key" and not os.environ.get("REDBRICK_SDK_DEBUG")
-                    else value
+                if not columns_set:
+                    table.add_column(
+                        key.capitalize(),
+                        width=(43 if debug_mode else 6)
+                        if key == "key"
+                        else 36
+                        if key == "org"
+                        else None,
+                    )
+                row.append(
+                    ("***" + value[-3:]) if key == "key" and not debug_mode else value
                 )
-                info = f"{key}={value}"
-                max_length = max(max_length, len(info))
-                cur_data.append((color, f"{info}\n"))
-            data.append(cur_data)
-        if data:
-            color_print(
-                functools.reduce(
-                    lambda x, y: x + [("", f"{Separator('*'*max_length)}\n")] + y, data
-                )
+            columns_set = True
+            rows.append(row)
+
+        rows.sort(key=lambda profile: [profile[0] == default_profile, profile[0]])
+
+        for name, *row in rows:
+            table.add_row(
+                ("* " if name == default_profile else "") + name,
+                *row,
+                style="green" if name == default_profile else None
             )
+
+        console = Console()
+        console.print(table)
 
     def handle_set(self) -> None:
         """Handle set sub command."""
