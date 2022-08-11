@@ -29,6 +29,7 @@ install_requires = [
     "rasterio==1.2.10; sys_platform=='darwin'",
     "rasterio==1.2.10; sys_platform=='linux'",
     "requests<=2.28.1,>=2.23.0",
+    "Rich<=12.4.4",
     "scikit-image<=0.19.3,>=0.17.2",
     "Shapely<=1.8.2,>=1.8.0",
     "tenacity<=8.0.1",

@@ -11,7 +11,7 @@ import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.constants import MAX_CONCURRENCY
-from redbrick.utils.logging import print_error, print_info, handle_exception
+from redbrick.utils.logging import print_error, print_info
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.rb_label_utils import clean_rb_label
@@ -41,7 +41,6 @@ class Labeling:
         self.project_id = project_id
         self.review = review
 
-    @handle_exception
     def get_tasks(self, stage_name: str, count: int = 1) -> List[Dict]:
         """
         Get a list of tasks from stage_name.
@@ -161,7 +160,6 @@ class Labeling:
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return [val for val in temp if val]
 
-    @handle_exception
     def put_tasks(self, stage_name: str, tasks: List[Dict]) -> List[Dict]:
         """
         Put tasks with new labels or review result.
@@ -188,7 +186,6 @@ class Labeling:
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(self._put_tasks(stage_name, tasks))
 
-    @handle_exception
     def assign_task(
         self,
         stage_name: str,
@@ -201,7 +198,6 @@ class Labeling:
             self.org_id, self.project_id, stage_name, [task_id], email, current_user
         )
 
-    @handle_exception
     def get_task_queue(self, stage_name: str, concurrency: int = 200) -> List[Dict]:
         """Get all tasks in queue."""
         temp = self.context.labeling.get_tasks_queue
@@ -241,7 +237,6 @@ class Labeling:
             await gather_with_concurrency(10, coros, "Moving tasks to Start")
         await asyncio.sleep(0.250)  # give time to close ssl connections
 
-    @handle_exception
     def move_tasks_to_start(self, task_ids: List[str]) -> None:
         """Move groundtruth tasks back to start."""
         loop = asyncio.get_event_loop()

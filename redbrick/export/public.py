@@ -21,12 +21,7 @@ from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.files import uniquify_path, download_files
-from redbrick.utils.logging import (
-    print_error,
-    print_info,
-    print_warning,
-    handle_exception,
-)
+from redbrick.utils.logging import print_error, print_info, print_warning
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import (
     clean_rb_label,
@@ -506,7 +501,6 @@ class Export:
         with open(datapoint_map, "w", encoding="utf-8") as file_:
             json.dump(dp_map, file_, indent=2)
 
-    @handle_exception
     def redbrick_png(  # pylint: disable=too-many-locals
         self,
         only_ground_truth: bool = True,
@@ -671,7 +665,6 @@ class Export:
         with open(task_map, "w", encoding="utf-8") as tasks_file:
             json.dump(tasks, tasks_file, indent=2)
 
-    @handle_exception
     def redbrick_nifti(
         self,
         only_ground_truth: bool = True,
@@ -740,7 +733,6 @@ class Export:
             old_format if old_format is not None else not self.new_format,
         )
 
-    @handle_exception
     def redbrick_format(
         self,
         only_ground_truth: bool = True,
@@ -794,7 +786,6 @@ class Export:
             for datapoint in datapoints
         ]
 
-    @handle_exception
     def coco_format(
         self,
         only_ground_truth: bool = True,

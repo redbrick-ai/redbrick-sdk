@@ -16,12 +16,7 @@ from redbrick.common.enums import TaskStates
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.logging import (
-    print_error,
-    print_info,
-    print_warning,
-    handle_exception,
-)
+from redbrick.utils.logging import print_error, print_info, print_warning
 
 Func = TypeVar("Func", bound=Callable[..., Any])
 
@@ -50,7 +45,6 @@ class Learning:
         self.project_id = project_id
         self.stage_name = stage_name
 
-    @handle_exception
     @check_learning_stage
     def get_learning_info(self) -> Dict:
         """
@@ -168,7 +162,6 @@ class Learning:
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return failed
 
-    @handle_exception
     @check_learning_stage
     def update_tasks(self, cycle: int, tasks: List[Dict]) -> List[Dict]:
         """
@@ -198,14 +191,12 @@ class Learning2:
         self.project_id = project_id
         self.stage_name = stage_name
 
-    @handle_exception
     @check_learning_stage
     def check_is_processing(self) -> bool:
         """Check if a job is in process already."""
         result = self.context.learning2.check_for_job(self.org_id, self.project_id)
         return bool(result.get("isProcessing"))
 
-    @handle_exception
     @check_learning_stage
     def check_for_job(self, min_new_tasks: int = 100) -> bool:
         """Return true if there is a new job available."""
@@ -223,7 +214,6 @@ class Learning2:
 
         return False
 
-    @handle_exception
     @check_learning_stage
     def get_learning_info(
         self, min_new_tasks: int = 100, concurrency: int = 100
@@ -399,7 +389,6 @@ class Learning2:
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return failed
 
-    @handle_exception
     @check_learning_stage
     def update_tasks(self, cycle: int, tasks: List[Dict]) -> List[Dict]:
         """
@@ -421,13 +410,11 @@ class Learning2:
         temp = loop.run_until_complete(self._update_tasks2(tasks))
         return temp
 
-    @handle_exception
     @check_learning_stage
     def start_processing(self) -> None:
         """Signal to RedBrick AI that the training has begun."""
         self.context.learning2.start_processing(self.org_id, self.project_id)
 
-    @handle_exception
     @check_learning_stage
     def end_processing(self) -> None:
         """Signal to RedBrick AI that the training has end."""

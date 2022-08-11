@@ -13,7 +13,7 @@ from redbrick.cli.command import (
     CLIPruneController,
     CLIUploadController,
 )
-from redbrick.utils.logging import print_warning, handle_exception
+from redbrick.utils.logging import print_warning
 
 from .cli_base import CLIInterface
 
@@ -81,7 +81,6 @@ def cli_parser(generate_docs: bool = True) -> Any:
     return parser, cli
 
 
-@handle_exception
 def cli_main(argv: Optional[List[str]] = None) -> None:
     """CLI main handler."""
     parser: argparse.ArgumentParser

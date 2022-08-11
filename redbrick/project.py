@@ -9,7 +9,7 @@ import tenacity
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType, StorageMethod
-from redbrick.utils.logging import handle_exception, print_info
+from redbrick.utils.logging import print_info
 
 
 class RBProject:
@@ -217,7 +217,6 @@ class RBProject:
         """Representation of object."""
         return str(self)
 
-    @handle_exception
     def set_label_storage(self, storage_id: str, path: str) -> Tuple[str, str]:
         """
         Set label storage method for a project.
