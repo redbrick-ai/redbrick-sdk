@@ -24,6 +24,7 @@ install_requires = [
     "nest-asyncio<=1.5.5,>=1.5.4",
     "nibabel<=4.0.1,>=3.2.2",
     "numpy<=1.23.0,>=1.15",
+    "packaging<=21.3",
     "Pillow<=9.2.0,>=9.0.1",
     "rasterio==1.2.10; sys_platform=='darwin'",
     "rasterio==1.2.10; sys_platform=='linux'",
