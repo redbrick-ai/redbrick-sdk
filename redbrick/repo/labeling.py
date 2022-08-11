@@ -213,30 +213,31 @@ class LabelingRepo(LabelingControllerInterface):
         project_id: str,
         stage_name: str,
         task_ids: List[str],
-        email: Optional[str] = None,
+        emails: Optional[List[str]] = None,
         current_user: bool = False,
+        refresh: bool = False,
     ) -> None:
         """Assign tasks to specified email or current API key."""
         query_string = """
-        mutation assignTasks(
-            $orgId: UUID!,
-            $projectId: UUID!,
-            $stageName: String!,
-            $taskIds: [UUID!]!,
-            $email: String
+        mutation assignTasksMultipleUsers(
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String!
+            $taskIds: [UUID!]!
+            $emails: [String!]
             $currentUser: Boolean
+            $refresh: Boolean
         ){
-            assignTasks(
+            assignTasksMultipleUsers(
                 orgId: $orgId
                 projectId: $projectId
                 stageName: $stageName
                 taskIds: $taskIds
-                email: $email
+                emails: $emails
                 currentUser: $currentUser
+                refresh: $refresh
             ) {
-                entries {
-                    taskId
-                }
+                taskId
             }
         }
         """
@@ -247,8 +248,9 @@ class LabelingRepo(LabelingControllerInterface):
             "projectId": project_id,
             "stageName": stage_name,
             "taskIds": task_ids,
-            "email": email,
+            "emails": emails,
             "currentUser": current_user,
+            "refresh": refresh,
         }
 
         self.client.execute_query(query_string, query_variables)

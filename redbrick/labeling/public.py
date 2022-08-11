@@ -192,10 +192,17 @@ class Labeling:
         task_id: str,
         email: Optional[str] = None,
         current_user: bool = False,
+        refresh: bool = False,
     ) -> None:
         """Assign tasks to specified email or current API key."""
         self.context.labeling.assign_tasks(
-            self.org_id, self.project_id, stage_name, [task_id], email, current_user
+            self.org_id,
+            self.project_id,
+            stage_name,
+            [task_id],
+            [email] if email else None,
+            current_user,
+            refresh,
         )
 
     def get_task_queue(self, stage_name: str, concurrency: int = 200) -> List[Dict]:

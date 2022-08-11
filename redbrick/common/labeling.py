@@ -58,8 +58,9 @@ class LabelingControllerInterface(ABC):
         project_id: str,
         stage_name: str,
         task_ids: List[str],
-        email: Optional[str] = None,
+        emails: Optional[List[str]] = None,
         current_user: bool = False,
+        refresh: bool = False,
     ) -> None:
         """Assign tasks to specified email or current API key."""
 
