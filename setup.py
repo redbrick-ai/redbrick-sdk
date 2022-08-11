@@ -4,16 +4,6 @@ from setuptools import setup, find_packages  # type: ignore
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-# Extract from file as py36 does not support setuptools cfg metadata version
-with open("redbrick/__init__.py", "r", encoding="utf-8") as fh:
-    lines = fh.readlines()
-    for line in lines:
-        if line.strip().replace(" ", "").startswith("__version__="):
-            version = line.split("=")[1].split("#")[0].strip().strip("\"'")
-            break
-    else:
-        raise Exception("Could not find version")
-
 install_requires = [
     "aiofiles<=0.8.0",
     "aiohttp<=3.8.1,>=3.7.4",
@@ -38,7 +28,6 @@ install_requires = [
 
 setup(
     name="redbrick-sdk",
-    version=version,
     url="https://github.com/redbrick-ai/redbrick-sdk",
     description="RedBrick platform Python SDK!",
     py_modules=["redbrick"],
