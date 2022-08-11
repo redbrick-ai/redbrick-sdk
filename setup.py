@@ -75,6 +75,8 @@ setup(
             "pytest-mypy==0.9.1",
             "pytest-flake8==1.1.1",
             "pytest-randomly==3.12.0",
+            "pytest-xdist==2.5.0",
+            "pytest-xdist[psutil]==2.5.0",
         ]
     },
 )
