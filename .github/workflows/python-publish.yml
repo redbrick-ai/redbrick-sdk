@@ -14,7 +14,7 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
-    if: github.event_name != 'release'
+    if: github.event_name != 'release' && !github.event.pull_request.draft
     env:
       REDBRICK_SDK_API_KEY: ${{ secrets.REDBRICK_SDK_API_KEY }}
       REDBRICK_SDK_URL: ${{ secrets.REDBRICK_SDK_URL }}
