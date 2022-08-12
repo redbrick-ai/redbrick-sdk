@@ -7,7 +7,12 @@ import aiohttp
 
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
-from redbrick.repo.shards import TAXONOMY_SHARD, TASK_SHARD
+from redbrick.repo.shards import (
+    DATAPOINT_SHARD,
+    TASK_DATA_SHARD,
+    TAXONOMY_SHARD,
+    TASK_SHARD,
+)
 
 
 class ExportRepo(ExportControllerInterface):
@@ -85,9 +90,6 @@ class ExportRepo(ExportControllerInterface):
                     labelsData(interpolate: true)
                     labelsMap {
                         labelName
-                        imageIndex
-                        imageName
-                        seriesId
                     }
                 }
             }
@@ -168,9 +170,13 @@ class ExportRepo(ExportControllerInterface):
                 after: $cursor
             ) {{
                 entries {{
-                    {TASK_SHARD.format(
-                        "itemsPresigned:items(presigned: true)" if presign_items else ""
-                    )}
+                    {TASK_SHARD}
+                    latestTaskData {{
+                        {DATAPOINT_SHARD.format(
+                            "itemsPresigned:items(presigned: true)" if presign_items else ""
+                        )}
+                        {TASK_DATA_SHARD}
+                    }}
                 }}
                 cursor
                 cacheTime
@@ -207,6 +213,10 @@ class ExportRepo(ExportControllerInterface):
                 taskId: $taskId
             ) {{
                 {TASK_SHARD}
+                latestTaskData {{
+                    {DATAPOINT_SHARD}
+                    {TASK_DATA_SHARD}
+                }}
             }}
         }}
         """
@@ -308,14 +318,14 @@ class ExportRepo(ExportControllerInterface):
         return entries, generic_tasks.get("cursor")
 
     def presign_items(
-        self, org_id: str, storage_id: str, items: List[str]
-    ) -> List[str]:
+        self, org_id: str, storage_id: str, items: List[Optional[str]]
+    ) -> List[Optional[str]]:
         """Presign download items."""
         query = """
         query presignItems(
             $orgId: UUID!
             $storageId: UUID!
-            $items: [String!]!
+            $items: [String]!
         ) {
             presignItems(orgId: $orgId, storageId: $storageId, items: $items)
         }
@@ -324,5 +334,5 @@ class ExportRepo(ExportControllerInterface):
         variables = {"orgId": org_id, "storageId": storage_id, "items": items}
 
         response = self.client.execute_query(query, variables)
-        presigned_items: List[str] = response.get("presignItems", [])
+        presigned_items: List[Optional[str]] = response.get("presignItems", [])
         return presigned_items

@@ -11,17 +11,14 @@ from redbrick.utils.logging import print_error
 
 
 def process_nifti_download(
-    task: Dict, labels_path: Optional[str]
+    labels: List[Dict], labels_path: Optional[str]
 ) -> Optional[Union[str, List[str]]]:
     """Process nifti download file."""
     try:
         if not (
             labels_path
             and os.path.isfile(labels_path)
-            and any(
-                label.get("dicom", {}).get("groupids")
-                for label in task.get("labels", [])
-            )
+            and any(label.get("dicom", {}).get("groupids") for label in labels)
         ):
             return labels_path
 
@@ -40,7 +37,7 @@ def process_nifti_download(
         os.makedirs(dirname, exist_ok=True)
         files: List[str] = []
 
-        for label in task["labels"]:
+        for label in labels:
             if label.get("dicom"):
                 instances: List[int] = [label["dicom"]["instanceid"]] + (
                     label["dicom"].get("groupids", []) or []

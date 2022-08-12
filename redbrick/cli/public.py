@@ -13,9 +13,8 @@ from redbrick.cli.command import (
     CLIPruneController,
     CLIUploadController,
 )
+from redbrick.cli.cli_base import CLIInterface
 from redbrick.utils.logging import print_warning
-
-from .cli_base import CLIInterface
 
 
 class CLIController(CLIInterface):

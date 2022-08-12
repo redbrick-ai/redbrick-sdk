@@ -93,41 +93,81 @@ colorMap {
 archived
 """
 
-TASK_SHARD = """
+TASK_DATA_SHARD = """
+    createdAt
+    createdByEmail
+    labelsData(interpolate: true)
+    labelsStorage {
+        storageId
+    }
+    labelsMap(presigned: false) {
+        labelName
+    }
+"""
+
+TASK_SHARD = f"""
     taskId
     dpId
     currentStageName
-    latestTaskData {{
-        dataPoint {{
-            name
-            items(presigned: false)
-            {}
-            createdAt
-            createdByEntity {{
+    currentStageSubTask {{
+        ... on LabelingTask {{
+            state
+            assignedTo {{
+                userId
                 email
             }}
-            metaData
-            seriesInfo {{
-                name
-                itemsIndices
-                dataType
-                numFrames
+            taskData {{
+                {TASK_DATA_SHARD}
             }}
-            storageMethod {{
-                storageId
+            subTasks {{
+                state
+                assignedTo {{
+                    userId
+                    email
+                }}
+                taskData {{
+                    {TASK_DATA_SHARD}
+                }}
+            }}
+            overallConsensusScore
+            consensusInfo {{
+                user {{
+                    userId
+                    email
+                }}
+                taskData {{
+                    {TASK_DATA_SHARD}
+                }}
+                scores {{
+                    user {{
+                        userId
+                        email
+                    }}
+                    score
+                }}
             }}
         }}
+    }}
+"""
+
+DATAPOINT_SHARD = """
+    dataPoint {{
+        name
+        items(presigned: false)
+        {}
         createdAt
-        createdByEmail
-        labelsData(interpolate: true)
-        labelsStorage {{
-            storageId
+        createdByEntity {{
+            email
         }}
-        labelsMap(presigned: false) {{
-            labelName
-            imageIndex
-            imageName
-            seriesId
+        metaData
+        seriesInfo {{
+            name
+            itemsIndices
+            dataType
+            numFrames
+        }}
+        storageMethod {{
+            storageId
         }}
     }}
 """

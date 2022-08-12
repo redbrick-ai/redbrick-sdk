@@ -171,7 +171,7 @@ async def upload_files(
 
 
 async def download_files(
-    files: List[Tuple[str, str]],
+    files: List[Tuple[Optional[str], Optional[str]]],
     progress_bar_name: Optional[str] = "Downloading files",
     keep_progress_bar: bool = True,
     overwrite: bool = False,
@@ -187,7 +187,7 @@ async def download_files(
         ),
     )
     async def _download_file(
-        session: aiohttp.ClientSession, url: str, path: str
+        session: aiohttp.ClientSession, url: Optional[str], path: Optional[str]
     ) -> Optional[str]:
         # pylint: disable=no-member
         if not url or not path:

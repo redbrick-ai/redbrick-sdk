@@ -71,6 +71,6 @@ class ExportControllerInterface(ABC):
 
     @abstractmethod
     def presign_items(
-        self, org_id: str, storage_id: str, items: List[str]
-    ) -> List[str]:
+        self, org_id: str, storage_id: str, items: List[Optional[str]]
+    ) -> List[Optional[str]]:
         """Presign download items."""

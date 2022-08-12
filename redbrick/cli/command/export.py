@@ -5,7 +5,7 @@ import re
 import json
 from datetime import datetime, timezone
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import List, Dict, Tuple
+from typing import List, Dict, Optional, Tuple
 import shutil
 
 import tqdm  # type: ignore
@@ -297,7 +297,7 @@ class CLIExportController(CLIExportInterface):
 
         path_pattern = re.compile(r"[^\w.]+")
 
-        files: List[Tuple[str, str]] = []
+        files: List[Tuple[Optional[str], Optional[str]]] = []
         tasks_indices: List[List[int]] = []
 
         print_info("Preparing to download files")

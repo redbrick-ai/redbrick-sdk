@@ -65,6 +65,7 @@ def _parse_entry_latest(item: Dict) -> Dict:
             json.loads(datapoint["metaData"]) if datapoint.get("metaData") else None,
             storage_id,
             label_storage_id,
+            item.get("currentStageSubTask"),
         )
     except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
         return {}
@@ -588,19 +589,35 @@ class Export:
         self, datapoint: Dict, nifti_dir: str, old_format: bool
     ) -> Dict:
         """Download and process label maps."""
-        # pylint: disable=import-outside-toplevel, too-many-locals
+        # pylint: disable=import-outside-toplevel, too-many-locals, too-many-branches
         from redbrick.utils.dicom import process_nifti_download
 
         task = copy.deepcopy(datapoint)
-        files: List[Tuple[str, str]] = []
+        files: List[Tuple[Optional[str], Optional[str]]] = []
         labels_map = task.get("labelsMap", []) or []
+        presign_paths: List[Optional[str]] = [
+            label_map.get("labelName") if label_map else None
+            for label_map in labels_map
+        ]
+
+        if task.get("consensusTasks"):
+            presign_paths = [None for _ in presign_paths]
+            for consensus_task in task["consensusTasks"]:
+                presign_paths.extend(
+                    [
+                        consensus_label_map.get("labelName")
+                        if consensus_label_map
+                        and consensus_task.get("labelStorageId")
+                        == task["labelStorageId"]
+                        else None
+                        for consensus_label_map in (
+                            consensus_task.get("labelsMap", []) or []
+                        )
+                    ]
+                )
+
         presigned = self.context.export.presign_items(
-            self.org_id,
-            task["labelStorageId"],
-            [
-                label_map.get("labelName") if label_map else None
-                for label_map in labels_map
-            ],
+            self.org_id, task["labelStorageId"], presign_paths
         )
 
         path_pattern = re.compile(r"[^\w.]+")
@@ -628,20 +645,38 @@ class Export:
         else:
             series_names = [task_name] * len(labels_map)
 
-        added: Set[str] = set()
+        if not series_names:
+            series_names = [task_name]
+        if len(presigned) > len(series_names):
+            series_names *= (len(presigned) // len(series_names)) + 1
 
+        added: Set[str] = set()
         for url, series_name in zip(presigned, series_names):
             counter = 1
-            while series_name in added:
-                series_name = f"{series_name}_{counter}"
+            new_series_name = series_name
+            while new_series_name in added:
+                new_series_name = f"{series_name}_{counter}"
                 counter += 1
-            added.add(series_name)
-            files.append((url, f"{series_name}.nii"))
+            added.add(new_series_name)
+            files.append((url, f"{new_series_name}.nii"))
 
         paths = await download_files(files, "Downloading nifti labels", False, True)
 
         for label, path in zip(labels_map, paths):
-            label["labelName"] = process_nifti_download(task, path)
+            label["labelName"] = process_nifti_download(
+                task.get("labels", []) or [], path
+            )
+
+        if len(paths) > len(labels_map) and task.get("consensusTasks"):
+            index = len(labels_map)
+            for consensus_task in task["consensusTasks"]:
+                consensus_labels = consensus_task.get("labels", []) or []
+                consensus_labels_map = consensus_task.get("labelsMap", []) or []
+                for consensus_label_map in consensus_labels_map:
+                    consensus_label_map["labelName"] = process_nifti_download(
+                        consensus_labels, paths[index]
+                    )
+                    index += 1
 
         return dicom_rb_format(task, old_format)
 
