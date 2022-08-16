@@ -40,9 +40,9 @@ jobs:
       - name: Lint + Unit Tests
         run: |
           pytest redbrick -m "not slow" --mypy --black --eradicate --pycodestyle --pydocstyle --flake8 --pylint --pylint-rcfile=setup.cfg
-      - name: Integration Tests
-        run: |
-          pytest redbrick -m "slow"
+      # - name: Integration Tests
+      #   run: |
+      #     pytest redbrick -m "slow"
 
   deploy:
     runs-on: ubuntu-latest
