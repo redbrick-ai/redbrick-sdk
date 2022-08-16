@@ -2,9 +2,9 @@
 from argparse import ArgumentParser, Namespace
 from typing import List, Tuple
 
-from InquirerPy.utils import color_print  # type: ignore
-from InquirerPy.separator import Separator  # type: ignore
 from rich.console import Console
+from rich.table import Table
+from rich.box import ROUNDED
 
 from redbrick.cli.input.text import CLIInputText
 from redbrick.cli.input.uuid import CLIInputUUID
@@ -51,11 +51,17 @@ class CLIInfoController(CLIInfoInterface):
             self.handle_info()
 
     @staticmethod
-    def _color_print_info(title: str, attrs: List[Tuple[str, str]]) -> None:
-        text = [("green", f"{Separator()} {title} {Separator()}\n")]
+    def _show_info(title: str, attrs: List[Tuple[str, str]]) -> None:
+        console = Console()
+        table = Table(
+            title="[bold green]" + title,
+            show_header=False,
+            header_style=None,
+            box=ROUNDED,
+        )
         for key, value in attrs:
-            text.append(("", f"{key}: {value}\n"))
-        color_print(text)
+            table.add_row(key, value)
+        console.print(table)
 
     def handle_get(self) -> None:
         """Handle get sub command."""
@@ -68,7 +74,7 @@ class CLIInfoController(CLIInfoInterface):
                     status.stop()
                     raise error
 
-            CLIInfoController._color_print_info(
+            CLIInfoController._show_info(
                 "Label Storage", [("Storage ID", storage_id), ("Path prefix", path)]
             )
 
@@ -87,7 +93,7 @@ class CLIInfoController(CLIInfoInterface):
                     status.stop()
                     raise error
 
-            CLIInfoController._color_print_info(
+            CLIInfoController._show_info(
                 "Label Storage",
                 [("Storage ID", new_storage_id), ("Path prefix", new_path)],
             )
@@ -107,5 +113,5 @@ class CLIInfoController(CLIInfoInterface):
         project_data.append(("Taxonomy", project.taxonomy_name))
         project_data.append(("URL", project.url))
 
-        CLIInfoController._color_print_info("Organization", org_data)
-        CLIInfoController._color_print_info("Project", project_data)
+        CLIInfoController._show_info("Organization", org_data)
+        CLIInfoController._show_info("Project", project_data)

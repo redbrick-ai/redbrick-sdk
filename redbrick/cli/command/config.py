@@ -6,6 +6,7 @@ from typing import List, Optional
 from InquirerPy import inquirer  # type: ignore
 from rich.console import Console
 from rich.table import Table
+from rich.box import ROUNDED
 
 from redbrick import _populate_context
 from redbrick.cli.input import (
@@ -102,7 +103,9 @@ class CLIConfigController(CLIConfigInterface):
         profiles: List[str] = self.project.creds.profile_names
         debug_mode = bool(os.environ.get("REDBRICK_SDK_DEBUG"))
         rows: List[List[str]] = []
-        table = Table(title="RedBrick AI Profiles", expand=True)
+        table = Table(
+            title="[bold green]RedBrick AI Profiles", expand=True, box=ROUNDED
+        )
         columns_set = False
         for profile in profiles:
             if not columns_set:
