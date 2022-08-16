@@ -286,7 +286,7 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
             )
 
 
-def dicom_rb_format(task: Dict, old_format: bool, consensus_info: bool) -> Dict:
+def dicom_rb_format(task: Dict, old_format: bool, no_consensus: bool) -> Dict:
     """Get new dicom rb task format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     if old_format:
@@ -344,7 +344,10 @@ def dicom_rb_format(task: Dict, old_format: bool, consensus_info: bool) -> Dict:
             map(lambda idx: task["items"][idx], series_info["itemsIndices"])  # type: ignore
         )
 
-    if consensus_info:
+    if no_consensus:
+        output["series"] = volume_series
+        dicom_rb_series(task, output)
+    else:
         if not task.get("consensusTasks"):
             task["consensusTasks"] = [
                 {
@@ -385,8 +388,5 @@ def dicom_rb_format(task: Dict, old_format: bool, consensus_info: bool) -> Dict:
             output_consensus_task["series"] = [{**series} for series in volume_series]
 
             dicom_rb_series(consensus_task, output_consensus_task)
-    else:
-        output["series"] = volume_series
-        dicom_rb_series(task, output)
 
     return output

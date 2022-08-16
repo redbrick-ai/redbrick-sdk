@@ -588,7 +588,7 @@ class Export:
         )
 
     async def download_and_process_nifti(
-        self, datapoint: Dict, nifti_dir: str, old_format: bool, consensus_info: bool
+        self, datapoint: Dict, nifti_dir: str, old_format: bool, no_consensus: bool
     ) -> Dict:
         """Download and process label maps."""
         # pylint: disable=import-outside-toplevel, too-many-locals, too-many-branches
@@ -680,7 +680,7 @@ class Export:
                     )
                     index += 1
 
-        return dicom_rb_format(task, old_format, consensus_info)
+        return dicom_rb_format(task, old_format, no_consensus)
 
     def export_nifti_label_data(
         self,
@@ -688,7 +688,7 @@ class Export:
         nifti_dir: str,
         task_map: str,
         old_format: bool,
-        consensus_info: bool,
+        no_consensus: bool,
     ) -> None:
         """Export nifti label maps."""
         os.makedirs(nifti_dir, exist_ok=True)
@@ -698,7 +698,7 @@ class Export:
                 MAX_CONCURRENCY,
                 [
                     self.download_and_process_nifti(
-                        datapoint, nifti_dir, old_format, consensus_info
+                        datapoint, nifti_dir, old_format, no_consensus
                     )
                     for datapoint in datapoints
                 ],
@@ -716,7 +716,7 @@ class Export:
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
         old_format: Optional[bool] = None,
-        consensus_info: Optional[bool] = None,
+        no_consensus: Optional[bool] = None,
     ) -> None:
         """
         Export dicom segmentation labels in NIfTI-1 format.
@@ -747,10 +747,10 @@ class Export:
             If None, will default to old format for projects
             that are created before 2022-08-01 else new format.
 
-        consensus_info: Optional[bool] = None
-            Whether to export tasks in consensus format.
-            If None, will default to True for projects
-            that have consensus enabled, else False.
+        no_consensus: Optional[bool] = None
+            Whether to export tasks without consensus info.
+            If None, will default to export with consensus info,
+            if it is enabled for the given project.
             (Applicable only for new format export)
 
         Warnings
@@ -782,7 +782,7 @@ class Export:
             nifti_dir,
             os.path.join(destination, "tasks.json"),
             old_format if old_format is not None else not self.new_format,
-            consensus_info if consensus_info is not None else self.consensus_enabled,
+            no_consensus if no_consensus is not None else not self.consensus_enabled,
         )
 
     def redbrick_format(
