@@ -345,7 +345,16 @@ class Export:
     ) -> np.ndarray:
         """Convert rbai datapoint to a numpy mask."""
         # pylint: disable=import-error, import-outside-toplevel, disable=too-many-locals
-        import rasterio.features  # type: ignore
+        try:
+            import rasterio.features  # type: ignore
+        except Exception as error:
+            print_error(
+                "For windows users, please follow the rasterio "
+                + "documentation to properly install the module "
+                + "https://rasterio.readthedocs.io/en/latest/installation.html "
+                + "Rasterio is required by RedBrick SDK to work with masks."
+            )
+            raise error
 
         imagesize = labels[0]["pixel"]["imagesize"]
 
