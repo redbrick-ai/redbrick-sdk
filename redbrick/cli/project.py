@@ -2,7 +2,7 @@
 import os
 from typing import Optional
 
-from halo.halo import Halo  # type: ignore
+from rich.console import Console
 
 from redbrick import _populate_context
 from redbrick.common.context import RBContext
@@ -105,14 +105,15 @@ class CLIProject:
             ):
                 self._org = org
             else:
-                with Halo(text="Fetching organization", spinner="dots") as spinner:
+                console = Console()
+                with console.status("Fetching organization") as status:
                     try:
                         self._org = RBOrganization(self.context, self.org_id)
                         self.cache.set_object("org", self._org, True)
                     except Exception as error:
-                        spinner.fail()
+                        status.stop()
                         raise error
-                spinner.succeed(str(self._org))
+                console.print("[bold green]" + str(self._org))
         return self._org
 
     @property
@@ -127,16 +128,17 @@ class CLIProject:
             ):
                 self._project = project
             else:
-                with Halo(text="Fetching project", spinner="dots") as spinner:
+                console = Console()
+                with console.status("Fetching project") as status:
                     try:
                         self._project = RBProject(
                             self.context, self.org_id, self.project_id
                         )
                         self.cache.set_object("project", self._project, True)
                     except Exception as error:
-                        spinner.fail()
+                        status.stop()
                         raise error
-                    spinner.succeed(str(self._project))
+                console.print("[bold green]" + str(self._project))
         return self._project
 
     def initialize_project(self, org: RBOrganization, project: RBProject) -> None:

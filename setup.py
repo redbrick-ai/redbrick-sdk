@@ -7,7 +7,6 @@ with open("README.md", "r", encoding="utf-8") as fh:
 install_requires = [
     "aiofiles<=0.8.0",
     "aiohttp<=3.8.1,>=3.7.4",
-    "halo<=0.0.31",
     "inquirerpy<=0.3.4,>=0.3.3",
     "matplotlib<=3.5.2,>=3.2",
     "natsort<=8.1.0,>=8.0.2",

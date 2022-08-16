@@ -4,7 +4,6 @@ from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import List, Optional
 
 from InquirerPy import inquirer  # type: ignore
-from halo import Halo  # type: ignore
 from rich.console import Console
 from rich.table import Table
 
@@ -197,10 +196,11 @@ class CLIConfigController(CLIConfigInterface):
             )
         )
 
-        with Halo(text="Fetching organization", spinner="dots") as spinner:
+        console = Console()
+        with console.status("Fetching organization") as status:
             try:
                 org = RBOrganization(context, profile_details["org"])
-                spinner.succeed(str(org))
             except Exception as error:
-                spinner.fail()
+                status.stop()
                 raise error
+        console.print("[bold green]" + str(org))

@@ -3,7 +3,7 @@ import os
 import re
 from argparse import ArgumentParser, Namespace
 
-from halo.halo import Halo  # type: ignore
+from rich.console import Console
 
 from redbrick.cli.input.select import CLIInputSelect
 from redbrick.cli.project import CLIProject
@@ -37,23 +37,24 @@ class CLICloneController(CLICloneInterface):
 
     def handle_clone(self) -> None:
         """Handle empty sub command."""
+        # pylint: disable=too-many-locals
         temp = CLIProject(required=False)
         assert temp.creds.exists, "Credentials missing"
 
-        with Halo(text="Fetching organization", spinner="dots") as spinner:
+        console = Console()
+        with console.status("Fetching organization") as status:
             try:
                 org = RBOrganization(temp.context, temp.creds.org_id)
-                spinner.succeed(str(org))
             except Exception as error:
-                spinner.fail()
+                status.stop()
                 raise error
+        console.print("[bold green]" + str(org))
 
-        with Halo(text="Fetching projects", spinner="dots") as spinner:
+        with console.status("Fetching projects") as status:
             try:
                 projects = temp.context.project.get_projects(org.org_id)
-                spinner.succeed()
             except Exception as error:
-                spinner.fail()
+                status.stop()
                 raise error
 
         projects = list(
