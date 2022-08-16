@@ -561,17 +561,8 @@ class Upload:
     ) -> MultiPolygon:
         """Convert masks to polygons."""
         # pylint: disable=import-error, import-outside-toplevel
-        try:
-            import rasterio  # type: ignore
-            from rasterio import features  # type: ignore
-        except Exception as error:
-            print_error(
-                "For windows users, please follow the rasterio "
-                + "documentation to properly install the module "
-                + "https://rasterio.readthedocs.io/en/latest/installation.html "
-                + "Rasterio is required by RedBrick SDK to work with masks."
-            )
-            raise error
+        import rasterio  # type: ignore
+        from rasterio import features  # type: ignore
 
         all_polygons = []
         for shape, _ in features.shapes(

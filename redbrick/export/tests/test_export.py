@@ -1,7 +1,4 @@
 """Testing functions for Export."""
-
-
-import sys
 from typing import Dict
 import copy
 
@@ -58,11 +55,6 @@ def test_tax_class_id_map() -> None:
 
 def test_png_convert_simple() -> None:
     """Test converting to a simple png."""
-    if sys.platform not in ("linux", "darwin"):
-        # Don't run this test for windows, w/o rasterio will fail.
-        assert True
-        return
-
     taxonomy = {
         "categories": [
             {
