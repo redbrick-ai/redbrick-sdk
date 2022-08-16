@@ -286,7 +286,7 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
             )
 
 
-def dicom_rb_format(task: Dict, old_format: bool) -> Dict:
+def dicom_rb_format(task: Dict, old_format: bool, consensus_info: bool) -> Dict:
     """Get new dicom rb task format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     if old_format:
@@ -344,7 +344,17 @@ def dicom_rb_format(task: Dict, old_format: bool) -> Dict:
             map(lambda idx: task["items"][idx], series_info["itemsIndices"])  # type: ignore
         )
 
-    if task.get("consensusTasks"):
+    if consensus_info:
+        if not task.get("consensusTasks"):
+            task["consensusTasks"] = [
+                {
+                    "email": task.get("updatedBy"),
+                    "updatedAt": task.get("updatedAt"),
+                    "labels": task.get("labels"),
+                    "labelsMap": task.get("labelsMap"),
+                }
+            ]
+
         output["consensus"] = True
         if "consensusScore" in task:
             output["consensusScore"] = task["consensusScore"]
@@ -362,14 +372,14 @@ def dicom_rb_format(task: Dict, old_format: bool) -> Dict:
 
             if consensus_task.get("scores"):
                 output_consensus_task["scores"] = []
-                for consensus_info in consensus_task["scores"]:
+                for consensus_score in consensus_task["scores"]:
                     score = {}
-                    if consensus_info.get("userId"):
-                        score["secondaryUserId"] = consensus_info["userId"]
-                    if consensus_info.get("email"):
-                        score["secondaryUserEmail"] = consensus_info["email"]
-                    if consensus_info.get("score"):
-                        score["score"] = consensus_info["score"]
+                    if consensus_score.get("userId"):
+                        score["secondaryUserId"] = consensus_score["userId"]
+                    if consensus_score.get("email"):
+                        score["secondaryUserEmail"] = consensus_score["email"]
+                    if consensus_score.get("score"):
+                        score["score"] = consensus_score["score"]
                     output_consensus_task["scores"].append(score)
 
             output_consensus_task["series"] = [{**series} for series in volume_series]

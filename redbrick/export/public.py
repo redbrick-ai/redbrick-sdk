@@ -87,6 +87,7 @@ class Export:
         project_type: LabelType,
         output_stage_name: str,
         new_format: bool,
+        consensus_enabled: bool,
     ) -> None:
         """Construct Export object."""
         self.context = context
@@ -95,6 +96,7 @@ class Export:
         self.project_type = project_type
         self.output_stage_name = output_stage_name
         self.new_format = new_format
+        self.consensus_enabled = consensus_enabled
 
     def _get_raw_data_latest(
         self,
@@ -586,7 +588,7 @@ class Export:
         )
 
     async def download_and_process_nifti(
-        self, datapoint: Dict, nifti_dir: str, old_format: bool
+        self, datapoint: Dict, nifti_dir: str, old_format: bool, consensus_info: bool
     ) -> Dict:
         """Download and process label maps."""
         # pylint: disable=import-outside-toplevel, too-many-locals, too-many-branches
@@ -678,10 +680,15 @@ class Export:
                     )
                     index += 1
 
-        return dicom_rb_format(task, old_format)
+        return dicom_rb_format(task, old_format, consensus_info)
 
     def export_nifti_label_data(
-        self, datapoints: List[Dict], nifti_dir: str, task_map: str, old_format: bool
+        self,
+        datapoints: List[Dict],
+        nifti_dir: str,
+        task_map: str,
+        old_format: bool,
+        consensus_info: bool,
     ) -> None:
         """Export nifti label maps."""
         os.makedirs(nifti_dir, exist_ok=True)
@@ -690,7 +697,9 @@ class Export:
             gather_with_concurrency(
                 MAX_CONCURRENCY,
                 [
-                    self.download_and_process_nifti(datapoint, nifti_dir, old_format)
+                    self.download_and_process_nifti(
+                        datapoint, nifti_dir, old_format, consensus_info
+                    )
                     for datapoint in datapoints
                 ],
                 "Processing nifti labels",
@@ -707,6 +716,7 @@ class Export:
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
         old_format: Optional[bool] = None,
+        consensus_info: Optional[bool] = None,
     ) -> None:
         """
         Export dicom segmentation labels in NIfTI-1 format.
@@ -737,6 +747,12 @@ class Export:
             If None, will default to old format for projects
             that are created before 2022-08-01 else new format.
 
+        consensus_info: Optional[bool] = None
+            Whether to export tasks in consensus format.
+            If None, will default to True for projects
+            that have consensus enabled, else False.
+            (Applicable only for new format export)
+
         Warnings
         ----------
         redbrick_nifti only works for the following types - DICOM_SEGMENTATION
@@ -766,6 +782,7 @@ class Export:
             nifti_dir,
             os.path.join(destination, "tasks.json"),
             old_format if old_format is not None else not self.new_format,
+            consensus_info if consensus_info is not None else self.consensus_enabled,
         )
 
     def redbrick_format(

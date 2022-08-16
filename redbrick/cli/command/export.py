@@ -51,7 +51,17 @@ class CLIExportController(CLIExportInterface):
         parser.add_argument(
             "--old-format",
             action="store_true",
-            help="Export tasks in old format",
+            help="""Whether to export tasks in old format.
+            If None, will default to old format for projects
+            that are created before 2022-08-01 else new format.""",
+        )
+        parser.add_argument(
+            "--consensus-info",
+            action="store_true",
+            help="""Whether to export tasks in consensus format.
+            If None, will default to True for projects
+            that have consensus enabled, else False.
+            (Applicable only for new format export)""",
         )
         parser.add_argument(
             "--clear-cache", action="store_true", help="Clear local cache"
@@ -258,6 +268,9 @@ class CLIExportController(CLIExportInterface):
                 self.args.old_format
                 if self.args.old_format
                 else not self.project.project.export_new_format,
+                self.args.consensus_info
+                if self.args.consensus_info
+                else self.project.project.consensus_enabled,
             )
             print_info(f"Exported: {task_map}")
             print_info(f"Exported nifti to: {nifti_dir}")

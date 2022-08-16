@@ -53,6 +53,8 @@ class RBProject:
         self._taxonomy_name: str
         self._project_url: str
         self._created_at: datetime
+
+        self.consensus_enabled: bool = False
         self._label_storage: Optional[Tuple[str, str]] = None
 
         # check if project exists on backend to validate
@@ -85,6 +87,7 @@ class RBProject:
             self.project_type,
             self.output_stage_name,
             self.export_new_format,
+            self.consensus_enabled,
         )
 
     @property
@@ -208,6 +211,7 @@ class RBProject:
         self._stages = self.context.project.get_stages(self.org_id, self.project_id)
         self._project_url = project["projectUrl"]
         self._created_at = parser.parse(project["createdAt"])
+        self.consensus_enabled = project["consensusSettings"]["enabled"]
 
     def __str__(self) -> str:
         """Get string representation of RBProject object."""
