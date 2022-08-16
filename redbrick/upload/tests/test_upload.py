@@ -1,4 +1,5 @@
 """Tests for upload module."""
+import sys
 import json
 from typing import List, Dict
 
@@ -14,10 +15,12 @@ from redbrick.tests.conftest import *  # pylint: disable=wildcard-import, unused
 
 def test_mask_rbai() -> None:
     """Test mask to polygon conversion."""
-    # pylint: disable=import-outside-toplevel, unused-import
-    try:
-        import rasterio  # type: ignore
-    except Exception:  # pylint: disable=broad-except
+    if (
+        sys.platform not in ("linux", "darwin")
+        and sys.version_info[0] == 3
+        and sys.version_info[1] < 8
+    ):
+        # Don't run this test for windows, w/o rasterio will fail.
         assert True
         return
 

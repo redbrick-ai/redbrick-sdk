@@ -1,4 +1,5 @@
 """Testing functions for Export."""
+import sys
 from typing import Dict
 import copy
 
@@ -55,10 +56,12 @@ def test_tax_class_id_map() -> None:
 
 def test_png_convert_simple() -> None:
     """Test converting to a simple png."""
-    # pylint: disable=import-outside-toplevel, unused-import
-    try:
-        import rasterio  # type: ignore
-    except Exception:  # pylint: disable=broad-except
+    if (
+        sys.platform not in ("linux", "darwin")
+        and sys.version_info[0] == 3
+        and sys.version_info[1] < 8
+    ):
+        # Don't run this test for windows, w/o rasterio will fail.
         assert True
         return
 
