@@ -345,6 +345,10 @@ def dicom_rb_format(task: Dict, old_format: bool, no_consensus: bool) -> Dict:
         )
 
     if no_consensus:
+        if task.get("consensusTasks"):
+            consensus_task = task["consensusTasks"][0]
+            task["labels"] = consensus_task.get("labels")
+            task["labelsMap"] = consensus_task.get("labelsMap")
         output["series"] = volume_series
         dicom_rb_series(task, output)
     else:
