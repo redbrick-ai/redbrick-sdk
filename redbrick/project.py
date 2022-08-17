@@ -88,6 +88,8 @@ class RBProject:
             self.output_stage_name,
             self.export_new_format,
             self.consensus_enabled,
+            self.label_stages,
+            self.review_stages,
         )
 
     @property
@@ -156,6 +158,20 @@ class RBProject:
                 self.org_id, self.project_id
             )
         return self._label_storage
+
+    @property
+    def label_stages(self) -> List[Dict]:
+        """Get list of label stages."""
+        return [
+            stage for stage in self._stages if stage["brickName"] == "manual-labeling"
+        ]
+
+    @property
+    def review_stages(self) -> List[Dict]:
+        """Get list of review stages."""
+        return [
+            stage for stage in self._stages if stage["brickName"] == "expert-review"
+        ]
 
     @property
     def export_new_format(self) -> bool:

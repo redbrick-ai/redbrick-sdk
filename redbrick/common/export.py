@@ -42,14 +42,11 @@ class ExportControllerInterface(ABC):
         stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
         presign_items: bool = False,
+        with_consensus: bool = False,
         first: int = 50,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str], Optional[datetime]]:
         """Get the latest datapoints."""
-
-    @abstractmethod
-    def get_datapoint_latest(self, org_id: str, project_id: str, task_id: str) -> Dict:
-        """Get the latest labels for a single datapoint."""
 
     @abstractmethod
     async def get_labels(

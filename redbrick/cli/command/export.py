@@ -151,6 +151,12 @@ class CLIExportController(CLIExportInterface):
         if self.args.clear_cache or format_type == self.FORMAT_COCO:
             self.project.cache.clear_cache(True)
 
+        no_consensus = (
+            self.args.no_consensus
+            if self.args.no_consensus
+            else not self.project.project.consensus_enabled
+        )
+
         cached_datapoints: Dict = {}
         cache_timestamp = None
         dp_conf = self.project.conf.get_section("datapoints")
@@ -172,6 +178,9 @@ class CLIExportController(CLIExportInterface):
             False,
             cache_timestamp,
             format_type == self.FORMAT_COCO,
+            bool(self.project.project.label_stages)
+            and not bool(self.project.project.review_stages)
+            and not no_consensus,
         )
 
         print_info(f"Refreshed {len(datapoints)} newly updated tasks")
@@ -267,9 +276,7 @@ class CLIExportController(CLIExportInterface):
                 self.args.old_format
                 if self.args.old_format
                 else not self.project.project.export_new_format,
-                self.args.no_consensus
-                if self.args.no_consensus
-                else not self.project.project.consensus_enabled,
+                no_consensus,
             )
             print_info(f"Exported: {task_map}")
             print_info(f"Exported nifti to: {nifti_dir}")

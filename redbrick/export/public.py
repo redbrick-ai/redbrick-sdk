@@ -88,6 +88,8 @@ class Export:
         output_stage_name: str,
         new_format: bool,
         consensus_enabled: bool,
+        label_stages: List[Dict],
+        review_stages: List[Dict],
     ) -> None:
         """Construct Export object."""
         self.context = context
@@ -97,6 +99,7 @@ class Export:
         self.output_stage_name = output_stage_name
         self.new_format = new_format
         self.consensus_enabled = consensus_enabled
+        self.has_label_stage_only = bool(label_stages) and not bool(review_stages)
 
     def _get_raw_data_latest(
         self,
@@ -104,7 +107,9 @@ class Export:
         only_ground_truth: bool = False,
         from_timestamp: Optional[float] = None,
         presign_items: bool = False,
+        with_consensus: bool = False,
     ) -> Tuple[List[Dict], Dict]:
+        # pylint: disable=too-many-locals
         temp = self.context.export.get_datapoints_latest
         stage_name = "END" if only_ground_truth else None
         my_iter = PaginationIterator(
@@ -117,6 +122,7 @@ class Export:
                 if from_timestamp is not None
                 else None,
                 presign_items,
+                with_consensus,
                 concurrency,
             )
         )
@@ -205,6 +211,7 @@ class Export:
                 stage_name,
                 cache_time,
                 False,
+                False,
                 concurrency,
                 cursor,
             )
@@ -222,17 +229,6 @@ class Export:
                 tasks[idx] = {**tasks[idx], "inputLabels": input_label["inputLabels"]}
 
         return tasks, (new_cache_time.timestamp() if new_cache_time else 0)
-
-    def _get_raw_data_single(self, task_id: str) -> Tuple[List[Dict], Dict]:
-        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
-        datapoint = self.context.export.get_datapoint_latest(
-            self.org_id, self.project_id, task_id
-        )
-        datapoints = []
-        task = _parse_entry_latest(datapoint)
-        if task:
-            datapoints.append(task)
-        return datapoints, general_info["taxonomy"]
 
     @staticmethod
     def _get_color(class_id: int, color_hex: Optional[str] = None) -> Any:
@@ -564,12 +560,16 @@ class Export:
             )
             return
 
+        datapoints, taxonomy = self._get_raw_data_latest(
+            concurrency,
+            False if task_id else only_ground_truth,
+            None if task_id else from_timestamp,
+        )
+
         if task_id:
-            datapoints, taxonomy = self._get_raw_data_single(task_id)
-        else:
-            datapoints, taxonomy = self._get_raw_data_latest(
-                concurrency, only_ground_truth, from_timestamp
-            )
+            datapoints = [
+                datapoint for datapoint in datapoints if datapoint["taskId"] == task_id
+            ]
 
         # Create output directory
         output_dir = uniquify_path(self.project_id)
@@ -765,12 +765,22 @@ class Export:
             )
             return
 
+        no_consensus = (
+            no_consensus if no_consensus is not None else not self.consensus_enabled
+        )
+
+        datapoints, _ = self._get_raw_data_latest(
+            concurrency,
+            False if task_id else only_ground_truth,
+            None if task_id else from_timestamp,
+            True,
+            self.has_label_stage_only and not no_consensus,
+        )
+
         if task_id:
-            datapoints, _ = self._get_raw_data_single(task_id)
-        else:
-            datapoints, _ = self._get_raw_data_latest(
-                concurrency, only_ground_truth, from_timestamp
-            )
+            datapoints = [
+                datapoint for datapoint in datapoints if datapoint["taskId"] == task_id
+            ]
 
         # Create output directory
         destination = uniquify_path(self.project_id)
@@ -782,7 +792,7 @@ class Export:
             nifti_dir,
             os.path.join(destination, "tasks.json"),
             old_format if old_format is not None else not self.new_format,
-            no_consensus if no_consensus is not None else not self.consensus_enabled,
+            no_consensus,
         )
 
     def redbrick_format(
@@ -822,12 +832,17 @@ class Export:
             Datapoint and labels in RedBrick AI format. See
             https://docs.redbrickai.com/python-sdk/reference
         """
+        datapoints, _ = self._get_raw_data_latest(
+            concurrency,
+            False if task_id else only_ground_truth,
+            None if task_id else from_timestamp,
+            True,
+        )
+
         if task_id:
-            datapoints, _ = self._get_raw_data_single(task_id)
-        else:
-            datapoints, _ = self._get_raw_data_latest(
-                concurrency, only_ground_truth, from_timestamp, True
-            )
+            datapoints = [
+                datapoint for datapoint in datapoints if datapoint["taskId"] == task_id
+            ]
 
         return [
             {
@@ -886,12 +901,17 @@ class Export:
             )
             return {}
 
+        datapoints, taxonomy = self._get_raw_data_latest(
+            concurrency,
+            False if task_id else only_ground_truth,
+            None if task_id else from_timestamp,
+            True,
+        )
+
         if task_id:
-            datapoints, taxonomy = self._get_raw_data_single(task_id)
-        else:
-            datapoints, taxonomy = self._get_raw_data_latest(
-                concurrency, only_ground_truth, from_timestamp, True
-            )
+            datapoints = [
+                datapoint for datapoint in datapoints if datapoint["taskId"] == task_id
+            ]
 
         return coco_converter(datapoints, taxonomy)
 

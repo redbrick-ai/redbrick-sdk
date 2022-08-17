@@ -18,7 +18,7 @@ from redbrick.common.enums import LabelType
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.logging import print_error
+from redbrick.utils.logging import print_error, print_warning
 from redbrick.utils.segmentation import check_mask_map_format
 from redbrick.utils.files import (
     NIFTI_FILE_TYPES,
@@ -545,7 +545,7 @@ class Upload:
         for item in items:
             if not (isinstance(item, str) and item and os.path.isfile(item)):
                 invalid += [item]
-                print_error(f"{item} is an invalid path")
+                print_warning(f"{item} is an invalid path")
                 continue
             try:
                 get_file_type(item)

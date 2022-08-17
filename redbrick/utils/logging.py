@@ -19,7 +19,10 @@ logging.basicConfig(
     datefmt="[%X]",
     handlers=[
         RichHandler(
-            level=logging.INFO, show_path=False, enable_link_path=False, markup=True
+            level=logging.INFO,
+            show_path=debug_mode,
+            enable_link_path=debug_mode,
+            markup=True,
         )
     ],
 )
@@ -38,4 +41,8 @@ def print_warning(text: str) -> None:
 
 def print_error(text: Union[str, Exception]) -> None:
     """Log errors."""
+    if debug_mode:
+        if isinstance(text, str):
+            raise Exception(text)
+        raise text from text
     logger.error(text)

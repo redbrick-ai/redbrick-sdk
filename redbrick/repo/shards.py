@@ -106,11 +106,16 @@ TASK_DATA_SHARD = """
 """
 
 TASK_SHARD = f"""
-    taskId
-    dpId
-    currentStageName
-    currentStageSubTask {{
-        ... on LabelingTask {{
+    ... on LabelingTask {{
+        state
+        assignedTo {{
+            userId
+            email
+        }}
+        taskData {{
+            {TASK_DATA_SHARD}
+        }}
+        subTasks {{
             state
             assignedTo {{
                 userId
@@ -119,32 +124,22 @@ TASK_SHARD = f"""
             taskData {{
                 {TASK_DATA_SHARD}
             }}
-            subTasks {{
-                state
-                assignedTo {{
-                    userId
-                    email
-                }}
-                taskData {{
-                    {TASK_DATA_SHARD}
-                }}
+        }}
+        overallConsensusScore
+        consensusInfo {{
+            user {{
+                userId
+                email
             }}
-            overallConsensusScore
-            consensusInfo {{
+            taskData {{
+                {TASK_DATA_SHARD}
+            }}
+            scores {{
                 user {{
                     userId
                     email
                 }}
-                taskData {{
-                    {TASK_DATA_SHARD}
-                }}
-                scores {{
-                    user {{
-                        userId
-                        email
-                    }}
-                    score
-                }}
+                score
             }}
         }}
     }}

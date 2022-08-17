@@ -148,6 +148,7 @@ class ExportRepo(ExportControllerInterface):
         stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
         presign_items: bool = False,
+        with_consensus: bool = False,
         first: int = 50,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str], Optional[datetime]]:
@@ -170,7 +171,12 @@ class ExportRepo(ExportControllerInterface):
                 after: $cursor
             ) {{
                 entries {{
-                    {TASK_SHARD}
+                    taskId
+                    dpId
+                    currentStageName
+                    currentStageSubTask{"(consensus: true)" if with_consensus else ""} {{
+                        {TASK_SHARD}
+                    }}
                     latestTaskData {{
                         {DATAPOINT_SHARD.format(
                             "itemsPresigned:items(presigned: true)" if presign_items else ""
@@ -202,36 +208,6 @@ class ExportRepo(ExportControllerInterface):
             tasks_paged.get("cursor"),
             parser.parse(new_cache_time) if new_cache_time else None,
         )
-
-    def get_datapoint_latest(self, org_id: str, project_id: str, task_id: str) -> Dict:
-        """Get the latest labels for a single bdatapoint."""
-        query_string = f"""
-        query($orgId: UUID!, $projectId: UUID!, $taskId: UUID!) {{
-            task(
-                orgId: $orgId
-                projectId: $projectId
-                taskId: $taskId
-            ) {{
-                {TASK_SHARD}
-                latestTaskData {{
-                    {DATAPOINT_SHARD}
-                    {TASK_DATA_SHARD}
-                }}
-            }}
-        }}
-        """
-        # EXECUTE THE QUERY
-        query_variables = {
-            "orgId": org_id,
-            "projectId": project_id,
-            "taskId": task_id,
-        }
-
-        result: Dict[str, Dict] = self.client.execute_query(
-            query_string, query_variables, False
-        )
-
-        return result.get("task", {}) or {}
 
     async def get_labels(
         self, session: aiohttp.ClientSession, org_id: str, project_id: str, dp_id: str
