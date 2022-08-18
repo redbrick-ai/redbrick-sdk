@@ -164,7 +164,7 @@ class CLIExportController(CLIExportInterface):
             cached_dp = self.project.cache.get_data("datapoints", dp_conf["cache"])
             if isinstance(cached_dp, dict):
                 cached_datapoints = cached_dp
-                cache_timestamp = int(dp_conf["timestamp"])
+                cache_timestamp = int(dp_conf["timestamp"]) or None
 
         cached_dimensions: Dict = {}
         dim_cache = self.project.conf.get_option("dimensions", "cache")
@@ -177,6 +177,7 @@ class CLIExportController(CLIExportInterface):
             self.args.concurrency,
             False,
             cache_timestamp,
+            None,
             format_type == self.FORMAT_COCO,
             bool(self.project.project.label_stages)
             and not bool(self.project.project.review_stages)
@@ -194,7 +195,13 @@ class CLIExportController(CLIExportInterface):
 
         dp_hash = self.project.cache.set_data("datapoints", cached_datapoints)
         self.project.conf.set_section(
-            "datapoints", {"timestamp": str(current_timestamp), "cache": dp_hash}
+            "datapoints",
+            {
+                "timestamp": str(
+                    current_timestamp if datapoints else (cache_timestamp or 0)
+                ),
+                "cache": dp_hash,
+            },
         )
         self.project.conf.save()
 

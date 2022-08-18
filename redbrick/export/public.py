@@ -106,6 +106,7 @@ class Export:
         concurrency: int,
         only_ground_truth: bool = False,
         from_timestamp: Optional[float] = None,
+        to_timestamp: Optional[float] = None,
         presign_items: bool = False,
         with_consensus: bool = False,
     ) -> Tuple[List[Dict], Dict]:
@@ -120,6 +121,9 @@ class Export:
                 stage_name,
                 datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
                 if from_timestamp is not None
+                else None,
+                datetime.fromtimestamp(to_timestamp, tz=timezone.utc)
+                if to_timestamp is not None
                 else None,
                 presign_items,
                 with_consensus,
@@ -210,6 +214,7 @@ class Export:
                 self.project_id,
                 stage_name,
                 cache_time,
+                None,
                 False,
                 False,
                 concurrency,
@@ -508,6 +513,7 @@ class Export:
         fill_holes: bool = False,
         max_hole_size: int = 30,
         from_timestamp: Optional[float] = None,
+        to_timestamp: Optional[float] = None,
     ) -> None:
         """
         Export segmentation labels as masks.
@@ -545,6 +551,11 @@ class Export:
             that were labeled/updated since the given timestamp.
             Format - output from datetime.timestamp()
 
+        to_timestamp: Optional[float] = None
+            If the timestamp is mentioned, will only export tasks
+            that were labeled/updated till the given timestamp.
+            Format - output from datetime.timestamp()
+
         Warnings
         ----------
         redbrick_png only works for the following types - IMAGE_SEGMENTATION, IMAGE_MULTI
@@ -564,6 +575,7 @@ class Export:
             concurrency,
             False if task_id else only_ground_truth,
             None if task_id else from_timestamp,
+            None if task_id else to_timestamp,
         )
 
         if task_id:
@@ -715,6 +727,7 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
+        to_timestamp: Optional[float] = None,
         old_format: Optional[bool] = None,
         no_consensus: Optional[bool] = None,
     ) -> None:
@@ -740,6 +753,11 @@ class Export:
         from_timestamp: Optional[float] = None
             If the timestamp is mentioned, will only export tasks
             that were labeled/updated since the given timestamp.
+            Format - output from datetime.timestamp()
+
+        to_timestamp: Optional[float] = None
+            If the timestamp is mentioned, will only export tasks
+            that were labeled/updated till the given timestamp.
             Format - output from datetime.timestamp()
 
         old_format: Optional[bool] = None
@@ -773,6 +791,7 @@ class Export:
             concurrency,
             False if task_id else only_ground_truth,
             None if task_id else from_timestamp,
+            None if task_id else to_timestamp,
             True,
             self.has_label_stage_only and not no_consensus,
         )
@@ -801,6 +820,7 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
+        to_timestamp: Optional[float] = None,
     ) -> List[Dict]:
         """
         Export data into redbrick format.
@@ -826,6 +846,11 @@ class Export:
             that were labeled/updated since the given timestamp.
             Format - output from datetime.timestamp()
 
+        to_timestamp: Optional[float] = None
+            If the timestamp is mentioned, will only export tasks
+            that were labeled/updated till the given timestamp.
+            Format - output from datetime.timestamp()
+
         Returns:
         -----------------
         List[Dict]
@@ -836,6 +861,7 @@ class Export:
             concurrency,
             False if task_id else only_ground_truth,
             None if task_id else from_timestamp,
+            None if task_id else to_timestamp,
             True,
         )
 
@@ -859,6 +885,7 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
+        to_timestamp: Optional[float] = None,
     ) -> Dict:
         """
         Export project into coco format.
@@ -884,6 +911,11 @@ class Export:
             that were labeled/updated since the given timestamp.
             Format - output from datetime.timestamp()
 
+        to_timestamp: Optional[float] = None
+            If the timestamp is mentioned, will only export tasks
+            that were labeled/updated till the given timestamp.
+            Format - output from datetime.timestamp()
+
         Returns
         -----------
         List[Dict]
@@ -905,6 +937,7 @@ class Export:
             concurrency,
             False if task_id else only_ground_truth,
             None if task_id else from_timestamp,
+            None if task_id else to_timestamp,
             True,
         )
 

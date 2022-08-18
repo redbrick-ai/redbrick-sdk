@@ -147,19 +147,22 @@ class ExportRepo(ExportControllerInterface):
         project_id: str,
         stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
+        till_time: Optional[datetime] = None,
         presign_items: bool = False,
         with_consensus: bool = False,
         first: int = 50,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str], Optional[datetime]]:
         """Get the latest datapoints."""
+        # pylint: disable=too-many-locals
         query_string = f"""
         query(
-            $orgId: UUID!,
-            $projectId: UUID!,
-            $stageName: String,
-            $cacheTime: DateTime,
-            $first: Int,
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String
+            $cacheTime: DateTime
+            $tillTime: DateTime
+            $first: Int
             $cursor: String
         ) {{
             tasksPaged(
@@ -167,6 +170,7 @@ class ExportRepo(ExportControllerInterface):
                 projectId: $projectId
                 stageName: $stageName
                 cacheTime: $cacheTime
+                tillTime: $tillTime
                 first: $first
                 after: $cursor
             ) {{
@@ -195,6 +199,7 @@ class ExportRepo(ExportControllerInterface):
             "projectId": project_id,
             "stageName": stage_name,
             "cacheTime": None if cache_time is None else cache_time.isoformat(),
+            "tillTime": None if till_time is None else till_time.isoformat(),
             "first": first,
             "cursor": cursor,
         }
