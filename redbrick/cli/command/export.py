@@ -328,12 +328,15 @@ class CLIExportController(CLIExportInterface):
 
         print_info("Preparing to download files")
         for task in tqdm.tqdm(data):
-            task_dir = uniquify_path(
-                os.path.join(
-                    parent_dir,
-                    re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"],
-                )
+            task_name = (
+                re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
             )
+            task_dir = os.path.join(parent_dir, task_name)
+            if os.path.isdir(task_dir):
+                print_info(f"{task_dir} exists. Skipping")
+                continue
+            shutil.rmtree(task_dir, ignore_errors=True)
+            os.makedirs(task_dir, exist_ok=True)
             series_dirs: List[str] = []
             series_items_indices: List[List[int]] = []
             if sum(
@@ -344,7 +347,6 @@ class CLIExportController(CLIExportInterface):
             ) == len(task["items"]) and (
                 len(task["seriesInfo"]) > 1 or task["seriesInfo"][0].get("name")
             ):
-                os.makedirs(task_dir, exist_ok=True)
                 for series_idx, series in enumerate(task["seriesInfo"]):
                     series_dir = uniquify_path(
                         os.path.join(
@@ -353,14 +355,13 @@ class CLIExportController(CLIExportInterface):
                             or chr(series_idx + ord("A")),
                         )
                     )
-                    shutil.rmtree(series_dir, ignore_errors=True)
-                    os.makedirs(series_dir, exist_ok=True)
+                    os.makedirs(series_dir)
                     series_dirs.append(series_dir)
                     series_items_indices.append(series["itemsIndices"])
             else:
-                shutil.rmtree(task_dir, ignore_errors=True)
-                os.makedirs(task_dir, exist_ok=True)
-                series_dirs.append(task_dir)
+                series_dir = os.path.join(task_dir, task_name)
+                os.makedirs(series_dir)
+                series_dirs.append(series_dir)
                 series_items_indices.append(list(range(len(task["items"]))))
 
             to_presign = []

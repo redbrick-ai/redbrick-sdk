@@ -1,6 +1,7 @@
 """Public API to exporting."""
 import asyncio
 import re
+import shutil
 from typing import List, Dict, Optional, Set, Tuple, Any
 from functools import partial
 import os
@@ -29,6 +30,8 @@ from redbrick.utils.rb_label_utils import (
     flat_rb_format,
 )
 from redbrick.coco.coco_main import coco_converter
+
+# pylint: disable=too-many-lines
 
 
 def _parse_entry_latest(item: Dict) -> Dict:
@@ -635,10 +638,10 @@ class Export:
         )
 
         path_pattern = re.compile(r"[^\w.]+")
-        task_name = os.path.join(
-            nifti_dir,
-            re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"],
-        )
+        task_name = re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
+        task_dir = os.path.join(nifti_dir, task_name)
+        shutil.rmtree(task_dir, ignore_errors=True)
+        os.makedirs(task_dir, exist_ok=True)
         series_names: List[str] = []
         if sum(
             map(
@@ -648,19 +651,23 @@ class Export:
         ) == len(task["items"]) and (
             len(task["seriesInfo"]) > 1 or task["seriesInfo"][0].get("name")
         ):
-            os.makedirs(task_name, exist_ok=True)
             for series_idx, series in enumerate(task["seriesInfo"]):
                 series_name = os.path.join(
-                    task_name,
+                    task_dir,
                     re.sub(path_pattern, "-", series.get("name", "") or "")
                     or chr(series_idx + ord("A")),
                 )
                 series_names.append(series_name)
         else:
-            series_names = [task_name] * len(labels_map)
+            total_volumes = len(labels_map) or 1
+            if total_volumes == 1:
+                series_names = [os.path.join(task_dir, task_name)]
+            else:
+                series_names = [
+                    os.path.join(task_dir, chr(series_idx + ord("A")))
+                    for series_idx in range(total_volumes)
+                ]
 
-        if not series_names:
-            series_names = [task_name]
         if len(presigned) > len(series_names):
             series_names *= (len(presigned) // len(series_names)) + 1
 
