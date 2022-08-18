@@ -49,7 +49,7 @@ def version_check(current_version: str) -> None:
     ):
         latest_version = get_latest_version(current_version)
         # Comparing with current installed version
-        if current_version != latest_version:
+        if Version(current_version) < Version(latest_version):
             warn = (
                 "You are using version '{}' of the SDK. However, version '{}' is available!\n"
                 + "Please update as soon as possible to get the latest features and bug fixes.\n"
