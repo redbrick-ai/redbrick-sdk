@@ -232,6 +232,10 @@ class CLIUploadController(CLIUploadInterface):
                     if output.get("converted"):
                         file_data = json.loads(output["converted"])
 
+                if storage_id == str(StorageMethod.REDBRICK):
+                    print_info(
+                        f"Looking in your local file system for items mentioned in {item_group[0]}"
+                    )
                 for item in file_data:
                     if (
                         not isinstance(item.get("items"), list)
@@ -311,7 +315,10 @@ class CLIUploadController(CLIUploadInterface):
                         if os.path.isfile(item_path):
                             item["items"][idx] = item_path
                         else:
-                            print_warning(f"{path} from {item_group[0]} does not exist")
+                            print_warning(
+                                f"Could not find {path}. "
+                                + "Perhaps you forgot to supply the --storage argument"
+                            )
                             break
                     else:
                         uploading.add(item["name"])
