@@ -160,6 +160,7 @@ DATAPOINT_SHARD = """
             itemsIndices
             dataType
             numFrames
+            dimensions
         }}
         storageMethod {{
             storageId

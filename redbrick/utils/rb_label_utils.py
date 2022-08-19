@@ -364,6 +364,8 @@ def dicom_rb_format(task: Dict, old_format: bool, no_consensus: bool) -> Dict:
             series["name"] = series_info["name"]
         if series_info.get("numFrames"):
             series["numFrames"] = series_info["numFrames"]
+        if series_info.get("dimensions"):
+            series["dimensions"] = series_info["dimensions"]
         series["items"] = list(
             map(lambda idx: task["items"][idx], series_info["itemsIndices"])  # type: ignore
         )
