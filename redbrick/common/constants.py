@@ -15,3 +15,13 @@ PROJECT_API_HAS_CHANGED = (
     "this api has changed recently, try running help(redbrick.get_project)"
     + " or visiting https://redbrick-sdk.readthedocs.io/en/stable/#redbrick.get_project"
 )
+
+PEERLESS_ERRORS = (
+    KeyboardInterrupt,
+    PermissionError,
+    TimeoutError,
+    ConnectionError,
+    ValueError,
+    SystemError,
+    SystemExit,
+)
