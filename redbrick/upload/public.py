@@ -99,7 +99,8 @@ class Upload:
             point_success["response"] = response
             return point_success
         except Exception as error:  # pylint:disable=broad-except
-            print_error(error)
+            if isinstance(error, AssertionError):
+                print_error(error)
             point_error = deepcopy(point)
             point_error["error"] = error
             return point_error
