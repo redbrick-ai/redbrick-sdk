@@ -43,6 +43,6 @@ def print_error(text: Union[str, Exception]) -> None:
     """Log errors."""
     if debug_mode:
         if isinstance(text, str):
-            raise Exception(text)
-        raise text from text
+            raise ValueError(text)
+        raise ValueError(str(text)) from text
     logger.error(text)

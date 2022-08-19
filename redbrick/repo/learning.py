@@ -121,26 +121,6 @@ class LearningRepo(LearningControllerInterface):
             result["activeLearningClientSummary"]["tdType"],
         )
 
-    def send_batch_learning_results(
-        self,
-        org_id: str,
-        project_id: str,
-        stage_name: str,
-        cycle: int,
-        tasks: List[Dict],
-    ) -> None:
-        """
-        Send a batch of learning results.
-
-        tasks is a list of dictionaries containing the following keys:
-        {
-            "taskId": "<>",
-            "score": [0,1],
-            "labels": [{ }]  // see standard label format
-        }
-        """
-        raise NotImplementedError()
-
     async def send_batch_learning_results_async(
         self,
         aio_client: aiohttp.ClientSession,
