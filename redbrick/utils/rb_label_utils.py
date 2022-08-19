@@ -151,16 +151,29 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
         if attributes:
             label_obj["attributes"] = attributes
 
+        video_metadata = {}
+        if (
+            len(volume.get("items", []) or []) > 1
+            and isinstance(label.get("frameindex"), int)
+            and label["frameindex"] >= 0
+        ):
+            video_metadata = {
+                "video": {
+                    "frameIndex": label["frameindex"],
+                    "trackId": label.get("trackid", ""),
+                    "keyFrame": label.get("keyframe", True),
+                    "endTrack": label.get("end", True),
+                }
+            }
+
         if label.get("tasklevelclassify"):
             output_task["classification"] = {**label_obj}
         elif label.get("multiclassify"):
             volume["classifications"] = volume.get("classifications", []) or []
             volume["classifications"].append(
                 {
-                    "keyFrame": label.get("keyframe", True),
-                    "endTrack": label.get("end", True),
-                    "frameIndex": label.get("frameindex", 0),
                     **label_obj,
+                    **video_metadata,
                 }
             )
         elif label.get("dicom", {}).get("instanceid"):
@@ -182,10 +195,14 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
             volume["measurements"].append(
                 {
                     "type": "length",
-                    "point1": label["length3d"]["point1"],
-                    "point2": label["length3d"]["point2"],
-                    "absolutePoint1": label["length3d"]["computedpoint1world"],
-                    "absolutePoint2": label["length3d"]["computedpoint2world"],
+                    "point1": dict(zip("ijk", label["length3d"]["point1"])),
+                    "point2": dict(zip("ijk", label["length3d"]["point2"])),
+                    "absolutePoint1": dict(
+                        zip("xyz", label["length3d"]["computedpoint1world"])
+                    ),
+                    "absolutePoint2": dict(
+                        zip("xyz", label["length3d"]["computedpoint2world"])
+                    ),
                     "normal": label["length3d"]["normal"],
                     "length": label["length3d"]["computedlength"],
                     **label_obj,
@@ -196,12 +213,18 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
             volume["measurements"].append(
                 {
                     "type": "angle",
-                    "point1": label["angle3d"]["point1"],
-                    "vertex": label["angle3d"]["point2"],
-                    "point2": label["angle3d"]["point3"],
-                    "absolutePoint1": label["angle3d"]["computedpoint1world"],
-                    "absoluteVertex": label["angle3d"]["computedpoint2world"],
-                    "absolutePoint2": label["angle3d"]["computedpoint3world"],
+                    "point1": dict(zip("ijk", label["angle3d"]["point1"])),
+                    "vertex": dict(zip("ijk", label["angle3d"]["point2"])),
+                    "point2": dict(zip("ijk", label["angle3d"]["point3"])),
+                    "absolutePoint1": dict(
+                        zip("xyz", label["angle3d"]["computedpoint1world"])
+                    ),
+                    "absoluteVertex": dict(
+                        zip("xyz", label["angle3d"]["computedpoint2world"])
+                    ),
+                    "absolutePoint2": dict(
+                        zip("xyz", label["angle3d"]["computedpoint3world"])
+                    ),
                     "normal": label["angle3d"]["normal"],
                     "angle": label["angle3d"]["computedangledeg"],
                     **label_obj,
@@ -211,21 +234,23 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
             volume["landmarks"] = volume.get("landmarks", [])
             volume["landmarks"].append(
                 {
-                    "x": label["point"]["xnorm"],
-                    "y": label["point"]["ynorm"],
-                    "keyFrame": label.get("keyframe", True),
-                    "endTrack": label.get("end", True),
-                    "frameIndex": label.get("frameindex", 0),
+                    "point": {
+                        "xNorm": label["point"]["xnorm"],
+                        "yNorm": label["point"]["ynorm"],
+                    },
                     **label_obj,
+                    **video_metadata,
                 }
             )
         elif label.get("point3d"):
             volume["landmarks3d"] = volume.get("landmarks3d", [])
             volume["landmarks3d"].append(
                 {
-                    "x": label["point3d"]["pointx"],
-                    "y": label["point3d"]["pointy"],
-                    "z": label["point3d"]["pointz"],
+                    "point": {
+                        "i": label["point3d"]["pointx"],
+                        "j": label["point3d"]["pointy"],
+                        "k": label["point3d"]["pointz"],
+                    },
                     **label_obj,
                 }
             )
@@ -234,40 +259,41 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
             volume["polylines"].append(
                 {
                     "points": [
-                        {"x": point["xnorm"], "y": point["ynorm"]}
+                        {"xNorm": point["xnorm"], "yNorm": point["ynorm"]}
                         for point in label["polyline"]
                     ],
-                    "keyFrame": label.get("keyframe", True),
-                    "endTrack": label.get("end", True),
-                    "frameIndex": label.get("frameindex", 0),
                     **label_obj,
+                    **video_metadata,  # type: ignore
                 }
             )
         elif label.get("bbox2d"):
             volume["boundingBoxes"] = volume.get("boundingBoxes", [])
             volume["boundingBoxes"].append(
                 {
-                    "x": label["bbox2d"]["xnorm"],
-                    "y": label["bbox2d"]["ynorm"],
-                    "width": label["bbox2d"]["wnorm"],
-                    "height": label["bbox2d"]["hnorm"],
-                    "keyFrame": label.get("keyframe", True),
-                    "endTrack": label.get("end", True),
-                    "frameIndex": label.get("frameindex", 0),
+                    "pointTopLeft": {
+                        "xNorm": label["bbox2d"]["xnorm"],
+                        "yNorm": label["bbox2d"]["ynorm"],
+                    },
+                    "wNorm": label["bbox2d"]["wnorm"],
+                    "hNorm": label["bbox2d"]["hnorm"],
                     **label_obj,
+                    **video_metadata,
                 }
             )
         elif label.get("bbox3d"):
             volume["boundingBoxes3d"] = volume.get("boundingBoxes3d", [])
             volume["boundingBoxes3d"].append(
                 {
-                    "x": label["bbox3d"]["pointx"],
-                    "y": label["bbox3d"]["pointy"],
-                    "z": label["bbox3d"]["pointz"],
+                    "pointTopLeft": {
+                        "i": label["bbox3d"]["pointx"],
+                        "j": label["bbox3d"]["pointy"],
+                        "k": label["bbox3d"]["pointz"],
+                    },
                     "width": label["bbox3d"]["deltax"],
                     "height": label["bbox3d"]["deltay"],
                     "depth": label["bbox3d"]["deltaz"],
                     **label_obj,
+                    **video_metadata,
                 }
             )
         elif label.get("polygon"):
@@ -275,13 +301,11 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
             volume["polygons"].append(
                 {
                     "points": [
-                        {"x": point["xnorm"], "y": point["ynorm"]}
+                        {"xNorm": point["xnorm"], "yNorm": point["ynorm"]}
                         for point in label["polygon"]
                     ],
-                    "keyFrame": label.get("keyframe", True),
-                    "endTrack": label.get("end", True),
-                    "frameIndex": label.get("frameindex", 0),
                     **label_obj,
+                    **video_metadata,  # type: ignore
                 }
             )
 
