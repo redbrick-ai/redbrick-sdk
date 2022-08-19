@@ -2,7 +2,7 @@
 
 import json
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timezone
+from datetime import datetime
 from dateutil import parser  # type: ignore
 
 import tenacity
@@ -86,7 +86,6 @@ class RBProject:
             project_id,
             self.project_type,
             self.output_stage_name,
-            self.export_new_format,
             self.consensus_enabled,
             self.label_stages,
             self.review_stages,
@@ -172,15 +171,6 @@ class RBProject:
         return [
             stage for stage in self._stages if stage["brickName"] == "expert-review"
         ]
-
-    @property
-    def export_new_format(self) -> bool:
-        """
-        Whether to use new task format for default export.
-
-        True for tasks created since 2022-08-01
-        """
-        return self._created_at >= datetime(2022, 8, 1, tzinfo=timezone.utc)
 
     def __wait_for_project_to_finish_creating(self) -> Dict:
         try:

@@ -51,9 +51,7 @@ class CLIExportController(CLIExportInterface):
         parser.add_argument(
             "--old-format",
             action="store_true",
-            help="""Whether to export tasks in old format.
-            If None, will default to old format for projects
-            that are created before 2022-08-01 else new format.""",
+            help="""Whether to export tasks in old format. (Default: False)""",
         )
         parser.add_argument(
             "--no-consensus",
@@ -277,13 +275,7 @@ class CLIExportController(CLIExportInterface):
             os.makedirs(nifti_dir, exist_ok=True)
             task_map = os.path.join(export_dir, "tasks.json")
             self.project.project.export.export_nifti_label_data(
-                data,
-                nifti_dir,
-                task_map,
-                self.args.old_format
-                if self.args.old_format
-                else not self.project.project.export_new_format,
-                no_consensus,
+                data, nifti_dir, task_map, bool(self.args.old_format), no_consensus
             )
             print_info(f"Exported: {task_map}")
             print_info(f"Exported nifti to: {nifti_dir}")

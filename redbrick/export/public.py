@@ -89,7 +89,6 @@ class Export:
         project_id: str,
         project_type: LabelType,
         output_stage_name: str,
-        new_format: bool,
         consensus_enabled: bool,
         label_stages: List[Dict],
         review_stages: List[Dict],
@@ -100,7 +99,6 @@ class Export:
         self.project_id = project_id
         self.project_type = project_type
         self.output_stage_name = output_stage_name
-        self.new_format = new_format
         self.consensus_enabled = consensus_enabled
         self.has_label_stage_only = bool(label_stages) and not bool(review_stages)
 
@@ -735,7 +733,7 @@ class Export:
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
         to_timestamp: Optional[float] = None,
-        old_format: Optional[bool] = None,
+        old_format: bool = False,
         no_consensus: Optional[bool] = None,
     ) -> None:
         """
@@ -767,10 +765,8 @@ class Export:
             that were labeled/updated till the given timestamp.
             Format - output from datetime.timestamp()
 
-        old_format: Optional[bool] = None
+        old_format: bool = False
             Whether to export tasks in old format.
-            If None, will default to old format for projects
-            that are created before 2022-08-01 else new format.
 
         no_consensus: Optional[bool] = None
             Whether to export tasks without consensus info.
@@ -817,7 +813,7 @@ class Export:
             datapoints,
             nifti_dir,
             os.path.join(destination, "tasks.json"),
-            old_format if old_format is not None else not self.new_format,
+            old_format,
             no_consensus,
         )
 
