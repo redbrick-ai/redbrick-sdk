@@ -7,7 +7,12 @@ import aiohttp
 
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
-from redbrick.repo.shards import TAXONOMY_SHARD, TASK_SHARD
+from redbrick.repo.shards import (
+    DATAPOINT_SHARD,
+    TASK_DATA_SHARD,
+    TAXONOMY_SHARD,
+    TASK_SHARD,
+)
 
 
 class ExportRepo(ExportControllerInterface):
@@ -16,17 +21,6 @@ class ExportRepo(ExportControllerInterface):
     def __init__(self, client: RBClient) -> None:
         """Construct ExportRepo."""
         self.client = client
-
-    def get_datapoints_input(
-        self,
-        org_id: str,
-        project_id: str,
-        first: int = 50,
-        presign: bool = False,
-        cursor: Optional[str] = None,
-    ) -> Tuple[List[Dict], Optional[str]]:
-        """Get datapoints that were uploaded to the project."""
-        raise NotImplementedError()
 
     def get_output_info(self, org_id: str, project_id: str) -> Dict:
         """Get info about the output labelset and taxonomy."""
@@ -85,9 +79,6 @@ class ExportRepo(ExportControllerInterface):
                     labelsData(interpolate: true)
                     labelsMap {
                         labelName
-                        imageIndex
-                        imageName
-                        seriesId
                     }
                 }
             }
@@ -145,18 +136,22 @@ class ExportRepo(ExportControllerInterface):
         project_id: str,
         stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
+        till_time: Optional[datetime] = None,
         presign_items: bool = False,
+        with_consensus: bool = False,
         first: int = 50,
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str], Optional[datetime]]:
         """Get the latest datapoints."""
+        # pylint: disable=too-many-locals
         query_string = f"""
         query(
-            $orgId: UUID!,
-            $projectId: UUID!,
-            $stageName: String,
-            $cacheTime: DateTime,
-            $first: Int,
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String
+            $cacheTime: DateTime
+            $tillTime: DateTime
+            $first: Int
             $cursor: String
         ) {{
             tasksPaged(
@@ -164,13 +159,23 @@ class ExportRepo(ExportControllerInterface):
                 projectId: $projectId
                 stageName: $stageName
                 cacheTime: $cacheTime
+                tillTime: $tillTime
                 first: $first
                 after: $cursor
             ) {{
                 entries {{
-                    {TASK_SHARD.format(
-                        "itemsPresigned:items(presigned: true)" if presign_items else ""
-                    )}
+                    taskId
+                    dpId
+                    currentStageName
+                    currentStageSubTask{"(consensus: true)" if with_consensus else ""} {{
+                        {TASK_SHARD}
+                    }}
+                    latestTaskData {{
+                        {DATAPOINT_SHARD.format(
+                            "itemsPresigned:items(presigned: true)" if presign_items else ""
+                        )}
+                        {TASK_DATA_SHARD}
+                    }}
                 }}
                 cursor
                 cacheTime
@@ -183,6 +188,7 @@ class ExportRepo(ExportControllerInterface):
             "projectId": project_id,
             "stageName": stage_name,
             "cacheTime": None if cache_time is None else cache_time.isoformat(),
+            "tillTime": None if till_time is None else till_time.isoformat(),
             "first": first,
             "cursor": cursor,
         }
@@ -196,32 +202,6 @@ class ExportRepo(ExportControllerInterface):
             tasks_paged.get("cursor"),
             parser.parse(new_cache_time) if new_cache_time else None,
         )
-
-    def get_datapoint_latest(self, org_id: str, project_id: str, task_id: str) -> Dict:
-        """Get the latest labels for a single bdatapoint."""
-        query_string = f"""
-        query($orgId: UUID!, $projectId: UUID!, $taskId: UUID!) {{
-            task(
-                orgId: $orgId
-                projectId: $projectId
-                taskId: $taskId
-            ) {{
-                {TASK_SHARD}
-            }}
-        }}
-        """
-        # EXECUTE THE QUERY
-        query_variables = {
-            "orgId": org_id,
-            "projectId": project_id,
-            "taskId": task_id,
-        }
-
-        result: Dict[str, Dict] = self.client.execute_query(
-            query_string, query_variables, False
-        )
-
-        return result.get("task", {}) or {}
 
     async def get_labels(
         self, session: aiohttp.ClientSession, org_id: str, project_id: str, dp_id: str
@@ -308,14 +288,14 @@ class ExportRepo(ExportControllerInterface):
         return entries, generic_tasks.get("cursor")
 
     def presign_items(
-        self, org_id: str, storage_id: str, items: List[str]
-    ) -> List[str]:
+        self, org_id: str, storage_id: str, items: List[Optional[str]]
+    ) -> List[Optional[str]]:
         """Presign download items."""
         query = """
         query presignItems(
             $orgId: UUID!
             $storageId: UUID!
-            $items: [String!]!
+            $items: [String]!
         ) {
             presignItems(orgId: $orgId, storageId: $storageId, items: $items)
         }
@@ -324,5 +304,5 @@ class ExportRepo(ExportControllerInterface):
         variables = {"orgId": org_id, "storageId": storage_id, "items": items}
 
         response = self.client.execute_query(query, variables)
-        presigned_items: List[str] = response.get("presignItems", [])
+        presigned_items: List[Optional[str]] = response.get("presignItems", [])
         return presigned_items

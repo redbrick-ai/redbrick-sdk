@@ -171,13 +171,25 @@ class CLIUploadController(CLIUploadInterface):
                 )
             )
 
+        segmentation_mapping = {}
+        if self.args.segment_map:
+            with open(self.args.segment_map, "r", encoding="utf-8") as file_:
+                segmentation_mapping = json.load(file_)
+                assert isinstance(
+                    segmentation_mapping, dict
+                ), "Segmentation mapping is invalid"
+
         points: List[Dict] = []
         uploading = set()
         if self.args.json:
+            segment_map = {**segmentation_mapping}
+            segmentation_mapping = {}
             print_info("Validating files")
             for item_group in tqdm.tqdm(items_list):
                 with open(item_group[0], "r", encoding="utf-8") as file_:
-                    file_data = json.load(file_)
+                    file_data: List[Dict] = json.load(file_)
+                if not file_data:
+                    continue
                 if not isinstance(file_data, list) or any(
                     not isinstance(obj, dict) for obj in file_data
                 ):
@@ -198,6 +210,10 @@ class CLIUploadController(CLIUploadInterface):
                         continue
 
                 if data_type == "DICOM":
+                    if segment_map:
+                        for item in file_data:
+                            item["segmentMap"] = item.get("segmentMap", segment_map)
+
                     output = self.project.context.upload.validate_and_convert_to_import_format(
                         json.dumps(file_data), True, storage_id
                     )
@@ -216,6 +232,10 @@ class CLIUploadController(CLIUploadInterface):
                     if output.get("converted"):
                         file_data = json.loads(output["converted"])
 
+                if storage_id == str(StorageMethod.REDBRICK):
+                    print_info(
+                        f"Looking in your local file system for items mentioned in {item_group[0]}"
+                    )
                 for item in file_data:
                     if (
                         not isinstance(item.get("items"), list)
@@ -295,7 +315,10 @@ class CLIUploadController(CLIUploadInterface):
                         if os.path.isfile(item_path):
                             item["items"][idx] = item_path
                         else:
-                            print_warning(f"{path} from {item_group[0]} does not exist")
+                            print_warning(
+                                f"Could not find {path}. "
+                                + "Perhaps you forgot to supply the --storage argument"
+                            )
                             break
                     else:
                         uploading.add(item["name"])
@@ -424,10 +447,6 @@ class CLIUploadController(CLIUploadInterface):
         if points:
             print_info(f"Found {len(points)} items")
             loop = asyncio.get_event_loop()
-            segmentation_mapping = {}
-            if self.args.segment_map:
-                with open(self.args.segment_map, "r", encoding="utf-8") as file_:
-                    segmentation_mapping = json.load(file_)
 
             uploads = loop.run_until_complete(
                 project.upload._create_tasks(

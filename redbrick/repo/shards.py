@@ -93,41 +93,77 @@ colorMap {
 archived
 """
 
-TASK_SHARD = """
-    taskId
-    dpId
-    currentStageName
-    latestTaskData {{
-        dataPoint {{
-            name
-            items(presigned: false)
-            {}
-            createdAt
-            createdByEntity {{
+TASK_DATA_SHARD = """
+    createdAt
+    createdByEmail
+    labelsData(interpolate: true)
+    labelsStorage {
+        storageId
+    }
+    labelsMap(presigned: false) {
+        labelName
+    }
+"""
+
+TASK_SHARD = f"""
+    ... on LabelingTask {{
+        state
+        assignedTo {{
+            userId
+            email
+        }}
+        taskData {{
+            {TASK_DATA_SHARD}
+        }}
+        subTasks {{
+            state
+            assignedTo {{
+                userId
                 email
             }}
-            metaData
-            seriesInfo {{
-                name
-                itemsIndices
-                dataType
-                numFrames
-            }}
-            storageMethod {{
-                storageId
+            taskData {{
+                {TASK_DATA_SHARD}
             }}
         }}
+        overallConsensusScore
+        consensusInfo {{
+            user {{
+                userId
+                email
+            }}
+            taskData {{
+                {TASK_DATA_SHARD}
+            }}
+            scores {{
+                user {{
+                    userId
+                    email
+                }}
+                score
+            }}
+        }}
+    }}
+"""
+
+DATAPOINT_SHARD = """
+    dataPoint {{
+        name
+        items(presigned: false)
+        {}
         createdAt
-        createdByEmail
-        labelsData(interpolate: true)
-        labelsStorage {{
-            storageId
+        createdByEntity {{
+            email
         }}
-        labelsMap(presigned: false) {{
-            labelName
-            imageIndex
-            imageName
-            seriesId
+        metaData
+        seriesInfo {{
+            name
+            itemsIndices
+            dataType
+            numFrames
+            dimensions
+        }}
+        storageMethod {{
+            storageId
         }}
     }}
 """

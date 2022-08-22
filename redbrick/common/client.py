@@ -8,7 +8,7 @@ import tenacity
 
 from redbrick import __version__ as sdk_version  # pylint: disable=cyclic-import
 from redbrick.utils.logging import print_error
-from redbrick.common.constants import DEFAULT_URL, MAX_RETRY_ATTEMPTS
+from redbrick.common.constants import DEFAULT_URL, MAX_RETRY_ATTEMPTS, PEERLESS_ERRORS
 
 
 class RBClient:
@@ -37,15 +37,7 @@ class RBClient:
         reraise=True,
         stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type(
-            (
-                KeyboardInterrupt,
-                PermissionError,
-                TimeoutError,
-                ConnectionError,
-                ValueError,
-            )
-        ),
+        retry=tenacity.retry_if_not_exception_type(PEERLESS_ERRORS),
     )
     def execute_query(
         self, query: str, variables: Dict, raise_for_error: bool = True
@@ -64,15 +56,7 @@ class RBClient:
         reraise=True,
         stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
         wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type(
-            (
-                KeyboardInterrupt,
-                PermissionError,
-                TimeoutError,
-                ConnectionError,
-                ValueError,
-            )
-        ),
+        retry=tenacity.retry_if_not_exception_type(PEERLESS_ERRORS),
     )
     async def execute_query_async(
         self,

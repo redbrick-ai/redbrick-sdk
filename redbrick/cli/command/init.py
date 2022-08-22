@@ -2,7 +2,7 @@
 import os
 from argparse import ArgumentParser, Namespace
 
-from halo.halo import Halo  # type: ignore
+from rich.console import Console
 
 from redbrick.cli.input import CLIInputNumber, CLIInputSelect, CLIInputText
 from redbrick.cli.project import CLIProject
@@ -47,20 +47,20 @@ class CLIInitController(CLIInitInterface):
         """Handle empty sub command."""
         assert self.project.creds.exists, "Credentials missing"
 
-        with Halo(text="Fetching organization", spinner="dots") as spinner:
+        console = Console()
+        with console.status("Fetching organization") as status:
             try:
                 org = RBOrganization(self.project.context, self.project.creds.org_id)
-                spinner.succeed(str(org))
             except Exception as error:
-                spinner.fail()
+                status.stop()
                 raise error
+        console.print("[bold green]" + str(org))
 
-        with Halo(text="Fetching taxonomies", spinner="dots") as spinner:
+        with console.status("Fetching taxonomies") as status:
             try:
                 taxonomies = org.taxonomies()
-                spinner.succeed()
             except Exception as error:
-                spinner.fail()
+                status.stop()
                 raise error
 
         name = CLIInputText(
@@ -74,12 +74,12 @@ class CLIInitController(CLIInitInterface):
         taxonomy = CLIInputSelect(self.args.taxonomy, "Taxonomy", taxonomies).get()
         reviews = int(CLIInputNumber(self.args.reviews, "Reviews").get())
 
-        with Halo(text="Creating project", spinner="dots") as spinner:
+        with console.status("Creating project") as status:
             try:
                 project = org.create_project(name, label_type, taxonomy, reviews)
-                spinner.succeed(str(project))
             except Exception as error:
-                spinner.fail()
+                status.stop()
                 raise error
+        console.print("[bold green]" + str(project))
 
         self.project.initialize_project(org, project)

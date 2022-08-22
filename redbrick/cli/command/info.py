@@ -2,9 +2,9 @@
 from argparse import ArgumentParser, Namespace
 from typing import List, Tuple
 
-from InquirerPy.utils import color_print  # type: ignore
-from InquirerPy.separator import Separator  # type: ignore
-from halo.halo import Halo  # type: ignore
+from rich.console import Console
+from rich.table import Table
+from rich.box import ROUNDED
 
 from redbrick.cli.input.text import CLIInputText
 from redbrick.cli.input.uuid import CLIInputUUID
@@ -51,24 +51,30 @@ class CLIInfoController(CLIInfoInterface):
             self.handle_info()
 
     @staticmethod
-    def _color_print_info(title: str, attrs: List[Tuple[str, str]]) -> None:
-        text = [("green", f"{Separator()} {title} {Separator()}\n")]
+    def _show_info(title: str, attrs: List[Tuple[str, str]]) -> None:
+        console = Console()
+        table = Table(
+            title="[bold green]" + title,
+            show_header=False,
+            header_style=None,
+            box=ROUNDED,
+        )
         for key, value in attrs:
-            text.append(("", f"{key}: {value}\n"))
-        color_print(text)
+            table.add_row(key, value)
+        console.print(table)
 
     def handle_get(self) -> None:
         """Handle get sub command."""
         if self.args.get == self.SETTING_LABELSTORAGE:
-            with Halo(text="Get: Label Storage", spinner="dots") as spinner:
+            console = Console()
+            with console.status("Get: Label Storage") as status:
                 try:
                     storage_id, path = self.project.project.label_storage
                 except Exception as error:
-                    spinner.fail()
+                    status.stop()
                     raise error
-            spinner.succeed()
 
-            CLIInfoController._color_print_info(
+            CLIInfoController._show_info(
                 "Label Storage", [("Storage ID", storage_id), ("Path prefix", path)]
             )
 
@@ -77,17 +83,17 @@ class CLIInfoController(CLIInfoInterface):
         if self.args.set == self.SETTING_LABELSTORAGE:
             storage_id = CLIInputUUID(None, "Storage ID").get()
             path = CLIInputText(None, "Path prefix", "", True).get()
-            with Halo(text="Set: Label Storage", spinner="dots") as spinner:
+            console = Console()
+            with console.status("Set: Label Storage") as status:
                 try:
                     new_storage_id, new_path = self.project.project.set_label_storage(
                         storage_id, path
                     )
                 except Exception as error:
-                    spinner.fail()
+                    status.stop()
                     raise error
-            spinner.succeed()
 
-            CLIInfoController._color_print_info(
+            CLIInfoController._show_info(
                 "Label Storage",
                 [("Storage ID", new_storage_id), ("Path prefix", new_path)],
             )
@@ -107,5 +113,5 @@ class CLIInfoController(CLIInfoInterface):
         project_data.append(("Taxonomy", project.taxonomy_name))
         project_data.append(("URL", project.url))
 
-        CLIInfoController._color_print_info("Organization", org_data)
-        CLIInfoController._color_print_info("Project", project_data)
+        CLIInfoController._show_info("Organization", org_data)
+        CLIInfoController._show_info("Project", project_data)

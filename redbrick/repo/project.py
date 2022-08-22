@@ -34,6 +34,9 @@ class ProjectRepo(ProjectRepoInterface):
                     }
                     projectUrl
                     createdAt
+                    consensusSettings {
+                        enabled
+                    }
                 }
             }
         """

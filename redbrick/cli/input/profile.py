@@ -49,7 +49,7 @@ class CLIInputProfile(CLIInputParams):
                     qmark=">",
                     amark=">",
                     message="Profile name:",
-                    default="rb_" + datetime.strftime(datetime.now(), "%Y%m%d%H%M%S%f"),
+                    default="rb_" + datetime.strftime(datetime.now(), "%Y%m%d%H%M%S"),
                     transformer=self.filtrator,
                     filter=self.filtrator,
                     validate=self.validator,

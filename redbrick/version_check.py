@@ -4,20 +4,22 @@ import os
 from configparser import ConfigParser
 from datetime import datetime
 
-from distutils.version import StrictVersion
+from packaging.version import Version
 from .utils.logging import print_warning  # pylint: disable=cyclic-import
 
 
-def get_latest_version() -> str:
+def get_latest_version(current_version: str) -> str:
     """Get latest version from PyPI."""
     # pylint: disable=import-outside-toplevel
     import requests  # type: ignore
 
     url = "https://pypi.org/pypi/redbrick-sdk/json"
     data = requests.get(url).json()
-    versions = list(data["releases"].keys())
-    versions.sort(key=StrictVersion)
-    return str(versions[-1])
+    versions = sorted(map(Version, data["releases"].keys()), reverse=True)
+    for version in versions:
+        if not version.is_prerelease:
+            return str(version)
+    return current_version
 
 
 def version_check(current_version: str) -> None:
@@ -45,16 +47,15 @@ def version_check(current_version: str) -> None:
         or "last_checked" not in cache_config["version"]
         or current_timestamp - int(cache_config["version"]["last_checked"]) > 86400
     ):
-        latest_version = get_latest_version()
+        latest_version = get_latest_version(current_version)
         # Comparing with current installed version
-        if current_version != latest_version:
+        if Version(current_version) < Version(latest_version):
             warn = (
                 "You are using version '{}' of the SDK. However, version '{}' is available!\n"
                 + "Please update as soon as possible to get the latest features and bug fixes.\n"
-                + "You can use 'python -m pip install --upgrade redbrick-sdk'"
-                + " to get the latest version."
+                + "You can use 'python -m pip install redbrick-sdk=={}' to get the latest version."
             )
-            print_warning(warn.format(current_version, latest_version))
+            print_warning(warn.format(current_version, latest_version, latest_version))
 
         cache_config["version"]["latest_version"] = latest_version
         cache_config["version"]["last_checked"] = str(current_timestamp)

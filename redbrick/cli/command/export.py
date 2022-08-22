@@ -5,7 +5,7 @@ import re
 import json
 from datetime import datetime, timezone
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import List, Dict, Tuple
+from typing import List, Dict, Optional, Tuple
 import shutil
 
 import tqdm  # type: ignore
@@ -51,7 +51,14 @@ class CLIExportController(CLIExportInterface):
         parser.add_argument(
             "--old-format",
             action="store_true",
-            help="Export tasks in old format",
+            help="""Whether to export tasks in old format. (Default: False)""",
+        )
+        parser.add_argument(
+            "--no-consensus",
+            action="store_true",
+            help="""Whether to export tasks without consensus info.
+            If None, will default to export with consensus info,
+            if it is enabled for the given project.""",
         )
         parser.add_argument(
             "--clear-cache", action="store_true", help="Clear local cache"
@@ -142,6 +149,12 @@ class CLIExportController(CLIExportInterface):
         if self.args.clear_cache or format_type == self.FORMAT_COCO:
             self.project.cache.clear_cache(True)
 
+        no_consensus = (
+            self.args.no_consensus
+            if self.args.no_consensus
+            else not self.project.project.consensus_enabled
+        )
+
         cached_datapoints: Dict = {}
         cache_timestamp = None
         dp_conf = self.project.conf.get_section("datapoints")
@@ -149,7 +162,7 @@ class CLIExportController(CLIExportInterface):
             cached_dp = self.project.cache.get_data("datapoints", dp_conf["cache"])
             if isinstance(cached_dp, dict):
                 cached_datapoints = cached_dp
-                cache_timestamp = int(dp_conf["timestamp"])
+                cache_timestamp = int(dp_conf["timestamp"]) or None
 
         cached_dimensions: Dict = {}
         dim_cache = self.project.conf.get_option("dimensions", "cache")
@@ -162,7 +175,11 @@ class CLIExportController(CLIExportInterface):
             self.args.concurrency,
             False,
             cache_timestamp,
+            None,
             format_type == self.FORMAT_COCO,
+            bool(self.project.project.label_stages)
+            and not bool(self.project.project.review_stages)
+            and not no_consensus,
         )
 
         print_info(f"Refreshed {len(datapoints)} newly updated tasks")
@@ -176,7 +193,13 @@ class CLIExportController(CLIExportInterface):
 
         dp_hash = self.project.cache.set_data("datapoints", cached_datapoints)
         self.project.conf.set_section(
-            "datapoints", {"timestamp": str(current_timestamp), "cache": dp_hash}
+            "datapoints",
+            {
+                "timestamp": str(
+                    current_timestamp if datapoints else (cache_timestamp or 0)
+                ),
+                "cache": dp_hash,
+            },
         )
         self.project.conf.save()
 
@@ -252,12 +275,7 @@ class CLIExportController(CLIExportInterface):
             os.makedirs(nifti_dir, exist_ok=True)
             task_map = os.path.join(export_dir, "tasks.json")
             self.project.project.export.export_nifti_label_data(
-                data,
-                nifti_dir,
-                task_map,
-                self.args.old_format
-                if self.args.old_format
-                else not self.project.project.export_new_format,
+                data, nifti_dir, task_map, bool(self.args.old_format), no_consensus
             )
             print_info(f"Exported: {task_map}")
             print_info(f"Exported nifti to: {nifti_dir}")
@@ -297,17 +315,20 @@ class CLIExportController(CLIExportInterface):
 
         path_pattern = re.compile(r"[^\w.]+")
 
-        files: List[Tuple[str, str]] = []
+        files: List[Tuple[Optional[str], Optional[str]]] = []
         tasks_indices: List[List[int]] = []
 
         print_info("Preparing to download files")
         for task in tqdm.tqdm(data):
-            task_dir = uniquify_path(
-                os.path.join(
-                    parent_dir,
-                    re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"],
-                )
+            task_name = (
+                re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
             )
+            task_dir = os.path.join(parent_dir, task_name)
+            if os.path.isdir(task_dir):
+                print_info(f"{task_dir} exists. Skipping")
+                continue
+            shutil.rmtree(task_dir, ignore_errors=True)
+            os.makedirs(task_dir, exist_ok=True)
             series_dirs: List[str] = []
             series_items_indices: List[List[int]] = []
             if sum(
@@ -318,7 +339,6 @@ class CLIExportController(CLIExportInterface):
             ) == len(task["items"]) and (
                 len(task["seriesInfo"]) > 1 or task["seriesInfo"][0].get("name")
             ):
-                os.makedirs(task_dir, exist_ok=True)
                 for series_idx, series in enumerate(task["seriesInfo"]):
                     series_dir = uniquify_path(
                         os.path.join(
@@ -327,14 +347,13 @@ class CLIExportController(CLIExportInterface):
                             or chr(series_idx + ord("A")),
                         )
                     )
-                    shutil.rmtree(series_dir, ignore_errors=True)
-                    os.makedirs(series_dir, exist_ok=True)
+                    os.makedirs(series_dir)
                     series_dirs.append(series_dir)
                     series_items_indices.append(series["itemsIndices"])
             else:
-                shutil.rmtree(task_dir, ignore_errors=True)
-                os.makedirs(task_dir, exist_ok=True)
-                series_dirs.append(task_dir)
+                series_dir = os.path.join(task_dir, task_name)
+                os.makedirs(series_dir)
+                series_dirs.append(series_dir)
                 series_items_indices.append(list(range(len(task["items"]))))
 
             to_presign = []

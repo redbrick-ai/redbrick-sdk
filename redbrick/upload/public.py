@@ -18,7 +18,7 @@ from redbrick.common.enums import LabelType
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.logging import print_error, handle_exception
+from redbrick.utils.logging import print_error, print_warning
 from redbrick.utils.segmentation import check_mask_map_format
 from redbrick.utils.files import (
     NIFTI_FILE_TYPES,
@@ -99,7 +99,8 @@ class Upload:
             point_success["response"] = response
             return point_success
         except Exception as error:  # pylint:disable=broad-except
-            print_error(error)
+            if isinstance(error, AssertionError):
+                print_error(error)
             point_error = deepcopy(point)
             point_error["error"] = error
             return point_error
@@ -545,7 +546,7 @@ class Upload:
         for item in items:
             if not (isinstance(item, str) and item and os.path.isfile(item)):
                 invalid += [item]
-                print_error(f"{item} is an invalid path")
+                print_warning(f"{item} is an invalid path")
                 continue
             try:
                 get_file_type(item)
@@ -656,7 +657,6 @@ class Upload:
 
         return entry
 
-    @handle_exception
     def create_datapoints(
         self,
         storage_id: str,
@@ -743,7 +743,6 @@ class Upload:
 
         return skipped + created
 
-    @handle_exception
     def create_datapoint_from_masks(
         self,
         storage_id: str,
@@ -834,7 +833,6 @@ class Upload:
             self._create_datapoints(storage_id, [datapoint_entry], False)
         )[0]
 
-    @handle_exception
     def delete_tasks(self, task_ids: List[str]) -> bool:
         """Delete project tasks based on task ids.
 

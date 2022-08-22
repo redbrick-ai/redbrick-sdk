@@ -1,7 +1,6 @@
 """Abstract interface to upload."""
 
 from typing import List, Dict, Optional, Any
-from pathlib import Path
 
 import aiohttp
 
@@ -15,22 +14,6 @@ class UploadRepo(UploadControllerInterface):
     def __init__(self, client: RBClient) -> None:
         """Construct ExportRepo."""
         self.client = client
-
-    def create_datapoint(
-        self,
-        org_id: str,
-        project_id: str,
-        storage_id: str,
-        name: str,
-        items: List[str],
-        labels: Optional[List[Dict]],
-    ) -> str:
-        """
-        Create a datapoint and returns its taskId.
-
-        Name must be unique in the project.
-        """
-        raise NotImplementedError()
 
     async def create_datapoint_async(
         self,
@@ -184,16 +167,6 @@ class UploadRepo(UploadControllerInterface):
         result = self.client.execute_query(query_string, query_variables)
         assert isinstance(result["itemsUploadPresign"]["items"], list)
         return result["itemsUploadPresign"]["items"]
-
-    def upload_image(self, org_id: str, project_id: str, file_path: Path) -> str:
-        """Upload a local image and add labels."""
-        raise NotImplementedError()
-
-    async def upload_image_async(
-        self, org_id: str, project_id: str, file_path: Path
-    ) -> str:
-        """Upload a local image and add labels."""
-        raise NotImplementedError()
 
     def delete_tasks(self, org_id: str, project_id: str, task_ids: List[str]) -> bool:
         """Delete tasks in a project."""

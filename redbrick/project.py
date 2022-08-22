@@ -2,14 +2,15 @@
 
 import json
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timezone
+from datetime import datetime
 from dateutil import parser  # type: ignore
 
 import tenacity
+from redbrick.common.constants import PEERLESS_ERRORS
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType, StorageMethod
-from redbrick.utils.logging import handle_exception, print_info
+from redbrick.utils.logging import print_info
 
 
 class RBProject:
@@ -53,6 +54,8 @@ class RBProject:
         self._taxonomy_name: str
         self._project_url: str
         self._created_at: datetime
+
+        self.consensus_enabled: bool = False
         self._label_storage: Optional[Tuple[str, str]] = None
 
         # check if project exists on backend to validate
@@ -84,7 +87,9 @@ class RBProject:
             project_id,
             self.project_type,
             self.output_stage_name,
-            self.export_new_format,
+            self.consensus_enabled,
+            self.label_stages,
+            self.review_stages,
         )
 
     @property
@@ -155,13 +160,18 @@ class RBProject:
         return self._label_storage
 
     @property
-    def export_new_format(self) -> bool:
-        """
-        Whether to use new task format for default export.
+    def label_stages(self) -> List[Dict]:
+        """Get list of label stages."""
+        return [
+            stage for stage in self._stages if stage["brickName"] == "manual-labeling"
+        ]
 
-        True for tasks created since 2022-08-01
-        """
-        return self._created_at >= datetime(2022, 8, 1, tzinfo=timezone.utc)
+    @property
+    def review_stages(self) -> List[Dict]:
+        """Get list of review stages."""
+        return [
+            stage for stage in self._stages if stage["brickName"] == "expert-review"
+        ]
 
     def __wait_for_project_to_finish_creating(self) -> Dict:
         try:
@@ -169,15 +179,7 @@ class RBProject:
                 reraise=True,
                 stop=tenacity.stop_after_attempt(10),
                 wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-                retry=tenacity.retry_if_not_exception_type(
-                    (
-                        KeyboardInterrupt,
-                        PermissionError,
-                        TimeoutError,
-                        ConnectionError,
-                        ValueError,
-                    )
-                ),
+                retry=tenacity.retry_if_not_exception_type(PEERLESS_ERRORS),
             ):
                 with attempt:
                     project = self.context.project.get_project(
@@ -208,6 +210,7 @@ class RBProject:
         self._stages = self.context.project.get_stages(self.org_id, self.project_id)
         self._project_url = project["projectUrl"]
         self._created_at = parser.parse(project["createdAt"])
+        self.consensus_enabled = project["consensusSettings"]["enabled"]
 
     def __str__(self) -> str:
         """Get string representation of RBProject object."""
@@ -217,7 +220,6 @@ class RBProject:
         """Representation of object."""
         return str(self)
 
-    @handle_exception
     def set_label_storage(self, storage_id: str, path: str) -> Tuple[str, str]:
         """
         Set label storage method for a project.

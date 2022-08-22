@@ -23,11 +23,11 @@ from redbrick.common.constants import (
 from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
 
-from redbrick.utils.logging import print_info, handle_exception
+from redbrick.utils.logging import print_info
 
 from .version_check import version_check
 
-__version__ = "2.0.0b1"
+__version__ = "2.0.0"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -77,7 +77,6 @@ def _populate_context(context: RBContext) -> RBContext:
     return context
 
 
-@handle_exception
 def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization:
     """
     Get an existing redbrick organization object.
@@ -108,7 +107,6 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
     return RBOrganization(context, org_id)
 
 
-@handle_exception
 def get_project(
     org_id: str, project_id: str, api_key: str, url: str = DEFAULT_URL
 ) -> RBProject:

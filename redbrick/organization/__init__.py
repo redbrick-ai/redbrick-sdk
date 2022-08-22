@@ -7,7 +7,7 @@ from tqdm import tqdm  # type: ignore
 from redbrick.common.enums import LabelType
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
-from redbrick.utils.logging import print_info, print_warning, handle_exception
+from redbrick.utils.logging import print_info, print_warning
 from redbrick.utils.pagination import PaginationIterator
 from .basic_project import get_active_learning_project, get_basic_project
 
@@ -34,7 +34,6 @@ class RBOrganization:
         org = self.context.project.get_org(self._org_id)
         self._name = org["name"]
 
-    @handle_exception
     def taxonomies(self, only_name: bool = True) -> Union[List[str], List[Dict]]:
         """Get a list of taxonomy names/objects in the organization."""
         taxonomies = self.context.project.get_taxonomies(self._org_id)
@@ -49,7 +48,6 @@ class RBOrganization:
 
         return projects
 
-    @handle_exception
     def projects(self) -> List[RBProject]:
         """Get a list of active projects in the organization."""
         projects = self._all_projects_raw()
@@ -76,7 +74,6 @@ class RBOrganization:
         """Representation of object."""
         return str(self)
 
-    @handle_exception
     def create_project(
         self,
         name: str,
@@ -154,7 +151,6 @@ class RBOrganization:
 
         return RBProject(self.context, self.org_id, project_data["projectId"])
 
-    @handle_exception
     def labeling_time(
         self, start_date: datetime, end_date: datetime, concurrency: int = 50
     ) -> List[Dict]:
@@ -183,7 +179,6 @@ class RBOrganization:
 
         return tasks
 
-    @handle_exception
     def create_taxonomy(
         self,
         name: str,
