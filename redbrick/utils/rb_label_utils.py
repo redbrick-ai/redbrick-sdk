@@ -122,7 +122,7 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
     series = output_task["series"]
     for volume_index, label_map in enumerate(labels_map):
         if volume_index >= len(series):
-            series.extend([{} for _ in range(volume_index - len(series))])
+            series.extend([{} for _ in range(volume_index - len(series) + 1)])
         if label_map and label_map.get("labelName"):
             series[volume_index]["segmentations"] = label_map["labelName"]
             series[volume_index]["segmentMap"] = {}
@@ -130,7 +130,7 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
     for label in labels:
         volume_index = label.get("volumeindex", 0)
         if volume_index >= len(series):
-            series.extend([{} for _ in range(volume_index - len(series))])
+            series.extend([{} for _ in range(volume_index - len(series) + 1)])
 
     for label in labels:
         volume = series[label.get("volumeindex", 0)]
