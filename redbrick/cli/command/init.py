@@ -7,7 +7,6 @@ from rich.console import Console
 from redbrick.cli.input import CLIInputNumber, CLIInputSelect, CLIInputText
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIInitInterface
-from redbrick.common.enums import LabelType
 from redbrick.organization import RBOrganization
 
 
@@ -17,7 +16,6 @@ class CLIInitController(CLIInitInterface):
     def __init__(self, parser: ArgumentParser) -> None:
         """Intialize init sub commands."""
         parser.add_argument("--name", "-n", help="Project name")
-        parser.add_argument("--label", "-l", help="Label type")
         parser.add_argument("--taxonomy", "-t", help="Taxonomy name")
         parser.add_argument("--reviews", "-r", help="Number of review stages")
         parser.add_argument(
@@ -66,17 +64,12 @@ class CLIInitController(CLIInitInterface):
         name = CLIInputText(
             self.args.name, "Name", os.path.basename(self.project.path)
         ).get()
-        label_type = LabelType(
-            CLIInputSelect(
-                self.args.label, "Label", [label.value for label in LabelType]
-            ).get()
-        )
         taxonomy = CLIInputSelect(self.args.taxonomy, "Taxonomy", taxonomies).get()
         reviews = int(CLIInputNumber(self.args.reviews, "Reviews").get())
 
         with console.status("Creating project") as status:
             try:
-                project = org.create_project(name, label_type, taxonomy, reviews)
+                project = org.create_project(name, taxonomy, reviews)
             except Exception as error:
                 status.stop()
                 raise error

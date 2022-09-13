@@ -25,7 +25,7 @@ type Series = {
   numFrames?: number;
   dimensions?: [number, number, number];
   segmentations?: string | string[];
-  segmentMap?: { [instanceId: number]: { category: string | string[] } };
+  segmentMap?: { [instanceId: number]: { category: string | string[]; attributes?: Attributes } };
   landmarks?: Landmarks[];
   landmarks3d?: Landmarks3D[];
   measurements?: (MeasureLength | MeasureAngle)[];
