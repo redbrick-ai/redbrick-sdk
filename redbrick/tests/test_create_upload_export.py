@@ -18,23 +18,19 @@ def create_test_project(
     org_id: str,
     api_key: str,
     url: str,
-    label_type: LabelType,
     taxonomy: str = "Berkeley Deep Drive (BDD)",
     reviews: int = 1,
 ) -> Generator[RBProject, None, None]:
     """Create project."""
     project_name = (
-        f"{label_type.value}"
+        f"{LabelType.DICOM_SEGMENTATION.value}"
         + f"{datetime.strftime(datetime.now(), '%Y%m%d%H%M%S%f')}{random.randint(0, 1000)}"
     )
     project: Optional[RBProject] = None
     try:
         org = redbrick.get_org(api_key=api_key, org_id=org_id, url=url)
         project = org.create_project(
-            name=project_name,
-            label_type=label_type,
-            taxonomy_name=taxonomy,
-            reviews=reviews,
+            name=project_name, taxonomy_name=taxonomy, reviews=reviews
         )
         assert project
         yield project
@@ -241,14 +237,9 @@ def validate_export_data_coco(
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize(
-    "label_type", (LabelType.IMAGE_CLASSIFY, LabelType.IMAGE_POLYGON)
-)
-def test_classify_project(
-    org_id: str, api_key: str, url: str, label_type: LabelType
-) -> None:
+def test_classify_project(org_id: str, api_key: str, url: str) -> None:
     """Test export."""
-    with create_test_project(org_id, api_key, url, label_type) as project:
+    with create_test_project(org_id, api_key, url) as project:
         task_count = 20
         upload_test_data(project, task_count)
         all_tasks, labeled_tasks = label_test_data(project, task_count)
@@ -260,5 +251,3 @@ def test_classify_project(
         ]
 
         validate_export_data_redbrick(project, tasks_map, groundtruth_task_ids)
-        if label_type in (LabelType.IMAGE_POLYGON,):
-            validate_export_data_coco(project, tasks_map, groundtruth_task_ids)

@@ -77,7 +77,6 @@ class RBOrganization:
     def create_project(
         self,
         name: str,
-        label_type: LabelType,
         taxonomy_name: str,
         reviews: int = 0,
         exists_okay: bool = False,
@@ -93,9 +92,6 @@ class RBOrganization:
         --------------
         name: str
             A unique name for your project
-
-        label_type: redbrick.LabelType
-            Configures the label and data type of your project.
 
         taxonomy_name: str
             The name of the taxonomy you want to use for this project.
@@ -125,7 +121,7 @@ class RBOrganization:
             same_name = list(filter(lambda x: x["name"] == name, all_projects))
             if same_name:
                 temp = RBProject(self.context, self.org_id, same_name[0]["projectId"])
-                if temp.project_type != label_type:
+                if temp.project_type != LabelType.DICOM_SEGMENTATION:
                     raise ValueError(
                         "Project with matching name exists, but it has a different type"
                     )
@@ -141,7 +137,11 @@ class RBOrganization:
 
         try:
             project_data = self.context.project.create_project(
-                self.org_id, name, stages, label_type.value, taxonomy_name
+                self.org_id,
+                name,
+                stages,
+                LabelType.DICOM_SEGMENTATION.value,
+                taxonomy_name,
             )
         except ValueError as error:
             raise Exception(
