@@ -601,7 +601,13 @@ class Export:
         )
 
     async def download_and_process_nifti(
-        self, datapoint: Dict, nifti_dir: str, old_format: bool, no_consensus: bool
+        self,
+        datapoint: Dict,
+        nifti_dir: str,
+        color_map: Dict,
+        old_format: bool,
+        no_consensus: bool,
+        png_mask: bool,
     ) -> Dict:
         """Download and process label maps."""
         # pylint: disable=import-outside-toplevel, too-many-locals, too-many-branches
@@ -683,7 +689,7 @@ class Export:
 
         for label, path in zip(labels_map, paths):
             label["labelName"] = process_nifti_download(
-                task.get("labels", []) or [], path
+                task.get("labels", []) or [], path, png_mask, color_map
             )
 
         if len(paths) > len(labels_map) and task.get("consensusTasks"):
@@ -693,7 +699,7 @@ class Export:
                 consensus_labels_map = consensus_task.get("labelsMap", []) or []
                 for consensus_label_map in consensus_labels_map:
                     consensus_label_map["labelName"] = process_nifti_download(
-                        consensus_labels, paths[index]
+                        consensus_labels, paths[index], png_mask, color_map
                     )
                     index += 1
 
@@ -702,12 +708,24 @@ class Export:
     def export_nifti_label_data(
         self,
         datapoints: List[Dict],
+        taxonomy: Dict,
         nifti_dir: str,
         task_map: str,
         old_format: bool,
         no_consensus: bool,
+        png_mask: bool,
     ) -> None:
         """Export nifti label maps."""
+        class_id_map: Dict = {}
+        color_map: Dict = {}
+        if png_mask:
+            Export.tax_class_id_mapping(
+                [taxonomy["categories"][0]["name"]],  # object
+                taxonomy["categories"][0]["children"],  # categories
+                class_id_map,
+                color_map,
+                taxonomy.get("colorMap"),
+            )
         os.makedirs(nifti_dir, exist_ok=True)
         loop = asyncio.get_event_loop()
         tasks = loop.run_until_complete(
@@ -715,7 +733,12 @@ class Export:
                 MAX_CONCURRENCY,
                 [
                     self.download_and_process_nifti(
-                        datapoint, nifti_dir, old_format, no_consensus
+                        datapoint,
+                        nifti_dir,
+                        color_map,
+                        old_format,
+                        no_consensus,
+                        png_mask,
                     )
                     for datapoint in datapoints
                 ],
@@ -735,6 +758,7 @@ class Export:
         to_timestamp: Optional[float] = None,
         old_format: bool = False,
         no_consensus: Optional[bool] = None,
+        png: bool = False,
     ) -> None:
         """
         Export dicom segmentation labels in NIfTI-1 format.
@@ -774,6 +798,9 @@ class Export:
             if it is enabled for the given project.
             (Applicable only for new format export)
 
+        png: bool = False
+            Export nifti labels as png masks.
+
         Warnings
         ----------
         redbrick_nifti only works for the following types - DICOM_SEGMENTATION
@@ -790,7 +817,7 @@ class Export:
             no_consensus if no_consensus is not None else not self.consensus_enabled
         )
 
-        datapoints, _ = self._get_raw_data_latest(
+        datapoints, taxonomy = self._get_raw_data_latest(
             concurrency,
             False if task_id else only_ground_truth,
             None if task_id else from_timestamp,
@@ -811,10 +838,12 @@ class Export:
         print_info(f"Saving NIfTI files to {destination} directory")
         self.export_nifti_label_data(
             datapoints,
+            taxonomy,
             nifti_dir,
             os.path.join(destination, "tasks.json"),
             old_format,
             no_consensus,
+            png,
         )
 
     def redbrick_format(

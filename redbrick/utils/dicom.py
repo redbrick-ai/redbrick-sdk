@@ -3,23 +3,28 @@ import os
 from typing import Dict, List, Optional, Tuple, Union
 import shutil
 
-import nibabel  # type: ignore
-import numpy
-
 from redbrick.utils.files import uniquify_path
 from redbrick.utils.logging import print_error
 
 
 def process_nifti_download(
-    labels: List[Dict], labels_path: Optional[str]
+    labels: List[Dict], labels_path: Optional[str], png_mask: bool, color_map: Dict
 ) -> Optional[Union[str, List[str]]]:
     """Process nifti download file."""
+    # pylint: disable=too-many-locals, import-outside-toplevel
+    import nibabel  # type: ignore
+    import numpy
+    from PIL import Image  # type: ignore
+
     try:
-        if not (
-            labels_path
-            and os.path.isfile(labels_path)
-            and any(label.get("dicom", {}).get("groupids") for label in labels)
-        ):
+        if not (labels_path and os.path.isfile(labels_path)):
+            return labels_path
+
+        overlapping_labels = any(
+            label.get("dicom", {}).get("groupids") for label in labels
+        )
+
+        if not (png_mask or overlapping_labels):
             return labels_path
 
         img = nibabel.load(labels_path)
@@ -32,6 +37,25 @@ def process_nifti_download(
         header = img.header
         data = img.get_fdata()
 
+        if png_mask:
+            mask_arr = numpy.transpose(data, (1, 0, 2))
+            mask_arr = mask_arr.reshape(mask_arr.shape[0], mask_arr.shape[1])
+
+            if not overlapping_labels:
+                color_mask = numpy.zeros((mask_arr.shape[0], mask_arr.shape[1], 3))
+                for label in labels:
+                    if label.get("dicom"):
+                        color_mask[
+                            mask_arr == label["dicom"]["instanceid"]
+                        ] = color_map.get(
+                            "::".join(label["category"][0][1:]), (255, 255, 255)
+                        )
+
+                pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
+                filename = uniquify_path(f"{os.path.splitext(labels_path)[0]}.png")
+                pil_color_mask.save(filename)
+                return [filename]
+
         dirname = os.path.splitext(labels_path)[0]
         shutil.rmtree(dirname, ignore_errors=True)
         os.makedirs(dirname, exist_ok=True)
@@ -42,20 +66,30 @@ def process_nifti_download(
                 instances: List[int] = [label["dicom"]["instanceid"]] + (
                     label["dicom"].get("groupids", []) or []
                 )
-                filename = uniquify_path(
-                    os.path.join(dirname, f"{label['dicom']['instanceid']}.nii")
-                )
 
-                new_img = nibabel.Nifti1Image(
-                    numpy.where(
-                        numpy.isin(data, instances),  # type: ignore
-                        label["dicom"]["instanceid"],
-                        0,
-                    ),
-                    affine,
-                    header,
-                )
-                nibabel.save(new_img, filename)
+                if png_mask:
+                    color_mask = numpy.where(
+                        numpy.isin(mask_arr, instances),
+                        color_map.get(
+                            "::".join(label["category"][0][1:]), (255, 255, 255)
+                        ),
+                        (0, 0, 0),
+                    )
+                    filename = uniquify_path(
+                        os.path.join(dirname, f"{label['dicom']['instanceid']}.png")
+                    )
+                    pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
+                    pil_color_mask.save(filename)
+                else:
+                    new_data = numpy.where(
+                        numpy.isin(data, instances), label["dicom"]["instanceid"], 0  # type: ignore
+                    )
+                    filename = uniquify_path(
+                        os.path.join(dirname, f"{label['dicom']['instanceid']}.nii")
+                    )
+                    new_img = nibabel.Nifti1Image(new_data, affine, header)
+                    nibabel.save(new_img, filename)
+
                 files.append(filename)
 
         return files
@@ -69,8 +103,11 @@ def process_nifti_upload(
     files: List[str],
 ) -> Tuple[Optional[str], Dict[int, List[int]]]:
     """Process nifti upload files."""
-    # pylint: disable=too-many-locals, too-many-branches
+    # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
     # pylint: disable=too-many-statements, too-many-return-statements
+    import nibabel  # type: ignore
+    import numpy
+
     if not files or any(
         not isinstance(file_, str) or not os.path.isfile(file_) for file_ in files
     ):
