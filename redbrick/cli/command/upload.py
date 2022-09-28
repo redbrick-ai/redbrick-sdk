@@ -283,6 +283,8 @@ class CLIUploadController(CLIUploadInterface):
                     if item.get("labelsMap"):
                         if data_type == "DICOM":
                             for label_map in item["labelsMap"]:
+                                if not isinstance(label_map, dict):
+                                    label_map = {}
                                 if not isinstance(label_map["labelName"], list):
                                     label_map["labelName"] = [label_map["labelName"]]
                                 label_map["labelName"] = [
@@ -418,6 +420,8 @@ class CLIUploadController(CLIUploadInterface):
                         if label_data.get("labelsMap"):
                             item["labelsMap"] = []
                             for label_map in label_data["labelsMap"]:
+                                if not isinstance(label_map, dict):
+                                    label_map = {}
                                 if not isinstance(label_map["labelName"], list):
                                     label_map["labelName"] = [label_map["labelName"]]
                                 label_map["labelName"] = [

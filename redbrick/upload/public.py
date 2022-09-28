@@ -10,6 +10,7 @@ from uuid import uuid4
 
 import aiohttp
 import tenacity
+from tenacity.stop import stop_after_attempt
 import numpy as np
 from shapely.geometry import MultiPolygon, shape as gen_shape  # type: ignore
 
@@ -151,7 +152,7 @@ class Upload:
             return {"name": file_name, "filePath": file_path, "error": error}
 
     @tenacity.retry(
-        stop=tenacity.stop_after_attempt(1),
+        stop=stop_after_attempt(1),
         retry_error_callback=lambda _: {},
     )
     async def _create_task(
@@ -589,7 +590,7 @@ class Upload:
             # need to keep it a Multi throughout
             if polygon.type == "Polygon":
                 polygon = MultiPolygon([polygon])
-        return polygon
+        return polygon  # type: ignore
 
     @staticmethod
     def mask_to_rbai(  # pylint: disable=too-many-locals
@@ -727,7 +728,7 @@ class Upload:
 
                 filtered_points.append(deepcopy(point))
         else:
-            filtered_points = list(map(deepcopy, points))  # type: ignore
+            filtered_points: List[Dict] = list(map(deepcopy, points))  # type: ignore
 
         if filtered_points:
             loop = asyncio.get_event_loop()

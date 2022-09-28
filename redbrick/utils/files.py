@@ -8,6 +8,9 @@ import aiohttp
 import aiofiles  # type: ignore
 from yarl import URL
 import tenacity
+from tenacity.retry import retry_if_not_exception_type
+from tenacity.stop import stop_after_attempt
+from tenacity.wait import wait_exponential
 from natsort import natsorted, ns
 
 from redbrick.common.constants import MAX_CONCURRENCY, MAX_RETRY_ATTEMPTS
@@ -133,9 +136,9 @@ async def upload_files(
 
     @tenacity.retry(
         reraise=True,
-        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+        stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_not_exception_type((KeyboardInterrupt,)),
         retry_error_callback=lambda _: False,
     )
     async def _upload_file(
@@ -180,9 +183,9 @@ async def download_files(
 
     @tenacity.retry(
         reraise=True,
-        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type(
+        stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_not_exception_type(
             (KeyboardInterrupt, PermissionError, ValueError)
         ),
     )
