@@ -62,6 +62,7 @@ class ExportControllerInterface(ABC):
         project_id: str,
         stage_name: Optional[str] = None,
         task_search: Optional[str] = None,
+        manual_labeling_filters: Optional[Dict] = None,
         first: int = 50,
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:

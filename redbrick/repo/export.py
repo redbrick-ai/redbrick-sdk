@@ -238,6 +238,7 @@ class ExportRepo(ExportControllerInterface):
         project_id: str,
         stage_name: Optional[str] = None,
         task_search: Optional[str] = None,
+        manual_labeling_filters: Optional[Dict] = None,
         first: int = 50,
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
@@ -265,9 +266,20 @@ class ExportRepo(ExportControllerInterface):
                     taskId
                     datapoint {
                         name
+                        items
+                        itemsPresigned: items(presigned: true)
                     }
                     currentStageName
                     createdAt
+                    currentStageSubTask {
+                        ... on LabelingTask {
+                            state
+                            assignedTo {
+                                userId
+                                email
+                            }
+                        }
+                    }
                 }
                 cursor
             }
@@ -279,6 +291,7 @@ class ExportRepo(ExportControllerInterface):
             "projectId": project_id,
             "stageName": stage_name,
             "taskSearch": task_search,
+            "manualLabelingFilters": manual_labeling_filters,
             "first": first,
             "after": after,
         }

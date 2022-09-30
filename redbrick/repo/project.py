@@ -324,5 +324,5 @@ class ProjectRepo(ProjectRepoInterface):
         }
         """
         result = self.client.execute_query(query_string, {})
-        current_user: Dict = result["currentUser"]["me"]
+        current_user: Dict = result["me"]
         return current_user

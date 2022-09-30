@@ -991,6 +991,7 @@ class Export:
                 self.project_id,
                 self.output_stage_name if only_ground_truth else None,
                 name,
+                None,
                 concurrency,
             )
         )
