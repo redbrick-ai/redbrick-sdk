@@ -43,7 +43,7 @@ def process_nifti_download(
                     label["dicom"].get("groupids", []) or []
                 )
                 filename = uniquify_path(
-                    os.path.join(dirname, f"{label['dicom']['instanceid']}.nii")
+                    os.path.join(dirname, f"{label['dicom']['instanceid']}.nii.gz")
                 )
 
                 new_img = nibabel.Nifti1Image(
@@ -131,7 +131,7 @@ def process_nifti_upload(
             if img.get_data_dtype() != numpy.uint16:
                 data = numpy.round(data).astype(numpy.uint16)  # type: ignore
 
-            for i, j, k in zip(*numpy.where(numpy.logical_and(base_data, data))):
+            for i, j, k in zip(*numpy.where(numpy.logical_and(base_data, data))):  # type: ignore
                 sub_instances = tuple(
                     sorted(
                         instance_map[int(base_data[i, j, k])]

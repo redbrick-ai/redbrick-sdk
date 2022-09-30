@@ -127,6 +127,11 @@ def uniquify_path(path: str) -> str:
     return path
 
 
+def is_gzipped_data(data: bytes) -> bool:
+    """Check if data is gzipped."""
+    return data[:2] == b"\x1f\x8b"
+
+
 async def upload_files(
     files: List[Tuple[str, str, str]],
     progress_bar_name: Optional[str] = "Uploading files",
@@ -178,6 +183,7 @@ async def download_files(
     progress_bar_name: Optional[str] = "Downloading files",
     keep_progress_bar: bool = True,
     overwrite: bool = False,
+    zipped: bool = False,
 ) -> List[Optional[str]]:
     """Download files from url to local path (presigned url, file path)."""
 
@@ -198,11 +204,15 @@ async def download_files(
         async with session.get(URL(url, encoded=True)) as response:
             if response.status == 200:
                 data = await response.read()
-                if response.headers.get("Content-Encoding") == "gzip":
+                if not zipped and response.headers.get("Content-Encoding") == "gzip":
                     try:
                         data = gzip.decompress(data)
                     except Exception:  # pylint: disable=broad-except
                         pass
+                if zipped and not is_gzipped_data(data):
+                    data = gzip.compress(data)
+                if zipped and not path.endswith(".gz"):
+                    path += ".gz"
                 if not overwrite:
                     path = uniquify_path(path)
                 async with aiofiles.open(path, "wb") as file_:  # type: ignore
