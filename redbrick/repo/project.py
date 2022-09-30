@@ -313,3 +313,16 @@ class ProjectRepo(ProjectRepoInterface):
         }
         result = self.client.execute_query(query_string, query_variables, False)
         return bool(result and result.get("updateLabelStorage", {}).get("ok"))
+
+    def get_current_user(self) -> Dict:
+        """Get current user."""
+        query_string = """
+        query currentUser {
+            me {
+                userId
+            }
+        }
+        """
+        result = self.client.execute_query(query_string, {})
+        current_user: Dict = result["currentUser"]["me"]
+        return current_user

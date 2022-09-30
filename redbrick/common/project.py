@@ -73,3 +73,7 @@ class ProjectRepoInterface(ABC):
         self, org_id: str, project_id: str, storage_id: str, path: str
     ) -> bool:
         """Set label storage method for a project."""
+
+    @abstractmethod
+    def get_current_user(self) -> Dict:
+        """Get current user."""

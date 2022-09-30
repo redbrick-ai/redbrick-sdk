@@ -3,7 +3,7 @@ import os
 from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import List, Optional
 
-from InquirerPy import inquirer  # type: ignore
+from InquirerPy.prompts.confirm import ConfirmPrompt
 from rich.console import Console
 from rich.table import Table
 from rich.box import ROUNDED
@@ -87,7 +87,7 @@ class CLIConfigController(CLIConfigInterface):
         """Handle empty sub command."""
         if self.project.creds.exists:
             if not self.args.force:
-                confirmation = inquirer.confirm(
+                confirmation = ConfirmPrompt(
                     message="Credentials file already exists. Overwrite?", default=False
                 ).execute()
                 if not confirmation:

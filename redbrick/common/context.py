@@ -1,4 +1,5 @@
 """Container for low-level methods to communicate with API."""
+from typing import Optional
 
 
 class RBContext:
@@ -23,8 +24,18 @@ class RBContext:
         self.learning2: LearningController2Interface
         self.project: ProjectRepoInterface
 
+        self._key_id: Optional[str] = None
+
     def __str__(self) -> str:
         """Get string representation."""
         return repr(self) + (
             "***" + self.client.api_key[-3:] if self.client.api_key else ""
         )
+
+    @property
+    def key_id(self) -> str:
+        """Get key id."""
+        if not self._key_id:
+            key_id: str = self.project.get_current_user()["userId"]
+            self._key_id = key_id
+        return self._key_id

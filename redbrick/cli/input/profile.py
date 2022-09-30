@@ -3,7 +3,8 @@ from datetime import datetime
 import re
 from typing import List, Optional
 
-from InquirerPy import inquirer  # type: ignore
+from InquirerPy.prompts.input import InputPrompt
+from InquirerPy.prompts.fuzzy import FuzzyPrompt
 
 from redbrick.cli.cli_base import CLIInputParams
 
@@ -45,7 +46,7 @@ class CLIInputProfile(CLIInputParams):
         self.entity = self.from_args()
         if self.entity is None:
             if self.add:
-                self.entity = inquirer.text(
+                self.entity = InputPrompt(
                     qmark=">",
                     amark=">",
                     message="Profile name:",
@@ -56,7 +57,7 @@ class CLIInputProfile(CLIInputParams):
                     invalid_message=self.error_message,
                 ).execute()
             elif self.profiles:
-                self.entity = inquirer.fuzzy(
+                self.entity = FuzzyPrompt(
                     qmark=">",
                     amark=">",
                     message="Profile name:",
