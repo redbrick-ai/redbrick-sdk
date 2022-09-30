@@ -25,7 +25,12 @@ type Series = {
   numFrames?: number;
   dimensions?: [number, number, number];
   segmentations?: string | string[];
-  segmentMap?: { [instanceId: number]: { category: string | string[]; attributes?: Attributes } };
+  segmentMap?: {
+    [instanceId: number]: {
+      category: string | string[];
+      attributes?: Attributes;
+    };
+  };
   landmarks?: Landmarks[];
   landmarks3d?: Landmarks3D[];
   measurements?: (MeasureLength | MeasureAngle)[];
@@ -115,7 +120,7 @@ type Classification = {
 };
 
 type Attributes = {
-  [attributeName: string]: string | boolean;
+  [attributeName: string]: string | boolean | string[];
 };
 
 type VideoMetaData = {
