@@ -1,6 +1,6 @@
 """Dicom/nifti related functions."""
 import os
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 import shutil
 
 import nibabel  # type: ignore
@@ -66,7 +66,7 @@ def process_nifti_download(
 
 
 def process_nifti_upload(
-    files: List[str],
+    files: List[str], instances: Set[int], label_validate: bool
 ) -> Tuple[Optional[str], Dict[int, List[int]]]:
     """Process nifti upload files."""
     # pylint: disable=too-many-locals, too-many-branches
@@ -76,7 +76,7 @@ def process_nifti_upload(
     ):
         return None, {}
 
-    if len(files) == 1:
+    if len(files) == 1 and not label_validate:
         return files[0], {}
 
     try:
@@ -116,8 +116,17 @@ def process_nifti_upload(
                     instance_map[inst] = [inst]
                     reverse_instance_map[(inst,)] = inst
 
+        used_instances = set(instance_map.keys())
+
+        if label_validate and instances != used_instances:
+            raise ValueError(
+                "Instance IDs in segmentation file(s) and segmentMap do not match. "
+                + f"Segmentation file(s) have instances: {used_instances} and "
+                + f"segmentMap has instances: {instances}"
+            )
+
         group_instances = sorted(
-            set(range(1, 65536)) - set(instance_map.keys()), reverse=True
+            set(range(1, 65536)) - instances - used_instances, reverse=True
         )
 
         for file_ in files[1:]:
@@ -149,7 +158,11 @@ def process_nifti_upload(
 
             base_data = numpy.where(data, data, base_data)
 
-        base_data = numpy.asarray(base_data, dtype=numpy.uint16)
+        if group_instances and group_instances[0] <= 255:
+            base_img.set_data_dtype(numpy.uint8)
+            base_data = numpy.asarray(base_data, dtype=numpy.uint8)
+        else:
+            base_data = numpy.asarray(base_data, dtype=numpy.uint16)
 
         if isinstance(base_img, nibabel.Nifti1Image):
             new_img = nibabel.Nifti1Image(base_data, base_img.affine, base_img.header)
@@ -159,7 +172,7 @@ def process_nifti_upload(
         dirname = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-        filename = uniquify_path(os.path.join(dirname, "label.nii"))
+        filename = uniquify_path(os.path.join(dirname, "label.nii.gz"))
         nibabel.save(new_img, filename)
 
         group_map: Dict[int, List[int]] = {}

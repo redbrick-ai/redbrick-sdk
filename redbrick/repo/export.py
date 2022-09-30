@@ -248,6 +248,7 @@ class ExportRepo(ExportControllerInterface):
             $projectId: UUID!
             $stageName: String
             $taskSearch: String
+            $manualLabelingFilters: TasksFilter
             $first: Int
             $after: String
         ) {
@@ -256,6 +257,7 @@ class ExportRepo(ExportControllerInterface):
                 projectId: $projectId
                 stageName: $stageName
                 taskSearch: $taskSearch
+                manualLabelingFilters: $manualLabelingFilters
                 first: $first
                 after: $after
             ) {

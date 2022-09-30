@@ -1,6 +1,5 @@
 """Abstract interface to Labeling APIs."""
-
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict
 import aiohttp
 
 from redbrick.common.client import RBClient
@@ -254,106 +253,6 @@ class LabelingRepo(LabelingControllerInterface):
         }
 
         self.client.execute_query(query_string, query_variables)
-
-    def get_tasks_queue(
-        self,
-        org_id: str,
-        project_id: str,
-        stage_name: str,
-        first: int,
-        cursor: Optional[str] = None,
-    ) -> Tuple[List[Dict], str]:
-        """Get task queue."""
-        query_string = """
-            query(
-                $orgId: UUID!
-                $projectId: UUID!
-                $stageName: String!
-                $first: Int!
-                $after: String
-                ) {
-                taskQueue(
-                    orgId: $orgId
-                    projectId: $projectId
-                    stageName: $stageName
-                    first: $first
-                    after: $after
-                ) {
-                    cursor
-                    entries {
-                        taskId
-                        state
-                        assignedTo {
-                            email
-                            userId
-                        }
-                        datapoint {
-                            itemsPresigned: items(presigned: true)
-                            items(presigned: false)
-                            dataType
-                            name
-                    }
-                    }
-                }
-            }
-
-        """
-
-        # EXECUTE THE QUERY
-        query_variables = {
-            "orgId": org_id,
-            "projectId": project_id,
-            "stageName": stage_name,
-            "first": first,
-            "after": cursor,
-        }
-
-        response = self.client.execute_query(query_string, query_variables)
-        return response["taskQueue"]["entries"], response["taskQueue"]["cursor"]
-
-    def get_task_queue_count(
-        self,
-        org_id: str,
-        project_id: str,
-        stage_name: str,
-        for_active_learning: bool = False,
-    ) -> int:
-        """Get the length of the task queue for showing loading."""
-        query_string = """
-            query ($orgId: UUID!
-                $projectId: UUID!
-                $stageName: String!)  {
-                manualLabelingStageSummary(
-                    orgId:$orgId,
-                    projectId:$projectId,
-                    stageName:$stageName
-                ){
-                    taskStatusSummary {
-                    assignedCount
-                    unassignedCount
-                    inProgressCount
-                    }
-                }
-            }
-        """
-        # EXECUTE THE QUERY
-        query_variables = {
-            "orgId": org_id,
-            "projectId": project_id,
-            "stageName": stage_name,
-        }
-
-        response = self.client.execute_query(query_string, query_variables)
-        summary = response["manualLabelingStageSummary"]["taskStatusSummary"]
-        return (
-            int(summary["unassignedCount"])
-            if for_active_learning
-            else int(
-                summary["assignedCount"]
-                + summary["unassignedCount"]
-                + summary["inProgressCount"]
-            )
-        )
 
     async def move_task_to_start(
         self,

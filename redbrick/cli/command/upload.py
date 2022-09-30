@@ -67,6 +67,11 @@ class CLIUploadController(CLIUploadInterface):
         parser.add_argument(
             "--ground-truth", action="store_true", help="Upload tasks to ground truth"
         )
+        parser.add_argument(
+            "--label-validate",
+            action="store_true",
+            help="Validate nifti label instances and segment map",
+        )
 
     def handler(self, args: Namespace) -> None:
         """Handle upload command."""
@@ -329,6 +334,7 @@ class CLIUploadController(CLIUploadInterface):
                     segmentation_mapping,
                     self.args.ground_truth,
                     label_storage_id,
+                    self.args.label_validate,
                 )
             )
 

@@ -164,6 +164,7 @@ class Upload:
         is_ground_truth: bool,
         label_storage_id: str,
         project_label_storage_id: str,
+        label_validate: bool,
     ) -> Dict:
         # pylint: disable=too-many-locals, too-many-branches, too-many-nested-blocks
         # pylint: disable=import-outside-toplevel, too-many-statements
@@ -233,7 +234,9 @@ class Upload:
             download_dir = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
             if not os.path.exists(download_dir):
                 os.makedirs(download_dir)
-            for label_map in labels_map:
+            for volume_index, label_map in enumerate(labels_map):
+                if not isinstance(label_map, dict) or not label_map.get("labelName"):
+                    continue
                 input_labels_path = label_map["labelName"]
                 if isinstance(input_labels_path, list):
                     if not input_labels_path or any(
@@ -287,12 +290,21 @@ class Upload:
                         input_labels_path = None
 
                 if input_labels_path:
+                    labels = point.get("labels", [])
+                    input_labels_path, group_map = process_nifti_upload(
+                        input_labels_path,
+                        set(
+                            label["dicom"]["instanceid"]
+                            for label in labels
+                            if label.get("dicom", {}).get("instanceid")
+                            and (
+                                label.get("volumeindex") is None
+                                or int(label.get("volumeindex")) == volume_index
+                            )
+                        ),
+                        label_validate,
+                    )
                     if isinstance(input_labels_path, list):
-                        input_labels_path, group_map = process_nifti_upload(
-                            input_labels_path
-                        )
-
-                        labels = point.get("labels", [])
                         for label in labels:
                             if label.get("dicom", {}).get("instanceid") in group_map:
                                 label["dicom"]["groupids"] = group_map[
@@ -432,6 +444,7 @@ class Upload:
         segmentation_mapping: Dict,
         is_ground_truth: bool,
         label_storage_id: str,
+        label_validate: bool,
     ) -> List[Dict]:
         # pylint: disable=too-many-locals
         try:
@@ -476,6 +489,7 @@ class Upload:
                     is_ground_truth,
                     label_storage_id,
                     project_label_storage_id,
+                    label_validate,
                 )
                 for point in points
             ]
@@ -638,6 +652,7 @@ class Upload:
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
         label_storage_id: Optional[str] = None,
+        label_validate: bool = False,
     ) -> List[Dict]:
         """
         Create datapoints in project.
@@ -669,6 +684,9 @@ class Upload:
             Optional label storage id to reference nifti segmentations.
             Defaults to items storage_id if not specified.
 
+        label_validate: bool = False
+            Validate label nifti instances and segment map.
+
         Returns
         -------------
         List[Dict]
@@ -699,6 +717,7 @@ class Upload:
                 {},
                 is_ground_truth,
                 label_storage_id or storage_id,
+                label_validate,
             )
         )
 

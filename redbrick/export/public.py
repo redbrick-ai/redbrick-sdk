@@ -681,7 +681,9 @@ class Export:
             added.add(new_series_name)
             files.append((url, f"{new_series_name}.nii"))
 
-        paths = await download_files(files, "Downloading nifti labels", False, True)
+        paths = await download_files(
+            files, "Downloading nifti labels", False, True, True
+        )
 
         for label, path in zip(labels_map, paths):
             label["labelName"] = process_nifti_download(
