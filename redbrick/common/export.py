@@ -1,6 +1,6 @@
 """Abstract interface to exporting data from a project."""
 
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Sequence, Tuple
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -70,6 +70,6 @@ class ExportControllerInterface(ABC):
 
     @abstractmethod
     def presign_items(
-        self, org_id: str, storage_id: str, items: List[Optional[str]]
+        self, org_id: str, storage_id: str, items: Sequence[Optional[str]]
     ) -> List[Optional[str]]:
         """Presign download items."""
