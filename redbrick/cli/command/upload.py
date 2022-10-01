@@ -61,16 +61,23 @@ class CLIUploadController(CLIUploadInterface):
         )
         parser.add_argument(
             "--label-storage",
-            help="Label Storage method: (same as items storage (--storage) [default],"
+            help="Label Storage method: (same as items storage `--storage` [default],"
             + f" {self.STORAGE_REDBRICK}, {self.STORAGE_PUBLIC}, <storage id>)",
         )
         parser.add_argument(
-            "--ground-truth", action="store_true", help="Upload tasks to ground truth"
+            "--ground-truth",
+            action="store_true",
+            help="""Upload tasks directly to ground truth.""",
         )
         parser.add_argument(
             "--label-validate",
             action="store_true",
-            help="Validate nifti label instances and segment map",
+            help="""
+            Validate NIfTI label instances and segmentMap.
+            By default, the uploaded NIfTI files are not validated during upload,
+            which can result in invalid files being uploaded.
+            Using this argument validates the files before upload,
+            but may increase the upload time.""",
         )
 
     def handler(self, args: Namespace) -> None:
