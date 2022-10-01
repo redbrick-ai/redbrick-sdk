@@ -4,21 +4,23 @@ import uuid
 import asyncio
 import os
 from copy import deepcopy
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Set
 import json
 from uuid import uuid4
 
 import aiohttp
 import tenacity
+from tenacity.stop import stop_after_attempt
 import numpy as np
 from shapely.geometry import MultiPolygon, shape as gen_shape  # type: ignore
+import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.logging import print_error, print_warning
+from redbrick.utils.logging import print_error, print_info, print_warning
 from redbrick.utils.segmentation import check_mask_map_format
 from redbrick.utils.files import (
     NIFTI_FILE_TYPES,
@@ -151,7 +153,7 @@ class Upload:
             return {"name": file_name, "filePath": file_path, "error": error}
 
     @tenacity.retry(
-        stop=tenacity.stop_after_attempt(1),
+        stop=stop_after_attempt(1),
         retry_error_callback=lambda _: {},
     )
     async def _create_task(
@@ -162,6 +164,7 @@ class Upload:
         is_ground_truth: bool,
         label_storage_id: str,
         project_label_storage_id: str,
+        label_validate: bool,
     ) -> Dict:
         # pylint: disable=too-many-locals, too-many-branches, too-many-nested-blocks
         # pylint: disable=import-outside-toplevel, too-many-statements
@@ -231,7 +234,9 @@ class Upload:
             download_dir = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
             if not os.path.exists(download_dir):
                 os.makedirs(download_dir)
-            for label_map in labels_map:
+            for volume_index, label_map in enumerate(labels_map):
+                if not isinstance(label_map, dict) or not label_map.get("labelName"):
+                    continue
                 input_labels_path = label_map["labelName"]
                 if isinstance(input_labels_path, list):
                     if not input_labels_path or any(
@@ -285,12 +290,21 @@ class Upload:
                         input_labels_path = None
 
                 if input_labels_path:
+                    labels = point.get("labels", [])
+                    input_labels_path, group_map = process_nifti_upload(
+                        input_labels_path,
+                        set(
+                            label["dicom"]["instanceid"]
+                            for label in labels
+                            if label.get("dicom", {}).get("instanceid")
+                            and (
+                                label.get("volumeindex") is None
+                                or int(label.get("volumeindex")) == volume_index
+                            )
+                        ),
+                        label_validate,
+                    )
                     if isinstance(input_labels_path, list):
-                        input_labels_path, group_map = process_nifti_upload(
-                            input_labels_path
-                        )
-
-                        labels = point.get("labels", [])
                         for label in labels:
                             if label.get("dicom", {}).get("instanceid") in group_map:
                                 label["dicom"]["groupids"] = group_map[
@@ -430,6 +444,7 @@ class Upload:
         segmentation_mapping: Dict,
         is_ground_truth: bool,
         label_storage_id: str,
+        label_validate: bool,
     ) -> List[Dict]:
         # pylint: disable=too-many-locals
         try:
@@ -474,6 +489,7 @@ class Upload:
                     is_ground_truth,
                     label_storage_id,
                     project_label_storage_id,
+                    label_validate,
                 )
                 for point in points
             ]
@@ -529,34 +545,6 @@ class Upload:
         return result
 
     @staticmethod
-    def _check_validity_of_items(items: Optional[List[str]]) -> List[str]:
-        """
-        Check the validity of an items entry with locally stored data.
-
-        Returns
-        ---------
-        List[str]
-            List of invalid items.
-        """
-        invalid = []
-        if not (isinstance(items, list) and items):
-            raise ValueError(
-                "`items` must be a list of urls (one for image and multiple for videoframes)"
-            )
-        for item in items:
-            if not (isinstance(item, str) and item and os.path.isfile(item)):
-                invalid += [item]
-                print_warning(f"{item} is an invalid path")
-                continue
-            try:
-                get_file_type(item)
-            except ValueError as error:
-                invalid += [item]
-                print_error(error)
-
-        return invalid
-
-    @staticmethod
     def _mask_to_polygon(
         mask: np.ndarray,
     ) -> MultiPolygon:
@@ -589,7 +577,7 @@ class Upload:
             # need to keep it a Multi throughout
             if polygon.type == "Polygon":
                 polygon = MultiPolygon([polygon])
-        return polygon
+        return polygon  # type: ignore
 
     @staticmethod
     def mask_to_rbai(  # pylint: disable=too-many-locals
@@ -664,6 +652,7 @@ class Upload:
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
         label_storage_id: Optional[str] = None,
+        label_validate: bool = False,
     ) -> List[Dict]:
         """
         Create datapoints in project.
@@ -695,6 +684,9 @@ class Upload:
             Optional label storage id to reference nifti segmentations.
             Defaults to items storage_id if not specified.
 
+        label_validate: bool = False
+            Validate label nifti instances and segment map.
+
         Returns
         -------------
         List[Dict]
@@ -710,38 +702,24 @@ class Upload:
             we will assign the "items" path to it.
 
         """
-        created, skipped, filtered_points = [], [], []
-        # Check if user wants to do a direct upload
-        if storage_id == StorageMethod.REDBRICK:
-            for point in points:
-                # check path of items, if invalid, skip
-                invalid = Upload._check_validity_of_items(point.get("items"))
-                if invalid:
-                    point_error = deepcopy(point)
-                    point_error["error"] = "Invalid items"
-                    skipped.append(point_error)
-                    continue
-                # update points dict with correct information
-                if "name" not in point:
-                    point["name"] = point["items"][0]
+        points = self.prepare_json_files(
+            [points],
+            str(self.project_type.value).split("_", 1)[0],
+            storage_id,
+            segmentation_mapping,
+        )
 
-                filtered_points.append(deepcopy(point))
-        else:
-            filtered_points = list(map(deepcopy, points))  # type: ignore
-
-        if filtered_points:
-            loop = asyncio.get_event_loop()
-            created = loop.run_until_complete(
-                self._create_tasks(
-                    storage_id,
-                    filtered_points,
-                    segmentation_mapping or {},
-                    is_ground_truth,
-                    label_storage_id or storage_id,
-                )
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(
+            self._create_tasks(
+                storage_id,
+                points,
+                {},
+                is_ground_truth,
+                label_storage_id or storage_id,
+                label_validate,
             )
-
-        return skipped + created
+        )
 
     def create_datapoint_from_masks(
         self,
@@ -850,3 +828,153 @@ class Upload:
             True if successful, else False.
         """
         return self.context.upload.delete_tasks(self.org_id, self.project_id, task_ids)
+
+    def prepare_json_files(
+        self,
+        files_data: List[List[Dict]],
+        data_type: str,
+        storage_id: str,
+        segment_map: Optional[Dict],
+        task_dirs: Optional[List[str]] = None,
+        uploaded: Optional[Set[str]] = None,
+    ) -> List[Dict]:
+        """Prepare items from json files for upload."""
+        # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+        points: List[Dict] = []
+        uploading = set()
+        print_info("Validating files")
+        if not task_dirs:
+            cur_dir = os.getcwd()
+            task_dirs = [cur_dir] * len(files_data)
+        for file_data, task_dir in tqdm.tqdm(  # pylint: disable=too-many-nested-blocks
+            zip(files_data, task_dirs)
+        ):
+            if not file_data:
+                continue
+            if not isinstance(file_data, list) or any(
+                not isinstance(obj, dict) for obj in file_data
+            ):
+                print_warning("Invalid items list")
+                continue
+
+            for item in file_data:
+                if (
+                    item.get("items")
+                    and isinstance(item.get("segmentations"), list)
+                    and len(item["segmentations"]) > 1
+                ):
+                    print_warning(
+                        "Items list contains multiple segmentations."
+                        + " Please use new import format: https://docs.redbrickai.com"
+                        + "/python-sdk/reference/annotation-format-nifti#items-json"
+                    )
+                    continue
+
+            if data_type == "DICOM":
+                if segment_map:
+                    for item in file_data:
+                        item["segmentMap"] = item.get("segmentMap", segment_map)
+
+                output = self.context.upload.validate_and_convert_to_import_format(
+                    json.dumps(file_data), True, storage_id
+                )
+                if not output.get("isValid"):
+                    print_warning(
+                        output.get(
+                            "error",
+                            "Error: Invalid format\n"
+                            + "Docs: https://docs.redbrickai.com/python-sdk/reference"
+                            + "/annotation-format-nifti#items-json",
+                        )
+                    )
+                    continue
+
+                if output.get("converted"):
+                    file_data = json.loads(output["converted"])
+
+            if storage_id == str(StorageMethod.REDBRICK):
+                print_info("Looking in your local file system for items")
+            for item in file_data:
+                if (
+                    not isinstance(item.get("items"), list)
+                    or not item["items"]
+                    or not all(isinstance(i, str) for i in item["items"])
+                ):
+                    print_warning(f"Invalid {item}")
+                    continue
+
+                if "name" not in item:
+                    item["name"] = item["items"][0]
+                if (uploaded and item["name"] in uploaded) or item["name"] in uploading:
+                    print_info(f"Skipping duplicate item name: {item['name']}")
+                    continue
+
+                if "segmentations" in item:
+                    if isinstance(item["segmentations"], list):
+                        item["segmentations"] = {
+                            str(idx): segmentation
+                            for idx, segmentation in enumerate(item["segmentations"])
+                        }
+                    if "labelsMap" not in item and isinstance(
+                        item["segmentations"], dict
+                    ):
+                        item["labelsMap"] = [
+                            {"labelName": segmentation, "imageIndex": int(idx)}
+                            if segmentation
+                            else None
+                            for idx, segmentation in item["segmentations"].items()
+                        ]
+                    del item["segmentations"]
+                elif "labelsPath" in item:
+                    if "labelsMap" not in item:
+                        item["labelsMap"] = [
+                            {
+                                "labelName": item["labelsPath"],
+                                "imageIndex": 0,
+                            }
+                        ]
+                    del item["labelsPath"]
+
+                if item.get("labelsMap"):
+                    if data_type == "DICOM":
+                        for label_map in item["labelsMap"]:
+                            if not isinstance(label_map, dict):
+                                label_map = {}
+                            if not isinstance(label_map["labelName"], list):
+                                label_map["labelName"] = [label_map["labelName"]]
+                            label_map["labelName"] = [
+                                label_name
+                                if os.path.isabs(label_name)
+                                or not os.path.exists(
+                                    os.path.join(task_dir, label_name)
+                                )
+                                else os.path.abspath(os.path.join(task_dir, label_name))
+                                for label_name in label_map["labelName"]
+                            ]
+                            if len(label_map["labelName"]) == 1:
+                                label_map["labelName"] = label_map["labelName"][0]
+                    else:
+                        del item["labelsMap"]
+
+                if storage_id != str(StorageMethod.REDBRICK):
+                    uploading.add(item["name"])
+                    points.append(item)
+                    continue
+
+                for idx, path in enumerate(item["items"]):
+                    item_path = (
+                        path if os.path.isabs(path) else os.path.join(task_dir, path)
+                    )
+                    if os.path.isfile(item_path):
+                        item["items"][idx] = item_path
+                    else:
+                        print_warning(
+                            f"Could not find {path}. "
+                            + "Perhaps you forgot to supply the --storage argument"
+                        )
+                        break
+                else:
+                    uploading.add(item["name"])
+                    points.append(item)
+
+        return points

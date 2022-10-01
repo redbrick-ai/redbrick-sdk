@@ -5,6 +5,9 @@ import requests  # type: ignore
 
 import aiohttp
 import tenacity
+from tenacity.retry import retry_if_not_exception_type
+from tenacity.stop import stop_after_attempt
+from tenacity.wait import wait_exponential
 
 from redbrick import __version__ as sdk_version  # pylint: disable=cyclic-import
 from redbrick.utils.logging import print_error
@@ -35,9 +38,9 @@ class RBClient:
 
     @tenacity.retry(
         reraise=True,
-        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type(PEERLESS_ERRORS),
+        stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_not_exception_type(PEERLESS_ERRORS),
     )
     def execute_query(
         self, query: str, variables: Dict, raise_for_error: bool = True
@@ -54,9 +57,9 @@ class RBClient:
 
     @tenacity.retry(
         reraise=True,
-        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type(PEERLESS_ERRORS),
+        stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_not_exception_type(PEERLESS_ERRORS),
     )
     async def execute_query_async(
         self,

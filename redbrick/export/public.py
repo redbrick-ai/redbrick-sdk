@@ -245,7 +245,9 @@ class Export:
             return [int(color_hex[i : i + 2], 16) for i in (0, 2, 4)]
         color = (
             np.array(
-                cm.tab20b(int(class_id)) if class_id > 20 else cm.tab20c(int(class_id))
+                cm.tab20b(int(class_id))  # type: ignore
+                if class_id > 20
+                else cm.tab20c(int(class_id))  # type: ignore
             )
             * 255
         )
@@ -269,7 +271,7 @@ class Export:
                 next(
                     (
                         color.get("color")
-                        for color in taxonomy_color
+                        for color in (taxonomy_color or [])
                         if not color.get("taskcategory")
                         and color.get("trail", []) == trail
                     ),
@@ -452,7 +454,7 @@ class Export:
                 indexes = np.where(mask == i)
                 color_mask[indexes] = color_map[class_id_reverse[i]]
 
-        return color_mask
+        return color_mask  # type: ignore
 
     @staticmethod
     def _export_png_mask_data(
@@ -679,7 +681,9 @@ class Export:
             added.add(new_series_name)
             files.append((url, f"{new_series_name}.nii"))
 
-        paths = await download_files(files, "Downloading nifti labels", False, True)
+        paths = await download_files(
+            files, "Downloading nifti labels", False, True, True
+        )
 
         for label, path in zip(labels_map, paths):
             label["labelName"] = process_nifti_download(
@@ -987,6 +991,7 @@ class Export:
                 self.project_id,
                 self.output_stage_name if only_ground_truth else None,
                 name,
+                None,
                 concurrency,
             )
         )

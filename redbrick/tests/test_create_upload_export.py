@@ -7,6 +7,9 @@ from typing import Dict, Generator, List, Optional, Tuple
 
 import pytest
 import tenacity
+from tenacity.retry import retry_if_not_exception_type
+from tenacity.stop import stop_after_attempt
+from tenacity.wait import wait_exponential
 
 import redbrick
 from redbrick.common.enums import LabelType, StorageMethod
@@ -96,6 +99,7 @@ def label_test_data(
 ) -> Tuple[List[Dict], List[Dict]]:
     """Label test data."""
     all_tasks, labeled_tasks = [], []
+    labels = None
     if project.project_type == LabelType.IMAGE_CLASSIFY:
         labels = get_test_label_classify
     elif project.project_type == LabelType.IMAGE_POLYGON:
@@ -104,9 +108,9 @@ def label_test_data(
     tasks: List[Dict] = []
     for attempt in tenacity.Retrying(
         reraise=True,
-        stop=tenacity.stop_after_attempt(10),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type(
+        stop=stop_after_attempt(10),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_not_exception_type(
             (KeyboardInterrupt, PermissionError, ValueError)
         ),
     ):
@@ -118,7 +122,7 @@ def label_test_data(
     cur_batch = [
         {
             **task,
-            "labels": labels(),
+            "labels": labels() if labels else [],
         }
         for task in tasks[:to_label]
     ]
@@ -148,12 +152,12 @@ def label_test_data(
 def review_test_data(project: RBProject, labeled_tasks: List[Dict]) -> List[Dict]:
     """Review test data."""
     reviewed_tasks = []
-
+    tasks = []
     for attempt in tenacity.Retrying(
         reraise=True,
-        stop=tenacity.stop_after_attempt(10),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type(
+        stop=stop_after_attempt(10),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_not_exception_type(
             (KeyboardInterrupt, PermissionError, ValueError)
         ),
     ):

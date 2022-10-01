@@ -77,19 +77,6 @@ def test_file_type_extraction_invalid() -> None:
         assert type(error).__name__ == "ValueError"
 
 
-def test_items_validity() -> None:
-    """Check invalid items."""
-    # pylint: disable=protected-access
-    file_name = f"{uuid4()}.png"
-    with open(file_name, "w", encoding="utf-8") as file_:
-        file_.write("test")
-
-    items = [2, "", "missing.txt", file_name]
-    invalid = Upload._check_validity_of_items(items)  # type: ignore
-    os.remove(file_name)
-    assert len(invalid) == len(items) - 1
-
-
 @pytest.mark.slow
 def test_invalid_upload_object(project: RBProject) -> None:
     """Check invalid item list upload."""

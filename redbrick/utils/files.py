@@ -8,6 +8,9 @@ import aiohttp
 import aiofiles  # type: ignore
 from yarl import URL
 import tenacity
+from tenacity.retry import retry_if_not_exception_type
+from tenacity.stop import stop_after_attempt
+from tenacity.wait import wait_exponential
 from natsort import natsorted, ns
 
 from redbrick.common.constants import MAX_CONCURRENCY, MAX_RETRY_ATTEMPTS
@@ -124,6 +127,11 @@ def uniquify_path(path: str) -> str:
     return path
 
 
+def is_gzipped_data(data: bytes) -> bool:
+    """Check if data is gzipped."""
+    return data[:2] == b"\x1f\x8b"
+
+
 async def upload_files(
     files: List[Tuple[str, str, str]],
     progress_bar_name: Optional[str] = "Uploading files",
@@ -133,9 +141,9 @@ async def upload_files(
 
     @tenacity.retry(
         reraise=True,
-        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type((KeyboardInterrupt,)),
+        stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_not_exception_type((KeyboardInterrupt,)),
         retry_error_callback=lambda _: False,
     )
     async def _upload_file(
@@ -175,14 +183,15 @@ async def download_files(
     progress_bar_name: Optional[str] = "Downloading files",
     keep_progress_bar: bool = True,
     overwrite: bool = False,
+    zipped: bool = False,
 ) -> List[Optional[str]]:
     """Download files from url to local path (presigned url, file path)."""
 
     @tenacity.retry(
         reraise=True,
-        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type(
+        stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_not_exception_type(
             (KeyboardInterrupt, PermissionError, ValueError)
         ),
     )
@@ -195,11 +204,15 @@ async def download_files(
         async with session.get(URL(url, encoded=True)) as response:
             if response.status == 200:
                 data = await response.read()
-                if response.headers.get("Content-Encoding") == "gzip":
+                if not zipped and response.headers.get("Content-Encoding") == "gzip":
                     try:
                         data = gzip.decompress(data)
                     except Exception:  # pylint: disable=broad-except
                         pass
+                if zipped and not is_gzipped_data(data):
+                    data = gzip.compress(data)
+                if zipped and not path.endswith(".gz"):
+                    path += ".gz"
                 if not overwrite:
                     path = uniquify_path(path)
                 async with aiofiles.open(path, "wb") as file_:  # type: ignore

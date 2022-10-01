@@ -5,6 +5,9 @@ from typing import Dict, List, Optional, Tuple
 import aiohttp
 from yarl import URL
 import tenacity
+from tenacity.retry import retry_if_not_exception_type
+from tenacity.stop import stop_after_attempt
+from tenacity.wait import wait_exponential
 
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils import aioimgspy
@@ -22,9 +25,9 @@ async def _get_image_dimension_map(
 
     @tenacity.retry(
         reraise=True,
-        stop=tenacity.stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_not_exception_type(
+        stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_not_exception_type(
             (KeyboardInterrupt, PermissionError, ValueError)
         ),
     )
@@ -38,7 +41,7 @@ async def _get_image_dimension_map(
             URL(datapoint["itemsPresigned"][0], encoded=True)
         ) as response:
             temp = await aioimgspy.probe(response.content)  # type: ignore
-        return datapoint["taskId"], (temp["width"], temp["height"])
+        return datapoint["taskId"], (temp["width"], temp["height"]) if temp else (0, 0)
 
     # limit to 30, default is 100, cleanup is done by session
     conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)

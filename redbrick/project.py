@@ -6,6 +6,9 @@ from datetime import datetime
 from dateutil import parser  # type: ignore
 
 import tenacity
+from tenacity.retry import retry_if_not_exception_type
+from tenacity.stop import stop_after_attempt
+from tenacity.wait import wait_exponential
 from redbrick.common.constants import PEERLESS_ERRORS
 
 from redbrick.common.context import RBContext
@@ -174,12 +177,13 @@ class RBProject:
         ]
 
     def __wait_for_project_to_finish_creating(self) -> Dict:
+        project = {}
         try:
             for attempt in tenacity.Retrying(
                 reraise=True,
-                stop=tenacity.stop_after_attempt(10),
-                wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-                retry=tenacity.retry_if_not_exception_type(PEERLESS_ERRORS),
+                stop=stop_after_attempt(10),
+                wait=wait_exponential(multiplier=1, min=1, max=10),
+                retry=retry_if_not_exception_type(PEERLESS_ERRORS),
             ):
                 with attempt:
                     project = self.context.project.get_project(

@@ -1,7 +1,7 @@
 """Input select handler."""
 from typing import Any, List, Optional
 
-from InquirerPy import inquirer  # type: ignore
+from InquirerPy.prompts.fuzzy import FuzzyPrompt
 
 from redbrick.cli.cli_base import CLIInputParams
 
@@ -36,7 +36,7 @@ class CLIInputSelect(CLIInputParams):
         self.entity = self.from_args()
         if self.entity is None:
             if self.options:
-                self.entity = inquirer.fuzzy(
+                self.entity = FuzzyPrompt(
                     qmark=">", amark=">", message=self.name + ":", choices=self.options
                 ).execute()
             else:
