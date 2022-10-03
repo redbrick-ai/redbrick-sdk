@@ -4,7 +4,7 @@ import uuid
 import asyncio
 import os
 from copy import deepcopy
-from typing import List, Dict, Optional, Set
+from typing import List, Dict, Optional, Sequence, Set, Union
 import json
 from uuid import uuid4
 
@@ -237,8 +237,24 @@ class Upload:
             for volume_index, label_map in enumerate(labels_map):
                 if not isinstance(label_map, dict) or not label_map.get("labelName"):
                     continue
-                input_labels_path = label_map["labelName"]
-                if isinstance(input_labels_path, list):
+                input_labels_path: Optional[Union[str, List[str]]] = label_map[
+                    "labelName"
+                ]
+                if isinstance(input_labels_path, str) and os.path.isdir(
+                    input_labels_path
+                ):
+                    input_labels_path = [
+                        os.path.join(input_labels_path, input_file)
+                        for input_file in os.listdir(input_labels_path)
+                    ]
+                    if any(
+                        not os.path.isfile(input_path)
+                        for input_path in input_labels_path
+                    ):
+                        input_labels_path = None
+                elif input_labels_path:
+                    if isinstance(input_labels_path, str):
+                        input_labels_path = [input_labels_path]
                     if not input_labels_path or any(
                         not isinstance(input_path, str)
                         for input_path in input_labels_path
@@ -250,7 +266,7 @@ class Upload:
                             for input_path in input_labels_path
                             if not os.path.isfile(input_path)
                         ]
-                        downloaded_paths = []
+                        downloaded_paths: Sequence[Optional[str]] = []
                         if external_paths:
                             presigned_paths = self.context.export.presign_items(
                                 self.org_id,
@@ -275,23 +291,16 @@ class Upload:
                             input_labels_path = [
                                 input_path
                                 for input_path in input_labels_path
-                                if os.path.isfile(input_path)
-                            ] + downloaded_paths
-
-                elif os.path.isdir(input_labels_path):
-                    input_labels_path = [
-                        os.path.join(input_labels_path, input_file)
-                        for input_file in os.listdir(input_labels_path)
-                    ]
-                    if any(
-                        not os.path.isfile(input_path)
-                        for input_path in input_labels_path
-                    ):
-                        input_labels_path = None
+                                if input_path and os.path.isfile(input_path)
+                            ] + [
+                                downloaded_path
+                                for downloaded_path in downloaded_paths
+                                if downloaded_path
+                            ]
 
                 if input_labels_path:
                     labels = point.get("labels", [])
-                    input_labels_path, group_map = process_nifti_upload(
+                    output_labels_path, group_map = process_nifti_upload(
                         input_labels_path,
                         set(
                             label["dicom"]["instanceid"]
@@ -304,22 +313,22 @@ class Upload:
                         ),
                         label_validate,
                     )
-                    if isinstance(input_labels_path, list):
-                        for label in labels:
-                            if label.get("dicom", {}).get("instanceid") in group_map:
-                                label["dicom"]["groupids"] = group_map[
-                                    label["dicom"]["instanceid"]
-                                ]
+
+                    for label in labels:
+                        if label.get("dicom", {}).get("instanceid") in group_map:
+                            label["dicom"]["groupids"] = group_map[
+                                label["dicom"]["instanceid"]
+                            ]
 
                     if (
-                        input_labels_path
-                        and not os.path.isfile(input_labels_path)
+                        output_labels_path
+                        and not os.path.isfile(output_labels_path)
                         and label_storage_id != project_label_storage_id
                     ):
                         presigned_path = self.context.export.presign_items(
-                            self.org_id, label_storage_id, [input_labels_path]
+                            self.org_id, label_storage_id, [output_labels_path]
                         )[0]
-                        input_labels_path = (
+                        output_labels_path = (
                             await download_files(
                                 [
                                     (
@@ -332,7 +341,7 @@ class Upload:
                             )
                         )[0]
 
-                    if input_labels_path and os.path.isfile(input_labels_path):
+                    if output_labels_path and os.path.isfile(output_labels_path):
                         file_type = NIFTI_FILE_TYPES["nii"]
                         presigned = await self.context.labeling.presign_labels_path(
                             session,
@@ -345,7 +354,7 @@ class Upload:
                             await upload_files(
                                 [
                                     (
-                                        input_labels_path,
+                                        output_labels_path,
                                         presigned["presignedUrl"],
                                         file_type,
                                     )
@@ -356,8 +365,8 @@ class Upload:
                             )
                         )[0]:
                             label_map["labelName"] = presigned["filePath"]
-                    elif input_labels_path:
-                        label_map["labelName"] = input_labels_path
+                    elif output_labels_path:
+                        label_map["labelName"] = output_labels_path
                     else:
                         return {}
                 else:
@@ -497,13 +506,13 @@ class Upload:
 
         await asyncio.sleep(0.250)  # give time to close ssl connections
 
-        for point, task in zip(points, tasks):
-            if not task:
-                print_error(f"Error uploading {point}")
-
         temp_dir = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
+
+        for point, task in zip(points, tasks):
+            if not task:
+                print_error(f"Error uploading {point}")
 
         return tasks
 

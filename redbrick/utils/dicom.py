@@ -66,11 +66,13 @@ def process_nifti_download(
 
 
 def process_nifti_upload(
-    files: List[str], instances: Set[int], label_validate: bool
+    files: Union[str, List[str]], instances: Set[int], label_validate: bool
 ) -> Tuple[Optional[str], Dict[int, List[int]]]:
     """Process nifti upload files."""
     # pylint: disable=too-many-locals, too-many-branches
     # pylint: disable=too-many-statements, too-many-return-statements
+    if isinstance(files, str):
+        files = [files]
     if not files or any(
         not isinstance(file_, str) or not os.path.isfile(file_) for file_ in files
     ):

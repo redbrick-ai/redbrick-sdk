@@ -1,5 +1,5 @@
 """Repo for accessing export apis."""
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Sequence, Tuple
 from datetime import datetime
 from dateutil import parser  # type: ignore
 
@@ -303,7 +303,7 @@ class ExportRepo(ExportControllerInterface):
         return entries, generic_tasks.get("cursor")
 
     def presign_items(
-        self, org_id: str, storage_id: str, items: List[Optional[str]]
+        self, org_id: str, storage_id: str, items: Sequence[Optional[str]]
     ) -> List[Optional[str]]:
         """Presign download items."""
         query = """
