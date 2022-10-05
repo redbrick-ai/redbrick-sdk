@@ -160,9 +160,10 @@ def process_nifti_upload(
 
         if label_validate and instances != used_instances:
             raise ValueError(
-                "Instance IDs in segmentation file(s) and segmentMap do not match. "
+                "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
                 + f"Segmentation file(s) have instances: {used_instances} and "
-                + f"segmentMap has instances: {instances}"
+                + f"segmentMap has instances: {instances}\n"
+                + f"Segmentation(s): {files}"
             )
 
         group_instances = sorted(
