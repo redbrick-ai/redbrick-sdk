@@ -12,6 +12,9 @@ from typing import Generator, Optional, Tuple
 
 import pytest
 import tenacity
+from tenacity.retry import retry_if_not_exception_type
+from tenacity.stop import stop_after_attempt
+from tenacity.wait import wait_exponential
 
 from redbrick.common.enums import LabelType, StorageMethod
 from redbrick.project import RBProject
@@ -110,11 +113,12 @@ def label_data(project: RBProject, num_tasks: int) -> None:
     """Label data."""
     categories = ["bus", "bike", "truck", "motor", "car", "train", "rider"]
     while num_tasks:
+        tasks = []
         for attempt in tenacity.Retrying(
             reraise=True,
-            stop=tenacity.stop_after_attempt(10),
-            wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-            retry=tenacity.retry_if_not_exception_type(
+            stop=stop_after_attempt(10),
+            wait=wait_exponential(multiplier=1, min=1, max=10),
+            retry=retry_if_not_exception_type(
                 (KeyboardInterrupt, PermissionError, ValueError)
             ),
         ):

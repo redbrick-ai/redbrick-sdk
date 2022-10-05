@@ -7,13 +7,11 @@ from argparse import ArgumentError, ArgumentParser, Namespace
 import sys
 from typing import List, Dict, Optional, Union
 
-import tqdm  # type: ignore
-
 from redbrick.cli.input.select import CLIInputSelect
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIUploadInterface
 from redbrick.common.enums import StorageMethod, ImportTypes
-from redbrick.utils.logging import print_info, print_warning
+from redbrick.utils.logging import print_info
 from redbrick.utils.files import (
     JSON_FILE_TYPES,
     IMAGE_FILE_TYPES,
@@ -63,11 +61,23 @@ class CLIUploadController(CLIUploadInterface):
         )
         parser.add_argument(
             "--label-storage",
-            help="Label Storage method: (same as items storage (--storage) [default],"
+            help="Label Storage method: (same as items storage `--storage` [default],"
             + f" {self.STORAGE_REDBRICK}, {self.STORAGE_PUBLIC}, <storage id>)",
         )
         parser.add_argument(
-            "--ground-truth", action="store_true", help="Upload tasks to ground truth"
+            "--ground-truth",
+            action="store_true",
+            help="""Upload tasks directly to ground truth.""",
+        )
+        parser.add_argument(
+            "--label-validate",
+            action="store_true",
+            help="""
+            Validate NIfTI label instances and segmentMap.
+            By default, the uploaded NIfTI files are not validated during upload,
+            which can result in invalid files being uploaded.
+            Using this argument validates the files before upload,
+            but may increase the upload time.""",
         )
 
     def handler(self, args: Namespace) -> None:
@@ -182,147 +192,21 @@ class CLIUploadController(CLIUploadInterface):
         points: List[Dict] = []
         uploading = set()
         if self.args.json:
-            segment_map = {**segmentation_mapping}
-            segmentation_mapping = {}
-            print_info("Validating files")
-            for item_group in tqdm.tqdm(items_list):
+            files_data: List[List[Dict]] = []
+            task_dirs: List[str] = []
+            for item_group in items_list:
+                task_dirs.append(os.path.dirname(item_group[0]))
                 with open(item_group[0], "r", encoding="utf-8") as file_:
-                    file_data: List[Dict] = json.load(file_)
-                if not file_data:
-                    continue
-                if not isinstance(file_data, list) or any(
-                    not isinstance(obj, dict) for obj in file_data
-                ):
-                    print_warning(f"{item_group[0]} is not a list of task objects")
-                    continue
-
-                for item in file_data:
-                    if (
-                        item.get("items")
-                        and isinstance(item.get("segmentations"), list)
-                        and len(item["segmentations"]) > 1
-                    ):
-                        print_warning(
-                            f"{item_group[0]} contains multiple segmentations."
-                            + " Please use new import format: https://docs.redbrickai.com"
-                            + "/python-sdk/reference/annotation-format-nifti#items-json"
-                        )
-                        continue
-
-                if data_type == "DICOM":
-                    if segment_map:
-                        for item in file_data:
-                            item["segmentMap"] = item.get("segmentMap", segment_map)
-
-                    output = self.project.context.upload.validate_and_convert_to_import_format(
-                        json.dumps(file_data), True, storage_id
-                    )
-                    if not output.get("isValid"):
-                        print_warning(
-                            f"File: {item_group[0]}\n"
-                            + output.get(
-                                "error",
-                                "Error: Invalid format\n"
-                                + "Docs: https://docs.redbrickai.com/python-sdk/reference"
-                                + "/annotation-format-nifti#items-json",
-                            )
-                        )
-                        continue
-
-                    if output.get("converted"):
-                        file_data = json.loads(output["converted"])
-
-                if storage_id == str(StorageMethod.REDBRICK):
-                    print_info(
-                        f"Looking in your local file system for items mentioned in {item_group[0]}"
-                    )
-                for item in file_data:
-                    if (
-                        not isinstance(item.get("items"), list)
-                        or not item["items"]
-                        or not all(isinstance(i, str) for i in item["items"])
-                    ):
-                        print_warning(f"Invalid {item} in {item_group[0]}")
-                        continue
-
-                    if "name" not in item:
-                        item["name"] = item["items"][0]
-                    if item["name"] in upload_cache or item["name"] in uploading:
-                        print_info(f"Skipping duplicate item name: {item['name']}")
-                        continue
-
-                    task_dir = os.path.dirname(item_group[0])
-                    if "segmentations" in item:
-                        if isinstance(item["segmentations"], list):
-                            item["segmentations"] = {
-                                str(idx): segmentation
-                                for idx, segmentation in enumerate(
-                                    item["segmentations"]
-                                )
-                            }
-                        if "labelsMap" not in item and isinstance(
-                            item["segmentations"], dict
-                        ):
-                            item["labelsMap"] = [
-                                {"labelName": segmentation, "imageIndex": int(idx)}
-                                if segmentation
-                                else None
-                                for idx, segmentation in item["segmentations"].items()
-                            ]
-                        del item["segmentations"]
-                    elif "labelsPath" in item:
-                        if "labelsMap" not in item:
-                            item["labelsMap"] = [
-                                {
-                                    "labelName": item["labelsPath"],
-                                    "imageIndex": 0,
-                                }
-                            ]
-                        del item["labelsPath"]
-
-                    if item.get("labelsMap"):
-                        if data_type == "DICOM":
-                            for label_map in item["labelsMap"]:
-                                if not isinstance(label_map["labelName"], list):
-                                    label_map["labelName"] = [label_map["labelName"]]
-                                label_map["labelName"] = [
-                                    label_name
-                                    if os.path.isabs(label_name)
-                                    or not os.path.exists(
-                                        os.path.join(task_dir, label_name)
-                                    )
-                                    else os.path.abspath(
-                                        os.path.join(task_dir, label_name)
-                                    )
-                                    for label_name in label_map["labelName"]
-                                ]
-                                if len(label_map["labelName"]) == 1:
-                                    label_map["labelName"] = label_map["labelName"][0]
-                        else:
-                            del item["labelsMap"]
-
-                    if storage_id != str(StorageMethod.REDBRICK):
-                        uploading.add(item["name"])
-                        points.append(item)
-                        continue
-
-                    for idx, path in enumerate(item["items"]):
-                        item_path = (
-                            path
-                            if os.path.isabs(path)
-                            else os.path.join(task_dir, path)
-                        )
-                        if os.path.isfile(item_path):
-                            item["items"][idx] = item_path
-                        else:
-                            print_warning(
-                                f"Could not find {path}. "
-                                + "Perhaps you forgot to supply the --storage argument"
-                            )
-                            break
-                    else:
-                        uploading.add(item["name"])
-                        points.append(item)
+                    files_data.append(json.load(file_))
+            points = self.project.project.upload.prepare_json_files(
+                files_data,
+                data_type,
+                storage_id,
+                segmentation_mapping,
+                task_dirs,
+                upload_cache,
+            )
+            segmentation_mapping = {}
         else:
             for igroup in items_list:
                 if isinstance(igroup, dict):
@@ -418,6 +302,8 @@ class CLIUploadController(CLIUploadInterface):
                         if label_data.get("labelsMap"):
                             item["labelsMap"] = []
                             for label_map in label_data["labelsMap"]:
+                                if not isinstance(label_map, dict):
+                                    label_map = {}
                                 if not isinstance(label_map["labelName"], list):
                                     label_map["labelName"] = [label_map["labelName"]]
                                 label_map["labelName"] = [
@@ -455,6 +341,7 @@ class CLIUploadController(CLIUploadInterface):
                     segmentation_mapping,
                     self.args.ground_truth,
                     label_storage_id,
+                    self.args.label_validate,
                 )
             )
 

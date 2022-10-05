@@ -2,7 +2,7 @@
 import os
 import json
 import asyncio
-from typing import Dict, List, Optional, Tuple, Callable, Any, Union, TypeVar, cast
+from typing import Dict, List, Optional, Callable, Any, Union, TypeVar, cast
 from functools import partial, wraps
 from copy import deepcopy
 
@@ -12,7 +12,6 @@ import tqdm  # type: ignore
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.utils.files import NIFTI_FILE_TYPES, upload_files
 from redbrick.common.context import RBContext
-from redbrick.common.enums import TaskStates
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label
 from redbrick.utils.async_utils import gather_with_concurrency
@@ -233,33 +232,6 @@ class Learning2:
         taxonomy, td_type = self.context.learning2.get_taxonomy_and_type(
             self.org_id, self.project_id
         )
-
-        def _filter_active_learning_tasks(
-            org_id: str,
-            project_id: str,
-            stage_name: str,
-            concurrency: int,
-            cursor: Optional[str],
-        ) -> Tuple[List[Dict], str]:
-            entries, new_cursor = self.context.labeling.get_tasks_queue(
-                org_id, project_id, stage_name, concurrency, cursor
-            )
-            return [
-                item for item in entries if item["state"] == TaskStates.UNASSIGNED.value
-            ], new_cursor
-
-        my_queue_iter = PaginationIterator(
-            partial(
-                _filter_active_learning_tasks,
-                self.org_id,
-                self.project_id,
-                self.stage_name,
-                concurrency,
-            )
-        )
-        tasks_in_queue = self.context.labeling.get_task_queue_count(
-            self.org_id, self.project_id, self.stage_name, True
-        )
         general_info = self.context.export.get_output_info(self.org_id, self.project_id)
 
         my_finished_iter = PaginationIterator(
@@ -292,25 +264,32 @@ class Learning2:
                 "labelsMap": label_data.get("labelsMap", []) or [],
             }
 
-        def _parse_unlabeled_entry(item: Dict) -> Dict:
-            datapoint = item.get("datapoint", {}) or {}
-            items_presigned = datapoint.get("itemsPresigned", []) or []
-            name = datapoint.get("name")
-            items = datapoint.get("items", []) or []
-            task_id = item.get("taskId")
-            return {
-                "taskId": task_id,
-                "items": items,
-                "status": item.get("state"),
-                "itemsPresigned": items_presigned,
-                "name": name,
-            }
+        my_iter = PaginationIterator(
+            partial(
+                self.context.export.task_search,
+                self.org_id,
+                self.project_id,
+                self.stage_name,
+                None,
+                {"userId": None},
+                concurrency,
+            )
+        )
 
         print_info("Downloading unfinished tasks")
-        unlabeled = [
-            _parse_unlabeled_entry(item)
-            for item in tqdm.tqdm(my_queue_iter, unit=" tasks", total=tasks_in_queue)
-        ]
+        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
+            unlabeled = [
+                {
+                    "taskId": task["taskId"],
+                    "name": task["datapoint"]["name"],
+                    "assignedTo": None,
+                    "status": task["currentStageSubTask"].get("status"),
+                    "items": task["datapoint"]["items"],
+                    "itemsPresigned": task["datapoint"]["itemsPresigned"],
+                    "createdAt": task["createdAt"],
+                }
+                for task in progress
+            ]
 
         print_info("Downloading finished tasks")
         labeled = [

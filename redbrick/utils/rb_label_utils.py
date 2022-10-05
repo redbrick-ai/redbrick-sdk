@@ -405,7 +405,7 @@ def dicom_rb_format(task: Dict, old_format: bool, no_consensus: bool) -> Dict:
 
             if consensus_task.get("scores"):
                 output_consensus_task["scores"] = []
-                for consensus_score in consensus_task["scores"]:
+                for consensus_score in consensus_task["scores"] or []:
                     score = {}
                     if consensus_score.get("userId"):
                         score["secondaryUserId"] = consensus_score["userId"]

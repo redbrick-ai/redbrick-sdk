@@ -11,7 +11,7 @@ import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.constants import MAX_CONCURRENCY
-from redbrick.utils.logging import print_error, print_info
+from redbrick.utils.logging import print_error
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.rb_label_utils import clean_rb_label
@@ -43,7 +43,7 @@ class Labeling:
 
     def get_tasks(self, stage_name: str, count: int = 1) -> List[Dict]:
         """
-        Get a list of tasks from stage_name.
+        Get a list of tasks from stage_name for current API Key to work upon.
 
         >>> project = redbrick.get_project(...)
         >>> label_tasks = project.labeling.get_tasks(...)
@@ -205,32 +205,99 @@ class Labeling:
             refresh,
         )
 
-    def get_task_queue(self, stage_name: str, concurrency: int = 200) -> List[Dict]:
-        """Get all tasks in queue."""
-        temp = self.context.labeling.get_tasks_queue
+    def get_task_queue(
+        self,
+        stage_name: str,
+        concurrency: int = 50,
+        user_id: Optional[str] = None,
+        fetch_unassigned: bool = True,
+    ) -> List[Dict]:
+        """Get all tasks in queue.
+
+        Parameters
+        --------------
+        stage_name: str
+            The stage for which you want to query the task queue.
+
+        concurrency: int = 50
+            The number of tasks to retrieve at a time.
+            We recommend keeping this <= 50.
+
+        user_id: Optional[str] = None
+            The user id for which you want to query the task queue.
+            If None, will query for current API Key.
+
+        fetch_unassigned: bool = True
+            Whether to fetch unassigned tasks.
+
+        Returns
+        ---------------
+        List[Dict]
+            List of tasks in queue - [{"taskId", "name", "createdAt"}]
+        """
+        if not user_id:
+            user_id = self.context.key_id
+
         my_iter = PaginationIterator(
-            partial(temp, self.org_id, self.project_id, stage_name, concurrency)
+            partial(
+                self.context.export.task_search,
+                self.org_id,
+                self.project_id,
+                stage_name,
+                None,
+                {"userId": user_id},
+                concurrency,
+            )
         )
 
-        count = self.context.labeling.get_task_queue_count(
-            self.org_id, self.project_id, stage_name
-        )
+        with tqdm.tqdm(
+            my_iter, unit=" datapoints", desc="Fetching assigned tasks"
+        ) as progress:
+            datapoints = [
+                {
+                    "taskId": task["taskId"],
+                    "name": task["datapoint"]["name"],
+                    "assignedTo": (
+                        (task["currentStageSubTask"] or {}).get("assignedTo") or {}
+                    ).get("email"),
+                    "status": (task["currentStageSubTask"] or {}).get("state"),
+                    "items": task["datapoint"]["items"],
+                    "itemsPresigned": task["datapoint"]["itemsPresigned"],
+                    "createdAt": task["createdAt"],
+                }
+                for task in progress
+            ]
 
-        def _parse_entry(item: Dict) -> Dict:
-            return {
-                "taskId": item["taskId"],
-                "assignedTo": (item.get("assignedTo") or {}).get("email"),
-                "status": item["state"],
-                "items": item["datapoint"]["items"],
-                "itemsPresigned": item["datapoint"]["itemsPresigned"],
-                "name": item["datapoint"]["name"],
-            }
+        if fetch_unassigned:
+            my_iter = PaginationIterator(
+                partial(
+                    self.context.export.task_search,
+                    self.org_id,
+                    self.project_id,
+                    stage_name,
+                    None,
+                    {"userId": None},
+                    concurrency,
+                )
+            )
 
-        print_info("Downloading tasks in stage")
-        return [
-            _parse_entry(val)
-            for val in tqdm.tqdm(my_iter, unit=" datapoints", total=count)
-        ]
+            with tqdm.tqdm(
+                my_iter, unit=" datapoints", desc="Fetching unassigned tasks"
+            ) as progress:
+                datapoints += [
+                    {
+                        "taskId": task["taskId"],
+                        "name": task["datapoint"]["name"],
+                        "assignedTo": None,
+                        "status": (task["currentStageSubTask"] or {}).get("state"),
+                        "items": task["datapoint"]["items"],
+                        "itemsPresigned": task["datapoint"]["itemsPresigned"],
+                        "createdAt": task["createdAt"],
+                    }
+                    for task in progress
+                ]
+
+        return datapoints
 
     async def _tasks_to_start(self, task_ids: List[str]) -> None:
         conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)

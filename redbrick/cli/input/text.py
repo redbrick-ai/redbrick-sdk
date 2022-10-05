@@ -1,7 +1,7 @@
 """Input text handler."""
 from typing import Optional
 
-from InquirerPy import inquirer  # type: ignore
+from InquirerPy.prompts.input import InputPrompt
 
 from redbrick.cli.cli_base import CLIInputParams
 
@@ -36,7 +36,7 @@ class CLIInputText(CLIInputParams):
         """Get filtered text value post validation."""
         self.entity = self.from_args()
         if self.entity is None:
-            self.entity = inquirer.text(
+            self.entity = InputPrompt(
                 qmark=">",
                 amark=">",
                 message=self.name + ":",

@@ -1,6 +1,5 @@
 """Abstract interface to exporting."""
-
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict
 from abc import ABC, abstractmethod
 import aiohttp
 
@@ -63,27 +62,6 @@ class LabelingControllerInterface(ABC):
         refresh: bool = False,
     ) -> None:
         """Assign tasks to specified email or current API key."""
-
-    @abstractmethod
-    def get_tasks_queue(
-        self,
-        org_id: str,
-        project_id: str,
-        stage_name: str,
-        first: int,
-        cursor: Optional[str] = None,
-    ) -> Tuple[List[Dict], str]:
-        """Get task queue."""
-
-    @abstractmethod
-    def get_task_queue_count(
-        self,
-        org_id: str,
-        project_id: str,
-        stage_name: str,
-        for_active_learning: bool = False,
-    ) -> int:
-        """Get the length of the task queue for showing loading."""
 
     @abstractmethod
     async def move_task_to_start(
