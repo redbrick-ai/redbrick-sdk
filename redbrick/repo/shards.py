@@ -91,6 +91,63 @@ colorMap {
     taskcategory
 }
 archived
+isNew
+taxId
+studyClassify {
+    name
+    attrType
+    attrId
+    options {
+        name
+        optionId
+        color
+        archived
+    }
+    archived
+}
+seriesClassify {
+    name
+    attrType
+    attrId
+    options {
+        name
+        optionId
+        color
+        archived
+    }
+    archived
+}
+instanceClassify {
+    name
+    attrType
+    attrId
+    options {
+        name
+        optionId
+        color
+        archived
+    }
+    archived
+}
+objectTypes {
+    category
+    classId
+    labelType
+    attributes {
+        name
+        attrType
+        attrId
+        options {
+            name
+            optionId
+            color
+            archived
+        }
+        archived
+    }
+    color
+    archived
+}
 """
 
 TASK_DATA_SHARD = """

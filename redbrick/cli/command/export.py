@@ -61,6 +61,9 @@ class CLIExportController(CLIExportInterface):
             if it is enabled for the given project.""",
         )
         parser.add_argument(
+            "--png", action="store_true", help="Export labels as png masks"
+        )
+        parser.add_argument(
             "--clear-cache", action="store_true", help="Clear local cache"
         )
         parser.add_argument(
@@ -275,7 +278,13 @@ class CLIExportController(CLIExportInterface):
             os.makedirs(nifti_dir, exist_ok=True)
             task_map = os.path.join(export_dir, "tasks.json")
             self.project.project.export.export_nifti_label_data(
-                data, nifti_dir, task_map, bool(self.args.old_format), no_consensus
+                data,
+                taxonomy,
+                nifti_dir,
+                task_map,
+                bool(self.args.old_format),
+                no_consensus,
+                bool(self.args.png),
             )
             print_info(f"Exported: {task_map}")
             print_info(f"Exported nifti to: {nifti_dir}")
