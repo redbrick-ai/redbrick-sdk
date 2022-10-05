@@ -14,12 +14,12 @@ traceback.install(
 )
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG if debug_mode else logging.INFO,
     format="%(message)s",
     datefmt="[%X]",
     handlers=[
         RichHandler(
-            level=logging.INFO,
+            level=logging.DEBUG if debug_mode else logging.INFO,
             show_path=debug_mode,
             enable_link_path=debug_mode,
             markup=True,
@@ -27,6 +27,11 @@ logging.basicConfig(
     ],
 )
 logger = logging.getLogger("rich")
+
+
+def print_debug(text: str) -> None:
+    """Log debug information."""
+    logger.debug(text)
 
 
 def print_info(text: str) -> None:
