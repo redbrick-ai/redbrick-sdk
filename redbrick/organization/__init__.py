@@ -9,6 +9,7 @@ from redbrick.common.context import RBContext
 from redbrick.project import RBProject
 from redbrick.utils.logging import print_info, print_warning
 from redbrick.utils.pagination import PaginationIterator
+from redbrick.utils.rb_tax_utils import format_taxonomy
 from .basic_project import get_active_learning_project, get_basic_project
 
 
@@ -39,7 +40,7 @@ class RBOrganization:
         taxonomies = self.context.project.get_taxonomies(self._org_id)
         if only_name:
             return [tax["name"] for tax in taxonomies]
-        return taxonomies
+        return list(map(format_taxonomy, taxonomies))
 
     def _all_projects_raw(self) -> List[Dict]:
         """Get and filter entries from server."""
@@ -201,5 +202,24 @@ class RBOrganization:
             if task_categories
             else task_categories,
             task_attributes,
+        ):
+            print_info(f"Successfully created taxonomy: {name}")
+
+    def create_taxonomy_new(
+        self,
+        name: str,
+        study_classify: Optional[List[Dict]] = None,
+        series_classify: Optional[List[Dict]] = None,
+        instance_classify: Optional[List[Dict]] = None,
+        object_types: Optional[List[Dict]] = None,
+    ) -> None:
+        """Create New Taxonomy."""
+        if self.context.project.create_taxonomy_new(
+            self.org_id,
+            name,
+            study_classify,
+            series_classify,
+            instance_classify,
+            object_types,
         ):
             print_info(f"Successfully created taxonomy: {name}")
