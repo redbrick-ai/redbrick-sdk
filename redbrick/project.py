@@ -176,6 +176,27 @@ class RBProject:
             stage for stage in self._stages if stage["brickName"] == "expert-review"
         ]
 
+    @property
+    def members(self) -> List[Dict]:
+        """Get list of project members."""
+        members = self.context.project.get_members(self.org_id, self.project_id)
+        project_members = []
+        for member in members:
+            member_obj = member.get("member", {})
+            user_obj = member_obj.get("user", {})
+            project_members.append(
+                {
+                    "userId": user_obj.get("userId"),
+                    "email": user_obj.get("email"),
+                    "givenName": user_obj.get("givenName"),
+                    "familyName": user_obj.get("familyName"),
+                    "role": member_obj.get("role"),
+                    "tags": member_obj.get("tags"),
+                    "stageAccess": member.get("stageAccess"),
+                }
+            )
+        return project_members
+
     def __wait_for_project_to_finish_creating(self) -> Dict:
         project = {}
         try:
