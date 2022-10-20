@@ -141,8 +141,8 @@ class Upload:
         from redbrick.utils.dicom import process_nifti_upload
 
         logger.debug(
-            f"{storage_id=}, {is_ground_truth=}, {label_storage_id=}, "
-            + f"{project_label_storage_id=}, {label_validate=}"
+            f"storage={storage_id}, gt={is_ground_truth}, label_storage={label_storage_id}, "
+            + f"project_label_storage={project_label_storage_id}, validate={label_validate}"
         )
         if storage_id == StorageMethod.REDBRICK:
             logger.debug("Uploading files to Redbrick")
