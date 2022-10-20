@@ -134,15 +134,26 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
 
     for label in labels:
         volume = series[label.get("volumeindex", 0)]
-        label_obj = {
-            "category": label["category"][0][1]
-            if len(label["category"][0]) == 2
-            else label["category"][0][1:]
-        }
+        label_obj = {}
+        if "category" in label and label["category"] is not None:
+            label_obj["category"] = (
+                label["category"]
+                if not isinstance(label["category"], list)
+                else label["category"][0][1]
+                if isinstance(label["category"][0], list)
+                and len(label["category"][0]) == 2
+                else label["category"][0][1:]
+                if isinstance(label["category"][0], list)
+                and len(label["category"][0]) > 2
+                else label["category"]
+            )
+
         attributes = {}
         for attribute in label.get("attributes", []) or []:
             attributes[attribute["name"]] = (
-                True
+                attribute["value"]
+                if not isinstance(attribute["value"], str)
+                else True
                 if attribute["value"].lower() == "true"
                 else False
                 if attribute["value"].lower() == "false"
@@ -166,9 +177,9 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
                 }
             }
 
-        if label.get("tasklevelclassify"):
+        if label.get("tasklevelclassify") or label.get("studyclassify"):
             output_task["classification"] = {**label_obj}
-        elif label.get("multiclassify"):
+        elif label.get("multiclassify") or label.get("seriesclassify"):
             volume["classifications"] = volume.get("classifications", []) or []
             volume["classifications"].append(
                 {
@@ -262,7 +273,7 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
                         {"xNorm": point["xnorm"], "yNorm": point["ynorm"]}
                         for point in label["polyline"]
                     ],
-                    **label_obj,
+                    **label_obj,  # type: ignore
                     **video_metadata,  # type: ignore
                 }
             )
@@ -304,7 +315,7 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
                         {"xNorm": point["xnorm"], "yNorm": point["ynorm"]}
                         for point in label["polygon"]
                     ],
-                    **label_obj,
+                    **label_obj,  # type: ignore
                     **video_metadata,  # type: ignore
                 }
             )

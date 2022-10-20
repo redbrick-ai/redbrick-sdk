@@ -20,11 +20,10 @@ from redbrick.common.enums import LabelType
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.logging import print_error, print_info, print_warning
+from redbrick.utils.logging import log_error, logger
 from redbrick.utils.segmentation import check_mask_map_format
 from redbrick.utils.files import (
     NIFTI_FILE_TYPES,
-    VIDEO_FILE_TYPES,
     download_files,
     get_file_type,
     upload_files,
@@ -102,7 +101,7 @@ class Upload:
             return point_success
         except Exception as error:  # pylint:disable=broad-except
             if isinstance(error, AssertionError):
-                print_error(error)
+                log_error(error)
             point_error = deepcopy(point)
             point_error["error"] = error
             return point_error
@@ -123,35 +122,6 @@ class Upload:
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return tasks
 
-    async def _item_upload(
-        self,
-        session: aiohttp.ClientSession,
-        storage_id: str,
-        file_name: str,
-        file_path: str,
-        is_ground_truth: bool,
-    ) -> Dict:
-        """Try to upload an item."""
-        try:
-            data_type, task_type = str(self.project_type.value).split("_", 1)
-            response = await self.context.upload.item_upload_async(
-                session,
-                self.org_id,
-                self.project_id,
-                storage_id,
-                data_type,
-                task_type,
-                file_path,
-                file_name,
-                get_file_type(file_path)[1],
-                is_ground_truth,
-            )
-            assert response.get("ok"), "Failed to create task"
-            return {"name": file_name, "filePath": file_path, "response": response}
-        except Exception as error:  # pylint:disable=broad-except
-            print_error(error)
-            return {"name": file_name, "filePath": file_path, "error": error}
-
     @tenacity.retry(
         stop=stop_after_attempt(1),
         retry_error_callback=lambda _: {},
@@ -170,7 +140,12 @@ class Upload:
         # pylint: disable=import-outside-toplevel, too-many-statements
         from redbrick.utils.dicom import process_nifti_upload
 
+        logger.debug(
+            f"storage={storage_id}, gt={is_ground_truth}, label_storage={label_storage_id}, "
+            + f"project_label_storage={project_label_storage_id}, validate={label_validate}"
+        )
         if storage_id == StorageMethod.REDBRICK:
+            logger.debug("Uploading files to Redbrick")
             file_types, upload_items, presigned_items = [], [], []
             try:
                 for item in point["items"]:
@@ -179,8 +154,9 @@ class Upload:
                 presigned_items = self._generate_upload_presigned_url(
                     upload_items, file_types
                 )
+                logger.debug(f"Presigned items: {presigned_items}")
             except Exception:  # pylint:disable=broad-except
-                print_error(f"Failed to upload {point['name']}")
+                log_error(f"Failed to upload {point['name']}")
                 return {
                     "name": point["name"],
                     "error": f"Failed to upload {point['name']}",
@@ -201,7 +177,7 @@ class Upload:
             )
 
             if not all(uploaded):
-                print_error(f"Failed to upload {point['name']}")
+                log_error(f"Failed to upload {point['name']}")
                 return {
                     "name": point["name"],
                     "error": f"Failed to upload {point['name']}",
@@ -212,177 +188,168 @@ class Upload:
             ]
 
         labels_map: List[Dict] = []
-        data_type = str(self.project_type.value).split("_", 1)[0]
-        if data_type == "DICOM":
-            if (
-                "labelsMap" not in point
-                and point.get("segmentations")
-                and len(point["segmentations"]) == len(point["items"])
-            ):
-                point["labelsMap"] = [
-                    {"labelName": segmentation, "imageIndex": idx}
-                    for idx, segmentation in enumerate(point["segmentations"])
-                ]
-                del point["segmentations"]
-            elif "labelsMap" not in point and point.get("labelsPath"):
-                point["labelsMap"] = [
-                    {"labelName": point["labelsPath"], "imageIndex": 0}
-                ]
-                del point["labelsPath"]
 
-            labels_map = point.get("labelsMap", []) or []  # type: ignore
-            download_dir = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
-            if not os.path.exists(download_dir):
-                os.makedirs(download_dir)
-            for volume_index, label_map in enumerate(labels_map):
-                if not isinstance(label_map, dict) or not label_map.get("labelName"):
-                    continue
-                input_labels_path: Optional[Union[str, List[str]]] = label_map[
-                    "labelName"
+        if (
+            "labelsMap" not in point
+            and point.get("segmentations")
+            and len(point["segmentations"]) == len(point["items"])
+        ):
+            logger.debug("Converting segmentations to labelsMap")
+            point["labelsMap"] = [
+                {"labelName": segmentation, "imageIndex": idx}
+                for idx, segmentation in enumerate(point["segmentations"])
+            ]
+            del point["segmentations"]
+        elif "labelsMap" not in point and point.get("labelsPath"):
+            logger.debug("Converting labelsPath to labelsMap")
+            point["labelsMap"] = [{"labelName": point["labelsPath"], "imageIndex": 0}]
+            del point["labelsPath"]
+
+        labels_map = point.get("labelsMap", []) or []  # type: ignore
+        download_dir = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
+        if not os.path.exists(download_dir):
+            logger.debug(f"Creating temp directory: {download_dir}")
+            os.makedirs(download_dir)
+        for volume_index, label_map in enumerate(labels_map):
+            logger.debug(f"Processing label map: {label_map} for volume {volume_index}")
+            if not isinstance(label_map, dict) or not label_map.get("labelName"):
+                logger.debug(
+                    f"Skipping labelMap: {label_map} for volume {volume_index}"
+                )
+                continue
+
+            input_labels_path: Optional[Union[str, List[str]]] = label_map["labelName"]
+            if isinstance(input_labels_path, str) and os.path.isdir(input_labels_path):
+                logger.debug("Label path is a directory")
+                input_labels_path = [
+                    os.path.join(input_labels_path, input_file)
+                    for input_file in os.listdir(input_labels_path)
                 ]
-                if isinstance(input_labels_path, str) and os.path.isdir(
-                    input_labels_path
+                if any(
+                    not os.path.isfile(input_path) for input_path in input_labels_path
                 ):
-                    input_labels_path = [
-                        os.path.join(input_labels_path, input_file)
-                        for input_file in os.listdir(input_labels_path)
+                    logger.debug("Not all paths are files")
+                    input_labels_path = None
+            elif input_labels_path:
+                if isinstance(input_labels_path, str):
+                    logger.debug("Label path is string")
+                    input_labels_path = [input_labels_path]
+
+                if not input_labels_path or any(
+                    not isinstance(input_path, str) for input_path in input_labels_path
+                ):
+                    input_labels_path = None
+                else:
+                    external_paths = [
+                        input_path
+                        for input_path in input_labels_path
+                        if not os.path.isfile(input_path)
                     ]
-                    if any(
-                        not os.path.isfile(input_path)
-                        for input_path in input_labels_path
-                    ):
-                        input_labels_path = None
-                elif input_labels_path:
-                    if isinstance(input_labels_path, str):
-                        input_labels_path = [input_labels_path]
-                    if not input_labels_path or any(
-                        not isinstance(input_path, str)
-                        for input_path in input_labels_path
-                    ):
+                    downloaded_paths: Sequence[Optional[str]] = []
+                    if external_paths:
+                        presigned_paths = self.context.export.presign_items(
+                            self.org_id,
+                            label_storage_id,
+                            external_paths,
+                        )
+
+                        download_paths = [
+                            os.path.join(download_dir, f"{uuid4()}.nii")
+                            for _ in range(len(external_paths))
+                        ]
+                        downloaded_paths = await download_files(
+                            list(zip(presigned_paths, download_paths)),
+                            f"Downloading labels for {point.get('name') or point['items'][0]}",
+                            False,
+                        )
+                    if any(not downloaded_path for downloaded_path in downloaded_paths):
                         input_labels_path = None
                     else:
-                        external_paths = [
+                        input_labels_path = [
                             input_path
                             for input_path in input_labels_path
-                            if not os.path.isfile(input_path)
+                            if input_path and os.path.isfile(input_path)
+                        ] + [
+                            downloaded_path
+                            for downloaded_path in downloaded_paths
+                            if downloaded_path
                         ]
-                        downloaded_paths: Sequence[Optional[str]] = []
-                        if external_paths:
-                            presigned_paths = self.context.export.presign_items(
-                                self.org_id,
-                                label_storage_id,
-                                external_paths,
-                            )
 
-                            download_paths = [
-                                os.path.join(download_dir, f"{uuid4()}.nii")
-                                for _ in range(len(external_paths))
-                            ]
-                            downloaded_paths = await download_files(
-                                list(zip(presigned_paths, download_paths)),
-                                f"Downloading labels for {point.get('name') or point['items'][0]}",
-                                False,
-                            )
-                        if any(
-                            not downloaded_path for downloaded_path in downloaded_paths
-                        ):
-                            input_labels_path = None
-                        else:
-                            input_labels_path = [
-                                input_path
-                                for input_path in input_labels_path
-                                if input_path and os.path.isfile(input_path)
-                            ] + [
-                                downloaded_path
-                                for downloaded_path in downloaded_paths
-                                if downloaded_path
-                            ]
-
-                if input_labels_path:
-                    labels = point.get("labels", [])
-                    output_labels_path, group_map = process_nifti_upload(
-                        input_labels_path,
-                        set(
-                            label["dicom"]["instanceid"]
-                            for label in labels
-                            if label.get("dicom", {}).get("instanceid")
-                            and (
-                                label.get("volumeindex") is None
-                                or int(label.get("volumeindex")) == volume_index
-                            )
-                        ),
-                        label_validate,
-                    )
-
-                    for label in labels:
-                        if label.get("dicom", {}).get("instanceid") in group_map:
-                            label["dicom"]["groupids"] = group_map[
-                                label["dicom"]["instanceid"]
-                            ]
-
-                    if (
-                        output_labels_path
-                        and not os.path.isfile(output_labels_path)
-                        and label_storage_id != project_label_storage_id
-                    ):
-                        presigned_path = self.context.export.presign_items(
-                            self.org_id, label_storage_id, [output_labels_path]
-                        )[0]
-                        output_labels_path = (
-                            await download_files(
-                                [
-                                    (
-                                        presigned_path,
-                                        os.path.join(download_dir, f"{uuid4()}.nii"),
-                                    )
-                                ],
-                                f"Downloading labels for {point.get('name') or point['items'][0]}",
-                                False,
-                            )
-                        )[0]
-
-                    if output_labels_path and os.path.isfile(output_labels_path):
-                        file_type = NIFTI_FILE_TYPES["nii"]
-                        presigned = await self.context.labeling.presign_labels_path(
-                            session,
-                            self.org_id,
-                            self.project_id,
-                            str(uuid4()),
-                            file_type,
+            if input_labels_path:
+                labels = point.get("labels", [])
+                output_labels_path, group_map = process_nifti_upload(
+                    input_labels_path,
+                    set(
+                        label["dicom"]["instanceid"]
+                        for label in labels
+                        if label.get("dicom", {}).get("instanceid")
+                        and (
+                            label.get("volumeindex") is None
+                            or int(label.get("volumeindex")) == volume_index
                         )
-                        if (
-                            await upload_files(
-                                [
-                                    (
-                                        output_labels_path,
-                                        presigned["presignedUrl"],
-                                        file_type,
-                                    )
-                                ],
-                                "Uploading labels for "
-                                + f"{point['name'][:57]}{point['name'][57:] and '...'}",
-                                False,
-                            )
-                        )[0]:
-                            label_map["labelName"] = presigned["filePath"]
-                    elif output_labels_path:
-                        label_map["labelName"] = output_labels_path
-                    else:
-                        return {}
-                else:
-                    return {}
+                    ),
+                    label_validate,
+                )
 
-        elif (
-            data_type == "VIDEO"
-            and get_file_type(point["items"][0])[0] in VIDEO_FILE_TYPES
-        ):
-            return await self._item_upload(
-                session,
-                storage_id,
-                point["name"],
-                point["items"][0],
-                is_ground_truth,
-            )
+                for label in labels:
+                    if label.get("dicom", {}).get("instanceid") in group_map:
+                        label["dicom"]["groupids"] = group_map[
+                            label["dicom"]["instanceid"]
+                        ]
+
+                if (
+                    output_labels_path
+                    and not os.path.isfile(output_labels_path)
+                    and label_storage_id != project_label_storage_id
+                ):
+                    presigned_path = self.context.export.presign_items(
+                        self.org_id, label_storage_id, [output_labels_path]
+                    )[0]
+                    output_labels_path = (
+                        await download_files(
+                            [
+                                (
+                                    presigned_path,
+                                    os.path.join(download_dir, f"{uuid4()}.nii"),
+                                )
+                            ],
+                            f"Downloading labels for {point.get('name') or point['items'][0]}",
+                            False,
+                        )
+                    )[0]
+
+                if output_labels_path and os.path.isfile(output_labels_path):
+                    file_type = NIFTI_FILE_TYPES["nii"]
+                    presigned = await self.context.labeling.presign_labels_path(
+                        session,
+                        self.org_id,
+                        self.project_id,
+                        str(uuid4()),
+                        file_type,
+                    )
+                    if (
+                        await upload_files(
+                            [
+                                (
+                                    output_labels_path,
+                                    presigned["presignedUrl"],
+                                    file_type,
+                                )
+                            ],
+                            "Uploading labels for "
+                            + f"{point['name'][:57]}{point['name'][57:] and '...'}",
+                            False,
+                        )
+                    )[0]:
+                        label_map["labelName"] = presigned["filePath"]
+                elif output_labels_path:
+                    label_map["labelName"] = output_labels_path
+                else:
+                    logger.debug("Empty label path")
+                    return {}
+            else:
+                logger.debug("Invalid label files")
+                return {}
 
         return await self._create_datapoint(
             session, storage_id, point, is_ground_truth, labels_map or None
@@ -470,7 +437,7 @@ class Upload:
                     labels = point.get("labels", [])
                     for label in labels:
                         if label.get("dicom", {}).get("instanceid"):
-                            print_error(
+                            log_error(
                                 "Cannot have dicom segmentations in `labels` "
                                 + f" when segmentMap is given: {point}"
                             )
@@ -481,7 +448,7 @@ class Upload:
                         else global_segmentations
                     )
         except ValueError as err:
-            print_error(err)
+            log_error(err)
             return points
 
         project_label_storage_id, _ = self.context.project.get_label_storage(
@@ -512,7 +479,7 @@ class Upload:
 
         for point, task in zip(points, tasks):
             if not task:
-                print_error(f"Error uploading {point}")
+                log_error(f"Error uploading {point}")
 
         return tasks
 
@@ -549,7 +516,7 @@ class Upload:
                 self.org_id, self.project_id, files, file_type
             )
         except ValueError as error:
-            print_error(error)
+            log_error(error)
             raise error
         return result
 
@@ -563,7 +530,7 @@ class Upload:
             import rasterio  # type: ignore
             from rasterio import features  # type: ignore
         except Exception as error:
-            print_error(
+            log_error(
                 "For windows users, please follow the rasterio "
                 + "documentation to properly install the module "
                 + "https://rasterio.readthedocs.io/en/latest/installation.html "
@@ -711,13 +678,12 @@ class Upload:
             we will assign the "items" path to it.
 
         """
-        points = self.prepare_json_files(
-            [points],
-            str(self.project_type.value).split("_", 1)[0],
-            storage_id,
-            segmentation_mapping,
-        )
+        if str(self.project_type.value).split("_", 1)[0] != "DICOM":
+            raise Exception(
+                "Uploading data to non Medical projects has been deprecated"
+            )
 
+        points = self.prepare_json_files([points], storage_id, segmentation_mapping)
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
             self._create_tasks(
@@ -841,7 +807,6 @@ class Upload:
     def prepare_json_files(
         self,
         files_data: List[List[Dict]],
-        data_type: str,
         storage_id: str,
         segment_map: Optional[Dict],
         task_dirs: Optional[List[str]] = None,
@@ -851,7 +816,7 @@ class Upload:
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         points: List[Dict] = []
         uploading = set()
-        print_info("Validating files")
+        logger.info("Validating files")
         if not task_dirs:
             cur_dir = os.getcwd()
             task_dirs = [cur_dir] * len(files_data)
@@ -863,7 +828,7 @@ class Upload:
             if not isinstance(file_data, list) or any(
                 not isinstance(obj, dict) for obj in file_data
             ):
-                print_warning("Invalid items list")
+                logger.warning("Invalid items list")
                 continue
 
             for item in file_data:
@@ -872,50 +837,49 @@ class Upload:
                     and isinstance(item.get("segmentations"), list)
                     and len(item["segmentations"]) > 1
                 ):
-                    print_warning(
+                    logger.warning(
                         "Items list contains multiple segmentations."
                         + " Please use new import format: https://docs.redbrickai.com"
                         + "/python-sdk/reference/annotation-format-nifti#items-json"
                     )
                     continue
 
-            if data_type == "DICOM":
-                if segment_map:
-                    for item in file_data:
-                        item["segmentMap"] = item.get("segmentMap", segment_map)
+            if segment_map:
+                for item in file_data:
+                    item["segmentMap"] = item.get("segmentMap", segment_map)
 
-                output = self.context.upload.validate_and_convert_to_import_format(
-                    json.dumps(file_data), True, storage_id
-                )
-                if not output.get("isValid"):
-                    print_warning(
-                        output.get(
-                            "error",
-                            "Error: Invalid format\n"
-                            + "Docs: https://docs.redbrickai.com/python-sdk/reference"
-                            + "/annotation-format-nifti#items-json",
-                        )
+            output = self.context.upload.validate_and_convert_to_import_format(
+                json.dumps(file_data), True, storage_id
+            )
+            if not output.get("isValid"):
+                logger.warning(
+                    output.get(
+                        "error",
+                        "Error: Invalid format\n"
+                        + "Docs: https://docs.redbrickai.com/python-sdk/reference"
+                        + "/annotation-format-nifti#items-json",
                     )
-                    continue
+                )
+                continue
 
-                if output.get("converted"):
-                    file_data = json.loads(output["converted"])
+            if output.get("converted"):
+                file_data = json.loads(output["converted"])
 
             if storage_id == str(StorageMethod.REDBRICK):
-                print_info("Looking in your local file system for items")
+                logger.info("Looking in your local file system for items")
             for item in file_data:
                 if (
                     not isinstance(item.get("items"), list)
                     or not item["items"]
                     or not all(isinstance(i, str) for i in item["items"])
                 ):
-                    print_warning(f"Invalid {item}")
+                    logger.warning(f"Invalid {item}")
                     continue
 
                 if "name" not in item:
                     item["name"] = item["items"][0]
                 if (uploaded and item["name"] in uploaded) or item["name"] in uploading:
-                    print_info(f"Skipping duplicate item name: {item['name']}")
+                    logger.info(f"Skipping duplicate item name: {item['name']}")
                     continue
 
                 if "segmentations" in item:
@@ -945,25 +909,20 @@ class Upload:
                     del item["labelsPath"]
 
                 if item.get("labelsMap"):
-                    if data_type == "DICOM":
-                        for label_map in item["labelsMap"]:
-                            if not isinstance(label_map, dict):
-                                label_map = {}
-                            if not isinstance(label_map["labelName"], list):
-                                label_map["labelName"] = [label_map["labelName"]]
-                            label_map["labelName"] = [
-                                label_name
-                                if os.path.isabs(label_name)
-                                or not os.path.exists(
-                                    os.path.join(task_dir, label_name)
-                                )
-                                else os.path.abspath(os.path.join(task_dir, label_name))
-                                for label_name in label_map["labelName"]
-                            ]
-                            if len(label_map["labelName"]) == 1:
-                                label_map["labelName"] = label_map["labelName"][0]
-                    else:
-                        del item["labelsMap"]
+                    for label_map in item["labelsMap"]:
+                        if not isinstance(label_map, dict):
+                            label_map = {}
+                        if not isinstance(label_map["labelName"], list):
+                            label_map["labelName"] = [label_map["labelName"]]
+                        label_map["labelName"] = [
+                            label_name
+                            if os.path.isabs(label_name)
+                            or not os.path.exists(os.path.join(task_dir, label_name))
+                            else os.path.abspath(os.path.join(task_dir, label_name))
+                            for label_name in label_map["labelName"]
+                        ]
+                        if len(label_map["labelName"]) == 1:
+                            label_map["labelName"] = label_map["labelName"][0]
 
                 if storage_id != str(StorageMethod.REDBRICK):
                     uploading.add(item["name"])
@@ -977,7 +936,7 @@ class Upload:
                     if os.path.isfile(item_path):
                         item["items"][idx] = item_path
                     else:
-                        print_warning(
+                        logger.warning(
                             f"Could not find {path}. "
                             + "Perhaps you forgot to supply the --storage argument"
                         )

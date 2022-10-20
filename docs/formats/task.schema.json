@@ -192,9 +192,6 @@
                                         "$ref": "#/$defs/video"
                                     }
                                 },
-                                "required": [
-                                    "category"
-                                ],
                                 "additionalProperties": false
                             },
                             "additionalItems": false
@@ -570,9 +567,6 @@
                         "$ref": "#/$defs/attributes"
                     }
                 },
-                "required": [
-                    "category"
-                ],
                 "additionalProperties": false
             },
             "items": {
@@ -685,7 +679,8 @@
             "description": "Label category",
             "type": [
                 "array",
-                "string"
+                "string",
+                "number"
             ],
             "minItems": 1,
             "items": {
@@ -696,7 +691,56 @@
         "attributes": {
             "title": "Attributes",
             "description": "Label Attributes",
-            "type": "object",
+            "type": [
+                "array",
+                "object"
+            ],
+            "minItems": 1,
+            "items": {
+                "title": "Attribute",
+                "description": "Label Attribute",
+                "type": "object",
+                "properties": {
+                    "attrId": {
+                        "title": "Attribute ID",
+                        "description": "Attribute ID",
+                        "type": "number"
+                    },
+                    "optionId": {
+                        "title": "Option ID",
+                        "description": "Option ID",
+                        "type": [
+                            "number",
+                            "array"
+                        ],
+                        "minItems": 1,
+                        "items": {
+                            "type": "number"
+                        },
+                        "additionalItems": false
+                    },
+                    "name": {
+                        "title": "Name",
+                        "description": "Attribute name",
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "value": {
+                        "title": "Value",
+                        "description": "Attribute value",
+                        "type": [
+                            "string",
+                            "boolean",
+                            "array"
+                        ],
+                        "minItems": 1,
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "additionalItems": false,
             "patternProperties": {
                 "^.{1,512}$": {
                     "type": [

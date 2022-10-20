@@ -15,7 +15,7 @@ from redbrick.common.context import RBContext
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import clean_rb_label
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.logging import print_error, print_info, print_warning
+from redbrick.utils.logging import log_error, logger
 
 Func = TypeVar("Func", bound=Callable[..., Any])
 
@@ -110,7 +110,7 @@ class Learning:
         labeled: List[Dict] = []
         unlabeled: List[Dict] = []
 
-        print_info("Downloading tasks for active learning")
+        logger.info("Downloading tasks for active learning")
         for entry in tqdm.tqdm(my_iter, unit=" tasks"):
             if entry.get("groundTruth"):
                 labeled.append(_parse_labeled_entry(entry))
@@ -139,7 +139,7 @@ class Learning:
                 [task],
             )
         except ValueError as error:
-            print_error(error)
+            log_error(error)
             point_error = deepcopy(task)
             point_error["error"] = error
             return point_error
@@ -276,7 +276,7 @@ class Learning2:
             )
         )
 
-        print_info("Downloading unfinished tasks")
+        logger.info("Downloading unfinished tasks")
         with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
             unlabeled = [
                 {
@@ -291,7 +291,7 @@ class Learning2:
                 for task in progress
             ]
 
-        print_info("Downloading finished tasks")
+        logger.info("Downloading finished tasks")
         labeled = [
             _parse_labeled_entry(item)
             for item in tqdm.tqdm(
@@ -347,7 +347,7 @@ class Learning2:
                 session, self.org_id, self.project_id, self.stage_name, [task_input]
             )
         except ValueError as error:
-            print_error(error)
+            log_error(error)
             point_error = deepcopy(task)
             point_error["error"] = error
             return point_error
@@ -376,7 +376,7 @@ class Learning2:
         Return any tasks that experienced issues.
         """
         if cycle != 1:
-            print_warning("Use of cycle field is deprecated")
+            logger.warning("Use of cycle field is deprecated")
         _ = cycle  # deprecated
 
         # backwards compatibility

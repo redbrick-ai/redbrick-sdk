@@ -26,7 +26,7 @@ class LearningRepo(LearningControllerInterface):
     ) -> Optional[int]:
         """Check for a job, returns cycle number."""
         query = """
-        query  ($orgId:UUID!, $projectId:UUID!, $stageName: String!){
+        query activeLearningClientSummarySDK($orgId:UUID!, $projectId:UUID!, $stageName: String!){
             activeLearningClientSummary(orgId:$orgId, projectId:$projectId, stageName: $stageName){
                 availableJob {
                     cycleStatus
@@ -57,7 +57,13 @@ class LearningRepo(LearningControllerInterface):
     ) -> Tuple[List[dict], Optional[str]]:
         """Get batch of tasks, paginated."""
         query = """
-        query  ($orgId:UUID!, $projectId:UUID!, $stageName: String!, $first: Int!, $cursor: String){
+        query activeLearningClientSummarySDK(
+            $orgId:UUID!
+            $projectId:UUID!
+            $stageName: String!
+            $first: Int!
+            $cursor: String
+        ){
             activeLearningClientSummary(orgId:$orgId, projectId:$projectId, stageName: $stageName){
                 tdType
                 tasks (cursor: $cursor, first: $first){
@@ -96,19 +102,20 @@ class LearningRepo(LearningControllerInterface):
         self, org_id: str, project_id: str, stage_name: str
     ) -> Tuple[dict, str]:
         """Get the taxonomy for active learning."""
-        query = (
-            """
-        query  ($orgId:UUID!, $projectId:UUID!, $stageName: String!){
-            activeLearningClientSummary(orgId:$orgId, projectId:$projectId, stageName: $stageName){
+        query = f"""
+        query activeLearningClientSummarySDK($orgId:UUID!, $projectId:UUID!, $stageName: String!){{
+            activeLearningClientSummary(
+                orgId:$orgId
+                projectId:$projectId
+                stageName: $stageName
+            ) {{
                 tdType
-                taxonomy {
-                    %s
-                }
-            }
-        }
+                taxonomy {{
+                    {TAXONOMY_SHARD}
+                }}
+            }}
+        }}
         """
-            % TAXONOMY_SHARD
-        )
         variables = {
             "orgId": org_id,
             "projectId": project_id,
@@ -132,7 +139,7 @@ class LearningRepo(LearningControllerInterface):
     ) -> None:
         """Perform send_batch_learning_results with asyncio."""
         query = """
-        mutation(
+        mutation sendAlLabelsSDK(
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String!
@@ -169,7 +176,7 @@ class LearningRepo(LearningControllerInterface):
     ) -> None:
         """Set status of current training cycle."""
         query = """
-        mutation(
+        mutation updateAlCycleStatusSDK(
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String!
@@ -223,20 +230,16 @@ class Learning2Repo(LearningController2Interface):
 
     def get_taxonomy_and_type(self, org_id: str, project_id: str) -> Tuple[dict, str]:
         """Get the taxonomy for active learning."""
-        query = (
-            """
-        query projectTypeAndTaxonomy ($orgId: UUID!, $projectId: UUID!) {
-            project(orgId: $orgId, projectId: $projectId){
+        query = f"""
+        query projectTypeAndTaxonomy ($orgId: UUID!, $projectId: UUID!) {{
+            project(orgId: $orgId, projectId: $projectId) {{
                 tdType
-                taxonomy {
-                    %s
-                }
-            }
-        }
-
+                taxonomy {{
+                    {TAXONOMY_SHARD}
+                }}
+            }}
+        }}
         """
-            % TAXONOMY_SHARD
-        )
 
         variables = {"orgId": org_id, "projectId": project_id}
         result: Dict = self.client.execute_query(query, variables)

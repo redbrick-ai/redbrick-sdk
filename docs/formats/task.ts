@@ -27,7 +27,7 @@ type Series = {
   segmentations?: string | string[];
   segmentMap?: {
     [instanceId: number]: {
-      category: string | string[];
+      category: number | string | string[];
       attributes?: Attributes;
     };
   };
@@ -43,7 +43,7 @@ type Series = {
 // Label Types
 type Landmarks = {
   point: Point2D;
-  category: string | string[];
+  category: number | string | string[];
   attributes?: Attributes;
 
   // video meta-data
@@ -52,7 +52,7 @@ type Landmarks = {
 
 type Landmarks3D = {
   point: VoxelPoint;
-  category: string | string[];
+  category: number | string | string[];
   attributes?: Attributes;
 };
 
@@ -64,7 +64,7 @@ type MeasureLength = {
   absolutePoint2: WorldPoint;
   normal: [number, number, number];
   length: number;
-  category: string | string[];
+  category: number | string | string[];
   attributes?: Attributes;
 };
 
@@ -78,7 +78,7 @@ type MeasureAngle = {
   absolutePoint2: WorldPoint;
   normal: [number, number, number];
   angle: number;
-  category: string | string[];
+  category: number | string | string[];
   attributes?: Attributes;
 };
 
@@ -86,7 +86,7 @@ type BoundingBox = {
   pointTopLeft: Point2D;
   wNorm: number;
   hNorm: number;
-  category: string | string[];
+  category: number | string | string[];
   attributes?: Attributes;
 
   // video meta-data
@@ -96,7 +96,7 @@ type BoundingBox = {
 type Polygon = {
   points: Point2D[];
 
-  category: string | string[];
+  category: number | string | string[];
   attributes?: Attributes;
 
   // video meta-data
@@ -105,7 +105,7 @@ type Polygon = {
 
 type Polyline = {
   points: Point2D[];
-  category: string | string[];
+  category: number | string | string[];
   attributes?: Attributes;
 
   // video meta-data
@@ -113,15 +113,22 @@ type Polyline = {
 };
 
 type Classification = {
-  category: string | string[];
+  category?: number | string | string[];
   attributes?: Attributes;
   // video meta-data
   video?: VideoMetaData;
 };
 
-type Attributes = {
-  [attributeName: string]: string | boolean | string[];
-};
+type Attributes =
+  | {
+      attrId?: number;
+      name?: string;
+      optionId?: number | number[];
+      value?: string | boolean | string[];
+    }[]
+  | {
+      [attributeName: string]: string | boolean | string[];
+    };
 
 type VideoMetaData = {
   frameIndex: number;

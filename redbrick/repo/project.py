@@ -309,6 +309,64 @@ class ProjectRepo(ProjectRepoInterface):
         result = self.client.execute_query(query_string, query_variables, False)
         return bool(result and result.get("createTaxonomyNew", {}).get("ok"))
 
+    def get_taxonomy(
+        self, org_id: str, tax_id: Optional[str], name: Optional[str]
+    ) -> Dict:
+        """Get a taxonomy."""
+        query = f"""
+            query getTaxonomySDK($orgId: UUID!, $taxId: UUID, $name: String) {{
+                taxonomy(orgId: $orgId, taxId: $taxId, name: $name) {{
+                    {TAXONOMY_SHARD}
+                }}
+            }}
+        """
+        response: Dict[str, Dict] = self.client.execute_query(
+            query, {"orgId": org_id, "taxId": tax_id, "name": name}
+        )
+        return response["taxonomy"]
+
+    def update_taxonomy(
+        self,
+        org_id: str,
+        tax_id: str,
+        study_classify: Optional[List[Dict]],
+        series_classify: Optional[List[Dict]],
+        instance_classify: Optional[List[Dict]],
+        object_types: Optional[List[Dict]],
+    ) -> bool:
+        """Update taxonomy."""
+        query_string = """
+        mutation updateTaxonomySDK(
+            $orgId: UUID!
+            $taxId: UUID!
+            $studyClassify: [NewAttributeInput!]
+            $seriesClassify: [NewAttributeInput!]
+            $instanceClassify: [NewAttributeInput!]
+            $objectTypes: [ObjectTypeInput!]
+        ) {
+            updateTaxonomy(
+                orgId: $orgId
+                taxId: $taxId
+                studyClassify: $studyClassify
+                seriesClassify: $seriesClassify
+                instanceClassify: $instanceClassify
+                objectTypes: $objectTypes
+            ) {
+                ok
+            }
+        }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "taxId": tax_id,
+            "studyClassify": study_classify,
+            "seriesClassify": series_classify,
+            "instanceClassify": instance_classify,
+            "objectTypes": object_types,
+        }
+        result = self.client.execute_query(query_string, query_variables, False)
+        return bool(result and result.get("updateTaxonomy", {}).get("ok"))
+
     def get_label_storage(self, org_id: str, project_id: str) -> Tuple[str, str]:
         """Get label storage method for a project."""
         query_string = """

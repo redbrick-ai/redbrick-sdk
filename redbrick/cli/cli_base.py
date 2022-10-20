@@ -4,7 +4,7 @@ from typing import Optional
 from argparse import Namespace
 
 from redbrick.cli.project import CLIProject
-from redbrick.utils.logging import print_warning
+from redbrick.utils.logging import logger
 
 
 class CLIInputParams(ABC):
@@ -33,7 +33,7 @@ class CLIInputParams(ABC):
         if self.validator(self.entity):
             return self.filtrator(self.entity)
 
-        print_warning(self.error_message + " : " + self.entity)
+        logger.warning(self.error_message + " : " + self.entity)
         return None
 
 

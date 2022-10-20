@@ -7,7 +7,7 @@ from tqdm import tqdm  # type: ignore
 from redbrick.common.enums import LabelType
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
-from redbrick.utils.logging import print_info, print_warning
+from redbrick.utils.logging import logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_tax_utils import format_taxonomy
 from .basic_project import get_active_learning_project, get_basic_project
@@ -113,11 +113,11 @@ class RBOrganization:
             A RedBrick Project object.
         """
         if active_learning is not None:
-            print_warning("active_learning arg is deprecated and will be ignored")
+            logger.warning("active_learning arg is deprecated and will be ignored")
         stages = get_basic_project(reviews)
 
         if exists_okay:
-            print_info("exists_okay=True... checking for project with same name")
+            logger.info("exists_okay=True... checking for project with same name")
             all_projects = self._all_projects_raw()
             same_name = list(filter(lambda x: x["name"] == name, all_projects))
             if same_name:
@@ -131,7 +131,7 @@ class RBOrganization:
                         "Project with matching name exists, but it has a different taxonomy"
                     )
 
-                print_warning(
+                logger.warning(
                     "exists_okay=True... returning project that already existed"
                 )
                 return temp
@@ -203,7 +203,7 @@ class RBOrganization:
             else task_categories,
             task_attributes,
         ):
-            print_info(f"Successfully created taxonomy: {name}")
+            logger.info(f"Successfully created taxonomy: {name}")
 
     def create_taxonomy_new(
         self,
@@ -222,4 +222,35 @@ class RBOrganization:
             instance_classify,
             object_types,
         ):
-            print_info(f"Successfully created taxonomy: {name}")
+            logger.info(f"Successfully created taxonomy: {name}")
+
+    def get_taxonomy(
+        self, tax_id: Optional[str] = None, name: Optional[str] = None
+    ) -> Dict:
+        """Get a taxonomy in the organization."""
+        taxonomy = self.context.project.get_taxonomy(self._org_id, tax_id, name)
+        return format_taxonomy(taxonomy)
+
+    def update_taxonomy(
+        self,
+        tax_id: str,
+        study_classify: Optional[List[Dict]] = None,
+        series_classify: Optional[List[Dict]] = None,
+        instance_classify: Optional[List[Dict]] = None,
+        object_types: Optional[List[Dict]] = None,
+    ) -> None:
+        """Update a taxonomy in the organization.
+
+        Warnings
+        ----------
+        Only applicable for Taxonomy V2.
+        """
+        if self.context.project.update_taxonomy(
+            self._org_id,
+            tax_id,
+            study_classify,
+            series_classify,
+            instance_classify,
+            object_types,
+        ):
+            logger.info(f"Successfully updated taxonomy: {tax_id}")

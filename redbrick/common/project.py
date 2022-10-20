@@ -77,6 +77,24 @@ class ProjectRepoInterface(ABC):
         """Create new taxonomy."""
 
     @abstractmethod
+    def get_taxonomy(
+        self, org_id: str, tax_id: Optional[str], name: Optional[str]
+    ) -> Dict:
+        """Get a taxonomy."""
+
+    @abstractmethod
+    def update_taxonomy(
+        self,
+        org_id: str,
+        tax_id: str,
+        study_classify: Optional[List[Dict]],
+        series_classify: Optional[List[Dict]],
+        instance_classify: Optional[List[Dict]],
+        object_types: Optional[List[Dict]],
+    ) -> bool:
+        """Update taxonomy."""
+
+    @abstractmethod
     def get_label_storage(self, org_id: str, project_id: str) -> Tuple[str, str]:
         """Get label storage method for a project."""
 

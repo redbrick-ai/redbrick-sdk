@@ -11,14 +11,8 @@ from redbrick.cli.input.select import CLIInputSelect
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIUploadInterface
 from redbrick.common.enums import StorageMethod, ImportTypes
-from redbrick.utils.logging import print_info
-from redbrick.utils.files import (
-    JSON_FILE_TYPES,
-    IMAGE_FILE_TYPES,
-    VIDEO_FILE_TYPES,
-    ALL_FILE_TYPES,
-    find_files_recursive,
-)
+from redbrick.utils.logging import logger
+from redbrick.utils.files import find_files_recursive
 
 
 class CLIUploadController(CLIUploadInterface):
@@ -93,6 +87,7 @@ class CLIUploadController(CLIUploadInterface):
         """Handle empty sub command."""
         # pylint: disable=protected-access, too-many-branches, too-many-locals, too-many-statements
         # pylint: disable=too-many-nested-blocks
+        logger.debug("Uploading data to project")
         project = self.project.project
 
         directory = os.path.normpath(self.args.directory)
@@ -101,7 +96,10 @@ class CLIUploadController(CLIUploadInterface):
         elif not os.path.isdir(directory):
             raise Exception(f"{directory} is not a valid directory")
 
-        data_type = str(project.project_type.value).split("_", 1)[0]
+        if str(project.project_type.value).split("_", 1)[0] != "DICOM":
+            raise Exception(
+                "Uploading data to non Medical projects has been deprecated"
+            )
 
         if self.args.storage == self.STORAGE_REDBRICK:
             storage_id = str(StorageMethod.REDBRICK)
@@ -129,44 +127,23 @@ class CLIUploadController(CLIUploadInterface):
         else:
             raise ArgumentError(None, "")
 
-        file_types = IMAGE_FILE_TYPES
-        multiple = False
-        if self.args.json:
-            file_types = JSON_FILE_TYPES
-        elif data_type == "VIDEO":
-            if self.args.as_frames:
-                multiple = True
-            else:
-                file_types = VIDEO_FILE_TYPES
-        elif data_type == "DICOM":
-            file_types = ALL_FILE_TYPES
-        elif data_type != "IMAGE":
-            raise Exception(
-                "Project data type needs to be IMAGE, VIDEO or DICOM to upload files"
-            )
-
-        valid_file_types = ", ".join(f".{type_}[.gz]" for type_ in file_types)
         items_list: Union[List[List[str]], List[Dict]]
         if self.args.json and directory.endswith(".json") and os.path.isfile(directory):
             items_list = [[os.path.abspath(directory)]]
         else:
-            print_info(f"Searching for items recursively in {directory}")
+            logger.info(f"Searching for items recursively in {directory}")
             items_list = find_files_recursive(
-                directory, set(file_types.keys()), multiple
+                directory, set(["json" if self.args.json else "*"])
             )
-            if multiple and not items_list:
-                print_info(
-                    "No items found. Please make sure your directories contain files of the same"
-                    + f" type within them, i.e. any one of the following: ({valid_file_types})"
-                )
-                return
+
+        logger.debug(f"Contains {len(items_list)} items")
 
         upload_cache_hash = self.project.conf.get_option("uploads", "cache")
         upload_cache = set(
             self.project.cache.get_data("uploads", upload_cache_hash, True, True) or []
         )
 
-        if "*" in file_types and items_list:
+        if not self.args.json and items_list:
             import_file_type = CLIInputSelect(
                 self.args.type,
                 "Import file type",
@@ -198,13 +175,9 @@ class CLIUploadController(CLIUploadInterface):
                 task_dirs.append(os.path.dirname(item_group[0]))
                 with open(item_group[0], "r", encoding="utf-8") as file_:
                     files_data.append(json.load(file_))
+            logger.debug("Preparing json files for upload")
             points = self.project.project.upload.prepare_json_files(
-                files_data,
-                data_type,
-                storage_id,
-                segmentation_mapping,
-                task_dirs,
-                upload_cache,
+                files_data, storage_id, segmentation_mapping, task_dirs, upload_cache
             )
             segmentation_mapping = {}
         else:
@@ -255,7 +228,7 @@ class CLIUploadController(CLIUploadInterface):
                     ).replace(os.path.sep, "/")
                 )
                 if item_name in upload_cache or item_name in uploading:
-                    print_info(f"Skipping duplicate item name: {item_name}")
+                    logger.info(f"Skipping duplicate item name: {item_name}")
                     continue
 
                 uploading.add(item_name)
@@ -267,71 +240,67 @@ class CLIUploadController(CLIUploadInterface):
                 }
                 if label_data and label_data.get("segmentMap"):
                     item["segmentMap"] = label_data["segmentMap"]
-                if data_type == "DICOM":
-                    if label_data and isinstance(label_data, dict):
-                        if (
-                            "segmentations" in label_data
-                            and "labelsMap" not in label_data
-                            and isinstance(label_data["segmentations"], (list, dict))
-                        ):
-                            if isinstance(label_data["segmentations"], list):
-                                label_data["segmentations"] = {
-                                    str(idx): segmentation
-                                    for idx, segmentation in enumerate(
-                                        label_data["segmentations"]
-                                    )
-                                }
-                            if isinstance(label_data["segmentations"], dict):
-                                label_data["labelsMap"] = [
-                                    {"labelName": segmentation, "imageIndex": int(idx)}
-                                    if segmentation
-                                    else None
-                                    for idx, segmentation in label_data[
-                                        "segmentations"
-                                    ].items()
-                                ]
-                        elif (
-                            "labelsPath" in label_data and "labelsMap" not in label_data
-                        ):
-                            label_data["labelsMap"] = [
-                                {
-                                    "labelName": label_data["labelsPath"],
-                                    "imageIndex": 0,
-                                }
-                            ]
-                        if label_data.get("labelsMap"):
-                            item["labelsMap"] = []
-                            for label_map in label_data["labelsMap"]:
-                                if not isinstance(label_map, dict):
-                                    label_map = {}
-                                if not isinstance(label_map["labelName"], list):
-                                    label_map["labelName"] = [label_map["labelName"]]
-                                label_map["labelName"] = [
-                                    label_name
-                                    if os.path.isabs(label_name)
-                                    or not os.path.exists(
-                                        os.path.join(task_dir, label_name)
-                                    )
-                                    else os.path.abspath(
-                                        os.path.join(task_dir, label_name)
-                                    )
-                                    for label_name in label_map["labelName"]
-                                ]
-                                if len(label_map["labelName"]) == 1:
-                                    label_map["labelName"] = label_map["labelName"][0]
-                                item["labelsMap"].append(
-                                    {
-                                        "labelName": label_map["labelName"],
-                                        "imageIndex": int(label_map["imageIndex"]),
-                                        "imageName": label_map.get("imageName"),
-                                        "seriesId": label_map.get("seriesId"),
-                                    }
+
+                if label_data and isinstance(label_data, dict):
+                    if (
+                        "segmentations" in label_data
+                        and "labelsMap" not in label_data
+                        and isinstance(label_data["segmentations"], (list, dict))
+                    ):
+                        if isinstance(label_data["segmentations"], list):
+                            label_data["segmentations"] = {
+                                str(idx): segmentation
+                                for idx, segmentation in enumerate(
+                                    label_data["segmentations"]
                                 )
+                            }
+                        if isinstance(label_data["segmentations"], dict):
+                            label_data["labelsMap"] = [
+                                {"labelName": segmentation, "imageIndex": int(idx)}
+                                if segmentation
+                                else None
+                                for idx, segmentation in label_data[
+                                    "segmentations"
+                                ].items()
+                            ]
+                    elif "labelsPath" in label_data and "labelsMap" not in label_data:
+                        label_data["labelsMap"] = [
+                            {
+                                "labelName": label_data["labelsPath"],
+                                "imageIndex": 0,
+                            }
+                        ]
+                    if label_data.get("labelsMap"):
+                        item["labelsMap"] = []
+                        for label_map in label_data["labelsMap"]:
+                            if not isinstance(label_map, dict):
+                                label_map = {}
+                            if not isinstance(label_map["labelName"], list):
+                                label_map["labelName"] = [label_map["labelName"]]
+                            label_map["labelName"] = [
+                                label_name
+                                if os.path.isabs(label_name)
+                                or not os.path.exists(
+                                    os.path.join(task_dir, label_name)
+                                )
+                                else os.path.abspath(os.path.join(task_dir, label_name))
+                                for label_name in label_map["labelName"]
+                            ]
+                            if len(label_map["labelName"]) == 1:
+                                label_map["labelName"] = label_map["labelName"][0]
+                            item["labelsMap"].append(
+                                {
+                                    "labelName": label_map["labelName"],
+                                    "imageIndex": int(label_map["imageIndex"]),
+                                    "imageName": label_map.get("imageName"),
+                                    "seriesId": label_map.get("seriesId"),
+                                }
+                            )
 
                 points.append(item)
 
         if points:
-            print_info(f"Found {len(points)} items")
+            logger.info(f"Found {len(points)} items")
             loop = asyncio.get_event_loop()
 
             uploads = loop.run_until_complete(
@@ -356,7 +325,7 @@ class CLIUploadController(CLIUploadInterface):
             )
             self.project.conf.save()
         elif not items_list:
-            print_info(
-                "No items found. Please make sure your directories contain files of valid type,"
-                + f" i.e. any one of the following: ({valid_file_types})"
+            logger.info(
+                "No items found. Please ensure that you have specified the correct data type: "
+                + "DICOM3D, NIFTI3D, etc. Type `redbrick upload -h` for more options and usage"
             )

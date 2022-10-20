@@ -31,22 +31,6 @@ class UploadControllerInterface(ABC):
         """
 
     @abstractmethod
-    async def item_upload_async(
-        self,
-        aio_client: aiohttp.ClientSession,
-        org_id: str,
-        project_id: str,
-        storage_id: str,
-        data_type: str,
-        task_type: str,
-        file_path: str,
-        file_name: str,
-        file_type: str,
-        is_ground_truth: bool = False,
-    ) -> Dict:
-        """Upload an item."""
-
-    @abstractmethod
     def items_upload_presign(
         self, org_id: str, project_id: str, files: List[str], file_type: List[str]
     ) -> List[Dict[Any, Any]]:

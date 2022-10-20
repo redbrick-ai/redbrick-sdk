@@ -22,7 +22,7 @@ from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.files import uniquify_path, download_files
-from redbrick.utils.logging import print_error, print_info, print_warning
+from redbrick.utils.logging import log_error, logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import (
     clean_rb_label,
@@ -137,7 +137,7 @@ class Export:
             self.org_id, self.project_id, stage_name
         )
 
-        print_info(
+        logger.info(
             f"Downloading {'groundtruth' if only_ground_truth else 'all'} tasks"
             + (
                 f" updated since {datetime.fromtimestamp(from_timestamp)}"
@@ -197,7 +197,7 @@ class Export:
             if from_timestamp is not None
             else None
         )
-        print_info(
+        logger.info(
             f"Downloading {'groundtruth' if only_ground_truth else 'all'} tasks"
             + (
                 f" updated since {datetime.fromtimestamp(from_timestamp)}"
@@ -352,7 +352,7 @@ class Export:
         try:
             import rasterio.features  # type: ignore
         except Exception as error:
-            print_error(
+            log_error(
                 "For windows users, please follow the rasterio "
                 + "documentation to properly install the module "
                 + "https://rasterio.readthedocs.io/en/latest/installation.html "
@@ -481,12 +481,12 @@ class Export:
 
         # Convert rbai to png masks and save output
         dp_map = {}
-        print_info("Converting to masks")
+        logger.info("Converting to masks")
 
         for datapoint in tqdm.tqdm(datapoints):
             labels = [label for label in datapoint["labels"] if "pixel" in label]
             if not labels:
-                print_warning(
+                logger.warning(
                     f"No segmentation labels in task {datapoint['taskId']}, skipping"
                 )
                 continue
@@ -568,7 +568,7 @@ class Export:
             LabelType.IMAGE_SEGMENTATION,
             LabelType.IMAGE_MULTI,
         ):
-            print_error(
+            log_error(
                 f"Project type needs to be {LabelType.IMAGE_SEGMENTATION} or "
                 + f"{LabelType.IMAGE_MULTI} for redbrick_png"
             )
@@ -590,7 +590,7 @@ class Export:
         output_dir = uniquify_path(self.project_id)
         mask_dir = os.path.join(output_dir, "masks")
         os.makedirs(mask_dir, exist_ok=True)
-        print_info(f"Saving masks to {output_dir} directory")
+        logger.info(f"Saving masks to {output_dir} directory")
 
         Export._export_png_mask_data(
             datapoints,
@@ -811,7 +811,7 @@ class Export:
 
         """
         if self.project_type != LabelType.DICOM_SEGMENTATION:
-            print_error(
+            log_error(
                 f"Project type needs to be {LabelType.DICOM_SEGMENTATION} "
                 + "for redbrick_nifi"
             )
@@ -839,7 +839,7 @@ class Export:
         destination = uniquify_path(self.project_id)
         nifti_dir = os.path.join(destination, "nifti")
         os.makedirs(nifti_dir, exist_ok=True)
-        print_info(f"Saving NIfTI files to {destination} directory")
+        logger.info(f"Saving NIfTI files to {destination} directory")
         self.export_nifti_label_data(
             datapoints,
             taxonomy,
@@ -963,7 +963,7 @@ class Export:
         redbrick_coco only works for the following types - IMAGE_BBOX, IMAGE_POLYGON
         """
         if self.project_type not in (LabelType.IMAGE_BBOX, LabelType.IMAGE_POLYGON):
-            print_error(
+            log_error(
                 f"Project type needs to be {LabelType.IMAGE_BBOX} or "
                 + f"{LabelType.IMAGE_POLYGON} for redbrick_coco"
             )

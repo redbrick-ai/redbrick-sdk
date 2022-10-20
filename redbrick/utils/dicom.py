@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 import shutil
 
 from redbrick.utils.files import uniquify_path
-from redbrick.utils.logging import print_error
+from redbrick.utils.logging import log_error
 
 
 def process_nifti_download(
@@ -30,7 +30,7 @@ def process_nifti_download(
         img = nibabel.load(labels_path)
 
         if not isinstance(img, nibabel.Nifti1Image):
-            print_error(f"{labels_path} is not a valid NIfTI1 file.")
+            log_error(f"{labels_path} is not a valid NIfTI1 file.")
             return labels_path
 
         affine = img.affine
@@ -96,7 +96,7 @@ def process_nifti_download(
         return files
 
     except Exception as error:  # pylint: disable=broad-except
-        print_error(f"Failed to process {labels_path}: {error}")
+        log_error(f"Failed to process {labels_path}: {error}")
         return labels_path
 
 
@@ -227,5 +227,5 @@ def process_nifti_upload(
         return (filename, group_map)
 
     except Exception as error:  # pylint: disable=broad-except
-        print_error(error)
+        log_error(error)
         return None, {}
