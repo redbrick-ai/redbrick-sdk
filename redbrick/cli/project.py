@@ -9,7 +9,7 @@ from redbrick.common.context import RBContext
 from redbrick.organization import RBOrganization
 from redbrick.project import RBProject
 from redbrick.cli.entity import CLICache, CLIConfiguration, CLICredentials
-from redbrick.utils.logging import print_info
+from redbrick.utils.logging import logger
 
 
 class CLIProject:
@@ -158,6 +158,6 @@ class CLIProject:
 
         self.conf.save()
 
-        print_info(
+        logger.info(
             f"Successfully initialized {project} in {self.path}\nURL: {project.url}"
         )

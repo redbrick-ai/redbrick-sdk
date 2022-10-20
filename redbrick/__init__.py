@@ -23,11 +23,11 @@ from redbrick.common.constants import (
 from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
 
-from redbrick.utils.logging import print_info
+from redbrick.utils.logging import logger
 
 from .version_check import version_check
 
-__version__ = "2.3.1"
+__version__ = "2.4.0"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -47,7 +47,7 @@ try:
     if asyncio._get_running_loop() is None:  # pylint: disable=protected-access
         raise RuntimeError
     nest_asyncio.apply()
-    print_info(
+    logger.info(
         "Applying nest-asyncio to a running event loop, this likely means you're in a jupyter"
         + " notebook and you can safely ignore this."
     )

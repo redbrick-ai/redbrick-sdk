@@ -15,7 +15,7 @@ from redbrick.cli.cli_base import CLIExportInterface
 from redbrick.coco.coco_main import _get_image_dimension_map, coco_converter
 from redbrick.common.enums import LabelType
 from redbrick.utils.files import uniquify_path, download_files
-from redbrick.utils.logging import print_info, print_error
+from redbrick.utils.logging import log_error, logger
 
 
 class CLIExportController(CLIExportInterface):
@@ -185,7 +185,7 @@ class CLIExportController(CLIExportInterface):
             and not no_consensus,
         )
 
-        print_info(f"Refreshed {len(datapoints)} newly updated tasks")
+        logger.info(f"Refreshed {len(datapoints)} newly updated tasks")
 
         for datapoint in datapoints:
             task_id = datapoint["taskId"]
@@ -253,7 +253,7 @@ class CLIExportController(CLIExportInterface):
             try:
                 loop.run_until_complete(self._download_files(data, export_dir))
             except Exception:  # pylint: disable=broad-except
-                print_error("Failed to download files")
+                log_error("Failed to download files")
 
         if format_type == self.FORMAT_MASK:
             mask_dir = os.path.join(export_dir, "masks")
@@ -270,9 +270,9 @@ class CLIExportController(CLIExportInterface):
                 self.args.fill_holes,
                 self.args.max_hole_size,
             )
-            print_info(f"Exported: {class_map}")
-            print_info(f"Exported: {datapoint_map}")
-            print_info(f"Exported masks to: {mask_dir}")
+            logger.info(f"Exported: {class_map}")
+            logger.info(f"Exported: {datapoint_map}")
+            logger.info(f"Exported masks to: {mask_dir}")
         elif format_type == self.FORMAT_NIFTI:
             nifti_dir = os.path.join(export_dir, "segmentations")
             os.makedirs(nifti_dir, exist_ok=True)
@@ -286,8 +286,8 @@ class CLIExportController(CLIExportInterface):
                 no_consensus,
                 bool(self.args.png),
             )
-            print_info(f"Exported: {task_map}")
-            print_info(f"Exported nifti to: {nifti_dir}")
+            logger.info(f"Exported: {task_map}")
+            logger.info(f"Exported nifti to: {nifti_dir}")
         else:
             export_path = os.path.join(
                 export_dir,
@@ -315,7 +315,7 @@ class CLIExportController(CLIExportInterface):
             with open(export_path, "w", encoding="utf-8") as file_:
                 json.dump(output, file_, indent=2)
 
-            print_info(f"Exported successfully to: {export_path}")
+            logger.info(f"Exported successfully to: {export_path}")
 
     async def _download_files(self, data: List[Dict], export_dir: str) -> None:
         # pylint: disable=too-many-locals
@@ -327,14 +327,14 @@ class CLIExportController(CLIExportInterface):
         files: List[Tuple[Optional[str], Optional[str]]] = []
         tasks_indices: List[List[int]] = []
 
-        print_info("Preparing to download files")
+        logger.info("Preparing to download files")
         for task in tqdm.tqdm(data):
             task_name = (
                 re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
             )
             task_dir = os.path.join(parent_dir, task_name)
             if os.path.isdir(task_dir):
-                print_info(f"{task_dir} exists. Skipping")
+                logger.info(f"{task_dir} exists. Skipping")
                 continue
             shutil.rmtree(task_dir, ignore_errors=True)
             os.makedirs(task_dir, exist_ok=True)

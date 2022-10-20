@@ -14,7 +14,7 @@ from redbrick.cli.command import (
     CLIUploadController,
 )
 from redbrick.cli.cli_base import CLIInterface
-from redbrick.utils.logging import print_warning
+from redbrick.utils.logging import logger
 
 
 class CLIController(CLIInterface):
@@ -89,11 +89,16 @@ def cli_main(argv: Optional[List[str]] = None) -> None:
 
     try:
         args = parser.parse_args(argv if argv is not None else sys.argv[1:])
+        logger.debug(args)
+    except KeyboardInterrupt:
+        logger.warning("User interrupted")
     except argparse.ArgumentError as error:
-        print_warning(str(error))
+        logger.warning(str(error))
         parser.print_help()
     else:
         try:
             cli.handle_command(args)
+        except KeyboardInterrupt:
+            logger.warning("User interrupted")
         except argparse.ArgumentError:
             parser.print_usage()

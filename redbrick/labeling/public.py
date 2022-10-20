@@ -11,7 +11,7 @@ import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.constants import MAX_CONCURRENCY
-from redbrick.utils.logging import print_error
+from redbrick.utils.logging import log_error
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.rb_label_utils import clean_rb_label
@@ -146,7 +146,7 @@ class Labeling:
                 )
 
         except ValueError as error:
-            print_error(error)
+            log_error(error)
             point_error = deepcopy(task)
             point_error["error"] = error
             return point_error

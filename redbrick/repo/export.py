@@ -25,7 +25,7 @@ class ExportRepo(ExportControllerInterface):
     def get_output_info(self, org_id: str, project_id: str) -> Dict:
         """Get info about the output labelset and taxonomy."""
         query_string = f"""
-        query ($orgId: UUID!, $name: String!){{
+        query customGroupSDK($orgId: UUID!, $name: String!){{
             customGroup(orgId: $orgId, name:$name){{
                 dataType
                 taskType
@@ -64,7 +64,13 @@ class ExportRepo(ExportControllerInterface):
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get datapoints that have made it to the output of the project."""
         query_string = """
-        query ($orgId: UUID!, $projectId: UUID!, $name: String!,$first: Int, $cursor: String){
+        query customGroupSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $name: String!
+            $first: Int
+            $cursor: String
+        ) {
         customGroup(orgId: $orgId, name:$name){
             datapointsPaged(first:$first, after:$cursor) {
             entries {
@@ -107,7 +113,7 @@ class ExportRepo(ExportControllerInterface):
     ) -> int:
         """Get number of datapoints in project."""
         query_string = """
-        query($orgId: UUID!, $projectId: UUID!, $stageName: String, $first: Int) {
+        query tasksPagedSDK($orgId: UUID!, $projectId: UUID!, $stageName: String, $first: Int) {
             tasksPaged(
                 orgId: $orgId
                 projectId: $projectId
@@ -145,7 +151,7 @@ class ExportRepo(ExportControllerInterface):
         """Get the latest datapoints."""
         # pylint: disable=too-many-locals
         query_string = f"""
-        query(
+        query tasksPagedSDK(
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String

@@ -10,6 +10,7 @@ from redbrick.cli.input.text import CLIInputText
 from redbrick.cli.input.uuid import CLIInputUUID
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIInfoInterface
+from redbrick.utils.logging import logger
 
 
 class CLIInfoController(CLIInfoInterface):
@@ -100,6 +101,7 @@ class CLIInfoController(CLIInfoInterface):
 
     def handle_info(self) -> None:
         """Handle empty sub command."""
+        logger.debug("Fetching project info")
         org = self.project.org
         project = self.project.project
 

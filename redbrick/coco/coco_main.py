@@ -11,7 +11,7 @@ from tenacity.wait import wait_exponential
 
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils import aioimgspy
-from redbrick.utils.logging import print_warning
+from redbrick.utils.logging import logger
 from redbrick.common.constants import MAX_CONCURRENCY, MAX_RETRY_ATTEMPTS
 from .polygon import rb2coco_polygon
 from .bbox import rb2coco_bbox
@@ -122,11 +122,11 @@ def coco_converter(
 
         if skipped_labels:
             if labels == skipped_labels:
-                print_warning(
+                logger.warning(
                     f"No bbox/polygon labels found for task {data['taskId']}, skipping"
                 )
             else:
-                print_warning(
+                logger.warning(
                     f"Skipped {skipped_labels} non bbox/polygon labels for {data['taskId']}"
                 )
 

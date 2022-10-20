@@ -10,7 +10,7 @@ from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_exponential
 
 from redbrick import __version__ as sdk_version  # pylint: disable=cyclic-import
-from redbrick.utils.logging import print_error
+from redbrick.utils.logging import log_error, logger
 from redbrick.common.constants import DEFAULT_URL, MAX_RETRY_ATTEMPTS, PEERLESS_ERRORS
 
 
@@ -47,6 +47,7 @@ class RBClient:
     ) -> Dict:
         """Execute a graphql query."""
         start_time = time.time()
+        logger.debug("Executing: " + query.strip().split("\n")[0])
         response = self.session.post(
             self.url,
             headers=self.headers,
@@ -70,6 +71,7 @@ class RBClient:
     ) -> Dict:
         """Execute a graphql query using asyncio."""
         start_time = time.time()
+        logger.debug("Executing async: " + query.strip().split("\n")[0])
         async with aio_session.post(
             self.url,
             headers=self.headers,
@@ -80,8 +82,10 @@ class RBClient:
 
     @staticmethod
     def _check_status_msg(response_status: int, start_time: float) -> None:
+        total_time = time.time() - start_time
+        logger.debug(f"Response status: {response_status} took {total_time} seconds")
         if response_status >= 500:
-            if time.time() - start_time >= 24:
+            if total_time >= 24:
                 raise TimeoutError(
                     "Request timed out. Please consider using lower concurrency"
                 )
@@ -100,7 +104,7 @@ class RBClient:
             errors = []
             for error in response_data["errors"]:
                 errors.append(error["message"])
-                print_error(error["message"])
+                log_error(error["message"])
 
             if raise_for_error:
                 raise ValueError("\n".join(errors))

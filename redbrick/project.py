@@ -13,7 +13,7 @@ from redbrick.common.constants import PEERLESS_ERRORS
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import LabelType, StorageMethod
-from redbrick.utils.logging import print_info
+from redbrick.utils.logging import logger
 
 
 class RBProject:
@@ -212,7 +212,7 @@ class RBProject:
                     )
                     if project["status"] == "CREATING":
                         if attempt.retry_state.attempt_number == 1:
-                            print_info("Project is still creating...")
+                            logger.info("Project is still creating...")
                         raise Exception("Unknown problem occurred")
         except tenacity.RetryError as error:
             raise Exception("Unknown problem occurred") from error

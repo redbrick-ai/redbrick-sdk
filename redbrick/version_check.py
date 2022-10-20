@@ -5,7 +5,7 @@ from configparser import ConfigParser
 from datetime import datetime
 
 from packaging.version import Version
-from .utils.logging import print_warning  # pylint: disable=cyclic-import
+from .utils.logging import logger  # pylint: disable=cyclic-import
 
 
 def get_latest_version(current_version: str) -> str:
@@ -55,7 +55,7 @@ def version_check(current_version: str) -> None:
                 + "Please update as soon as possible to get the latest features and bug fixes.\n"
                 + "You can use 'python -m pip install redbrick-sdk=={}' to get the latest version."
             )
-            print_warning(warn.format(current_version, latest_version, latest_version))
+            logger.warning(warn.format(current_version, latest_version, latest_version))
 
         cache_config["version"]["latest_version"] = latest_version
         cache_config["version"]["last_checked"] = str(current_timestamp)
