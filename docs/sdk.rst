@@ -12,7 +12,6 @@ Project
 .. automodule:: redbrick.project
    :members:
    :show-inheritance:
-   :exclude-members: learning, learning2
 
 Organization
 ----------------------

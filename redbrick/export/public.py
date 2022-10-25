@@ -92,6 +92,7 @@ class Export:
         consensus_enabled: bool,
         label_stages: List[Dict],
         review_stages: List[Dict],
+        taxonomy_name: str,
     ) -> None:
         """Construct Export object."""
         self.context = context
@@ -101,6 +102,7 @@ class Export:
         self.output_stage_name = output_stage_name
         self.consensus_enabled = consensus_enabled
         self.has_label_stage_only = bool(label_stages) and not bool(review_stages)
+        self.taxonomy_name = taxonomy_name
 
     def _get_raw_data_latest(
         self,
@@ -132,7 +134,9 @@ class Export:
             )
         )
 
-        general_info = self.context.export.get_output_info(self.org_id, self.project_id)
+        taxonomy = self.context.project.get_taxonomy(
+            self.org_id, tax_id=None, name=self.taxonomy_name
+        )
         datapoint_count = self.context.export.datapoints_in_project(
             self.org_id, self.project_id, stage_name
         )
@@ -160,7 +164,7 @@ class Export:
             except Exception:  # pylint: disable=broad-except
                 pass
 
-        return datapoints, general_info["taxonomy"]
+        return datapoints, taxonomy
 
     async def _get_input_labels(self, dp_ids: List[str]) -> List[Dict]:
         conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)

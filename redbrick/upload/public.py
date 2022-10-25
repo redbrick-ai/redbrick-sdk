@@ -651,7 +651,7 @@ class Upload:
 
         is_ground_truth: bool = False
             If labels are provided in points above, and this parameters is set to true, the labels
-            will be added to the Ground Truth stage. This is mainly useful for Active Learning.
+            will be added to the Ground Truth stage.
 
         segmentation_mapping: Optional[Dict] = None
             Optional mapping of semantic segmentation class ids and RedBrick categories.

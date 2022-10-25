@@ -7,12 +7,7 @@ import aiohttp
 
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
-from redbrick.repo.shards import (
-    DATAPOINT_SHARD,
-    TASK_DATA_SHARD,
-    TAXONOMY_SHARD,
-    TASK_SHARD,
-)
+from redbrick.repo.shards import DATAPOINT_SHARD, TASK_DATA_SHARD, TASK_SHARD
 
 
 class ExportRepo(ExportControllerInterface):
@@ -21,92 +16,6 @@ class ExportRepo(ExportControllerInterface):
     def __init__(self, client: RBClient) -> None:
         """Construct ExportRepo."""
         self.client = client
-
-    def get_output_info(self, org_id: str, project_id: str) -> Dict:
-        """Get info about the output labelset and taxonomy."""
-        query_string = f"""
-        query customGroupSDK($orgId: UUID!, $name: String!){{
-            customGroup(orgId: $orgId, name:$name){{
-                dataType
-                taskType
-                datapointCount
-                taxonomy {{
-                    {TAXONOMY_SHARD}
-                    colorMap {{
-                        name
-                        color
-                        classid
-                        trail
-                        taskcategory
-                    }}
-                }}
-            }}
-        }}
-        """
-
-        # EXECUTE THE QUERY
-        query_variables = {
-            "orgId": org_id,
-            "name": project_id + "-output",
-        }
-
-        result = self.client.execute_query(query_string, query_variables)
-
-        temp: Dict = result["customGroup"]
-        return temp
-
-    def get_datapoints_output(
-        self,
-        org_id: str,
-        project_id: str,
-        first: int = 50,
-        cursor: Optional[str] = None,
-    ) -> Tuple[List[Dict], Optional[str]]:
-        """Get datapoints that have made it to the output of the project."""
-        query_string = """
-        query customGroupSDK(
-            $orgId: UUID!
-            $projectId: UUID!
-            $name: String!
-            $first: Int
-            $cursor: String
-        ) {
-        customGroup(orgId: $orgId, name:$name){
-            datapointsPaged(first:$first, after:$cursor) {
-            entries {
-                name
-                itemsPresigned:items (presigned:true)
-                items(presigned:false)
-                task(projectId: $projectId) {
-                    taskId
-                }
-                labelData(customGroupName: $name){
-                    createdByEmail
-                    labelsData(interpolate: true)
-                    labelsMap {
-                        labelName
-                    }
-                }
-            }
-            cursor
-            }
-        }
-        }
-        """
-        # EXECUTE THE QUERY
-        query_variables = {
-            "orgId": org_id,
-            "name": project_id + "-output",
-            "projectId": project_id,
-            "cursor": cursor,
-            "first": first,
-        }
-
-        result = self.client.execute_query(query_string, query_variables, False)
-        custom_group = result.get("customGroup", {}) or {}
-        datapoints_paged = custom_group.get("datapointsPaged", {}) or {}
-        entries: List[Dict] = datapoints_paged.get("entries", []) or []  # type: ignore
-        return entries, datapoints_paged.get("cursor")
 
     def datapoints_in_project(
         self, org_id: str, project_id: str, stage_name: Optional[str] = None

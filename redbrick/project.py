@@ -1,6 +1,4 @@
 """Main object for RedBrick SDK."""
-
-import json
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from dateutil import parser  # type: ignore
@@ -43,7 +41,6 @@ class RBProject:
         """Construct RBProject."""
         # pylint: disable=import-outside-toplevel
         from redbrick.upload import Upload
-        from redbrick.learning import Learning, Learning2
         from redbrick.labeling import Labeling
         from redbrick.export import Export
 
@@ -67,19 +64,8 @@ class RBProject:
         self.upload = Upload(context, org_id, project_id, self.project_type)
 
         self.output_stage_name: str = "Output"
-        self.learning = Learning(self.context, self.org_id, self.project_id)
-        self.learning2 = Learning2(self.context, self.org_id, self.project_id)
         for stage in self._stages:
-            if stage["brickName"] == "manual-labeling":
-                if json.loads(stage["stageConfig"]).get("isPrimaryStage"):
-                    self.learning2 = Learning2(
-                        self.context, self.org_id, self.project_id, stage["stageName"]
-                    )
-            elif stage["brickName"] == "active-learning":
-                self.learning = Learning(
-                    self.context, self.org_id, self.project_id, stage["stageName"]
-                )
-            elif stage["brickName"] == "labelset-output":
+            if stage["brickName"] == "labelset-output":
                 self.output_stage_name = stage["stageName"]
 
         self.labeling = Labeling(context, org_id, project_id)
@@ -93,6 +79,7 @@ class RBProject:
             self.consensus_enabled,
             self.label_stages,
             self.review_stages,
+            self.taxonomy_name,
         )
 
     @property

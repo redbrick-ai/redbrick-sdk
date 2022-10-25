@@ -10,7 +10,7 @@ from redbrick.project import RBProject
 from redbrick.utils.logging import logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_tax_utils import format_taxonomy
-from .basic_project import get_active_learning_project, get_basic_project
+from .basic_project import get_basic_project
 
 
 class RBOrganization:
@@ -81,7 +81,6 @@ class RBOrganization:
         taxonomy_name: str,
         reviews: int = 0,
         exists_okay: bool = False,
-        active_learning: Optional[Dict] = None,
     ) -> RBProject:
         """
         Create a project within the organization.
@@ -112,8 +111,6 @@ class RBOrganization:
         redbrick.project.RBProject
             A RedBrick Project object.
         """
-        if active_learning is not None:
-            logger.warning("active_learning arg is deprecated and will be ignored")
         stages = get_basic_project(reviews)
 
         if exists_okay:
