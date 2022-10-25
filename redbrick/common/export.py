@@ -11,24 +11,6 @@ class ExportControllerInterface(ABC):
     """Abstract interface to define methods for Export."""
 
     @abstractmethod
-    def get_output_info(
-        self,
-        org_id: str,
-        project_id: str,
-    ) -> Dict:
-        """Get info about the output labelset and taxonomy."""
-
-    @abstractmethod
-    def get_datapoints_output(
-        self,
-        org_id: str,
-        project_id: str,
-        first: int = 50,
-        cursor: Optional[str] = None,
-    ) -> Tuple[List[Dict], Optional[str]]:
-        """Get datapoints that have made it to the output of the project."""
-
-    @abstractmethod
     def datapoints_in_project(
         self, org_id: str, project_id: str, stage_name: Optional[str] = None
     ) -> int:

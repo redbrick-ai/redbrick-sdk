@@ -2,9 +2,9 @@
 
 from typing import List, Dict, Tuple
 
+INPUT_NAME = "Input"
 OUTPUT_NAME = "Output"
 LABEL_NAME = "Label"
-ACTIVE_LEARNING_ENTRY = "Finalized_Tasks"
 MIN_REVIEW = 0
 MAX_REVIEW = 6
 
@@ -17,7 +17,7 @@ def _get_middle_stages(reviews: int, passed_name: str) -> Tuple[List[Dict], str]
         "routing": {
             "nextStageName": "Review_1" if reviews > 0 else passed_name,
         },
-        "stageConfig": {"isPrimaryStage": True},
+        "stageConfig": {},
     }
     feedback_stage = {
         "brickName": "feedback",
@@ -48,55 +48,6 @@ def _get_middle_stages(reviews: int, passed_name: str) -> Tuple[List[Dict], str]
     return stages, LABEL_NAME
 
 
-def _get_active_learning_config(
-    middle_stages: List[Dict], entry_point: str, batch_size: int, cycle_size: int
-) -> List[Dict]:
-
-    return (
-        [
-            {
-                "brickName": "labelset-input",
-                "routing": {
-                    "nextStageName": "Active_Learning",
-                },
-                "stageName": "Input",
-                "stageConfig": {},
-            },
-            {
-                "brickName": "active-learning",
-                "routing": {
-                    "passed": OUTPUT_NAME,
-                    "failed": entry_point,
-                },
-                "stageName": "Active_Learning",
-                "stageConfig": {
-                    "batchSize": batch_size,
-                    "cycleSize": cycle_size,
-                },
-            },
-            {
-                "brickName": "labelset-output",
-                "stageName": OUTPUT_NAME,
-                "routing": {
-                    "nextStageName": "END",
-                },
-                "stageConfig": {},
-            },
-        ]
-        + middle_stages
-        + [
-            {
-                "brickName": "feedback",
-                "stageName": ACTIVE_LEARNING_ENTRY,
-                "routing": {
-                    "feedbackStageName": "Active_Learning",
-                },
-                "stageConfig": {},
-            },
-        ]
-    )
-
-
 def get_basic_project(reviews: int = 0) -> List[Dict]:
     """Get basic project config with reviews."""
     reviews = max(reviews, MIN_REVIEW)
@@ -106,10 +57,10 @@ def get_basic_project(reviews: int = 0) -> List[Dict]:
 
     input_stage = {
         "brickName": "labelset-input",
+        "stageName": INPUT_NAME,
         "routing": {
             "nextStageName": entry_point,
         },
-        "stageName": "Input",
         "stageConfig": {},
     }
     output_stage = {
@@ -124,14 +75,3 @@ def get_basic_project(reviews: int = 0) -> List[Dict]:
     temp = [input_stage] + middle_stages + [output_stage]
 
     return temp
-
-
-def get_active_learning_project(
-    reviews: int, batch_size: int, cycle_size: int
-) -> List[Dict]:
-    """Get active learning project."""
-    middle_stages, entry_point = _get_middle_stages(reviews, ACTIVE_LEARNING_ENTRY)
-
-    return _get_active_learning_config(
-        middle_stages, entry_point, batch_size, cycle_size
-    )

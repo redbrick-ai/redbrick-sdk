@@ -12,7 +12,6 @@ class RBContext:
         from .export import ExportControllerInterface
         from .upload import UploadControllerInterface
         from .labeling import LabelingControllerInterface
-        from .learning import LearningControllerInterface, LearningController2Interface
         from .project import ProjectRepoInterface
 
         self.client = RBClient(api_key=api_key, url=url)
@@ -20,8 +19,6 @@ class RBContext:
         self.export: ExportControllerInterface
         self.upload: UploadControllerInterface
         self.labeling: LabelingControllerInterface
-        self.learning: LearningControllerInterface
-        self.learning2: LearningController2Interface
         self.project: ProjectRepoInterface
 
         self._key_id: Optional[str] = None
