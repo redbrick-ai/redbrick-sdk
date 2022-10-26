@@ -51,6 +51,11 @@
                 "description": "Task properties or extra info",
                 "type": "object"
             },
+            "preAssign": {
+                "title": "Task pre-assignment map",
+                "description": "Map of stage name and user id(s)/email(s) for task pre-assignment",
+                "type": "object"
+            },
             "series": {
                 "title": "Task Series",
                 "description": "List of task series",

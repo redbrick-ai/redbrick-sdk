@@ -1,5 +1,5 @@
 """Abstract interface to upload."""
-
+import json
 from typing import List, Dict, Optional, Any
 
 import aiohttp
@@ -28,12 +28,14 @@ class UploadRepo(UploadControllerInterface):
         series_info: Optional[List[Dict]] = None,
         meta_data: Optional[str] = None,
         is_ground_truth: bool = False,
+        pre_assign: Optional[Dict] = None,
     ) -> Dict:
         """
         Create a datapoint and returns its taskId.
 
         Name must be unique in the project.
         """
+        # pylint: disable=too-many-locals
         query_string = """
             mutation createDatapointSDK(
                 $orgId: UUID!
@@ -46,6 +48,7 @@ class UploadRepo(UploadControllerInterface):
                 $seriesInfo: [SeriesInfoInput!]
                 $metaData: String
                 $isGroundTruth: Boolean!
+                $preAssign: String
             ) {
                 createDatapoint(
                     orgId: $orgId
@@ -58,6 +61,7 @@ class UploadRepo(UploadControllerInterface):
                     seriesInfo: $seriesInfo
                     metaData: $metaData
                     isGroundTruth: $isGroundTruth
+                    preAssign: $preAssign
                 ) {
                     taskId
                 }
@@ -75,6 +79,7 @@ class UploadRepo(UploadControllerInterface):
             "seriesInfo": series_info,
             "metaData": meta_data,
             "isGroundTruth": is_ground_truth,
+            "preAssign": json.dumps(pre_assign),
         }
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables

@@ -94,6 +94,7 @@ class Upload:
                 point.get("seriesInfo"),
                 json.dumps(point["metaData"]) if point.get("metaData") else None,
                 is_ground_truth,
+                point.get("preAssign"),
             )
             assert response.get("taskId"), "Failed to create task"
             point_success = deepcopy(point)
