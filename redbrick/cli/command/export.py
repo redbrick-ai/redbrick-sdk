@@ -274,20 +274,25 @@ class CLIExportController(CLIExportInterface):
             logger.info(f"Exported: {datapoint_map}")
             logger.info(f"Exported masks to: {mask_dir}")
         elif format_type == self.FORMAT_NIFTI:
+            png_mask = bool(self.args.png)
             nifti_dir = os.path.join(export_dir, "segmentations")
             os.makedirs(nifti_dir, exist_ok=True)
             task_map = os.path.join(export_dir, "tasks.json")
+            class_map = os.path.join(export_dir, "class_map.json")
             self.project.project.export.export_nifti_label_data(
                 data,
                 taxonomy,
                 nifti_dir,
                 task_map,
+                class_map,
                 bool(self.args.old_format),
                 no_consensus,
-                bool(self.args.png),
+                png_mask,
             )
             logger.info(f"Exported: {task_map}")
             logger.info(f"Exported nifti to: {nifti_dir}")
+            if png_mask:
+                logger.info(f"Exported: {class_map}")
         else:
             export_path = os.path.join(
                 export_dir,
