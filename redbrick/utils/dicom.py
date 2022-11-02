@@ -8,7 +8,11 @@ from redbrick.utils.logging import log_error
 
 
 def process_nifti_download(
-    labels: List[Dict], labels_path: Optional[str], png_mask: bool, color_map: Dict
+    labels: List[Dict],
+    labels_path: Optional[str],
+    png_mask: bool,
+    color_map: Dict,
+    is_tax_v2: bool,
 ) -> Optional[Union[str, List[str]]]:
     """Process nifti download file."""
     # pylint: disable=too-many-locals, import-outside-toplevel
@@ -37,6 +41,13 @@ def process_nifti_download(
         header = img.header
         data = img.get_fdata()
 
+        dirname = (
+            os.path.splitext(labels_path)[0]
+            if labels_path.endswith(".gz")
+            else labels_path
+        )
+        dirname = os.path.splitext(dirname)[0]
+
         mask_arr: numpy.ndarray = numpy.array([0])
         if png_mask:
             mask_arr = numpy.transpose(data, (1, 0, 2))
@@ -46,18 +57,18 @@ def process_nifti_download(
                 color_mask = numpy.zeros((mask_arr.shape[0], mask_arr.shape[1], 3))
                 for label in labels:
                     if label.get("dicom"):
-                        color_mask[
-                            mask_arr == label["dicom"]["instanceid"]
-                        ] = color_map.get(
-                            "::".join(label["category"][0][1:]), (255, 255, 255)
+                        color_mask[mask_arr == label["dicom"]["instanceid"]] = (
+                            color_map.get(label.get("classid", -1), (255, 255, 255))
+                            if is_tax_v2
+                            else color_map.get(
+                                "::".join(label["category"][0][1:]), (255, 255, 255)
+                            )
                         )
 
                 pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
-                filename = uniquify_path(f"{os.path.splitext(labels_path)[0]}.png")
-                pil_color_mask.save(filename)
-                return [filename]
+                pil_color_mask.save(uniquify_path(f"{dirname}.png"))
+                return [labels_path]
 
-        dirname = os.path.splitext(labels_path)[0]
         shutil.rmtree(dirname, ignore_errors=True)
         os.makedirs(dirname, exist_ok=True)
         files: List[str] = []

@@ -614,6 +614,7 @@ class Export:
         old_format: bool,
         no_consensus: bool,
         png_mask: bool,
+        is_tax_v2: bool,
     ) -> Dict:
         """Download and process label maps."""
         # pylint: disable=import-outside-toplevel, too-many-locals, too-many-branches
@@ -689,7 +690,7 @@ class Export:
                 new_series_name = f"{series_name}_{counter}"
                 counter += 1
             added.add(new_series_name)
-            files.append((url, f"{new_series_name}.nii"))
+            files.append((url, f"{new_series_name}.nii.gz"))
 
         paths = await download_files(
             files, "Downloading nifti labels", False, True, True
@@ -697,7 +698,7 @@ class Export:
 
         for label, path in zip(labels_map, paths):
             label["labelName"] = process_nifti_download(
-                task.get("labels", []) or [], path, png_mask, color_map
+                task.get("labels", []) or [], path, png_mask, color_map, is_tax_v2
             )
 
         if len(paths) > len(labels_map) and task.get("consensusTasks"):
@@ -707,7 +708,7 @@ class Export:
                 consensus_labels_map = consensus_task.get("labelsMap", []) or []
                 for consensus_label_map in consensus_labels_map:
                     consensus_label_map["labelName"] = process_nifti_download(
-                        consensus_labels, paths[index], png_mask, color_map
+                        consensus_labels, paths[index], png_mask, color_map, is_tax_v2
                     )
                     index += 1
 
@@ -719,21 +720,37 @@ class Export:
         taxonomy: Dict,
         nifti_dir: str,
         task_map: str,
+        class_map_file: str,
         old_format: bool,
         no_consensus: bool,
         png_mask: bool,
     ) -> None:
         """Export nifti label maps."""
-        class_id_map: Dict = {}
+        # pylint: disable=too-many-locals
+        class_map: Dict = {}
         color_map: Dict = {}
+        is_tax_v2 = bool(taxonomy.get("isNew"))
         if png_mask:
-            Export.tax_class_id_mapping(
-                [taxonomy["categories"][0]["name"]],  # object
-                taxonomy["categories"][0]["children"],  # categories
-                class_id_map,
-                color_map,
-                taxonomy.get("colorMap"),
-            )
+            if is_tax_v2:
+                object_types = taxonomy.get("objectTypes", []) or []
+                for object_type in object_types:
+                    if object_type["labelType"] == "SEGMENTATION":
+                        color = Export._get_color(0, object_type["color"])
+                        color_map[object_type["classId"]] = color
+
+                        category: str = object_type["category"]
+                        if category in class_map:  # rare case
+                            category += f' ({object_type["classId"]})'
+                        class_map[category] = color
+            else:
+                Export.tax_class_id_mapping(
+                    [taxonomy["categories"][0]["name"]],  # object
+                    taxonomy["categories"][0]["children"],  # categories
+                    {},
+                    color_map,
+                    taxonomy.get("colorMap"),
+                )
+                class_map = color_map
         os.makedirs(nifti_dir, exist_ok=True)
         loop = asyncio.get_event_loop()
         tasks = loop.run_until_complete(
@@ -747,6 +764,7 @@ class Export:
                         old_format,
                         no_consensus,
                         png_mask,
+                        is_tax_v2,
                     )
                     for datapoint in datapoints
                 ],
@@ -756,6 +774,10 @@ class Export:
 
         with open(task_map, "w", encoding="utf-8") as tasks_file:
             json.dump(tasks, tasks_file, indent=2)
+
+        if png_mask:
+            with open(class_map_file, "w", encoding="utf-8") as classes_file:
+                json.dump(class_map, classes_file, indent=2)
 
     def redbrick_nifti(
         self,
@@ -817,7 +839,7 @@ class Export:
         if self.project_type != LabelType.DICOM_SEGMENTATION:
             log_error(
                 f"Project type needs to be {LabelType.DICOM_SEGMENTATION} "
-                + "for redbrick_nifi"
+                + "for redbrick_nifti"
             )
             return
 
@@ -849,6 +871,7 @@ class Export:
             taxonomy,
             nifti_dir,
             os.path.join(destination, "tasks.json"),
+            os.path.join(destination, "class_map.json"),
             old_format,
             no_consensus,
             png,
