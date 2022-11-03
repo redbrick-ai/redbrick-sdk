@@ -789,9 +789,9 @@ class Export:
         old_format: bool = False,
         no_consensus: Optional[bool] = None,
         png: bool = False,
-    ) -> None:
+    ) -> List[Dict]:
         """
-        Export dicom segmentation labels in NIfTI-1 format.
+        Export labels for 'Medical' project type. Segmentations are exported in NIfTI-1 format.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key, url)
         >>> project.export.redbrick_nifti()
@@ -831,17 +831,24 @@ class Export:
         png: bool = False
             Export nifti labels as png masks.
 
+        Returns:
+        -----------------
+        List[Dict]
+            Datapoint and labels in RedBrick AI format. See
+            https://docs.redbrickai.com/python-sdk/reference/annotation-format
+
         Warnings
         ----------
         redbrick_nifti only works for the following types - DICOM_SEGMENTATION
 
         """
+        # pylint: disable=too-many-locals
         if self.project_type != LabelType.DICOM_SEGMENTATION:
             log_error(
                 f"Project type needs to be {LabelType.DICOM_SEGMENTATION} "
                 + "for redbrick_nifti"
             )
-            return
+            return []
 
         no_consensus = (
             no_consensus if no_consensus is not None else not self.consensus_enabled
@@ -866,16 +873,20 @@ class Export:
         nifti_dir = os.path.join(destination, "nifti")
         os.makedirs(nifti_dir, exist_ok=True)
         logger.info(f"Saving NIfTI files to {destination} directory")
+        tasks_json = os.path.join(destination, "tasks.json")
         self.export_nifti_label_data(
             datapoints,
             taxonomy,
             nifti_dir,
-            os.path.join(destination, "tasks.json"),
+            tasks_json,
             os.path.join(destination, "class_map.json"),
             old_format,
             no_consensus,
             png,
         )
+        with open(tasks_json, "r", encoding="utf-8") as tasks_file:
+            tasks: List[Dict] = json.load(tasks_file)
+        return tasks
 
     def redbrick_format(
         self,
