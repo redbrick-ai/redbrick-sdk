@@ -147,32 +147,12 @@ class CLIExportInterface(ABC):
     TYPE_LATEST = "latest"
     TYPE_GROUNDTRUTH = "groundtruth"
 
-    FORMAT_REDBRICK = "redbrick"
-    FORMAT_COCO = "coco"
-    FORMAT_MASK = "mask"
-    FORMAT_NIFTI = "nifti"
-
     @abstractmethod
     def handler(self, args: Namespace) -> None:
         """Handle export command."""
 
     @abstractmethod
     def handle_export(self) -> None:
-        """Handle empty sub command."""
-
-
-class CLIPruneInterface(ABC):
-    """CLI prune interface."""
-
-    args: Namespace
-    project: CLIProject
-
-    @abstractmethod
-    def handler(self, args: Namespace) -> None:
-        """Handle prune command."""
-
-    @abstractmethod
-    def handle_prune(self) -> None:
         """Handle empty sub command."""
 
 
@@ -220,7 +200,6 @@ class CLIInterface(ABC):
     clone: CLICloneInterface
     info: CLIInfoInterface
     export: CLIExportInterface
-    prune: CLIPruneInterface
     upload: CLIUploadInterface
     report: CLIReportInterface
 
@@ -229,7 +208,6 @@ class CLIInterface(ABC):
     CLONE = "clone"
     INFO = "info"
     EXPORT = "export"
-    PRUNE = "prune"
     UPLOAD = "upload"
     REPORT = "report"
 

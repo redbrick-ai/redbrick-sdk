@@ -111,7 +111,6 @@ class CLIInfoController(CLIInfoInterface):
 
         project_data.append(("ID", project.project_id))
         project_data.append(("Name", project.name))
-        project_data.append(("Type", project.project_type.value))
         project_data.append(("Taxonomy", project.taxonomy_name))
         project_data.append(("URL", project.url))
 

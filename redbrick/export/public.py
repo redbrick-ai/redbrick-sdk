@@ -10,69 +10,20 @@ import copy
 from datetime import datetime, timezone
 
 import aiohttp
-from shapely.geometry import Polygon  # type: ignore
-from skimage.morphology import remove_small_holes  # type: ignore
-import numpy as np  # type: ignore
-from matplotlib import cm  # type: ignore
 import tqdm  # type: ignore
-from PIL import Image  # type: ignore
 
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.context import RBContext
-from redbrick.common.enums import LabelType
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.files import uniquify_path, download_files
-from redbrick.utils.logging import log_error, logger
+from redbrick.utils.logging import logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import (
     clean_rb_label,
     dicom_rb_format,
-    flat_rb_format,
+    parse_entry_latest,
 )
 from redbrick.utils.rb_event_utils import task_event_format
-from redbrick.coco.coco_main import coco_converter
-
-# pylint: disable=too-many-lines
-
-
-def _parse_entry_latest(item: Dict) -> Dict:
-    try:
-        task_id = item["taskId"]
-        task_data = item["latestTaskData"]
-        datapoint = task_data["dataPoint"]
-        items = datapoint["items"]
-        items_presigned = datapoint.get("itemsPresigned", []) or []
-        name = datapoint["name"]
-        created_by = (datapoint.get("createdByEntity", {}) or {}).get("email")
-        created_at = datapoint["createdAt"]
-        updated_by = task_data["createdByEmail"]
-        updated_at = task_data["createdAt"]
-        labels = [
-            clean_rb_label(label) for label in json.loads(task_data["labelsData"])
-        ]
-        storage_id = datapoint["storageMethod"]["storageId"]
-        label_storage_id = task_data["labelsStorage"]["storageId"]
-
-        return flat_rb_format(
-            labels,
-            items,
-            items_presigned,
-            name,
-            created_by,
-            created_at,
-            updated_by,
-            updated_at,
-            task_id,
-            item["currentStageName"],
-            task_data.get("labelsMap", []) or [],
-            datapoint.get("seriesInfo"),
-            json.loads(datapoint["metaData"]) if datapoint.get("metaData") else None,
-            storage_id,
-            label_storage_id,
-            item.get("currentStageSubTask"),
-        )
-    except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
-        return {}
 
 
 class Export:
@@ -88,7 +39,6 @@ class Export:
         context: RBContext,
         org_id: str,
         project_id: str,
-        project_type: LabelType,
         output_stage_name: str,
         consensus_enabled: bool,
         label_stages: List[Dict],
@@ -99,7 +49,6 @@ class Export:
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
-        self.project_type = project_type
         self.output_stage_name = output_stage_name
         self.consensus_enabled = consensus_enabled
         self.has_label_stage_only = bool(label_stages) and not bool(review_stages)
@@ -154,7 +103,7 @@ class Export:
         with tqdm.tqdm(my_iter, unit=" datapoints", total=datapoint_count) as progress:
             datapoints = []
             for val in progress:
-                task = _parse_entry_latest(val)
+                task = parse_entry_latest(val)
                 if task:
                     datapoints.append(task)
             try:
@@ -186,44 +135,6 @@ class Export:
         return [
             {**data, "inputLabels": label} for data, label in zip(input_data, labels)
         ]
-
-    def get_task_events(
-        self,
-        only_ground_truth: bool = True,
-        concurrency: int = 10,
-    ) -> List[Dict]:
-        """Get task events.
-
-        Parameters
-        -----------
-        only_ground_truth: bool = True
-            If set to True, will return all tasks
-            that have been completed in your workflow.
-
-        concurrency: int = 10
-
-        Returns
-        -----------
-        List[Dict]
-        """
-        my_iter = PaginationIterator(
-            partial(
-                self.context.export.task_events,
-                self.org_id,
-                self.project_id,
-                self.output_stage_name if only_ground_truth else None,
-                concurrency,
-            )
-        )
-
-        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
-            tasks = [
-                task
-                for task in progress
-                if (not only_ground_truth or task["currentStageName"] == "END")
-            ]
-
-        return list(map(task_event_format, tasks))
 
     def get_latest_data(
         self,
@@ -265,7 +176,7 @@ class Export:
                 cursor,
             )
             for val in entries:
-                tasks.append(_parse_entry_latest(val))
+                tasks.append(parse_entry_latest(val))
                 dp_ids.append(val["dpId"])
 
             if cursor is None:
@@ -282,19 +193,14 @@ class Export:
     @staticmethod
     def _get_color(class_id: int, color_hex: Optional[str] = None) -> Any:
         """Get a color from class id."""
-        # pylint: disable=no-member
         if color_hex:
             color_hex = color_hex.lstrip("#")
             return [int(color_hex[i : i + 2], 16) for i in (0, 2, 4)]
-        color = (
-            np.array(
-                cm.tab20b(int(class_id))  # type: ignore
-                if class_id > 20
-                else cm.tab20c(int(class_id))  # type: ignore
-            )
-            * 255
-        )
-        return color.astype(np.uint8)[0:3].tolist()
+        num = (374761397 + int(class_id) * 3266489917) & 0xFFFFFFFF
+        num = ((num ^ num >> 15) * 2246822519) & 0xFFFFFFFF
+        num = ((num ^ num >> 13) * 3266489917) & 0xFFFFFFFF
+        num = (num ^ num >> 16) >> 8
+        return list(num.to_bytes(3, "big"))
 
     @staticmethod
     def tax_class_id_mapping(
@@ -326,324 +232,6 @@ class Export:
             Export.tax_class_id_mapping(
                 trail, category["children"], class_id, color_map, taxonomy_color
             )
-
-    @staticmethod
-    def fill_mask_holes(mask: np.ndarray, max_hole_size: int) -> np.ndarray:
-        """Fill holes."""
-        mask_copy = copy.deepcopy(mask)
-
-        # find indexes where mask has labels
-        mask_greater_zero = np.where(mask > 0)
-
-        # convery copy mask to binary
-        mask_copy[mask_greater_zero] = 1
-
-        # fill holes in copy binary mask
-        mask_copy = remove_small_holes(
-            mask_copy.astype(bool),
-            area_threshold=max_hole_size,
-        )
-        mask_copy = mask_copy.astype(int)
-
-        # set original pixel values
-        mask_copy[mask_greater_zero] = mask[mask_greater_zero]
-
-        # find indexes of holes, and fill with neighbor
-        mask_hole_loc = np.where((mask == 0) & (mask_copy > 0))
-
-        for i in range(len(mask_hole_loc[0])):
-            mask_copy = Export.fill_hole_with_neighbor(
-                mask_copy, mask_hole_loc[0][i], mask_hole_loc[1][i]
-            )
-
-        return mask_copy
-
-    @staticmethod
-    def fill_hole_with_neighbor(mask: np.ndarray, i: Any, j: Any) -> np.ndarray:
-        """Fill a pixel in the mask with it's neighbors value."""
-        row, col = mask.shape
-        top = 0 if j - 1 < 0 else mask[i][j - 1]
-        top_right = 0 if (j - 1 < 0) or (i + 1 == row) else mask[i + 1][j - 1]
-        right = 0 if i + 1 == row else mask[i + 1][j]
-        bottom_right = 0 if (j + 1 == col) or (i + 1 == row) else mask[i + 1][j + 1]
-        bottom = 0 if j + 1 == col else mask[i][j + 1]
-        bottom_left = 0 if (i - 1 < 0) or (j + 1 == col) else mask[i - 1][j + 1]
-        left = 0 if i - 1 < 0 else mask[i - 1][j]
-        top_left = 0 if (i - 1 < 0) or (j - 1 == 0) else mask[i - 1][j - 1]
-        mask[i][j] = max(
-            top,
-            top_right,
-            right,
-            bottom_right,
-            bottom,
-            bottom_left,
-            left,
-            top_left,
-        )
-        return mask
-
-    @staticmethod
-    def convert_rbai_mask(
-        labels: List,
-        class_id_map: Dict,
-        color_map: Dict,
-        fill_holes: bool = False,
-        max_hole_size: int = 30,
-    ) -> np.ndarray:
-        """Convert rbai datapoint to a numpy mask."""
-        # pylint: disable=import-error, import-outside-toplevel, disable=too-many-locals
-        try:
-            import rasterio.features  # type: ignore
-        except Exception as error:
-            log_error(
-                "For windows users, please follow the rasterio "
-                + "documentation to properly install the module "
-                + "https://rasterio.readthedocs.io/en/latest/installation.html "
-                + "Rasterio is required by RedBrick SDK to work with masks."
-            )
-            raise error
-
-        imagesize = labels[0]["pixel"]["imagesize"]
-
-        # deal with condition where imagesize is returned as float
-        imagesize = np.round(imagesize).astype(int)  # type: ignore
-
-        mask = np.zeros([imagesize[1], imagesize[0]])
-        class_id_reverse = {
-            class_id: category for category, class_id in class_id_map.items()
-        }
-        for label in labels:
-            class_id = class_id_map["::".join(label["category"][0][1:])]
-            regions = copy.deepcopy(label["pixel"]["regions"])
-            holes = copy.deepcopy(label["pixel"]["holes"])
-            imagesize = label["pixel"]["imagesize"]
-
-            # deal with condition where imagesize is returned as float
-            imagesize = np.round(imagesize).astype(int)  # type: ignore
-
-            # iterate through regions, and create region mask
-            region_mask = np.zeros([imagesize[1], imagesize[0]])
-            if regions and len(regions) > 0:
-                for region in regions:
-                    if (
-                        len(np.array(region).shape) == 1
-                        or np.array(region).shape[0] < 3
-                    ):
-                        # Don't add empty regions to the mask
-                        # Don't add regions with < 3 vertices
-                        break
-
-                    # convert polygon to mask
-                    region_polygon = Polygon(region)
-                    single_region_mask = (
-                        rasterio.features.rasterize(
-                            [region_polygon],
-                            out_shape=(imagesize[1], imagesize[0]),
-                        ).astype(float)
-                        * class_id
-                    )
-
-                    # add single region to root region mask
-                    region_mask += single_region_mask
-
-            # iterate through holes, and create hole mask
-            hole_mask = np.zeros([imagesize[1], imagesize[0]])
-            if holes and len(holes) > 0:
-                for hole in holes:
-                    if len(np.array(hole).shape) == 1 or np.array(hole).shape[0] < 3:
-                        # Don't add empty hole to negative mask
-                        # Don't add holes with < 3 vertices
-                        break
-
-                    # convert polygon hole to mask
-                    hole_polygon = Polygon(hole)
-                    single_hole_mask = (
-                        rasterio.features.rasterize(
-                            [hole_polygon],
-                            out_shape=(imagesize[1], imagesize[0]),
-                        ).astype(float)
-                        * class_id
-                    )
-
-                    # add single hole mask to total hole mask
-                    hole_mask += single_hole_mask
-
-            # subtract the hole mask from region mask
-            region_mask -= hole_mask
-
-            # cleanup:
-            # - remove negative values from overlapping holes
-            neg_idxs = np.where(region_mask < 0)
-            region_mask[neg_idxs] = 0
-            # - remove overlapping region values
-            overlap_indexes = np.where(region_mask > class_id)
-            region_mask[overlap_indexes] = class_id
-
-            # merge current object to main mask
-            class_idx_not_zero = np.where(region_mask != 0)
-            mask[class_idx_not_zero] = region_mask[class_idx_not_zero]
-
-            # fill all single pixel holes
-            if fill_holes:
-                mask = Export.fill_mask_holes(mask, max_hole_size)
-
-            # convert 2d mask into 3d mask with colors
-            color_mask = np.zeros((mask.shape[0], mask.shape[1], 3))
-            class_ids = np.unique(mask)  # type: ignore
-            for i in class_ids:
-                if i == 0:
-                    # don't add color to background
-                    continue
-                indexes = np.where(mask == i)
-                color_mask[indexes] = color_map[class_id_reverse[i]]
-
-        return color_mask  # type: ignore
-
-    @staticmethod
-    def _export_png_mask_data(
-        datapoints: List[Dict],
-        taxonomy: Dict,
-        mask_dir: str,
-        class_map: str,
-        datapoint_map: str,
-        fill_holes: bool = False,
-        max_hole_size: int = 30,
-    ) -> None:
-        """Export png masks and map json."""
-        # pylint: disable=too-many-locals
-        # Create a color map from the taxonomy
-        class_id_map: Dict = {}
-        color_map: Dict = {}
-        Export.tax_class_id_mapping(
-            [taxonomy["categories"][0]["name"]],  # object
-            taxonomy["categories"][0]["children"],  # categories
-            class_id_map,
-            color_map,
-            taxonomy.get("colorMap"),
-        )
-
-        # Convert rbai to png masks and save output
-        dp_map = {}
-        logger.info("Converting to masks")
-
-        for datapoint in tqdm.tqdm(datapoints):
-            labels = [label for label in datapoint["labels"] if "pixel" in label]
-            if not labels:
-                logger.warning(
-                    f"No segmentation labels in task {datapoint['taskId']}, skipping"
-                )
-                continue
-
-            filename = f"{datapoint['taskId']}.png"
-            dp_map[filename] = datapoint["items"][0]
-
-            color_mask = Export.convert_rbai_mask(
-                labels, class_id_map, color_map, fill_holes, max_hole_size
-            )
-
-            # save png as 3 channel np.uint8 image
-            pil_color_mask = Image.fromarray(color_mask.astype(np.uint8))
-            pil_color_mask.save(os.path.join(mask_dir, filename))
-
-        with open(class_map, "w", encoding="utf-8") as file_:
-            json.dump(color_map, file_, indent=2)
-
-        with open(datapoint_map, "w", encoding="utf-8") as file_:
-            json.dump(dp_map, file_, indent=2)
-
-    def redbrick_png(  # pylint: disable=too-many-locals
-        self,
-        only_ground_truth: bool = True,
-        concurrency: int = 10,
-        task_id: Optional[str] = None,
-        fill_holes: bool = False,
-        max_hole_size: int = 30,
-        from_timestamp: Optional[float] = None,
-        to_timestamp: Optional[float] = None,
-    ) -> None:
-        """
-        Export segmentation labels as masks.
-
-        Masks are exported to a local directory named after project_id.
-        Please visit https://docs.redbrickai.com/python-sdk/reference#png-mask-formats
-        to see an overview of the format of the exported masks.
-
-        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
-        >>> project.export.redbrick_png()
-
-        Parameters
-        --------------
-        only_ground_truth: bool = True
-            If set to True, will only return data that has
-            been completed in your workflow. If False, will
-            export latest state
-
-        concurrency: int = 10
-
-        task_id: Optional[str] = None
-            If the unique task_id is mentioned, only a single
-            datapoint will be exported.
-
-        fill_holes : bool = False
-            If set to True, will fill any holes in your segmentation
-            masks.
-
-        max_hole_size: int = 10
-            If fill_holes = True, this parameter defines the maximum
-            size hole, in pixels, to fill.
-
-        from_timestamp: Optional[float] = None
-            If the timestamp is mentioned, will only export tasks
-            that were labeled/updated since the given timestamp.
-            Format - output from datetime.timestamp()
-
-        to_timestamp: Optional[float] = None
-            If the timestamp is mentioned, will only export tasks
-            that were labeled/updated till the given timestamp.
-            Format - output from datetime.timestamp()
-
-        Warnings
-        ----------
-        redbrick_png only works for the following types - IMAGE_SEGMENTATION, IMAGE_MULTI
-
-        """
-        if self.project_type not in (
-            LabelType.IMAGE_SEGMENTATION,
-            LabelType.IMAGE_MULTI,
-        ):
-            log_error(
-                f"Project type needs to be {LabelType.IMAGE_SEGMENTATION} or "
-                + f"{LabelType.IMAGE_MULTI} for redbrick_png"
-            )
-            return
-
-        datapoints, taxonomy = self._get_raw_data_latest(
-            concurrency,
-            False if task_id else only_ground_truth,
-            None if task_id else from_timestamp,
-            None if task_id else to_timestamp,
-        )
-
-        if task_id:
-            datapoints = [
-                datapoint for datapoint in datapoints if datapoint["taskId"] == task_id
-            ]
-
-        # Create output directory
-        output_dir = uniquify_path(self.project_id)
-        mask_dir = os.path.join(output_dir, "masks")
-        os.makedirs(mask_dir, exist_ok=True)
-        logger.info(f"Saving masks to {output_dir} directory")
-
-        Export._export_png_mask_data(
-            datapoints,
-            taxonomy,
-            mask_dir,
-            os.path.join(output_dir, "class_map.json"),
-            os.path.join(output_dir, "datapoint_map.json"),
-            fill_holes,
-            max_hole_size,
-        )
 
     async def download_and_process_nifti(
         self,
@@ -820,7 +408,7 @@ class Export:
             with open(class_map_file, "w", encoding="utf-8") as classes_file:
                 json.dump(class_map, classes_file, indent=2)
 
-    def redbrick_nifti(
+    def export_tasks(
         self,
         only_ground_truth: bool = True,
         concurrency: int = 10,
@@ -835,7 +423,7 @@ class Export:
         Export labels for 'Medical' project type. Segmentations are exported in NIfTI-1 format.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key, url)
-        >>> project.export.redbrick_nifti()
+        >>> project.export.export_tasks()
 
         Parameters
         --------------
@@ -878,18 +466,8 @@ class Export:
             Datapoint and labels in RedBrick AI format. See
             https://docs.redbrickai.com/python-sdk/reference/annotation-format
 
-        Warnings
-        ----------
-        redbrick_nifti only works for the following types - DICOM_SEGMENTATION
-
         """
         # pylint: disable=too-many-locals
-        if self.project_type != LabelType.DICOM_SEGMENTATION:
-            log_error(
-                f"Project type needs to be {LabelType.DICOM_SEGMENTATION} "
-                + "for redbrick_nifti"
-            )
-            return []
 
         no_consensus = (
             no_consensus if no_consensus is not None else not self.consensus_enabled
@@ -929,139 +507,28 @@ class Export:
             tasks: List[Dict] = json.load(tasks_file)
         return tasks
 
-    def redbrick_format(
+    def redbrick_nifti(
         self,
         only_ground_truth: bool = True,
         concurrency: int = 10,
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
         to_timestamp: Optional[float] = None,
+        old_format: bool = False,
+        no_consensus: Optional[bool] = None,
+        png: bool = False,
     ) -> List[Dict]:
-        """
-        Export data into redbrick format.
-
-        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
-        >>> result = project.export.redbrick_format()
-
-        Parameters
-        -----------------
-        only_ground_truth: bool = True
-            If set to True, will only return data that has
-            been completed in your workflow. If False, will
-            export latest state
-
-        concurrency: int = 10
-
-        task_id: Optional[str] = None
-            If the unique task_id is mentioned, only a single
-            datapoint will be exported.
-
-        from_timestamp: Optional[float] = None
-            If the timestamp is mentioned, will only export tasks
-            that were labeled/updated since the given timestamp.
-            Format - output from datetime.timestamp()
-
-        to_timestamp: Optional[float] = None
-            If the timestamp is mentioned, will only export tasks
-            that were labeled/updated till the given timestamp.
-            Format - output from datetime.timestamp()
-
-        Returns:
-        -----------------
-        List[Dict]
-            Datapoint and labels in RedBrick AI format. See
-            https://docs.redbrickai.com/python-sdk/reference
-        """
-        datapoints, _ = self._get_raw_data_latest(
+        """Alias to export_tasks method (Will be deprecated)."""
+        return self.export_tasks(
+            only_ground_truth,
             concurrency,
-            False if task_id else only_ground_truth,
-            None if task_id else from_timestamp,
-            None if task_id else to_timestamp,
-            True,
+            task_id,
+            from_timestamp,
+            to_timestamp,
+            old_format,
+            no_consensus,
+            png,
         )
-
-        if task_id:
-            datapoints = [
-                datapoint for datapoint in datapoints if datapoint["taskId"] == task_id
-            ]
-
-        return [
-            {
-                key: value
-                for key, value in datapoint.items()
-                if key not in ("labelsMap", "seriesInfo", "storageId", "labelStorageId")
-            }
-            for datapoint in datapoints
-        ]
-
-    def coco_format(
-        self,
-        only_ground_truth: bool = True,
-        concurrency: int = 10,
-        task_id: Optional[str] = None,
-        from_timestamp: Optional[float] = None,
-        to_timestamp: Optional[float] = None,
-    ) -> Dict:
-        """
-        Export project into coco format.
-
-        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
-        >>> result = project.export.coco_format()
-
-        Parameters
-        -----------
-        only_ground_truth: bool = True
-            If set to True, will only return data that has
-            been completed in your workflow. If False, will
-            export latest state
-
-        concurrency: int = 10
-
-        task_id: Optional[str] = None
-            If the unique task_id is mentioned, only a single
-            datapoint will be exported.
-
-        from_timestamp: Optional[float] = None
-            If the timestamp is mentioned, will only export tasks
-            that were labeled/updated since the given timestamp.
-            Format - output from datetime.timestamp()
-
-        to_timestamp: Optional[float] = None
-            If the timestamp is mentioned, will only export tasks
-            that were labeled/updated till the given timestamp.
-            Format - output from datetime.timestamp()
-
-        Returns
-        -----------
-        List[Dict]
-            Datapoint and labels in COCO format. See
-            https://cocodataset.org/#format-data
-
-        Warnings
-        ----------
-        redbrick_coco only works for the following types - IMAGE_BBOX, IMAGE_POLYGON
-        """
-        if self.project_type not in (LabelType.IMAGE_BBOX, LabelType.IMAGE_POLYGON):
-            log_error(
-                f"Project type needs to be {LabelType.IMAGE_BBOX} or "
-                + f"{LabelType.IMAGE_POLYGON} for redbrick_coco"
-            )
-            return {}
-
-        datapoints, taxonomy = self._get_raw_data_latest(
-            concurrency,
-            False if task_id else only_ground_truth,
-            None if task_id else from_timestamp,
-            None if task_id else to_timestamp,
-            True,
-        )
-
-        if task_id:
-            datapoints = [
-                datapoint for datapoint in datapoints if datapoint["taskId"] == task_id
-            ]
-
-        return coco_converter(datapoints, taxonomy)
 
     def search_tasks(
         self,
@@ -1090,7 +557,7 @@ class Export:
         Returns
         -----------
         List[Dict]
-            [{"taskId", "name", "createdAt"}]
+            [{"taskId": str, "name": str, "createdAt": str}]
         """
         my_iter = PaginationIterator(
             partial(
@@ -1117,3 +584,42 @@ class Export:
             ]
 
         return datapoints
+
+    def get_task_events(
+        self,
+        only_ground_truth: bool = True,
+        concurrency: int = 10,
+    ) -> List[Dict]:
+        """Get task history events log.
+
+        Parameters
+        -----------
+        only_ground_truth: bool = True
+            If set to True, will return events for tasks
+            that have been completed in your workflow.
+
+        concurrency: int = 10
+
+        Returns
+        -----------
+        List[Dict]
+            [{"taskId": str, "currentStageName": str, "events": List[Dict]}]
+        """
+        my_iter = PaginationIterator(
+            partial(
+                self.context.export.task_events,
+                self.org_id,
+                self.project_id,
+                self.output_stage_name if only_ground_truth else None,
+                concurrency,
+            )
+        )
+
+        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
+            tasks = [
+                task
+                for task in progress
+                if (not only_ground_truth or task["currentStageName"] == "END")
+            ]
+
+        return list(map(task_event_format, tasks))

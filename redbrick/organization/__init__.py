@@ -4,7 +4,6 @@ from functools import partial
 from typing import List, Optional, Dict, Union
 from tqdm import tqdm  # type: ignore
 
-from redbrick.common.enums import LabelType
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
 from redbrick.utils.logging import logger
@@ -119,7 +118,7 @@ class RBOrganization:
             same_name = list(filter(lambda x: x["name"] == name, all_projects))
             if same_name:
                 temp = RBProject(self.context, self.org_id, same_name[0]["projectId"])
-                if temp.project_type != LabelType.DICOM_SEGMENTATION:
+                if temp.td_type != "DICOM_SEGMENTATION":
                     raise ValueError(
                         "Project with matching name exists, but it has a different type"
                     )
@@ -135,11 +134,7 @@ class RBOrganization:
 
         try:
             project_data = self.context.project.create_project(
-                self.org_id,
-                name,
-                stages,
-                LabelType.DICOM_SEGMENTATION.value,
-                taxonomy_name,
+                self.org_id, name, stages, "DICOM_SEGMENTATION", taxonomy_name
             )
         except ValueError as error:
             raise Exception(

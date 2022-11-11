@@ -114,6 +114,47 @@ def flat_rb_format(
     return task
 
 
+def parse_entry_latest(item: Dict) -> Dict:
+    """Parse entry latest."""
+    try:
+        task_id = item["taskId"]
+        task_data = item["latestTaskData"]
+        datapoint = task_data["dataPoint"]
+        items = datapoint["items"]
+        items_presigned = datapoint.get("itemsPresigned", []) or []
+        name = datapoint["name"]
+        created_by = (datapoint.get("createdByEntity", {}) or {}).get("email")
+        created_at = datapoint["createdAt"]
+        updated_by = task_data["createdByEmail"]
+        updated_at = task_data["createdAt"]
+        labels = [
+            clean_rb_label(label) for label in json.loads(task_data["labelsData"])
+        ]
+        storage_id = datapoint["storageMethod"]["storageId"]
+        label_storage_id = task_data["labelsStorage"]["storageId"]
+
+        return flat_rb_format(
+            labels,
+            items,
+            items_presigned,
+            name,
+            created_by,
+            created_at,
+            updated_by,
+            updated_at,
+            task_id,
+            item["currentStageName"],
+            task_data.get("labelsMap", []) or [],
+            datapoint.get("seriesInfo"),
+            json.loads(datapoint["metaData"]) if datapoint.get("metaData") else None,
+            storage_id,
+            label_storage_id,
+            item.get("currentStageSubTask"),
+        )
+    except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
+        return {}
+
+
 def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-branches, too-many-statements

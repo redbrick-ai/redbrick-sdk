@@ -4,7 +4,7 @@ RedBrick AI SDK
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_project, get_org, LabelType, StorageMethod, ImportTypes
+   :members: get_project, get_org, StorageMethod, ImportTypes
    :show-inheritance:
 
 Project
@@ -22,13 +22,13 @@ Organization
 Export
 ----------------------
 .. autoclass:: redbrick.export.Export
-   :members: redbrick_format, redbrick_png, coco_format, redbrick_nifti, search_tasks, get_task_events
+   :members: export_tasks, search_tasks, get_task_events
    :show-inheritance:
 
 Upload
 ----------------------
 .. autoclass:: redbrick.upload.Upload
-   :members: create_datapoints, create_datapoint_from_masks, delete_tasks
+   :members: create_datapoints, delete_tasks
    :show-inheritance:
 
 Labeling

@@ -1,6 +1,5 @@
 """Public interface to upload module."""
 import shutil
-import uuid
 import asyncio
 import os
 from copy import deepcopy
@@ -11,17 +10,13 @@ from uuid import uuid4
 import aiohttp
 import tenacity
 from tenacity.stop import stop_after_attempt
-import numpy as np
-from shapely.geometry import MultiPolygon, shape as gen_shape  # type: ignore
 import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
-from redbrick.common.enums import LabelType
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import log_error, logger
-from redbrick.utils.segmentation import check_mask_map_format
 from redbrick.utils.files import (
     NIFTI_FILE_TYPES,
     download_files,
@@ -33,14 +28,11 @@ from redbrick.utils.files import (
 class Upload:
     """Primary interface to uploading new data to a project."""
 
-    def __init__(
-        self, context: RBContext, org_id: str, project_id: str, project_type: LabelType
-    ) -> None:
+    def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
         """Construct Upload object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
-        self.project_type = project_type
 
     async def _create_datapoint(
         self,
@@ -65,11 +57,7 @@ class Upload:
             assert (
                 "items" in point
                 and isinstance(point["items"], list)
-                and (
-                    len(point["items"]) == 1
-                    if str(self.project_type.value).startswith("IMAGE_")
-                    else point["items"]
-                )
+                and point["items"]
                 and all(
                     map(lambda item: isinstance(item, str) and item, point["items"])
                 )
@@ -521,107 +509,6 @@ class Upload:
             raise error
         return result
 
-    @staticmethod
-    def _mask_to_polygon(
-        mask: np.ndarray,
-    ) -> MultiPolygon:
-        """Convert masks to polygons."""
-        # pylint: disable=import-error, import-outside-toplevel
-        try:
-            import rasterio  # type: ignore
-            from rasterio import features  # type: ignore
-        except Exception as error:
-            log_error(
-                "For windows users, please follow the rasterio "
-                + "documentation to properly install the module "
-                + "https://rasterio.readthedocs.io/en/latest/installation.html "
-                + "Rasterio is required by RedBrick SDK to work with masks."
-            )
-            raise error
-
-        all_polygons = []
-        for shape, _ in features.shapes(
-            mask.astype(np.int16),
-            mask=(mask > 0),
-            transform=rasterio.Affine(1.0, 0, 0, 0, 1.0, 0),
-        ):
-            all_polygons.append(gen_shape(shape))
-
-        polygon = MultiPolygon(all_polygons)
-        if not polygon.is_valid:
-            polygon = polygon.buffer(0)
-            # Sometimes buffer() converts a simple Multipolygon to just a Polygon,
-            # need to keep it a Multi throughout
-            if polygon.type == "Polygon":
-                polygon = MultiPolygon([polygon])
-        return polygon  # type: ignore
-
-    @staticmethod
-    def mask_to_rbai(  # pylint: disable=too-many-locals
-        mask: np.ndarray, class_map: Dict, items: str, name: str
-    ) -> Dict:
-        """Convert a mask to rbai datapoint format."""
-        # Convert 3D mask into a series of 2D masks for each object
-        mask_2d_stack: np.ndarray = np.array([])
-        mask_2d_categories = []
-        for _, category in enumerate(class_map):
-            mask_2d = np.zeros((mask.shape[0], mask.shape[1]))
-            color = class_map[category]
-            class_idxs = np.where(
-                (mask[:, :, 0] == color[0])
-                & (mask[:, :, 1] == color[1])
-                & (mask[:, :, 2] == color[2])
-            )
-
-            if len(class_idxs[0]) == 0:
-                # Skip classes that aren't present
-                continue
-
-            mask_2d[class_idxs] = 1  # fill in binary mask
-            mask_2d_categories += [category]
-
-            # Stack all individual masks
-            if mask_2d_stack.shape[0] == 0:
-                mask_2d_stack = mask_2d
-            else:
-                mask_2d_stack = np.dstack((mask_2d_stack, mask_2d))  # type: ignore
-
-        entry: Dict = {}
-        entry["labels"] = []
-
-        if len(mask_2d_stack.shape) == 2:
-            mask_2d_stack = np.expand_dims(mask_2d_stack, axis=2)  # type: ignore
-
-        for depth in range(mask_2d_stack.shape[-1]):
-            mask_depth = mask_2d_stack[:, :, depth]
-            polygons = Upload._mask_to_polygon(mask_depth)
-
-            label_entry: Dict = {}
-            label_entry["category"] = [["object", mask_2d_categories[depth]]]
-            label_entry["attributes"] = []
-            label_entry["pixel"] = {}
-            label_entry["pixel"]["imagesize"] = [
-                mask_depth.shape[1],
-                mask_depth.shape[0],
-            ]
-            label_entry["pixel"]["regions"] = []
-            label_entry["pixel"]["holes"] = []
-            for polygon in polygons.geoms:
-                label_entry["pixel"]["regions"].append(
-                    [list(map(int, coords)) for coords in polygon.exterior.coords]
-                )
-                for interior in polygon.interiors:
-                    label_entry["pixel"]["holes"].append(
-                        [list(map(int, coords)) for coords in interior.coords]
-                    )
-
-            entry["labels"] += [label_entry]
-
-        entry["items"] = [items]
-        entry["name"] = name
-
-        return entry
-
     def create_datapoints(
         self,
         storage_id: str,
@@ -677,13 +564,7 @@ class Upload:
             2. When doing direct upload i.e. ``redbrick.StorageMethod.REDBRICK``,
             if you didn't specify a "name" field in your datapoints object,
             we will assign the "items" path to it.
-
         """
-        if str(self.project_type.value).split("_", 1)[0] != "DICOM":
-            raise Exception(
-                "Uploading data to non Medical projects has been deprecated"
-            )
-
         points = self.prepare_json_files([points], storage_id, segmentation_mapping)
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
@@ -696,96 +577,6 @@ class Upload:
                 label_validate,
             )
         )
-
-    def create_datapoint_from_masks(
-        self,
-        storage_id: str,
-        mask: np.ndarray,
-        class_map: Dict,
-        image_path: str,
-    ) -> Dict:
-        """
-        Create a single datapoint with mask.
-
-        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
-        >>> project.upload.create_datapoint_from_masks(...)
-
-        Parameters
-        --------------
-        storage_id: str
-            Your RedBrick AI external storage_id. This can be found under the Storage Tab
-            on the RedBrick AI platform. Currently, this method only supports external storage
-            or public storage i.e. redbrick.StorageMathod.PUBLIC (public hosted data).
-
-        mask: np.ndarray.astype(np.uint8)
-            A RGB mask with values as np.uint8. The RGB values correspond to a category,
-            who's mapping can be gound in class_map.
-
-        class_map: Dict
-            Maps between the category_name in your Project Taxonomy and the RGB color of the mask.
-
-            >>> class_map
-            >>> {'category-1': [12, 22, 93], 'category-2': [1, 23, 128]...}
-
-        image_map: str
-            A valid path to the corresponding image. If storage_id is
-            redbrick.StorageMethod.REDBRICK, image_map must be a
-            valid path to a locally stored image.
-
-        Returns
-        -------------
-        Dict
-            Task object with key `response` if successful, else `error`
-
-        Warnings
-        ------------
-        The category names in class_map must be valid entries in your project taxonomy. The project
-        type also must be IMAGE_SEGMENTATION.
-
-        """
-        check_mask_map_format(mask, class_map)
-
-        loop = asyncio.get_event_loop()
-        if storage_id == StorageMethod.REDBRICK:
-            _, file_type = get_file_type(image_path)
-            upload_filename = str(uuid.uuid4())
-
-            # get pre-signed url for s3 upload
-            presigned_items = self._generate_upload_presigned_url(
-                [upload_filename], [file_type]
-            )
-
-            # upload to s3
-            loop.run_until_complete(
-                upload_files(
-                    [
-                        (
-                            image_path,  # filename on local machine
-                            presigned_items[0]["presignedUrl"],
-                            file_type,
-                        )
-                    ],
-                    None,
-                )
-            )
-
-            # create datapoint
-            items = presigned_items[0]["filePath"]
-            name = image_path
-            datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-            return loop.run_until_complete(
-                self._create_datapoints(storage_id, [datapoint_entry], False)
-            )[0]
-
-        # If storage_id is for remote storage
-        items = image_path
-        name = image_path
-
-        # create datapoint
-        datapoint_entry = Upload.mask_to_rbai(mask, class_map, items, name)
-        return loop.run_until_complete(
-            self._create_datapoints(storage_id, [datapoint_entry], False)
-        )[0]
 
     def delete_tasks(self, task_ids: List[str]) -> bool:
         """Delete project tasks based on task ids.
