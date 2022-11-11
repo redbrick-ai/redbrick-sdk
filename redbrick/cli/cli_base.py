@@ -194,6 +194,24 @@ class CLIUploadInterface(ABC):
         """Handle empty sub command."""
 
 
+class CLIReportInterface(ABC):
+    """CLI report interface."""
+
+    args: Namespace
+    project: CLIProject
+
+    TYPE_ALL = "all"
+    TYPE_GROUNDTRUTH = "groundtruth"
+
+    @abstractmethod
+    def handler(self, args: Namespace) -> None:
+        """Handle report command."""
+
+    @abstractmethod
+    def handle_report(self) -> None:
+        """Handle empty sub command."""
+
+
 class CLIInterface(ABC):
     """Main CLI Interface."""
 
@@ -204,6 +222,7 @@ class CLIInterface(ABC):
     export: CLIExportInterface
     prune: CLIPruneInterface
     upload: CLIUploadInterface
+    report: CLIReportInterface
 
     CONFIG = "config"
     INIT = "init"
@@ -212,6 +231,7 @@ class CLIInterface(ABC):
     EXPORT = "export"
     PRUNE = "prune"
     UPLOAD = "upload"
+    REPORT = "report"
 
     @abstractmethod
     def handle_command(self, args: Namespace) -> None:

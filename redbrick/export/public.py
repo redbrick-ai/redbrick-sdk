@@ -29,6 +29,7 @@ from redbrick.utils.rb_label_utils import (
     dicom_rb_format,
     flat_rb_format,
 )
+from redbrick.utils.rb_event_utils import task_event_format
 from redbrick.coco.coco_main import coco_converter
 
 # pylint: disable=too-many-lines
@@ -185,6 +186,44 @@ class Export:
         return [
             {**data, "inputLabels": label} for data, label in zip(input_data, labels)
         ]
+
+    def get_task_events(
+        self,
+        only_ground_truth: bool = True,
+        concurrency: int = 10,
+    ) -> List[Dict]:
+        """Get task events.
+
+        Parameters
+        -----------
+        only_ground_truth: bool = True
+            If set to True, will return all tasks
+            that have been completed in your workflow.
+
+        concurrency: int = 10
+
+        Returns
+        -----------
+        List[Dict]
+        """
+        my_iter = PaginationIterator(
+            partial(
+                self.context.export.task_events,
+                self.org_id,
+                self.project_id,
+                self.output_stage_name if only_ground_truth else None,
+                concurrency,
+            )
+        )
+
+        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
+            tasks = [
+                task
+                for task in progress
+                if (not only_ground_truth or task["currentStageName"] == "END")
+            ]
+
+        return list(map(task_event_format, tasks))
 
     def get_latest_data(
         self,
@@ -655,9 +694,11 @@ class Export:
         os.makedirs(task_dir, exist_ok=True)
         series_names: List[str] = []
         if sum(
-            map(
-                lambda val: len(val.get("itemsIndices", []) or []) if val else 0,
-                task.get("seriesInfo", []) or [],
+            list(
+                map(
+                    lambda val: len(val.get("itemsIndices", []) or []) if val else 0,
+                    task.get("seriesInfo", []) or [],
+                )
             )
         ) == len(task["items"]) and (
             len(task["seriesInfo"]) > 1 or task["seriesInfo"][0].get("name")

@@ -12,6 +12,7 @@ from redbrick.cli.command import (
     CLIExportController,
     CLIPruneController,
     CLIUploadController,
+    CLIIReportController,
 )
 from redbrick.cli.cli_base import CLIInterface
 from redbrick.utils.logging import logger
@@ -45,6 +46,9 @@ class CLIController(CLIInterface):
         self.upload = CLIUploadController(
             command.add_parser(self.UPLOAD, help="Upload files to a project")
         )
+        self.report = CLIIReportController(
+            command.add_parser(self.REPORT, help="Generate report for a project")
+        )
 
     def handle_command(self, args: argparse.Namespace) -> None:
         """CLI command main handler."""
@@ -62,6 +66,8 @@ class CLIController(CLIInterface):
             self.prune.handler(args)
         elif args.command == self.UPLOAD:
             self.upload.handler(args)
+        elif args.command == self.REPORT:
+            self.report.handler(args)
         else:
             raise argparse.ArgumentError(None, "")
 

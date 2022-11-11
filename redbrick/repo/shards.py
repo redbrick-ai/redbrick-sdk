@@ -202,7 +202,7 @@ TASK_SHARD = f"""
     }}
 """
 
-DATAPOINT_SHARD = """
+DATAPOINT_SHARD: str = """
     dataPoint {{
         name
         items(presigned: false)

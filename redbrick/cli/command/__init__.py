@@ -6,3 +6,4 @@ from redbrick.cli.command.info import CLIInfoController
 from redbrick.cli.command.export import CLIExportController
 from redbrick.cli.command.prune import CLIPruneController
 from redbrick.cli.command.upload import CLIUploadController
+from redbrick.cli.command.report import CLIIReportController
