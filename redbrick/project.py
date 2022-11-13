@@ -10,7 +10,7 @@ from tenacity.wait import wait_exponential
 from redbrick.common.constants import PEERLESS_ERRORS
 
 from redbrick.common.context import RBContext
-from redbrick.common.enums import LabelType, StorageMethod
+from redbrick.common.enums import StorageMethod
 from redbrick.utils.logging import logger
 
 
@@ -50,7 +50,7 @@ class RBProject:
         self._project_id = project_id
         self._project_name: str
         self._stages: List[Dict]
-        self._td_type: str
+        self.td_type: str
         self._taxonomy_name: str
         self._project_url: str
         self._created_at: datetime
@@ -61,7 +61,7 @@ class RBProject:
         # check if project exists on backend to validate
         self._get_project()
 
-        self.upload = Upload(context, org_id, project_id, self.project_type)
+        self.upload = Upload(context, org_id, project_id)
 
         self.output_stage_name: str = "Output"
         for stage in self._stages:
@@ -74,7 +74,6 @@ class RBProject:
             context,
             org_id,
             project_id,
-            self.project_type,
             self.output_stage_name,
             self.consensus_enabled,
             self.label_stages,
@@ -126,15 +125,6 @@ class RBProject:
         Retrieves the taxonomy name.
         """
         return self._taxonomy_name
-
-    @property
-    def project_type(self) -> LabelType:
-        """
-        Read only project_type property.
-
-        Retrieves the type of the project.
-        """
-        return LabelType(self._td_type)
 
     @property
     def label_storage(self) -> Tuple[str, str]:
@@ -217,7 +207,7 @@ class RBProject:
         project = self.__wait_for_project_to_finish_creating()
 
         self._project_name = project["name"]
-        self._td_type = project["tdType"]
+        self.td_type = project["tdType"]
         self._taxonomy_name = project["taxonomy"]["name"]
         self._stages = self.context.project.get_stages(self.org_id, self.project_id)
         self._project_url = project["projectUrl"]

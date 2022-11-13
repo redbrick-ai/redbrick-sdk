@@ -96,11 +96,6 @@ class CLIUploadController(CLIUploadInterface):
         elif not os.path.isdir(directory):
             raise Exception(f"{directory} is not a valid directory")
 
-        if str(project.project_type.value).split("_", 1)[0] != "DICOM":
-            raise Exception(
-                "Uploading data to non Medical projects has been deprecated"
-            )
-
         if self.args.storage == self.STORAGE_REDBRICK:
             storage_id = str(StorageMethod.REDBRICK)
         elif self.args.storage == self.STORAGE_PUBLIC:

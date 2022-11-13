@@ -147,32 +147,12 @@ class CLIExportInterface(ABC):
     TYPE_LATEST = "latest"
     TYPE_GROUNDTRUTH = "groundtruth"
 
-    FORMAT_REDBRICK = "redbrick"
-    FORMAT_COCO = "coco"
-    FORMAT_MASK = "mask"
-    FORMAT_NIFTI = "nifti"
-
     @abstractmethod
     def handler(self, args: Namespace) -> None:
         """Handle export command."""
 
     @abstractmethod
     def handle_export(self) -> None:
-        """Handle empty sub command."""
-
-
-class CLIPruneInterface(ABC):
-    """CLI prune interface."""
-
-    args: Namespace
-    project: CLIProject
-
-    @abstractmethod
-    def handler(self, args: Namespace) -> None:
-        """Handle prune command."""
-
-    @abstractmethod
-    def handle_prune(self) -> None:
         """Handle empty sub command."""
 
 
@@ -194,6 +174,24 @@ class CLIUploadInterface(ABC):
         """Handle empty sub command."""
 
 
+class CLIReportInterface(ABC):
+    """CLI report interface."""
+
+    args: Namespace
+    project: CLIProject
+
+    TYPE_ALL = "all"
+    TYPE_GROUNDTRUTH = "groundtruth"
+
+    @abstractmethod
+    def handler(self, args: Namespace) -> None:
+        """Handle report command."""
+
+    @abstractmethod
+    def handle_report(self) -> None:
+        """Handle empty sub command."""
+
+
 class CLIInterface(ABC):
     """Main CLI Interface."""
 
@@ -202,16 +200,16 @@ class CLIInterface(ABC):
     clone: CLICloneInterface
     info: CLIInfoInterface
     export: CLIExportInterface
-    prune: CLIPruneInterface
     upload: CLIUploadInterface
+    report: CLIReportInterface
 
     CONFIG = "config"
     INIT = "init"
     CLONE = "clone"
     INFO = "info"
     EXPORT = "export"
-    PRUNE = "prune"
     UPLOAD = "upload"
+    REPORT = "report"
 
     @abstractmethod
     def handle_command(self, args: Namespace) -> None:

@@ -55,3 +55,14 @@ class ExportControllerInterface(ABC):
         self, org_id: str, storage_id: str, items: Sequence[Optional[str]]
     ) -> List[Optional[str]]:
         """Presign download items."""
+
+    @abstractmethod
+    def task_events(
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: Optional[str] = None,
+        first: int = 10,
+        after: Optional[str] = None,
+    ) -> Tuple[List[Dict], Optional[str]]:
+        """Get task events."""

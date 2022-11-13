@@ -67,7 +67,7 @@ class ExportRepo(ExportControllerInterface):
             $cacheTime: DateTime
             $tillTime: DateTime
             $first: Int
-            $cursor: String
+            $after: String
         ) {{
             tasksPaged(
                 orgId: $orgId
@@ -76,7 +76,7 @@ class ExportRepo(ExportControllerInterface):
                 cacheTime: $cacheTime
                 tillTime: $tillTime
                 first: $first
-                after: $cursor
+                after: $after
             ) {{
                 entries {{
                     taskId
@@ -105,7 +105,7 @@ class ExportRepo(ExportControllerInterface):
             "cacheTime": None if cache_time is None else cache_time.isoformat(),
             "tillTime": None if till_time is None else till_time.isoformat(),
             "first": first,
-            "cursor": cursor,
+            "after": cursor,
         }
 
         result = self.client.execute_query(query_string, query_variables, False)
@@ -236,3 +236,107 @@ class ExportRepo(ExportControllerInterface):
         response = self.client.execute_query(query, variables)
         presigned_items: List[Optional[str]] = response.get("presignItems", [])
         return presigned_items
+
+    def task_events(
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: Optional[str] = None,
+        first: int = 10,
+        after: Optional[str] = None,
+    ) -> Tuple[List[Dict], Optional[str]]:
+        """Get task events."""
+        query_string = """
+        query taskEvents(
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String
+            $first: Int
+            $after: String
+        ) {
+            tasksPaged(
+                orgId: $orgId
+                projectId: $projectId
+                stageName: $stageName
+                first: $first
+                after: $after
+            ) {
+                entries {
+                    taskId
+                    currentStageName
+                    genericEvents {
+                        __typename
+                        ... on TaskEvent {
+                            eventId
+                            createdAt
+                            inputEvent {
+                                currentStageName
+                                overallConsensusScore
+                            }
+                            outputEvent {
+                                currentStageName
+                                outputBool
+                            }
+                            createEvent {
+                                currentStageName
+                                isGroundTruth
+                            }
+                            taskData {
+                                stageName
+                                createdBy
+                            }
+                        }
+                        ... on Comment {
+                            commentId
+                            createdBy {
+                                userId
+                            }
+                            textVal
+                            createdAt
+                            stageName
+                            issueComment
+                            issueResolved
+                            replies {
+                                commentId
+                                createdBy {
+                                    userId
+                                }
+                                textVal
+                                createdAt
+                                stageName
+                                issueComment
+                                issueResolved
+                            }
+                        }
+                        ... on TaskStateChanges {
+                            stageNameAfter: stageName
+                            assignedAtAfter
+                            createdAt
+                            statusBefore
+                            statusAfter
+                            assignedToBefore
+                            assignedToAfter
+                            consensusAssigneesBefore
+                            consensusAssigneesAfter
+                            consensusStatusesBefore
+                            consensusStatusesAfter
+                        }
+                    }
+                }
+                cursor
+            }
+        }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+            "first": first,
+            "after": after,
+        }
+
+        result = self.client.execute_query(query_string, query_variables, False)
+        task_events = result.get("tasksPaged", {}) or {}
+        entries: List[Dict] = task_events.get("entries", []) or []
+        return entries, task_events.get("cursor")

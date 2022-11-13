@@ -1,1 +1,0 @@
-"""COCO format tests."""

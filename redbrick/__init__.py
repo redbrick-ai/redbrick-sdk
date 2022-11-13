@@ -14,7 +14,7 @@ import asyncio
 import nest_asyncio  # type: ignore
 
 from redbrick.common.context import RBContext
-from redbrick.common.enums import LabelType, StorageMethod, ImportTypes
+from redbrick.common.enums import StorageMethod, ImportTypes
 from redbrick.common.constants import (
     DEFAULT_URL,
     ORG_API_HAS_CHANGED,
@@ -27,7 +27,7 @@ from redbrick.utils.logging import logger
 
 from .version_check import version_check
 
-__version__ = "2.5.0"
+__version__ = "2.6.0"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:

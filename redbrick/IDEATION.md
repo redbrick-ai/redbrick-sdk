@@ -1,8 +1,6 @@
 Applications:
 
     - Export
-        - Coco format
-        - masks
     - Upload:
         - create datapoint
     - Labeling:
@@ -50,7 +48,7 @@ project.create_datapoints(
     dpoints=[{"name": "dpoint name", "items": []}...]
 )
 
-project.upload_images("./)
+project.upload_images("./")
 
 
 ##########

@@ -119,16 +119,9 @@ type Classification = {
   video?: VideoMetaData;
 };
 
-type Attributes =
-  | {
-      attrId?: number;
-      name?: string;
-      optionId?: number | number[];
-      value?: string | boolean | string[];
-    }[]
-  | {
-      [attributeName: string]: string | boolean | string[];
-    };
+type Attributes = {
+  [attributeName: string]: string | boolean | string[];
+};
 
 type VideoMetaData = {
   frameIndex: number;
