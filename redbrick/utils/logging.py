@@ -10,7 +10,7 @@ from rich import pretty, traceback
 debug_mode = bool(os.environ.get("REDBRICK_SDK_DEBUG"))
 pretty.install(overflow="fold")
 traceback.install(
-    word_wrap=True, show_locals=debug_mode, max_frames=6 if debug_mode else 3
+    word_wrap=True, show_locals=debug_mode, max_frames=10 if debug_mode else 5
 )
 
 logging.basicConfig(

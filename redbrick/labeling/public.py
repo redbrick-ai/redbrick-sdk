@@ -140,7 +140,7 @@ class Labeling:
                     self.project_id,
                     stage_name,
                     task_id,
-                    json.dumps(task["labels"]),
+                    json.dumps(task["labels"], separators=(",", ":")),
                     labels_path,
                     not bool(task.get("draft")),
                 )

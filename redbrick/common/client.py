@@ -1,5 +1,8 @@
 """Graphql Client responsible for make API requests."""
 import time
+import json
+import base64
+import gzip
 from typing import Dict
 import requests  # type: ignore
 
@@ -34,7 +37,24 @@ class RBClient:
     @property
     def headers(self) -> Dict:
         """Get request headers."""
-        return {"RB-SDK-Version": sdk_version, "ApiKey": self.api_key}
+        return {
+            "RB-SDK-Version": sdk_version,
+            "ApiKey": self.api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Content-Encoding-RB": "gzip",
+            "Accept-Encoding": "br, gzip",
+        }
+
+    def prepare_query(self, query: str, variables: Dict) -> bytes:
+        """Prepare query to be sent to the server."""
+        return base64.b64encode(
+            gzip.compress(
+                json.dumps(
+                    {"query": query, "variables": variables}, separators=(",", ":")
+                ).encode("utf-8")
+            )
+        )
 
     @tenacity.retry(
         reraise=True,
@@ -51,7 +71,7 @@ class RBClient:
         response = self.session.post(
             self.url,
             headers=self.headers,
-            json={"query": query, "variables": variables},
+            data=self.prepare_query(query, variables),
         )
         self._check_status_msg(response.status_code, start_time)
         return self._process_json_response(response.json(), raise_for_error)
@@ -75,7 +95,7 @@ class RBClient:
         async with aio_session.post(
             self.url,
             headers=self.headers,
-            json={"query": query, "variables": variables},
+            data=self.prepare_query(query, variables),
         ) as response:
             self._check_status_msg(response.status, start_time)
             return self._process_json_response(await response.json(), raise_for_error)
@@ -84,10 +104,10 @@ class RBClient:
     def _check_status_msg(response_status: int, start_time: float) -> None:
         total_time = time.time() - start_time
         logger.debug(f"Response status: {response_status} took {total_time} seconds")
-        if response_status >= 500:
-            if total_time >= 24:
+        if response_status == 413 or response_status >= 500:
+            if response_status == 413 or total_time >= 24:
                 raise TimeoutError(
-                    "Request timed out. Please consider using lower concurrency"
+                    "Request timed out/too large. Please consider using lower concurrency"
                 )
             raise ConnectionError(
                 "Internal Server Error: You are probably using an invalid API key"

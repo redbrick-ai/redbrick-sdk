@@ -14,8 +14,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath("../"))
-
-from redbrick import __version__ as sdk_version  # pylint: disable=wrong-import-position
+# pylint: disable=wrong-import-position
+from redbrick import __version__ as sdk_version  # noqa: E402
 
 # pylint: disable=invalid-name
 

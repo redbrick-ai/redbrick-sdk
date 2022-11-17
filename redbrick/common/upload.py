@@ -42,8 +42,9 @@ class UploadControllerInterface(ABC):
         """Delete tasks in a project."""
 
     @abstractmethod
-    def generate_items_list(
+    async def generate_items_list(
         self,
+        aio_client: aiohttp.ClientSession,
         files: List[str],
         import_type: str,
         as_study: bool = False,
@@ -52,8 +53,9 @@ class UploadControllerInterface(ABC):
         """Generate direct upload items list."""
 
     @abstractmethod
-    def validate_and_convert_to_import_format(
+    async def validate_and_convert_to_import_format(
         self,
+        aio_client: aiohttp.ClientSession,
         original: str,
         convert: Optional[bool] = None,
         storage_id: Optional[str] = None,

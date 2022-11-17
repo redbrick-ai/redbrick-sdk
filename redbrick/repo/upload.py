@@ -79,7 +79,7 @@ class UploadRepo(UploadControllerInterface):
             "seriesInfo": series_info,
             "metaData": meta_data,
             "isGroundTruth": is_ground_truth,
-            "preAssign": json.dumps(pre_assign),
+            "preAssign": json.dumps(pre_assign, separators=(",", ":")),
         }
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables
@@ -148,8 +148,9 @@ class UploadRepo(UploadControllerInterface):
 
         return (result.get("deleteTasks", {}) or {}).get("ok", False)
 
-    def generate_items_list(
+    async def generate_items_list(
         self,
+        aio_client: aiohttp.ClientSession,
         files: List[str],
         import_type: str,
         as_study: bool = False,
@@ -178,12 +179,15 @@ class UploadRepo(UploadControllerInterface):
             "groupedByStudy": as_study,
             "windows": windows,
         }
-        result = self.client.execute_query(query_string, query_variables)
+        result = await self.client.execute_query_async(
+            aio_client, query_string, query_variables
+        )
         items_list: str = result["generateItemsList"]
         return items_list
 
-    def validate_and_convert_to_import_format(
+    async def validate_and_convert_to_import_format(
         self,
+        aio_client: aiohttp.ClientSession,
         original: str,
         convert: Optional[bool] = None,
         storage_id: Optional[str] = None,
@@ -212,8 +216,8 @@ class UploadRepo(UploadControllerInterface):
             "storageId": storage_id,
         }
 
-        result: Dict[str, Dict] = self.client.execute_query(
-            query_string, query_variables
+        result: Dict[str, Dict] = await self.client.execute_query_async(
+            aio_client, query_string, query_variables
         )
 
         return result.get("validateAndConvertToImportFormat", {}) or {}

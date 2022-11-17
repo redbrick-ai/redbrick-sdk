@@ -102,3 +102,7 @@ def cli_main(argv: Optional[List[str]] = None) -> None:
             logger.warning("User interrupted")
         except argparse.ArgumentError:
             parser.print_usage()
+
+
+if __name__ == "__main__":
+    cli_main()
