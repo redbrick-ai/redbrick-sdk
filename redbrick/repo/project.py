@@ -100,7 +100,9 @@ class ProjectRepo(ProjectRepoInterface):
             }
         """
         for stage in stages:
-            stage["stageConfig"] = json.dumps(stage["stageConfig"])
+            stage["stageConfig"] = json.dumps(
+                stage["stageConfig"], separators=(",", ":")
+            )
         variables = {
             "orgId": org_id,
             "name": name,

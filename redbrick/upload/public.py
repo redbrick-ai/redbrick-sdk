@@ -2,6 +2,7 @@
 import shutil
 import asyncio
 import os
+import sys
 from copy import deepcopy
 from typing import List, Dict, Optional, Sequence, Set, Union
 import json
@@ -77,10 +78,12 @@ class Upload:
                 storage_id,
                 point["name"],
                 point["items"],
-                json.dumps(point.get("labels", [])),
+                json.dumps(point.get("labels", []), separators=(",", ":")),
                 labels_map,
                 point.get("seriesInfo"),
-                json.dumps(point["metaData"]) if point.get("metaData") else None,
+                json.dumps(point["metaData"], separators=(",", ":"))
+                if point.get("metaData")
+                else None,
                 is_ground_truth,
                 point.get("preAssign"),
             )
@@ -517,6 +520,7 @@ class Upload:
         segmentation_mapping: Optional[Dict] = None,
         label_storage_id: Optional[str] = None,
         label_validate: bool = False,
+        concurrency: int = 50,
     ) -> List[Dict]:
         """
         Create datapoints in project.
@@ -551,6 +555,8 @@ class Upload:
         label_validate: bool = False
             Validate label nifti instances and segment map.
 
+        concurrency: int = 50
+
         Returns
         -------------
         List[Dict]
@@ -565,7 +571,9 @@ class Upload:
             if you didn't specify a "name" field in your datapoints object,
             we will assign the "items" path to it.
         """
-        points = self.prepare_json_files([points], storage_id, segmentation_mapping)
+        points = self.prepare_json_files(
+            [points], storage_id, segmentation_mapping, None, None, concurrency
+        )
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
             self._create_tasks(
@@ -596,6 +604,98 @@ class Upload:
         """
         return self.context.upload.delete_tasks(self.org_id, self.project_id, task_ids)
 
+    async def _validate_json(
+        self, input_data: List[Dict], storage_id: str, concurrency: int
+    ) -> List[Dict]:
+        total_input_data = len(input_data)
+        logger.debug(f"Concurrency: {concurrency} for {total_input_data} items")
+        inputs: List[List[Dict]] = []
+        for batch in range(0, total_input_data, concurrency):
+            inputs.append(input_data[batch : batch + concurrency])
+
+        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = [
+                self.context.upload.validate_and_convert_to_import_format(
+                    session, json.dumps(data, separators=(",", ":")), True, storage_id
+                )
+                for data in inputs
+            ]
+            outputs = await gather_with_concurrency(MAX_CONCURRENCY, coros)
+
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+
+        output_data: List[Dict] = []
+        for idx, (inp, out) in enumerate(zip(inputs, outputs)):
+            if not out.get("isValid"):
+                logger.debug(f"Error for batch: {idx}")
+                logger.warning(
+                    out.get(
+                        "error",
+                        "Error: Invalid format\n"
+                        + "Docs: https://docs.redbrickai.com/python-sdk/reference"
+                        + "/annotation-format-nifti#items-json",
+                    )
+                )
+                return []
+
+            output_data.extend(
+                json.loads(out["converted"]) if out.get("converted") else inp
+            )
+
+        return output_data
+
+    async def generate_items_list(
+        self,
+        items_list: List[List[str]],
+        import_file_type: str,
+        as_study: bool,
+        concurrency: int = 50,
+    ) -> List[Dict]:
+        """Generate items list from local files."""
+        # pylint: disable=too-many-locals
+        grouped_items_list: Dict[str, List[str]] = {}
+        for items in items_list:
+            if not items:
+                continue
+            items_dir = os.path.dirname(items[0])
+            if as_study:
+                items_dir = os.path.dirname(items_dir)
+
+            if items_dir not in grouped_items_list:
+                grouped_items_list[items_dir] = []
+            grouped_items_list[items_dir].extend(items)
+
+        items_list = list(grouped_items_list.values())
+        total_groups = len(items_list)
+
+        is_win = sys.platform.startswith("win")
+        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = [
+                self.context.upload.generate_items_list(
+                    session,
+                    [
+                        item
+                        for items in items_list[batch : batch + concurrency]
+                        for item in items
+                    ],
+                    import_file_type,
+                    as_study,
+                    is_win,
+                )
+                for batch in range(0, total_groups, concurrency)
+            ]
+            outputs = await gather_with_concurrency(MAX_CONCURRENCY, coros)
+
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+
+        output_data: List[Dict] = []
+        for output in outputs:
+            output_data.extend(json.loads(output))
+
+        return output_data
+
     def prepare_json_files(
         self,
         files_data: List[List[Dict]],
@@ -603,9 +703,11 @@ class Upload:
         segment_map: Optional[Dict],
         task_dirs: Optional[List[str]] = None,
         uploaded: Optional[Set[str]] = None,
+        concurrency: int = 50,
     ) -> List[Dict]:
         """Prepare items from json files for upload."""
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+        logger.debug(f"Preparing {len(files_data)} files for upload")
         points: List[Dict] = []
         uploading = set()
         logger.info("Validating files")
@@ -640,22 +742,12 @@ class Upload:
                 for item in file_data:
                     item["segmentMap"] = item.get("segmentMap", segment_map)
 
-            output = self.context.upload.validate_and_convert_to_import_format(
-                json.dumps(file_data), True, storage_id
+            loop = asyncio.get_event_loop()
+            file_data = loop.run_until_complete(
+                self._validate_json(file_data, storage_id, concurrency)
             )
-            if not output.get("isValid"):
-                logger.warning(
-                    output.get(
-                        "error",
-                        "Error: Invalid format\n"
-                        + "Docs: https://docs.redbrickai.com/python-sdk/reference"
-                        + "/annotation-format-nifti#items-json",
-                    )
-                )
+            if not file_data:
                 continue
-
-            if output.get("converted"):
-                file_data = json.loads(output["converted"])
 
             if storage_id == str(StorageMethod.REDBRICK):
                 logger.info("Looking in your local file system for items")

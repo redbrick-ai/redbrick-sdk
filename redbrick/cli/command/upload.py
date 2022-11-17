@@ -4,7 +4,6 @@ import re
 import json
 import asyncio
 from argparse import ArgumentError, ArgumentParser, Namespace
-import sys
 from typing import List, Dict, Optional, Union
 
 from redbrick.cli.input.select import CLIInputSelect
@@ -73,6 +72,13 @@ class CLIUploadController(CLIUploadInterface):
             Using this argument validates the files before upload,
             but may increase the upload time.""",
         )
+        parser.add_argument(
+            "--concurrency",
+            "-c",
+            type=int,
+            default=50,
+            help="Concurrency value (Default: 50)",
+        )
 
     def handler(self, args: Namespace) -> None:
         """Handle upload command."""
@@ -138,18 +144,21 @@ class CLIUploadController(CLIUploadInterface):
             self.project.cache.get_data("uploads", upload_cache_hash, True, True) or []
         )
 
+        loop = asyncio.get_event_loop()
+
         if not self.args.json and items_list:
             import_file_type = CLIInputSelect(
                 self.args.type,
                 "Import file type",
                 [import_type.value for import_type in ImportTypes],
             ).get()
-            items_list = json.loads(
-                self.project.context.upload.generate_items_list(
-                    [item for items in items_list for item in items],
+
+            items_list = loop.run_until_complete(
+                self.project.project.upload.generate_items_list(
+                    items_list,
                     import_file_type,
                     self.args.as_study,
-                    sys.platform.startswith("win"),
+                    self.args.concurrency,
                 )
             )
 
@@ -172,7 +181,12 @@ class CLIUploadController(CLIUploadInterface):
                     files_data.append(json.load(file_))
             logger.debug("Preparing json files for upload")
             points = self.project.project.upload.prepare_json_files(
-                files_data, storage_id, segmentation_mapping, task_dirs, upload_cache
+                files_data,
+                storage_id,
+                segmentation_mapping,
+                task_dirs,
+                upload_cache,
+                self.args.concurrency,
             )
             segmentation_mapping = {}
         else:
@@ -296,7 +310,6 @@ class CLIUploadController(CLIUploadInterface):
 
         if points:
             logger.info(f"Found {len(points)} items")
-            loop = asyncio.get_event_loop()
 
             uploads = loop.run_until_complete(
                 project.upload._create_tasks(

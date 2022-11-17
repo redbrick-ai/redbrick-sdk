@@ -116,7 +116,11 @@ class CLICache:
         """Set cache data."""
         cache_file = self.cache_path(name, fixed_cache=fixed_cache)
         data = zlib.compress(
-            (entity if isinstance(entity, str) else json.dumps(entity)).encode()
+            (
+                entity
+                if isinstance(entity, str)
+                else json.dumps(entity, separators=(",", ":"))
+            ).encode()
         )
         cache_hash = hash_sha256(data)
         with open(cache_file, "wb") as file_:
