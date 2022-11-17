@@ -146,7 +146,6 @@ class Upload:
                 presigned_items = self._generate_upload_presigned_url(
                     upload_items, file_types
                 )
-                logger.debug(f"Presigned items: {presigned_items}")
             except Exception:  # pylint:disable=broad-except
                 log_error(f"Failed to upload {point['name']}")
                 return {
@@ -654,6 +653,7 @@ class Upload:
     ) -> List[Dict]:
         """Generate items list from local files."""
         # pylint: disable=too-many-locals
+        logger.debug(f"Concurrency: {concurrency} for {len(items_list)} items")
         grouped_items_list: Dict[str, List[str]] = {}
         for items in items_list:
             if not items:
@@ -665,6 +665,8 @@ class Upload:
             if items_dir not in grouped_items_list:
                 grouped_items_list[items_dir] = []
             grouped_items_list[items_dir].extend(items)
+
+        logger.debug(f"Grouped items list: {len(grouped_items_list)}")
 
         items_list = list(grouped_items_list.values())
         total_groups = len(items_list)

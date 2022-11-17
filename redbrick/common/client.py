@@ -104,10 +104,10 @@ class RBClient:
     def _check_status_msg(response_status: int, start_time: float) -> None:
         total_time = time.time() - start_time
         logger.debug(f"Response status: {response_status} took {total_time} seconds")
-        if response_status >= 500:
-            if total_time >= 24:
+        if response_status == 413 or response_status >= 500:
+            if response_status == 413 or total_time >= 24:
                 raise TimeoutError(
-                    "Request timed out. Please consider using lower concurrency"
+                    "Request timed out/too large. Please consider using lower concurrency"
                 )
             raise ConnectionError(
                 "Internal Server Error: You are probably using an invalid API key"
