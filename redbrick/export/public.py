@@ -281,17 +281,30 @@ class Export:
         shutil.rmtree(task_dir, ignore_errors=True)
         os.makedirs(task_dir, exist_ok=True)
         series_names: List[str] = []
-        if sum(
+        series_info: List[Dict] = task.get("seriesInfo", []) or []
+        has_series_info = sum(
             list(
                 map(
-                    lambda val: len(val.get("itemsIndices", []) or []) if val else 0,
-                    task.get("seriesInfo", []) or [],
+                    lambda val: len(val["itemsIndices"])
+                    if isinstance(val, dict) and len(val.get("itemsIndices", []) or [])
+                    else -1000000,
+                    series_info,
                 )
             )
-        ) == len(task["items"]) and (
-            len(task["seriesInfo"]) > 1 or task["seriesInfo"][0].get("name")
-        ):
-            for series_idx, series in enumerate(task["seriesInfo"]):
+        ) == len(task["items"])
+
+        image_index_map = {}
+        if has_series_info:
+            for volume_index, series in enumerate(series_info):
+                image_index_map.update(
+                    {
+                        image_index: volume_index
+                        for image_index in series["itemsIndices"]
+                    }
+                )
+
+        if has_series_info and (len(series_info) > 1 or series_info[0].get("name")):
+            for series_idx, series in enumerate(series_info):
                 series_name = os.path.join(
                     task_dir,
                     re.sub(path_pattern, "-", series.get("name", "") or "")
@@ -327,7 +340,12 @@ class Export:
 
         for label, path in zip(labels_map, paths):
             label["labelName"] = process_nifti_download(
-                task.get("labels", []) or [], path, png_mask, color_map, is_tax_v2
+                task.get("labels", []) or [],
+                path,
+                png_mask,
+                color_map,
+                is_tax_v2,
+                image_index_map.get(label["imageIndex"]),
             )
 
         if len(paths) > len(labels_map) and task.get("consensusTasks"):
@@ -337,7 +355,12 @@ class Export:
                 consensus_labels_map = consensus_task.get("labelsMap", []) or []
                 for consensus_label_map in consensus_labels_map:
                     consensus_label_map["labelName"] = process_nifti_download(
-                        consensus_labels, paths[index], png_mask, color_map, is_tax_v2
+                        consensus_labels,
+                        paths[index],
+                        png_mask,
+                        color_map,
+                        is_tax_v2,
+                        image_index_map.get(consensus_label_map["imageIndex"]),
                     )
                     index += 1
 
