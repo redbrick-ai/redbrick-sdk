@@ -274,9 +274,11 @@ class Export:
                     }
                 )
             labels_map = [None] * len(series_info)
-            for label_map in task.get("labelsMap", []) or []:
-                if label_map:
+            for idx, label_map in enumerate(task.get("labelsMap", []) or []):
+                if label_map and "imageIndex" in label_map:
                     labels_map[image_index_map[label_map["imageIndex"]]] = label_map
+                else:
+                    labels_map[idx] = label_map
 
         else:
             labels_map = task.get("labelsMap", []) or []
@@ -356,7 +358,7 @@ class Export:
                     png_mask,
                     color_map,
                     is_tax_v2,
-                    image_index_map.get(label["imageIndex"]),
+                    image_index_map.get(label.get("imageIndex")),
                 )
 
         if len(paths) > len(labels_map) and task.get("consensusTasks"):
@@ -371,7 +373,7 @@ class Export:
                         png_mask,
                         color_map,
                         is_tax_v2,
-                        image_index_map.get(consensus_label_map["imageIndex"]),
+                        image_index_map.get(consensus_label_map.get("imageIndex")),
                     )
                     index += 1
 
