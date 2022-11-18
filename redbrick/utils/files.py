@@ -118,6 +118,10 @@ def find_files_recursive(
 def uniquify_path(path: str) -> str:
     """Provide unique path with number index."""
     filename, extension = os.path.splitext(path)
+    if extension == ".gz":
+        filename, extension = os.path.splitext(filename)
+        extension += ".gz"
+
     counter = 1
 
     while os.path.exists(path):

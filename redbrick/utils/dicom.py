@@ -13,9 +13,10 @@ def process_nifti_download(
     png_mask: bool,
     color_map: Dict,
     is_tax_v2: bool,
+    volume_index: Optional[int],
 ) -> Optional[Union[str, List[str]]]:
     """Process nifti download file."""
-    # pylint: disable=too-many-locals, import-outside-toplevel
+    # pylint: disable=too-many-locals, import-outside-toplevel, too-many-statements
     import nibabel  # type: ignore
     import numpy
     from PIL import Image  # type: ignore
@@ -24,8 +25,19 @@ def process_nifti_download(
         if not (labels_path and os.path.isfile(labels_path)):
             return labels_path
 
+        filtered_labels = [
+            label
+            for label in labels
+            if label.get("dicom")
+            and (
+                volume_index is None
+                or label.get("volumeindex") is None
+                or label["volumeindex"] == volume_index
+            )
+        ]
+
         overlapping_labels = any(
-            label.get("dicom", {}).get("groupids") for label in labels
+            label["dicom"].get("groupids") for label in filtered_labels
         )
 
         if not (png_mask or overlapping_labels):
@@ -55,15 +67,14 @@ def process_nifti_download(
 
             if not overlapping_labels:
                 color_mask = numpy.zeros((mask_arr.shape[0], mask_arr.shape[1], 3))
-                for label in labels:
-                    if label.get("dicom"):
-                        color_mask[mask_arr == label["dicom"]["instanceid"]] = (
-                            color_map.get(label.get("classid", -1), (255, 255, 255))
-                            if is_tax_v2
-                            else color_map.get(
-                                "::".join(label["category"][0][1:]), (255, 255, 255)
-                            )
+                for label in filtered_labels:
+                    color_mask[mask_arr == label["dicom"]["instanceid"]] = (
+                        color_map.get(label.get("classid", -1), (255, 255, 255))
+                        if is_tax_v2
+                        else color_map.get(
+                            "::".join(label["category"][0][1:]), (255, 255, 255)
                         )
+                    )
 
                 pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
                 pil_color_mask.save(uniquify_path(f"{dirname}.png"))
@@ -73,36 +84,37 @@ def process_nifti_download(
         os.makedirs(dirname, exist_ok=True)
         files: List[str] = []
 
-        for label in labels:
-            if label.get("dicom"):
-                instances: List[int] = [label["dicom"]["instanceid"]] + (
-                    label["dicom"].get("groupids", []) or []
+        for label in filtered_labels:
+            instances: List[int] = [label["dicom"]["instanceid"]] + (
+                label["dicom"].get("groupids", []) or []
+            )
+
+            if png_mask:
+                indices = numpy.where(numpy.isin(mask_arr, instances))
+                if not indices[0].size:
+                    continue
+                color_mask = numpy.zeros((mask_arr.shape[0], mask_arr.shape[1], 3))
+                color_mask[indices] = color_map.get(
+                    "::".join(label["category"][0][1:]), (255, 255, 255)
                 )
+                filename = uniquify_path(
+                    os.path.join(dirname, f"{label['dicom']['instanceid']}.png")
+                )
+                pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
+                pil_color_mask.save(filename)
+            else:
+                indices = numpy.where(numpy.isin(data, instances))
+                if not indices[0].size:
+                    continue
+                new_data = numpy.zeros(data.shape)
+                new_data[indices] = label["dicom"]["instanceid"]
+                filename = uniquify_path(
+                    os.path.join(dirname, f"{label['dicom']['instanceid']}.nii.gz")
+                )
+                new_img = nibabel.Nifti1Image(new_data, affine, header)
+                nibabel.save(new_img, filename)
 
-                if png_mask:
-                    color_mask = numpy.where(
-                        numpy.isin(mask_arr, instances),
-                        color_map.get(
-                            "::".join(label["category"][0][1:]), (255, 255, 255)
-                        ),
-                        (0, 0, 0),
-                    )
-                    filename = uniquify_path(
-                        os.path.join(dirname, f"{label['dicom']['instanceid']}.png")
-                    )
-                    pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
-                    pil_color_mask.save(filename)
-                else:
-                    new_data = numpy.where(
-                        numpy.isin(data, instances), label["dicom"]["instanceid"], 0  # type: ignore
-                    )
-                    filename = uniquify_path(
-                        os.path.join(dirname, f"{label['dicom']['instanceid']}.nii.gz")
-                    )
-                    new_img = nibabel.Nifti1Image(new_data, affine, header)
-                    nibabel.save(new_img, filename)
-
-                files.append(filename)
+            files.append(filename)
 
         return files
 
