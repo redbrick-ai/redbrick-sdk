@@ -244,12 +244,43 @@ class Export:
         is_tax_v2: bool,
     ) -> Dict:
         """Download and process label maps."""
-        # pylint: disable=import-outside-toplevel, too-many-locals, too-many-branches
+        # pylint: disable=import-outside-toplevel, too-many-locals
+        # pylint: disable=too-many-branches, too-many-statements
         from redbrick.utils.dicom import process_nifti_download
 
         task = copy.deepcopy(datapoint)
         files: List[Tuple[Optional[str], Optional[str]]] = []
-        labels_map = task.get("labelsMap", []) or []
+        labels_map: List[Optional[Dict]] = []
+
+        series_info: List[Dict] = task.get("seriesInfo", []) or []
+        has_series_info = sum(
+            list(
+                map(
+                    lambda val: len(val["itemsIndices"])
+                    if isinstance(val, dict) and len(val.get("itemsIndices", []) or [])
+                    else -1000000,
+                    series_info,
+                )
+            )
+        ) == len(task["items"])
+
+        image_index_map = {}
+        if has_series_info:
+            for volume_index, series in enumerate(series_info):
+                image_index_map.update(
+                    {
+                        image_index: volume_index
+                        for image_index in series["itemsIndices"]
+                    }
+                )
+            labels_map = [None] * len(series_info)
+            for label_map in task.get("labelsMap", []) or []:
+                if label_map:
+                    labels_map[image_index_map[label_map["imageIndex"]]] = label_map
+
+        else:
+            labels_map = task.get("labelsMap", []) or []
+
         presign_paths: List[Optional[str]] = [
             label_map.get("labelName") if label_map else None
             for label_map in labels_map
@@ -281,27 +312,6 @@ class Export:
         shutil.rmtree(task_dir, ignore_errors=True)
         os.makedirs(task_dir, exist_ok=True)
         series_names: List[str] = []
-        series_info: List[Dict] = task.get("seriesInfo", []) or []
-        has_series_info = sum(
-            list(
-                map(
-                    lambda val: len(val["itemsIndices"])
-                    if isinstance(val, dict) and len(val.get("itemsIndices", []) or [])
-                    else -1000000,
-                    series_info,
-                )
-            )
-        ) == len(task["items"])
-
-        image_index_map = {}
-        if has_series_info:
-            for volume_index, series in enumerate(series_info):
-                image_index_map.update(
-                    {
-                        image_index: volume_index
-                        for image_index in series["itemsIndices"]
-                    }
-                )
 
         if has_series_info and (len(series_info) > 1 or series_info[0].get("name")):
             for series_idx, series in enumerate(series_info):
@@ -339,14 +349,15 @@ class Export:
         )
 
         for label, path in zip(labels_map, paths):
-            label["labelName"] = process_nifti_download(
-                task.get("labels", []) or [],
-                path,
-                png_mask,
-                color_map,
-                is_tax_v2,
-                image_index_map.get(label["imageIndex"]),
-            )
+            if label and label.get("labelName"):
+                label["labelName"] = process_nifti_download(
+                    task.get("labels", []) or [],
+                    path,
+                    png_mask,
+                    color_map,
+                    is_tax_v2,
+                    image_index_map.get(label["imageIndex"]),
+                )
 
         if len(paths) > len(labels_map) and task.get("consensusTasks"):
             index = len(labels_map)

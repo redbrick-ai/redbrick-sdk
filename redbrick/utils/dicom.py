@@ -16,7 +16,7 @@ def process_nifti_download(
     volume_index: Optional[int],
 ) -> Optional[Union[str, List[str]]]:
     """Process nifti download file."""
-    # pylint: disable=too-many-locals, import-outside-toplevel
+    # pylint: disable=too-many-locals, import-outside-toplevel, too-many-statements
     import nibabel  # type: ignore
     import numpy
     from PIL import Image  # type: ignore
@@ -90,10 +90,12 @@ def process_nifti_download(
             )
 
             if png_mask:
-                color_mask = numpy.where(
-                    numpy.isin(mask_arr, instances),
-                    color_map.get("::".join(label["category"][0][1:]), (255, 255, 255)),
-                    (0, 0, 0),
+                indices = numpy.where(numpy.isin(mask_arr, instances))
+                if not indices[0].size:
+                    continue
+                color_mask = numpy.zeros((mask_arr.shape[0], mask_arr.shape[1], 3))
+                color_mask[indices] = color_map.get(
+                    "::".join(label["category"][0][1:]), (255, 255, 255)
                 )
                 filename = uniquify_path(
                     os.path.join(dirname, f"{label['dicom']['instanceid']}.png")
