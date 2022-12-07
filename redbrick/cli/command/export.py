@@ -2,16 +2,23 @@
 import asyncio
 import os
 import re
+import json
 from datetime import datetime, timezone
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Tuple
 import shutil
-
-import tqdm  # type: ignore
 
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
-from redbrick.utils.files import uniquify_path, download_files
+from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.files import (
+    uniquify_path,
+    download_files,
+    IMAGE_FILE_TYPES,
+    VIDEO_FILE_TYPES,
+    NIFTI_FILE_TYPES,
+    DICOM_FILE_TYPES,
+)
 from redbrick.utils.logging import log_error, logger
 
 
@@ -30,6 +37,11 @@ class CLIExportController(CLIExportInterface):
             "--with-files",
             action="store_true",
             help="Export with files (e.g. images/video frames)",
+        )
+        parser.add_argument(
+            "--dicom-to-nifti",
+            action="store_true",
+            help="Convert DICOM images to NIfTI. Applicable when --with-files is set.",
         )
         parser.add_argument(
             "--old-format",
@@ -166,87 +178,205 @@ class CLIExportController(CLIExportInterface):
 
         os.makedirs(export_dir, exist_ok=True)
 
-        if self.args.with_files:
-            try:
-                loop.run_until_complete(self._download_files(data, export_dir))
-            except Exception:  # pylint: disable=broad-except
-                log_error("Failed to download files")
-
         png_mask = bool(self.args.png)
-        nifti_dir = os.path.join(export_dir, "segmentations")
-        os.makedirs(nifti_dir, exist_ok=True)
-        task_map = os.path.join(export_dir, "tasks.json")
-        class_map = os.path.join(export_dir, "class_map.json")
-        self.project.project.export.export_nifti_label_data(
+        segmentations_dir = os.path.join(export_dir, "segmentations")
+        os.makedirs(segmentations_dir, exist_ok=True)
+        task_file = os.path.join(export_dir, "tasks.json")
+        class_file = os.path.join(export_dir, "class_map.json")
+        storage_ids = [task["storageId"] for task in data]
+        tasks, class_map = self.project.project.export.export_nifti_label_data(
             data,
             taxonomy,
-            nifti_dir,
-            task_map,
-            class_map,
+            segmentations_dir,
             bool(self.args.old_format),
             no_consensus,
             png_mask,
         )
-        logger.info(f"Exported: {task_map}")
-        logger.info(f"Exported nifti to: {nifti_dir}")
-        if png_mask:
-            logger.info(f"Exported: {class_map}")
+        logger.info(f"Exported segmentations to: {segmentations_dir}")
 
-    async def _download_files(self, data: List[Dict], export_dir: str) -> None:
-        # pylint: disable=too-many-locals
-        parent_dir = os.path.join(export_dir, "tasks")
-        os.makedirs(parent_dir, exist_ok=True)
-
-        path_pattern = re.compile(r"[^\w.]+")
-
-        files: List[Tuple[Optional[str], Optional[str]]] = []
-        tasks_indices: List[List[int]] = []
-
-        logger.info("Preparing to download files")
-        for task in tqdm.tqdm(data):
-            task_name = (
-                re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
-            )
-            task_dir = os.path.join(parent_dir, task_name)
-            if os.path.isdir(task_dir):
-                logger.info(f"{task_dir} exists. Skipping")
-                continue
-            shutil.rmtree(task_dir, ignore_errors=True)
-            os.makedirs(task_dir, exist_ok=True)
-            series_dirs: List[str] = []
-            series_items_indices: List[List[int]] = []
-            if sum(
-                map(
-                    lambda val: len(val.get("itemsIndices", []) or []) if val else 0,
-                    task.get("seriesInfo", []) or [],
+        if self.args.with_files:
+            try:
+                loop.run_until_complete(
+                    self._download_tasks(
+                        tasks, storage_ids, export_dir, bool(self.args.dicom_to_nifti)
+                    )
                 )
-            ) == len(task["items"]) and (
-                len(task["seriesInfo"]) > 1 or task["seriesInfo"][0].get("name")
-            ):
-                for series_idx, series in enumerate(task["seriesInfo"]):
+            except Exception as err:  # pylint: disable=broad-except
+                log_error(f"Failed to download files: {err}")
+
+        with open(task_file, "w", encoding="utf-8") as tasks_file:
+            json.dump(tasks, tasks_file, indent=2)
+
+        logger.info(f"Exported: {task_file}")
+
+        if png_mask:
+            with open(class_file, "w", encoding="utf-8") as classes_file:
+                json.dump(class_map, classes_file, indent=2)
+
+            logger.info(f"Exported: {class_file}")
+
+    async def _download_tasks(
+        self,
+        tasks: List[Dict],
+        storage_ids: List[str],
+        export_dir: str,
+        dcm_to_nii: bool,
+    ) -> List[Dict]:
+        # pylint: disable=too-many-locals, import-outside-toplevel, too-many-nested-blocks
+
+        images_dir = os.path.join(export_dir, "images")
+        os.makedirs(images_dir, exist_ok=True)
+
+        downloaded_tasks = await gather_with_concurrency(
+            5,
+            [
+                self._download_task(task, storage_id, images_dir)
+                for task, storage_id in zip(tasks, storage_ids)
+            ],
+            progress_bar_name="Downloading images",
+            keep_progress_bar=False,
+        )
+        tasks = [task for task, _ in downloaded_tasks]
+
+        logger.info(f"Exported images to: {images_dir}")
+
+        if not dcm_to_nii:
+            return tasks
+
+        import numpy as np
+        import nibabel as nb  # type: ignore
+        from dicom2nifti import settings, dicom_series_to_nifti  # type: ignore
+
+        settings.disable_validate_slice_increment()
+
+        logger.info("Converting DICOM image volumes to NIfTI")
+
+        dcm_ext = re.compile(
+            r"\.("
+            + "|".join(
+                (
+                    IMAGE_FILE_TYPES.keys()
+                    | VIDEO_FILE_TYPES.keys()
+                    | NIFTI_FILE_TYPES.keys()
+                )
+                - DICOM_FILE_TYPES.keys()
+            )
+            + r")(\.gz)?$"
+        )
+        for task, series_dirs in downloaded_tasks:
+            if not task.get("series") or len(task["series"]) != len(series_dirs):
+                continue
+            for series, series_dir in zip(task["series"], series_dirs):
+                items = (
+                    [series["items"]]
+                    if isinstance(series["items"], str)
+                    else series["items"]
+                )
+                if (
+                    dcm_to_nii
+                    and len(items) > 1
+                    and not any(
+                        re.search(dcm_ext, item.split("?", 1)[0].rstrip("/"))
+                        for item in items
+                    )
+                ):
+                    logger.info(f"Converting {task['taskId']} image to nifti")
+                    try:
+                        nii_img = dicom_series_to_nifti(
+                            series_dir, uniquify_path(series_dir + ".nii.gz")
+                        )
+                    except Exception as err:  # pylint: disable=broad-except
+                        logger.warning(
+                            f"Task {task['taskId']} : Failed to convert {series_dir} - {err}"
+                        )
+                        continue
+                    series["items"] = nii_img["NII_FILE"]
+                    if series.get("segmentations"):
+                        logger.debug(f"{task['taskId']} matching headers")
+                        try:
+                            nii_seg = nb.load(
+                                os.path.abspath(
+                                    series["segmentations"]
+                                    if isinstance(series["segmentations"], str)
+                                    else series["segmentations"][0]
+                                )
+                            )
+                            imgh = nii_img["NII"].header
+                            segh = nii_seg.header
+                            if not (
+                                imgh.get_data_shape() == segh.get_data_shape()
+                                and imgh.get_data_offset() == segh.get_data_offset()
+                                and np.array_equal(
+                                    imgh.get_best_affine(), segh.get_best_affine()
+                                )
+                                and np.array_equal(imgh.get_qform(), segh.get_qform())
+                                and np.array_equal(imgh.get_sform(), segh.get_sform())
+                            ):
+                                logger.warning(
+                                    f"Task: {task['taskId']} : Headers of converted "
+                                    + "nifti image and segmentation do not match."
+                                )
+                        except Exception as err:  # pylint: disable=broad-except
+                            logger.warning(
+                                f"Task {task['taskId']} : Failed to match headers - {err}"
+                            )
+
+        return tasks
+
+    async def _download_task(
+        self,
+        task: Dict,
+        storage_id: str,
+        parent_dir: str,
+    ) -> Tuple[Dict, List[str]]:
+        # pylint: disable=too-many-locals
+        path_pattern = re.compile(r"[^\w.]+")
+        task_name = re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
+        task_dir = os.path.join(parent_dir, task_name)
+
+        shutil.rmtree(task_dir, ignore_errors=True)
+        os.makedirs(task_dir)
+
+        series_dirs: List[str] = []
+        items_lists: List[List[str]] = []
+
+        try:
+            if task.get("series"):
+                for series_idx, series in enumerate(task["series"]):
                     series_dir = uniquify_path(
                         os.path.join(
                             task_dir,
                             re.sub(path_pattern, "-", series.get("name", "") or "")
-                            or chr(series_idx + ord("A")),
+                            or (
+                                task_name
+                                if len(task["series"]) == 1
+                                else chr(series_idx + ord("A"))
+                            ),
                         )
                     )
                     os.makedirs(series_dir)
                     series_dirs.append(series_dir)
-                    series_items_indices.append(series["itemsIndices"])
+                    items_lists.append(
+                        [series["items"]]
+                        if isinstance(series["items"], str)
+                        else series["items"]
+                    )
             else:
                 series_dir = os.path.join(task_dir, task_name)
                 os.makedirs(series_dir)
                 series_dirs.append(series_dir)
-                series_items_indices.append(list(range(len(task["items"]))))
+                items_lists.append(task["items"])
 
             to_presign = []
             local_files = []
-            tasks_indices.append([])
-            for series_dir, items_indices in zip(series_dirs, series_items_indices):
-                paths = [task["items"][item_idx] for item_idx in items_indices]
+            for series_dir, paths in zip(series_dirs, items_lists):
                 file_names = [
-                    re.sub(path_pattern, "-", os.path.basename(path)) for path in paths
+                    re.sub(
+                        path_pattern,
+                        "-",
+                        os.path.basename(path.split("?", 1)[0].rstrip("/")),
+                    )
+                    for path in paths
                 ]
                 fill_index = (
                     0
@@ -254,7 +384,6 @@ class CLIExportController(CLIExportInterface):
                     else len(str(len(file_names)))
                 )
                 to_presign.extend(paths)
-                tasks_indices[-1].extend(items_indices)
                 for index, item in enumerate(file_names):
                     file_name, file_ext = os.path.splitext(item)
                     local_files.append(
@@ -271,18 +400,32 @@ class CLIExportController(CLIExportInterface):
                     )
 
             presigned = self.project.context.export.presign_items(
-                self.project.org_id, task["storageId"], to_presign
+                self.project.org_id, storage_id, to_presign
             )
-            files.extend(list(zip(presigned, local_files)))
 
-        downloaded = await download_files(files)
-        task_idx = 0
-        index_idx = 0
-        for (url, _), file_path in zip(files, downloaded):
-            data[task_idx]["items"][tasks_indices[task_idx][index_idx]] = (
-                file_path or url
+            if any(not presigned_path for presigned_path in presigned):
+                raise Exception("Failed to presign some files")
+
+            downloaded = await download_files(
+                list(zip(presigned, local_files)), "Downloading files", False
             )
-            index_idx += 1
-            if index_idx == len(tasks_indices[task_idx]):
-                task_idx += 1
-                index_idx = 0
+
+            if any(not downloaded_file for downloaded_file in downloaded):
+                raise Exception("Failed to download some files")
+
+            if task.get("series"):
+                prev_count = 0
+                for series_dir, series in zip(series_dirs, task["series"]):
+                    count = (
+                        1 if isinstance(series["items"], str) else len(series["items"])
+                    )
+                    series["items"] = downloaded[prev_count : prev_count + count]
+                    prev_count += count
+            else:
+                task["items"] = downloaded
+
+        except Exception as err:  # pylint: disable=broad-except
+            log_error(f"Failed to download files for task {task['taskId']}: {err}")
+            shutil.rmtree(task_dir, ignore_errors=True)
+
+        return task, series_dirs

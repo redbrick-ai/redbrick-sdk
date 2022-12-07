@@ -347,7 +347,7 @@ class Export:
             files.append((url, f"{new_series_name}.nii.gz"))
 
         paths = await download_files(
-            files, "Downloading nifti labels", False, True, True
+            files, "Downloading segmentations", False, True, True
         )
 
         for label, path in zip(labels_map, paths):
@@ -384,12 +384,10 @@ class Export:
         datapoints: List[Dict],
         taxonomy: Dict,
         nifti_dir: str,
-        task_map: str,
-        class_map_file: str,
         old_format: bool,
         no_consensus: bool,
         png_mask: bool,
-    ) -> None:
+    ) -> Tuple[List[Dict], Dict]:
         """Export nifti label maps."""
         # pylint: disable=too-many-locals
         class_map: Dict = {}
@@ -437,12 +435,7 @@ class Export:
             )
         )
 
-        with open(task_map, "w", encoding="utf-8") as tasks_file:
-            json.dump(tasks, tasks_file, indent=2)
-
-        if png_mask:
-            with open(class_map_file, "w", encoding="utf-8") as classes_file:
-                json.dump(class_map, classes_file, indent=2)
+        return tasks, class_map
 
     def export_tasks(
         self,
@@ -528,19 +521,25 @@ class Export:
         nifti_dir = os.path.join(destination, "nifti")
         os.makedirs(nifti_dir, exist_ok=True)
         logger.info(f"Saving NIfTI files to {destination} directory")
-        tasks_json = os.path.join(destination, "tasks.json")
-        self.export_nifti_label_data(
+        tasks, class_map = self.export_nifti_label_data(
             datapoints,
             taxonomy,
             nifti_dir,
-            tasks_json,
-            os.path.join(destination, "class_map.json"),
             old_format,
             no_consensus,
             png,
         )
-        with open(tasks_json, "r", encoding="utf-8") as tasks_file:
-            tasks: List[Dict] = json.load(tasks_file)
+        with open(
+            os.path.join(destination, "tasks.json"), "w", encoding="utf-8"
+        ) as tasks_file:
+            json.dump(tasks, tasks_file, indent=2)
+
+        if png:
+            with open(
+                os.path.join(destination, "class_map.json"), "w", encoding="utf-8"
+            ) as classes_file:
+                json.dump(class_map, classes_file, indent=2)
+
         return tasks
 
     def redbrick_nifti(
