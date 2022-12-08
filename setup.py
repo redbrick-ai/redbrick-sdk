@@ -7,6 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 install_requires = [
     "aiofiles<=0.8.0",
     "aiohttp<=3.8.1,>=3.7.4",
+    "dicom2nifti<=2.4.6",
     "inquirerpy<=0.3.4,>=0.3.3",
     "natsort<=8.1.0,>=8.0.2",
     "nest-asyncio<=1.5.5,>=1.5.4",

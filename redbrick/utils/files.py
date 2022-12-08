@@ -229,7 +229,7 @@ async def download_files(
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [_download_file(session, url, path) for url, path in files]
         paths = await gather_with_concurrency(
-            10, coros, progress_bar_name, keep_progress_bar
+            5, coros, progress_bar_name, keep_progress_bar
         )
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
