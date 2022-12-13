@@ -264,6 +264,9 @@ class ExportRepo(ExportControllerInterface):
                 entries {
                     taskId
                     currentStageName
+                    datapoint {
+                        name
+                    }
                     genericEvents {
                         __typename
                         ... on TaskEvent {

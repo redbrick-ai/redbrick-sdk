@@ -640,6 +640,13 @@ class Export:
         List[Dict]
             [{"taskId": str, "currentStageName": str, "events": List[Dict]}]
         """
+        members = self.context.project.get_members(self.org_id, self.project_id)
+        users = {}
+        for member in members:
+            user = member.get("member", {}).get("user", {})
+            if user.get("userId") and user.get("email"):
+                users[user["userId"]] = user["email"]
+
         my_iter = PaginationIterator(
             partial(
                 self.context.export.task_events,
@@ -657,4 +664,4 @@ class Export:
                 if (not only_ground_truth or task["currentStageName"] == "END")
             ]
 
-        return list(map(task_event_format, tasks))
+        return [task_event_format(task, users) for task in tasks]
