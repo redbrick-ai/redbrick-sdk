@@ -34,6 +34,7 @@ type Series = {
   landmarks?: Landmarks[];
   landmarks3d?: Landmarks3D[];
   measurements?: (MeasureLength | MeasureAngle)[];
+  ellipses?: Ellipse[];
   boundingBoxes?: BoundingBox[];
   polygons?: Polygon[];
   polylines?: Polyline[];
@@ -82,13 +83,25 @@ type MeasureAngle = {
   attributes?: Attributes;
 };
 
+type Ellipse = {
+  pointCenter: Point2D;
+  xRadiusNorm: number;
+  yRadiusNorm: number;
+  rotationRad: number;
+  category: number | string | string[];
+  attributes?: Attributes;
+  stats?: MeasurementStats;
+  // video meta-data
+  video?: VideoMetaData;
+}
+
 type BoundingBox = {
   pointTopLeft: Point2D;
   wNorm: number;
   hNorm: number;
   category: number | string | string[];
   attributes?: Attributes;
-
+  stats?: MeasurementStats;
   // video meta-data
   video?: VideoMetaData;
 };
@@ -98,7 +111,7 @@ type Polygon = {
 
   category: number | string | string[];
   attributes?: Attributes;
-
+  stats?: MeasurementStats;
   // video meta-data
   video?: VideoMetaData;
 };
@@ -146,3 +159,10 @@ type Point2D = {
   xnorm: number;
   ynorm: number;
 };
+
+type MeasurementStats = {
+  average: number;
+  area: number;
+  minimum: number;
+  maximum: number;
+}
