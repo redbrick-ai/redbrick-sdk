@@ -421,6 +421,58 @@
                             },
                             "additionalItems": false
                         },
+                        "ellipses": {
+                            "title": "Ellipse",
+                            "description": "Ellipse labels",
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "pointCenter": {
+                                        "$ref": "#/$defs/point2d"
+                                    },
+                                    "xRadiusNorm": {
+                                        "title": "X Radius",
+                                        "description": "Ellipse x radius normalized",
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "yRadiusNorm": {
+                                        "title": "Y Radius",
+                                        "description": "Ellipse Y radius normalized",
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "rotationRad": {
+                                        "title": "Rotation",
+                                        "description": "Ellipse rotation in radians",
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "category": {
+                                        "$ref": "#/$defs/category"
+                                    },
+                                    "attributes": {
+                                        "$ref": "#/$defs/attributes"
+                                    },
+                                    "video": {
+                                        "$ref": "#/$defs/video"
+                                    },
+                                    "stats": {
+                                        "$ref": "#/$defs/stats"
+                                    }
+                                },
+                                "required": [
+                                    "pointCenter",
+                                    "xRadiusNorm",
+                                    "yRadiusNorm",
+                                    "rotationRad",
+                                    "category"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "additionalItems": false
+                        },
                         "boundingBoxes": {
                             "title": "2D Bounding Box",
                             "description": "2D Bounding box labels",
@@ -451,6 +503,9 @@
                                     },
                                     "video": {
                                         "$ref": "#/$defs/video"
+                                    },
+                                    "stats": {
+                                        "$ref": "#/$defs/stats"
                                     }
                                 },
                                 "required": [
@@ -496,6 +551,9 @@
                                     },
                                     "attributes": {
                                         "$ref": "#/$defs/attributes"
+                                    },
+                                    "stats": {
+                                        "$ref": "#/$defs/stats"
                                     }
                                 },
                                 "required": [
@@ -534,6 +592,9 @@
                                     },
                                     "video": {
                                         "$ref": "#/$defs/video"
+                                    },
+                                    "stats": {
+                                        "$ref": "#/$defs/stats"
                                     }
                                 },
                                 "required": [
@@ -881,6 +942,40 @@
             "items": {
                 "type": "number"
             }
+        },
+        "stats": {
+            "title": "Measurement Stats",
+            "description": "Label measurement stats",
+            "type": "object",
+            "properties": {
+                "average": {
+                    "title": "Average",
+                    "description": "Average value",
+                    "type": "number"
+                },
+                "area": {
+                    "title": "Area",
+                    "description": "Region area",
+                    "type": "number"
+                },
+                "minimum": {
+                    "title": "Minimum",
+                    "description": "Minimum value",
+                    "type": "number"
+                },
+                "maximum": {
+                    "title": "Maximum",
+                    "description": "Maximum value",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "average",
+                "area",
+                "minimum",
+                "maximum"
+            ],
+            "additionalProperties": false
         }
     }
 }

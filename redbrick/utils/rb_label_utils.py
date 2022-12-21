@@ -218,6 +218,10 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
                 }
             }
 
+        measurement_stats = {}
+        if label.get("stats"):
+            measurement_stats = {"stats": label["stats"]}
+
         if label.get("tasklevelclassify") or label.get("studyclassify"):
             output_task["classification"] = {**label_obj}
         elif label.get("multiclassify") or label.get("seriesclassify"):
@@ -318,6 +322,22 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
                     **video_metadata,  # type: ignore
                 }
             )
+        elif label.get("ellipse"):
+            volume["ellipses"] = volume.get("ellipses", [])
+            volume["ellipses"].append(
+                {
+                    "pointCenter": {
+                        "xNorm": label["ellipse"]["xcenternorm"],
+                        "yNorm": label["ellipse"]["ycenternorm"],
+                    },
+                    "xRadiusNorm": label["ellipse"]["xnorm"],
+                    "yRadiusNorm": label["ellipse"]["ynorm"],
+                    "rotationRad": label["ellipse"]["rot"],
+                    **label_obj,
+                    **video_metadata,
+                    **measurement_stats,
+                }
+            )
         elif label.get("bbox2d"):
             volume["boundingBoxes"] = volume.get("boundingBoxes", [])
             volume["boundingBoxes"].append(
@@ -330,6 +350,7 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
                     "hNorm": label["bbox2d"]["hnorm"],
                     **label_obj,
                     **video_metadata,
+                    **measurement_stats,
                 }
             )
         elif label.get("bbox3d"):
@@ -346,6 +367,7 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
                     "depth": label["bbox3d"]["deltaz"],
                     **label_obj,
                     **video_metadata,
+                    **measurement_stats,
                 }
             )
         elif label.get("polygon"):
@@ -358,6 +380,7 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
                     ],
                     **label_obj,  # type: ignore
                     **video_metadata,  # type: ignore
+                    **measurement_stats,
                 }
             )
 
