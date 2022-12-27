@@ -1,8 +1,9 @@
 """
-Note
-------------
-To use the RedBrick SDK you need to create an API key. Please create an API key on 
-your RedBrick application by following along with `this documentation <https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key>`_.
+.. admonition:: Create an API key to get started
+    :class: hint
+
+    To use the RedBrick SDK you need to create an API key. Please create an API key on 
+    your RedBrick application by following along with `this documentation <https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key>`_.
 """
 import sys
 import asyncio
