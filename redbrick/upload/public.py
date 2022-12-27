@@ -524,10 +524,29 @@ class Upload:
         """
         Create datapoints in project.
 
-        Upload data, and optionally annotations, to your project.
+        Upload data, and optionally annotations, to your project. Please visit
+        `our documentation <https://docs.redbrickai.com/python-sdk/reference/annotation-format>`_
+        to understand the format for ``points``.
 
-        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
-        >>> project.upload.create_datapoints(...)
+        .. code:: python
+
+            project = redbrick.get_project(org_id, project_id, api_key, url)
+            points = [
+                {
+                    "name": "...",
+                    "series": [
+                        {
+                            "items": "...",
+
+                            # These fields are needed for importing segmentations.
+                            "segmentations": "...",
+                            "segmentMap": {...}
+                        }
+                    ]
+                }
+            ]
+            project.upload.create_datapoints(storage_id, points)
+
 
         Parameters
         --------------
@@ -541,10 +560,9 @@ class Upload:
             https://docs.redbrickai.com/python-sdk/reference/annotation-format.
             All the fields with `annotation` information are optional.
 
-
         is_ground_truth: bool = False
-            If labels are provided in ``points above``, and this parameters is set to true, the labels
-            will be added to the Ground Truth stage.
+            If labels are provided in ``points``, and this parameters
+            is set to true, the labels will be added to the Ground Truth stage.
 
         segmentation_mapping: Optional[Dict] = None
             Optional mapping of semantic segmentation class ids and RedBrick categories.
