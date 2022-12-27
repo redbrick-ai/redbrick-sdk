@@ -180,10 +180,14 @@ class RBOrganization:
         task_categories: Optional[List[Dict]] = None,
         task_attributes: Optional[List[Dict]] = None,
     ) -> None:
-        """Create Taxonomy.
+        """Create Taxonomy V1.
 
         Format reference for categories and attributes objects:
         https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
+
+        .. caution:: We recommend using Taxonomy V2.
+           Taxonomy V1 will be deprecated in a future release. Read more `here <https://docs.redbrickai.com/projects/taxonomies#taxonomy-v1-vs.-taxonomy-v2>`_
+
         """
         if self.context.project.create_taxonomy(
             self.org_id,
@@ -205,7 +209,12 @@ class RBOrganization:
         instance_classify: Optional[List[Dict]] = None,
         object_types: Optional[List[Dict]] = None,
     ) -> None:
-        """Create New Taxonomy."""
+        """
+        Create a Taxonomy V2.
+
+        Format reference for categories and attributes objects:
+        https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
+        """
         if self.context.project.create_taxonomy_new(
             self.org_id,
             name,
@@ -219,7 +228,7 @@ class RBOrganization:
     def get_taxonomy(
         self, tax_id: Optional[str] = None, name: Optional[str] = None
     ) -> Dict:
-        """Get a taxonomy in the organization."""
+        """Get a taxonomy created in your organization."""
         taxonomy = self.context.project.get_taxonomy(self._org_id, tax_id, name)
         return format_taxonomy(taxonomy)
 
@@ -231,7 +240,11 @@ class RBOrganization:
         instance_classify: Optional[List[Dict]] = None,
         object_types: Optional[List[Dict]] = None,
     ) -> None:
-        """Update a taxonomy in the organization.
+        """Update the categories/attributes of taxonomy in the organization.
+
+        Format reference for categories and attributes objects:
+        https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
+
 
         Warnings
         ----------

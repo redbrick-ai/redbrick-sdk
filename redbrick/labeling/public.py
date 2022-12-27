@@ -19,13 +19,37 @@ from redbrick.utils.files import NIFTI_FILE_TYPES, upload_files
 
 
 class Labeling:
-    """
+    r"""
     Perform programmatic labeling and review tasks.
 
     The Labeling class allows you to programmatically submit tasks.
     This can be useful for times when you want to make bulk actions
     e.g accepting several tasks, or make automated actions like using automated
     methods for review.
+
+    .. admonition:: Information
+
+      The Labeling module provides several methods to query tasks and assign tasks to
+      different users. Refer to this section for guidance on when to use each method:
+
+      - :obj:`assign_task`.
+        Use this method when you already have
+        the ``task_id`` you want to assign to a particular user. If you don't have the
+        ``task_id``, you can query all the tasks using :obj:`~redbrick.export.Export.export_tasks`
+        or query tasks assigned to a particular user/unassigned tasks using :obj:`get_task_queue`.
+
+      - :obj:`get_task_queue`.
+        Use this method when you want to retrieve the tasks assigned to a particular user, or
+        you want to fetch all the unassigned tasks in your project. This can be useful in
+        preparation for using :obj:`assign_task` to programmatically assigning tasks,
+        or :obj:`put_tasks` to programmatically label/review tasks assigned to you.
+
+      - :obj:`get_tasks`.
+        Use this method to fetch all tasks `already assigned to the current API Key`.
+        This can be useful in preparation for re-assigned those tasks to another
+        user (through :obj:`assign_task`) or for programmatically submitting them
+        through :obj:`put_tasks`.
+
     """
 
     def __init__(
@@ -43,7 +67,11 @@ class Labeling:
 
     def get_tasks(self, stage_name: str, count: int = 1) -> List[Dict]:
         """
-        Get a list of tasks from stage_name for current API Key to work upon.
+        Get tasks assigned to the API Key.
+
+        Get a list of tasks from ``stage_name`` for the current API Key to work upon. If
+        the current API Key is not assigned any tasks, calling this method will automatically
+        assign tasks to the API Key.
 
         >>> project = redbrick.get_project(...)
         >>> label_tasks = project.labeling.get_tasks(...)
@@ -162,11 +190,56 @@ class Labeling:
 
     def put_tasks(self, stage_name: str, tasks: List[Dict]) -> List[Dict]:
         """
-        Put tasks with new labels or review result.
+        Put tasks with new labels or a review result.
 
-        >>> project = redbrick.get_project(...)
-        >>> project.labeling.put_tasks(...)
-        >>> project.review.put_tasks(...)
+        Use this method to programmatically add labels to tasks in `Label stage`,
+        or to programmatically accept/reject tasks in a `Review stage`. If you don't already
+        have a list of ``task_id``, you can use :obj:`~redbrick.export.Export.export_tasks` to
+        get a list of all tasks in your project, or you can use :obj:`get_tasks`
+        to get a list of tasks assigned to you.
+
+        .. admonition:: Assign tasks to your API key
+            :class: caution
+
+            You must assign tasks to your API Key `before` you use :obj:`put_tasks`. You cannot
+            programmatically label/review tasks that are not assigned to you (in this case, your
+            API key).
+
+        .. tab:: Label
+
+            .. code:: python
+
+                project = redbrick.get_project(...)
+                tasks = [
+                    {
+                        "task_id": "...",
+                        "labels": [{...}]
+                    },
+                ]
+                project.labeling.put_tasks(stage_name="Label", tasks=tasks)
+
+
+        .. tab:: Review
+
+            .. code:: python
+
+                project = redbrick.get_project(...)
+                tasks = [
+                    {
+                        "task_id": "...",
+
+                        # Set reviewVal to True if you want to accept the task
+                        "reviewVal": True
+                    },
+                    {
+                        "task_id": "...",
+
+                        # Set reviewVal to False if you want to reject the task
+                        "reviewVal": False
+                    }
+                ]
+                project.review.put_tasks(stage_name="Review_1", tasks=tasks)
+
 
         Parameters
         --------------
@@ -175,8 +248,7 @@ class Labeling:
             same stage as which you called get_tasks on.
 
         tasks: List[Dict]
-            Tasks with new labels or review result. Please see doc for format.
-            https://docs.redbrickai.com/python-sdk/programmatically-label-and-review
+            Tasks with new labels or review result.
 
         Returns
         ---------------
@@ -194,7 +266,34 @@ class Labeling:
         current_user: bool = False,
         refresh: bool = False,
     ) -> None:
-        """Assign tasks to specified email or current API key."""
+        """
+        Assign tasks to specified email or current API key.
+
+        You must specify either the user ``email`` or set ``current_user`` to ``True``.
+
+        >>> project = redbrick.get_project(org_id, project_id, api_key)
+        >>> project.labeling.assign_task(stage_name, task_id, email)
+
+        Parameters
+        ------------------
+        stage_name: str
+            The stage name within which the task currently is. If you want to assign
+            ``task_id`` in the ``Label`` stage, set ``stage_name="Label"``.
+
+        task_id: str
+            The unique ``task_id`` of the task you want to assign.
+
+        email: Optional[str] = None
+            The email of the user you want to assign this task to. Make sure the
+            user has adequate permissions to be assigned this task in the project.
+
+        current_user: bool = False
+            If true, will assign the task to the API KEY being used with the SDK.
+
+        refresh: bool = False
+            Used for projects with Consensus activated. If `True`, will `overwrite` the assignment
+            to the current users.
+        """
         self.context.labeling.assign_tasks(
             self.org_id,
             self.project_id,
@@ -213,6 +312,9 @@ class Labeling:
         fetch_unassigned: bool = True,
     ) -> List[Dict]:
         """Get all tasks in queue.
+
+        Returns all the tasks assigned to a particular user and/or
+        tasks that are unassigned.
 
         Parameters
         --------------

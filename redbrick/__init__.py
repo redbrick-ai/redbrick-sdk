@@ -1,12 +1,8 @@
 """
-RedBrick SDK is a Python package for the RedBrick AI platform.
-
-Visit https://docs.redbrickai.com/python-sdk/sdk-overview for an
-overview of how to use the SDK and to view code examples.
-
-To use the RedBrick SDK you need to create an API key. Please
-see this documentation for accomplishing that.
-https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key
+Note
+------------
+To use the RedBrick SDK you need to create an API key. Please create an API key on 
+your RedBrick application by following along with `this documentation <https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key>`_.
 """
 import sys
 import asyncio
@@ -75,6 +71,8 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
     Organization object allows you to interact with your organization
     and perform high level actions like creating a project.
 
+    >>> org = redbrick.get_org(org_id, api_key)
+
     Parameters
     ---------------
     org_id: str
@@ -106,6 +104,8 @@ def get_project(
 
     Project objects allow you to interact with your RedBrick Ai projects,
     and perform actions like importing data, exporting data etc.
+
+    >>> project = redbrick.get_project(org_id, project_id, api_key)
 
     Parameters
     ---------------

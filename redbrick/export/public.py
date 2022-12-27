@@ -27,12 +27,7 @@ from redbrick.utils.rb_event_utils import task_event_format
 
 
 class Export:
-    """
-    Primary interface to handling export from a project.
-
-    This class has methods to export to various formats depending on
-    your project type.
-    """
+    """Primary interface for various export methods."""
 
     def __init__(
         self,
@@ -449,7 +444,12 @@ class Export:
         png: bool = False,
     ) -> List[Dict]:
         """
-        Export labels for 'Medical' project type. Segmentations are exported in NIfTI-1 format.
+        Export annotation data.
+
+        Meta-data and category information returned as an Object. Segmentations are written to
+        your disk in NIfTI-1 format. Please `visit our
+        documentation <https://docs.redbrickai.com/python-sdk/reference/annotation-format>`_
+        for more information on the format.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key, url)
         >>> project.export.export_tasks()
@@ -572,7 +572,8 @@ class Export:
         name: Optional[str] = None,
     ) -> List[Dict]:
         """
-        Search tasks by task_id/name in groundtruth or entire project.
+        Search tasks by ``task_id`` or ``name`` in any stage of your project workflow.
+        This function returns minimal meta-data about the queried tasks.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key, url)
         >>> result = project.export.search_tasks()
@@ -584,6 +585,7 @@ class Export:
             that have been completed in your workflow.
 
         concurrency: int = 10
+            The number of requests that will be made in parallel.
 
         name: Optional[str] = None
             If present, will return the task with task_id == name.
@@ -625,7 +627,18 @@ class Export:
         only_ground_truth: bool = True,
         concurrency: int = 10,
     ) -> List[Dict]:
-        """Get task history events log.
+        """Generate an audit log of all actions performed on tasks.
+
+        Use this method to get a detailed summary of all the actions performed on your
+        tasks, including:
+
+        - Who uploaded the data
+        - Who annotated your tasks
+        - Who reviewed your tasks
+        - and more.
+
+        This can be particulary useful to present to auditors who are interested in your
+        quality control workflows.
 
         Parameters
         -----------
@@ -634,6 +647,7 @@ class Export:
             that have been completed in your workflow.
 
         concurrency: int = 10
+            The number of requests that will be made in parallel.
 
         Returns
         -----------
