@@ -31,8 +31,11 @@ class CLIUploadController(CLIUploadInterface):
             "-t",
             nargs="?",
             default=ImportTypes.DICOM3D.value,
-            help=f"Import file type {[import_type.value for import_type in ImportTypes]} "
-            + f"(Default: {ImportTypes.DICOM3D.value}) *Applicable for Medical project",
+            help=f"""Import file type
+{['`' + import_type.value + '`' for import_type in ImportTypes]}\n
+Please refer to [our documentation](https://docs.redbrickai.com/importing-data/direct-data-upload),
+to understand the required folder structure and supported file types.
+""",
         )
         parser.add_argument(
             "--as-study", action="store_true", help="Group files by study"
@@ -66,11 +69,11 @@ class CLIUploadController(CLIUploadInterface):
             "--label-validate",
             action="store_true",
             help="""
-            Validate NIfTI label instances and segmentMap.
-            By default, the uploaded NIfTI files are not validated during upload,
-            which can result in invalid files being uploaded.
-            Using this argument validates the files before upload,
-            but may increase the upload time.""",
+Validate NIfTI label instances and segmentMap.
+By default, the uploaded NIfTI files are not validated during upload,
+which can result in invalid files being uploaded.
+Using this argument validates the files before upload,
+but may increase the upload time.""",
         )
         parser.add_argument(
             "--concurrency",

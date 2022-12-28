@@ -41,7 +41,7 @@ class CLIExportController(CLIExportInterface):
         parser.add_argument(
             "--dicom-to-nifti",
             action="store_true",
-            help="Convert DICOM images to NIfTI. Applicable when --with-files is set.",
+            help="Convert DICOM images to NIfTI. Applicable when `--with-files` is set.",
         )
         parser.add_argument(
             "--old-format",
@@ -72,7 +72,7 @@ class CLIExportController(CLIExportInterface):
             "--stage",
             "-s",
             help="Export tasks that are currently in the given stage. "
-            + f"Applicable for only type = {self.TYPE_LATEST}",
+            + "Applicable only with `redbrick export` and `redbrick export latest`",
         )
         parser.add_argument(
             "--destination",

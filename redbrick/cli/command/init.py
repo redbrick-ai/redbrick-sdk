@@ -19,7 +19,10 @@ class CLIInitController(CLIInitInterface):
         parser.add_argument("--taxonomy", "-t", help="Taxonomy name")
         parser.add_argument("--reviews", "-r", help="Number of review stages")
         parser.add_argument(
-            "path", nargs="?", default=".", help="Local path of project"
+            "path",
+            nargs="?",
+            default=".",
+            help="Local path of the empty project directory",
         )
 
     def handler(self, args: Namespace) -> None:

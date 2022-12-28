@@ -40,6 +40,7 @@ extensions = [
     "sphinxcontrib.napoleon",
     "sphinxarg.ext",
     "sphinx_inline_tabs",
+    "sphinxcontrib.autoprogram",
 ]
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
