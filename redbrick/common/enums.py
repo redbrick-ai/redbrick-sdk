@@ -3,10 +3,10 @@ from enum import Enum
 
 
 class StorageMethod:
-    """Special case storage method Ids.
+    """Built-in Storage Method ID's that can be used to import data.
 
-    - PUBLIC - Access files from a public cloud storage service or local storage
-    - REDBRICK - Access files from the RedBrickAI servers
+    - ``PUBLIC`` - Access files from a public cloud storage service or local storage.
+    - ``REDBRICK`` - Access files from the RedBrickAI servers.
     """
 
     PUBLIC = "11111111-1111-1111-1111-111111111111"
@@ -24,7 +24,12 @@ class TaskStates(Enum):
 
 
 class ImportTypes(Enum):
-    """Enumerate the different supported upload types."""
+    """
+    Enumerates the supported data import types.
+
+    Please see supported data types, and file extensions
+    in our `documentation here <https://docs.redbrickai.com/importing-data/direct-data-upload>`_.
+    """
 
     DICOM3D = "DICOM3D"
     NIFTI3D = "NIFTI3D"

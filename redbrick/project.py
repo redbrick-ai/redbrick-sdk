@@ -1,4 +1,4 @@
-"""Main object for RedBrick SDK."""
+"""Interface for interacting with your RedBrick AI Projects."""
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from dateutil import parser  # type: ignore
@@ -15,27 +15,7 @@ from redbrick.utils.logging import logger
 
 
 class RBProject:
-    """
-    Interact with a RedBrick project.
-
-    Attributes
-    -----------
-    export: redbrick.export.Export
-        Interface for managing exporting data and
-        labels from your redbrick ai projects.
-
-    labeling: redbrick.labeling.Labeling
-        Interface for programmatically labeling your
-        redbrick ai tasks.
-
-    review: redbrick.labeling.Labeling
-        Interface for programmatically reviewing your
-        redbrick ai tasks.
-
-    upload: redbrick.upload.Upload
-        Interface for programmatically managing upload
-        of your data and labels.
-    """
+    """Interface for interacting with your RedBrick AI Projects."""
 
     def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
         """Construct RBProject."""
@@ -227,8 +207,11 @@ class RBProject:
         Set label storage method for a project.
 
         By default, all annotations get stored in RedBrick AI's storage
-        i.e. redbrick.StorageMethod.REDBRICK.
+        i.e. ``redbrick.StorageMethod.REDBRICK``.
         Set a custom external storage, within which RedBrick AI will write all annotations.
+
+        >>> project = redbrick.get_project(org_id, project_id, api_key)
+        >>> project.set_label_storage(storage_id)
 
         Parameters
         ------------
@@ -244,9 +227,8 @@ class RBProject:
         Tuple[str, str]
             Returns [storage_id, path]
 
-        Warnings
+        Note
         ------------
-        - You can only set external storage for DICOM_SEGMENTATION projects.
         - You only need to run this command once per project.
 
         """

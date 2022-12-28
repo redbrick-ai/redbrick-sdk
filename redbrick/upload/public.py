@@ -524,10 +524,29 @@ class Upload:
         """
         Create datapoints in project.
 
-        Optionally you can upload labels with your data.
+        Upload data, and optionally annotations, to your project. Please visit
+        `our documentation <https://docs.redbrickai.com/python-sdk/reference/annotation-format>`_
+        to understand the format for ``points``.
 
-        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
-        >>> project.upload.create_datapoints(...)
+        .. code:: python
+
+            project = redbrick.get_project(org_id, project_id, api_key, url)
+            points = [
+                {
+                    "name": "...",
+                    "series": [
+                        {
+                            "items": "...",
+
+                            # These fields are needed for importing segmentations.
+                            "segmentations": "...",
+                            "segmentMap": {...}
+                        }
+                    ]
+                }
+            ]
+            project.upload.create_datapoints(storage_id, points)
+
 
         Parameters
         --------------
@@ -538,11 +557,12 @@ class Upload:
 
         points: List[Dict]
             Please see the RedBrick AI reference documentation for overview of the format.
-            https://docs.redbrickai.com/python-sdk/importing-data-and-labels
+            https://docs.redbrickai.com/python-sdk/reference/annotation-format.
+            All the fields with `annotation` information are optional.
 
         is_ground_truth: bool = False
-            If labels are provided in points above, and this parameters is set to true, the labels
-            will be added to the Ground Truth stage.
+            If labels are provided in ``points``, and this parameters
+            is set to true, the labels will be added to the Ground Truth stage.
 
         segmentation_mapping: Optional[Dict] = None
             Optional mapping of semantic segmentation class ids and RedBrick categories.
@@ -561,7 +581,7 @@ class Upload:
         List[Dict]
             List of task objects with key `response` if successful, else `error`
 
-        Notes
+        Note
         ----------
             1. If doing direct upload, please use ``redbrick.StorageMethod.REDBRICK``
             as the storage id. Your items path must be a valid path to a locally stored image.

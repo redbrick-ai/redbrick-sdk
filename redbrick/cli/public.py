@@ -23,14 +23,34 @@ class CLIController(CLIInterface):
     def __init__(self, command: argparse._SubParsersAction) -> None:
         """Initialize CLI command parsers."""
         self.config = CLIConfigController(
-            command.add_parser(self.CONFIG, help="Setup credentials")
+            command.add_parser(
+                self.CONFIG,
+                help="Setup the credentials for your CLI.",
+            )
         )
         self.init = CLIInitController(
-            command.add_parser(self.INIT, help="Create a new project")
+            command.add_parser(
+                self.INIT,
+                help="Create a new project",
+                description="""
+Create a new project. We recommend creating a new directory and naming it after your project,
+initializing your project within the new directory.
+
+```bash
+$ mkdir new-project
+$ cd new-project
+$ redbrick init
+```
+            """,
+            )
         )
         self.clone = CLICloneController(
             command.add_parser(
-                self.CLONE, help="Clone an existing remote project to local"
+                self.CLONE,
+                help="Clone an existing remote project to local",
+                description="""
+The project will be cloned to a local directory named after your `project name`.
+                """,
             )
         )
         self.info = CLIInfoController(
@@ -43,7 +63,18 @@ class CLIController(CLIInterface):
             command.add_parser(self.UPLOAD, help="Upload files to a project")
         )
         self.report = CLIIReportController(
-            command.add_parser(self.REPORT, help="Generate report for a project")
+            command.add_parser(
+                self.REPORT,
+                help="""
+Generate an audit report for a project. Exports a JSON file containing all actions & events
+associated with every task, including:
+
+- Who annotated the task
+- Who uploaded the data
+- Who reviewed the task
+- and more.
+""",
+            )
         )
 
     def handle_command(self, args: argparse.Namespace) -> None:
@@ -68,7 +99,10 @@ class CLIController(CLIInterface):
 
 def cli_parser(generate_docs: bool = True) -> Any:
     """Initialize argument parser."""
-    parser = argparse.ArgumentParser(description="RedBrick AI")
+    parser = argparse.ArgumentParser(
+        description="The RedBrick CLI offers a simple interface to quickly import and "
+        + "export your images & annotations, and perform other high-level actions."
+    )
     parser.add_argument(
         "-v", "--version", action="version", version=f"v{redbrick.__version__}"
     )

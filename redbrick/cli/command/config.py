@@ -26,29 +26,39 @@ class CLIConfigController(CLIConfigInterface):
 
     def __init__(self, parser: ArgumentParser) -> None:
         """Intialize config sub commands."""
-        sub_command = parser.add_subparsers(
-            title="Config sub-commands", dest="sub_command"
-        )
+        sub_command = parser.add_subparsers(dest="sub_command")
 
         parser.add_argument("--org", "-o", help="Org ID")
         parser.add_argument("--key", "-k", help="API Key")
-        parser.add_argument("--url", "-u", help="Endpoint URL")
+        parser.add_argument(
+            "--url",
+            "-u",
+            help="Endpoint URL, should default to https://app.redbrickai.com.",
+        )
         parser.add_argument("--profile", "-p", help="Profile name")
         parser.add_argument(
             "--force", "-f", action="store_true", help="Force create new credentials"
         )
 
         # list_sub_command
-        _ = sub_command.add_parser(self.LIST, help="List all profiles")
+        _ = sub_command.add_parser(self.LIST, help="List all credential profiles")
 
-        set_sub_command = sub_command.add_parser(self.SET, help="Set default profile")
+        set_sub_command = sub_command.add_parser(
+            self.SET, help="Set your default credentials profile"
+        )
         set_sub_command.add_argument("profile", nargs="?", help="Profile name")
 
         add_sub_command = sub_command.add_parser(self.ADD, help="Add a new profile")
         add_sub_command.add_argument("--org", "-o", help="Org ID")
-        add_sub_command.add_argument("--key", "-k", help="API Key")
-        add_sub_command.add_argument("--url", "-u", help="Endpoint URL")
-        add_sub_command.add_argument("--profile", "-p", help="Profile name")
+        add_sub_command.add_argument("--key", "-k", help="Add your API Key.")
+        add_sub_command.add_argument(
+            "--url",
+            "-u",
+            help="Endpoint URL, should default to https://app.redbrickai.com.",
+        )
+        add_sub_command.add_argument(
+            "--profile", "-p", help="Define a name for your authentication profile."
+        )
 
         unset_sub_command = sub_command.add_parser(self.REMOVE, help="Remove a profile")
         unset_sub_command.add_argument("profile", nargs="?", help="Profile name")

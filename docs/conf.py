@@ -39,6 +39,8 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinxcontrib.napoleon",
     "sphinxarg.ext",
+    "sphinx_inline_tabs",
+    "sphinxcontrib.autoprogram",
 ]
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -48,13 +50,12 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -65,4 +66,5 @@ html_static_path = []  # type: ignore
 # into the sidebar of all pages.  However, expanding the sections isn't
 # provided yet on the RTD theme (see
 # https://github.com/readthedocs/sphinx_rtd_theme/issues/455).
-html_theme_options = {"collapse_navigation": False, "navigation_depth": 4}
+html_static_path = ["_static"]
+html_logo = "_static/logo.png"

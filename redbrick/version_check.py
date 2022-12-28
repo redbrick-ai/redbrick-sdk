@@ -51,11 +51,11 @@ def version_check(current_version: str) -> None:
         # Comparing with current installed version
         if Version(current_version) < Version(latest_version):
             warn = (
-                "You are using version '{}' of the SDK. However, version '{}' is available!\n"
+                "You are using version '%s' of the SDK. However, version '%s' is available!\n"
                 + "Please update as soon as possible to get the latest features and bug fixes.\n"
-                + "You can use 'python -m pip install redbrick-sdk=={}' to get the latest version."
+                + "You can use 'python -m pip install redbrick-sdk==%s' to get the latest version."
             )
-            logger.warning(warn.format(current_version, latest_version, latest_version))
+            logger.warning(warn, current_version, latest_version, latest_version)
 
         cache_config["version"]["latest_version"] = latest_version
         cache_config["version"]["last_checked"] = str(current_timestamp)
