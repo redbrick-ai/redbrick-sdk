@@ -2,8 +2,9 @@
 .. admonition:: Create an API key to get started
     :class: hint
 
-    To use the RedBrick SDK you need to create an API key. Please create an API key on 
-    your RedBrick application by following along with `this documentation <https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key>`_.
+    To use the RedBrick SDK you need to create an API key. Please create an API key on
+    your RedBrick application by following along with
+    `this documentation <https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key>`_.
 """
 import sys
 import asyncio
@@ -24,7 +25,7 @@ from redbrick.utils.logging import logger
 
 from .version_check import version_check
 
-__version__ = "2.7.1"
+__version__ = "2.7.2"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -34,7 +35,7 @@ try:
         and sys.platform.startswith("win")
     ):
         asyncio.set_event_loop_policy(  # type: ignore
-            asyncio.WindowsSelectorEventLoopPolicy()  # pylint: disable=no-member
+            asyncio.WindowsSelectorEventLoopPolicy()  # type: ignore
         )
 except Exception:  # pylint: disable=broad-except
     pass

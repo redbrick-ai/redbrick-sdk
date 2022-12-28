@@ -1,6 +1,6 @@
 RedBrick AI SDK
 ========================================
-The SDK is best for writing Python scripts to interact with your RedBrick AI organization & projects. The SDK offers granular 
+The SDK is best for writing Python scripts to interact with your RedBrick AI organization & projects. The SDK offers granular
 functions for programmatically manipulating data, importing annotations, assigning tasks, and more.
 
 RedBrick
@@ -12,7 +12,7 @@ RedBrick
 Project
 ----------------------
 .. autoclass:: redbrick.project.RBProject
-   :members: name, org_id, project_id, url, taxonomy_name, label_storage, label_stages, review_stages, members, set_label_storage 
+   :members: name, org_id, project_id, url, taxonomy_name, label_storage, label_stages, review_stages, members, set_label_storage
    :show-inheritance:
 
 Organization

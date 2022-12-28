@@ -186,7 +186,8 @@ class RBOrganization:
         https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
 
         .. caution:: We recommend using Taxonomy V2.
-           Taxonomy V1 will be deprecated in a future release. Read more `here <https://docs.redbrickai.com/projects/taxonomies#taxonomy-v1-vs.-taxonomy-v2>`_
+           Taxonomy V1 will be deprecated in a future release. Read more
+           `here <https://docs.redbrickai.com/projects/taxonomies#taxonomy-v1-vs.-taxonomy-v2>`_
 
         """
         if self.context.project.create_taxonomy(
