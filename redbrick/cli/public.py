@@ -33,7 +33,7 @@ class CLIController(CLIInterface):
                 self.INIT,
                 help="Create a new project",
                 description="""
-Create a new project. We recommend creating a new directory and naming it after your project, 
+Create a new project. We recommend creating a new directory and naming it after your project,
 initializing your project within the new directory.
 
 ```bash
@@ -100,7 +100,8 @@ associated with every task, including:
 def cli_parser(generate_docs: bool = True) -> Any:
     """Initialize argument parser."""
     parser = argparse.ArgumentParser(
-        description="The RedBrick CLI offers a simple interface to quickly import and export your images & annotations, and perform other high-level actions."
+        description="The RedBrick CLI offers a simple interface to quickly import and "
+        + "export your images & annotations, and perform other high-level actions."
     )
     parser.add_argument(
         "-v", "--version", action="version", version=f"v{redbrick.__version__}"

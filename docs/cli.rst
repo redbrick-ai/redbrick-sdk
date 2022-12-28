@@ -6,4 +6,3 @@ RedBrick AI CLI
    :func: cli_parser
    :prog: redbrick
    :markdownhelp:
-
