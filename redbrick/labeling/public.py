@@ -289,13 +289,13 @@ class Labeling:
                 project = redbrick.get_project(...)
 
                 # Set review_result to True if you want to accept the tasks
-                project.review.put_tasks("Review_1", [{taskId: "task1"}], review_result=True)
+                project.review.put_tasks("Review_1", [{taskId: "..."}], review_result=True)
 
                 # Set review_result to False if you want to reject the tasks
-                project.review.put_tasks("Review_1", [{taskId: "task2"}], review_result=False)
+                project.review.put_tasks("Review_1", [{taskId: "..."}], review_result=False)
 
                 # Add labels if you want to accept the tasks with correction
-                project.review.put_tasks("Review_1", [{taskId: "task3", series: [{...}]}])
+                project.review.put_tasks("Review_1", [{taskId: "...", series: [{...}]}])
 
 
         Parameters
