@@ -48,8 +48,15 @@ class RBProject:
             if stage["brickName"] == "labelset-output":
                 self.output_stage_name = stage["stageName"]
 
-        self.labeling = Labeling(context, org_id, project_id)
-        self.review = Labeling(context, org_id, project_id, review=True)
+        self.labeling = Labeling(
+            context,
+            org_id,
+            project_id,
+            self.label_stages,
+        )
+        self.review = Labeling(
+            context, org_id, project_id, self.review_stages, review=True
+        )
         self.export = Export(
             context,
             org_id,

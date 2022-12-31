@@ -121,20 +121,20 @@ class LabelingRepo(LabelingControllerInterface):
         stage_name: str,
         task_id: str,
         labels_data: str,
-        labels_path: Optional[str] = None,
+        labels_map: Optional[List[Dict]] = None,
         finished: bool = True,
     ) -> None:
         """Put Labeling results."""
         query = """
         mutation putTaskAndLabels(
-        $orgId: UUID!
-        $projectId: UUID!
-        $stageName: String!
-        $taskId: UUID!
-        $elapsedTimeMs: Int!
-        $finished: Boolean!
-        $labelsData: String
-        $labelsPath: String
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String!
+            $taskId: UUID!
+            $elapsedTimeMs: Int!
+            $finished: Boolean!
+            $labelsData: String
+            $labelsMap: [LabelMapInput!]
         ) {
             putManualLabelingTaskAndLabels(
                 orgId: $orgId
@@ -144,7 +144,7 @@ class LabelingRepo(LabelingControllerInterface):
                 elapsedTimeMs: $elapsedTimeMs
                 finished: $finished
                 labelsData: $labelsData
-                labelsPath: $labelsPath
+                labelsMap: $labelsMap
             ) {
                 ok
             }
@@ -157,7 +157,7 @@ class LabelingRepo(LabelingControllerInterface):
             "stageName": stage_name,
             "taskId": task_id,
             "labelsData": labels_data,
-            "labelsPath": labels_path,
+            "labelsMap": labels_map,
             "finished": finished,
             "elapsedTimeMs": 0,
         }
@@ -210,18 +210,16 @@ class LabelingRepo(LabelingControllerInterface):
         self,
         org_id: str,
         project_id: str,
-        stage_name: str,
         task_ids: List[str],
         emails: Optional[List[str]] = None,
         current_user: bool = False,
-        refresh: bool = False,
-    ) -> None:
+        refresh: bool = True,
+    ) -> List[Dict]:
         """Assign tasks to specified email or current API key."""
         query_string = """
         mutation assignTasksMultipleUsers(
             $orgId: UUID!
             $projectId: UUID!
-            $stageName: String!
             $taskIds: [UUID!]!
             $emails: [String!]
             $currentUser: Boolean
@@ -230,13 +228,14 @@ class LabelingRepo(LabelingControllerInterface):
             assignTasksMultipleUsers(
                 orgId: $orgId
                 projectId: $projectId
-                stageName: $stageName
                 taskIds: $taskIds
                 emails: $emails
                 currentUser: $currentUser
                 refresh: $refresh
             ) {
                 taskId
+                name
+                stageName
             }
         }
         """
@@ -245,14 +244,15 @@ class LabelingRepo(LabelingControllerInterface):
         query_variables = {
             "orgId": org_id,
             "projectId": project_id,
-            "stageName": stage_name,
             "taskIds": task_ids,
             "emails": emails,
             "currentUser": current_user,
             "refresh": refresh,
         }
 
-        self.client.execute_query(query_string, query_variables)
+        response = self.client.execute_query(query_string, query_variables)
+        tasks: List[Dict] = response["assignTasksMultipleUsers"]
+        return tasks
 
     async def move_task_to_start(
         self,

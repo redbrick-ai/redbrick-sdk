@@ -666,16 +666,14 @@ class Export:
                 self.context.export.task_events,
                 self.org_id,
                 self.project_id,
-                self.output_stage_name if only_ground_truth else None,
+                "END" if only_ground_truth else None,
                 concurrency,
             )
         )
 
+        tasks: List[Dict] = []
         with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
-            tasks = [
-                task
-                for task in progress
-                if (not only_ground_truth or task["currentStageName"] == "END")
-            ]
+            for task in progress:
+                tasks.append(task_event_format(task, users))
 
-        return [task_event_format(task, users) for task in tasks]
+        return tasks

@@ -1,8 +1,9 @@
 """Public interface to labeling module."""
-import os
+import functools
+from inspect import signature
 import json
 import asyncio
-from typing import List, Dict, Optional
+from typing import Callable, List, Dict, Optional, Any, TypeVar, cast
 from copy import deepcopy
 from functools import partial
 
@@ -11,11 +12,37 @@ import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.constants import MAX_CONCURRENCY
-from redbrick.utils.logging import log_error
+from redbrick.common.enums import StorageMethod
+from redbrick.utils.upload import process_segmentation_upload, validate_json
+from redbrick.utils.logging import log_error, logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.rb_label_utils import clean_rb_label
-from redbrick.utils.files import NIFTI_FILE_TYPES, upload_files
+
+
+TFun = TypeVar("TFun", bound=Callable[..., Any])  # pylint: disable=invalid-name
+
+
+def check_stage(func: TFun) -> TFun:
+    """Check if stage exists in project and matches the interface."""
+
+    @functools.wraps(func)
+    def wrapper(
+        self: "Labeling", *args: Any, **kwargs: Any
+    ) -> Optional[Callable[..., Any]]:
+        func_args = dict(zip(list(signature(func).parameters.keys())[1:], args))
+        func_args.update(kwargs)
+        if func_args["stage_name"] not in [stage["stageName"] for stage in self.stages]:
+            log_error(
+                f"Stage '{func_args['stage_name']}' does not exist in this project, "
+                + f"or is not a '{'Review' if self.review else 'Label'}' stage.\n"
+                + "If it exists, you may need to use the following:\n>>> "
+                + f"project.{'labeling' if self.review else 'review'}.{func.__name__}(...)"
+            )
+            return None
+        return func(self, *args, **kwargs)
+
+    return cast(TFun, wrapper)
 
 
 class Labeling:
@@ -32,22 +59,22 @@ class Labeling:
       The Labeling module provides several methods to query tasks and assign tasks to
       different users. Refer to this section for guidance on when to use each method:
 
-      - :obj:`assign_task`.
+      - :obj:`assign_tasks`.
         Use this method when you already have
-        the ``task_id`` you want to assign to a particular user. If you don't have the
-        ``task_id``, you can query all the tasks using :obj:`~redbrick.export.Export.export_tasks`
+        the ``task_ids`` you want to assign to a particular user. If you don't have the
+        ``task_ids``, you can query all the tasks using :obj:`~redbrick.export.Export.export_tasks`
         or query tasks assigned to a particular user/unassigned tasks using :obj:`get_task_queue`.
 
       - :obj:`get_task_queue`.
         Use this method when you want to retrieve the tasks assigned to a particular user, or
         you want to fetch all the unassigned tasks in your project. This can be useful in
-        preparation for using :obj:`assign_task` to programmatically assigning tasks,
+        preparation for using :obj:`assign_tasks` to programmatically assigning tasks,
         or :obj:`put_tasks` to programmatically label/review tasks assigned to you.
 
       - :obj:`get_tasks`.
         Use this method to fetch all tasks `already assigned to the current API Key`.
         This can be useful in preparation for re-assigned those tasks to another
-        user (through :obj:`assign_task`) or for programmatically submitting them
+        user (through :obj:`assign_tasks`) or for programmatically submitting them
         through :obj:`put_tasks`.
 
     """
@@ -57,14 +84,17 @@ class Labeling:
         context: RBContext,
         org_id: str,
         project_id: str,
+        stages: List[Dict],
         review: bool = False,
     ) -> None:
         """Construct Labeling."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
+        self.stages = stages
         self.review = review
 
+    @check_stage
     def get_tasks(self, stage_name: str, count: int = 1) -> List[Dict]:
         """
         Get tasks assigned to the API Key.
@@ -119,48 +149,44 @@ class Labeling:
         return [_clean_tasks(task) for task in tasks]
 
     async def _put_task(
-        self, session: aiohttp.ClientSession, stage_name: str, task: Dict
+        self,
+        session: aiohttp.ClientSession,
+        stage_name: str,
+        task: Dict,
+        finalize: bool,
+        review_result: Optional[bool],
+        project_label_storage_id: str,
+        label_storage_id: str,
+        label_validate: bool,
     ) -> Optional[Dict]:
         task_id = task["taskId"]
         try:
-            if self.review:
-                review_val = task["reviewVal"]
+            if self.review and review_result is not None:
                 await self.context.labeling.put_review_task_result(
                     session,
                     self.org_id,
                     self.project_id,
                     stage_name,
                     task_id,
-                    review_val,
+                    review_result,
                 )
             else:
-                labels_path: Optional[str] = None
-                if (
-                    task.get("labelsPath")
-                    and (
-                        str(task["labelsPath"]).endswith(".nii")
-                        or str(task["labelsPath"]).endswith(".nii.gz")
+                try:
+                    labels_map = await process_segmentation_upload(
+                        self.context,
+                        session,
+                        self.org_id,
+                        self.project_id,
+                        task,
+                        project_label_storage_id,
+                        label_storage_id,
+                        label_validate,
                     )
-                    and os.path.isfile(task["labelsPath"])
-                ):
-                    file_type = NIFTI_FILE_TYPES["nii"]
-                    presigned = await self.context.labeling.presign_labels_path(
-                        session, self.org_id, self.project_id, task_id, file_type
+                except ValueError as err:
+                    logger.warning(
+                        f"Failed to process segmentations: `{err}` for taskId: `{task['taskId']}`"
                     )
-                    if (
-                        await upload_files(
-                            [
-                                (
-                                    task["labelsPath"],
-                                    presigned["presignedUrl"],
-                                    file_type,
-                                )
-                            ],
-                            "Uploading labels",
-                            False,
-                        )
-                    )[0]:
-                        labels_path = presigned["filePath"]
+                    labels_map = None
 
                 await self.context.labeling.put_labeling_results(
                     session,
@@ -169,8 +195,8 @@ class Labeling:
                     stage_name,
                     task_id,
                     json.dumps(task["labels"], separators=(",", ":")),
-                    labels_path,
-                    not bool(task.get("draft")),
+                    labels_map,
+                    True if self.review else finalize,
                 )
 
         except ValueError as error:
@@ -180,20 +206,52 @@ class Labeling:
             return point_error
         return None
 
-    async def _put_tasks(self, stage_name: str, tasks: List[Dict]) -> List[Dict]:
+    async def _put_tasks(
+        self,
+        stage_name: str,
+        tasks: List[Dict],
+        finalize: bool,
+        review_result: Optional[bool],
+        project_label_storage_id: str,
+        label_storage_id: str,
+        label_validate: bool,
+    ) -> List[Dict]:
         conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
-            coros = [self._put_task(session, stage_name, task) for task in tasks]
+            coros = [
+                self._put_task(
+                    session,
+                    stage_name,
+                    task,
+                    finalize,
+                    review_result,
+                    project_label_storage_id,
+                    label_storage_id,
+                    label_validate,
+                )
+                for task in tasks
+            ]
             temp = await gather_with_concurrency(10, coros, "Uploading tasks")
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return [val for val in temp if val]
 
-    def put_tasks(self, stage_name: str, tasks: List[Dict]) -> List[Dict]:
+    @check_stage
+    def put_tasks(
+        self,
+        stage_name: str,
+        tasks: List[Dict],
+        *,
+        finalize: bool = True,
+        review_result: Optional[bool] = None,
+        label_storage_id: Optional[str] = StorageMethod.REDBRICK,
+        label_validate: bool = False,
+        concurrency: int = 50,
+    ) -> List[Dict]:
         """
         Put tasks with new labels or a review result.
 
-        Use this method to programmatically add labels to tasks in `Label stage`,
-        or to programmatically accept/reject tasks in a `Review stage`. If you don't already
+        Use this method to programmatically submit tasks with labels in `Label stage`, or to
+        programmatically accept/reject/correct tasks in a `Review stage`. If you don't already
         have a list of ``task_id``, you can use :obj:`~redbrick.export.Export.export_tasks` to
         get a list of all tasks in your project, or you can use :obj:`get_tasks`
         to get a list of tasks assigned to you.
@@ -212,11 +270,16 @@ class Labeling:
                 project = redbrick.get_project(...)
                 tasks = [
                     {
-                        "task_id": "...",
-                        "labels": [{...}]
+                        "taskId": "...",
+                        "series": [{...}]
                     },
                 ]
-                project.labeling.put_tasks(stage_name="Label", tasks=tasks)
+
+                # Submit tasks with new labels
+                project.labeling.put_tasks("Label", tasks)
+
+                # Save tasks as draft with new labels
+                project.labeling.put_tasks("Label", tasks, finalize=False)
 
 
         .. tab:: Review
@@ -224,21 +287,15 @@ class Labeling:
             .. code:: python
 
                 project = redbrick.get_project(...)
-                tasks = [
-                    {
-                        "task_id": "...",
 
-                        # Set reviewVal to True if you want to accept the task
-                        "reviewVal": True
-                    },
-                    {
-                        "task_id": "...",
+                # Set review_result to True if you want to accept the tasks
+                project.review.put_tasks("Review_1", [{taskId: "task1"}], review_result=True)
 
-                        # Set reviewVal to False if you want to reject the task
-                        "reviewVal": False
-                    }
-                ]
-                project.review.put_tasks(stage_name="Review_1", tasks=tasks)
+                # Set review_result to False if you want to reject the tasks
+                project.review.put_tasks("Review_1", [{taskId: "task2"}], review_result=False)
+
+                # Add labels if you want to accept the tasks with correction
+                project.review.put_tasks("Review_1", [{taskId: "task3", series: [{...}]}])
 
 
         Parameters
@@ -250,66 +307,175 @@ class Labeling:
         tasks: List[Dict]
             Tasks with new labels or review result.
 
+        finalize: bool = True
+            Finalize the task. If you want to save the task as a draft, set this to False.
+            Applies only to Label stage.
+
+        review_result: Optional[bool] = None
+            Accepts or rejects the task based on the boolean value.
+            Applies only to Review stage.
+
+        label_storage_id: Optional[str] = None
+            Optional label storage id to reference external nifti segmentations.
+            Defaults to project settings' annotation storage_id if not specified.
+
+        label_validate: bool = False
+            Validate label nifti instances and segment map.
+
+        concurrency: int = 50
+
         Returns
         ---------------
         List[Dict]
-            A list of tasks that failed the upload.
+            A list of tasks that failed.
         """
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self._put_tasks(stage_name, tasks))
+        # pylint: disable=too-many-locals
 
-    def assign_task(
+        if not tasks:
+            return []
+
+        loop = asyncio.get_event_loop()
+        failed_tasks: List[Dict] = []
+        with_labels: List[Dict] = []
+        without_labels: List[Dict] = []
+        for task in tasks:
+            point = deepcopy(task)
+            # Invalid task
+            if not (
+                isinstance(point, dict)
+                and isinstance(point.get("taskId"), str)
+                and point["taskId"]
+            ):
+                logger.warning(f"Task {point} does not have `taskId`")
+                failed_tasks.append(point)
+            # Rejected
+            elif self.review and review_result is not None and not review_result:
+                without_labels.append(point)
+            # Submitted/Corrected (New label format)
+            elif isinstance(point.get("series"), list) and point["series"]:
+                point["name"] = "test"
+                for series in point["series"]:
+                    series["name"] = "test"
+                    series["items"] = "test"
+                with_labels.append(point)
+            # Submitted/Corrected (Old label format)
+            elif isinstance(point.get("labels"), list):
+                point["name"] = "test"
+                point["items"] = ["test"]
+                with_labels.append(point)
+            # Accepted
+            elif self.review and review_result:
+                without_labels.append(point)
+            # Invalid review state
+            elif self.review:
+                logger.warning(f"Task {point} does not have `review_result`")
+                failed_tasks.append(point)
+            # Invalid label state
+            else:
+                logger.warning(f"Invalid task format {point}")
+                failed_tasks.append(point)
+
+        project_label_storage_id, _ = self.context.project.get_label_storage(
+            self.org_id, self.project_id
+        )
+        if with_labels:
+            with_labels = loop.run_until_complete(
+                validate_json(
+                    self.context,
+                    with_labels,
+                    StorageMethod.REDBRICK,
+                    concurrency,
+                )
+            )
+
+            failed_tasks.extend(
+                loop.run_until_complete(
+                    self._put_tasks(
+                        stage_name,
+                        with_labels,
+                        finalize,
+                        None,
+                        project_label_storage_id,
+                        label_storage_id or project_label_storage_id,
+                        label_validate,
+                    )
+                )
+            )
+
+        if without_labels:
+            failed_tasks.extend(
+                loop.run_until_complete(
+                    self._put_tasks(
+                        stage_name,
+                        without_labels,
+                        True,
+                        review_result,
+                        project_label_storage_id,
+                        label_storage_id or project_label_storage_id,
+                        label_validate,
+                    )
+                )
+            )
+
+        return [
+            task
+            for task in tasks
+            if task["taskId"] in {task["taskId"] for task in failed_tasks}
+        ]
+
+    def assign_tasks(
         self,
-        stage_name: str,
-        task_id: str,
+        task_ids: List[str],
         email: Optional[str] = None,
         current_user: bool = False,
-        refresh: bool = False,
-    ) -> None:
+        refresh: bool = True,
+    ) -> List[Dict]:
         """
         Assign tasks to specified email or current API key.
 
-        You must specify either the user ``email`` or set ``current_user`` to ``True``.
+        Unassigns all users from the task if neither of the ``email`` or ``current_user`` are set.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key)
-        >>> project.labeling.assign_task(stage_name, task_id, email)
+        >>> project.labeling.assign_tasks([task_id], email)
 
         Parameters
         ------------------
-        stage_name: str
-            The stage name within which the task currently is. If you want to assign
-            ``task_id`` in the ``Label`` stage, set ``stage_name="Label"``.
-
-        task_id: str
-            The unique ``task_id`` of the task you want to assign.
+        task_ids: List[str]
+            List of unique ``task_id`` of the tasks you want to assign.
 
         email: Optional[str] = None
             The email of the user you want to assign this task to. Make sure the
             user has adequate permissions to be assigned this task in the project.
 
         current_user: bool = False
-            If true, will assign the task to the API KEY being used with the SDK.
+            If `True`, will assign the task to the API KEY being used with the SDK.
 
-        refresh: bool = False
-            Used for projects with Consensus activated. If `True`, will `overwrite` the assignment
-            to the current users.
+        refresh: bool = True
+            Used for projects with Consensus activated.
+            If `True`, will `overwrite` the assignment to the current users.
+
+        Returns
+        ---------------
+        List[Dict]
+            List of affected tasks - [{"taskId", "name", "stageName"}]
         """
-        self.context.labeling.assign_tasks(
+        return self.context.labeling.assign_tasks(
             self.org_id,
             self.project_id,
-            stage_name,
-            [task_id],
+            task_ids,
             [email] if email else None,
             current_user,
             refresh,
         )
 
+    @check_stage
     def get_task_queue(
         self,
         stage_name: str,
         concurrency: int = 50,
         user_id: Optional[str] = None,
-        fetch_unassigned: bool = True,
+        email: Optional[str] = None,
+        fetch_unassigned: bool = False,
     ) -> List[Dict]:
         """Get all tasks in queue.
 
@@ -327,9 +493,13 @@ class Labeling:
 
         user_id: Optional[str] = None
             The user id for which you want to query the task queue.
-            If None, will query for current API Key.
+            Will be preferred if both ``user_id`` and ``email`` are set.
 
-        fetch_unassigned: bool = True
+        email: Optional[str] = None
+            The user email for which you want to query the task queue.
+            If both ``user_id`` and ``email`` are None, will query for current API Key.
+
+        fetch_unassigned: bool = False
             Whether to fetch unassigned tasks.
 
         Returns
@@ -337,9 +507,6 @@ class Labeling:
         List[Dict]
             List of tasks in queue - [{"taskId", "name", "createdAt"}]
         """
-        if not user_id:
-            user_id = self.context.key_id
-
         my_iter = PaginationIterator(
             partial(
                 self.context.export.task_search,
@@ -347,7 +514,7 @@ class Labeling:
                 self.project_id,
                 stage_name,
                 None,
-                {"userId": user_id},
+                {"userId": user_id or email or self.context.key_id},
                 concurrency,
             )
         )
