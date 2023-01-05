@@ -33,7 +33,7 @@ class LabelingControllerInterface(ABC):
         stage_name: str,
         task_id: str,
         labels_data: str,
-        labels_path: Optional[str] = None,
+        labels_map: Optional[List[Dict]] = None,
         finished: bool = True,
     ) -> None:
         """Put Labeling results."""
@@ -55,12 +55,11 @@ class LabelingControllerInterface(ABC):
         self,
         org_id: str,
         project_id: str,
-        stage_name: str,
         task_ids: List[str],
         emails: Optional[List[str]] = None,
         current_user: bool = False,
-        refresh: bool = False,
-    ) -> None:
+        refresh: bool = True,
+    ) -> List[Dict]:
         """Assign tasks to specified email or current API key."""
 
     @abstractmethod

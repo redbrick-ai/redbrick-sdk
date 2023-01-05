@@ -36,5 +36,5 @@ Upload
 Labeling
 ----------------------
 .. autoclass:: redbrick.labeling.Labeling
-   :members: get_tasks, put_tasks, get_task_queue, assign_task, move_tasks_to_start
+   :members: get_tasks, put_tasks, get_task_queue, assign_tasks, move_tasks_to_start
    :show-inheritance:
