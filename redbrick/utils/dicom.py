@@ -18,7 +18,7 @@ def process_nifti_download(
     """Process nifti download file."""
     # pylint: disable=too-many-locals, import-outside-toplevel, too-many-statements
     import nibabel  # type: ignore
-    import numpy
+    import numpy  # type: ignore
     from PIL import Image  # type: ignore
 
     try:
@@ -130,7 +130,7 @@ def process_nifti_upload(
     # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
     # pylint: disable=too-many-statements, too-many-return-statements
     import nibabel  # type: ignore
-    import numpy
+    import numpy  # type: ignore
 
     if isinstance(files, str):
         files = [files]

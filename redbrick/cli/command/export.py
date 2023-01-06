@@ -243,7 +243,7 @@ class CLIExportController(CLIExportInterface):
         if not dcm_to_nii:
             return tasks
 
-        import numpy as np
+        import numpy as np  # type: ignore
         import nibabel as nb  # type: ignore
         from dicom2nifti import settings, dicom_series_to_nifti  # type: ignore
 

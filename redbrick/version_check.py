@@ -14,7 +14,7 @@ def get_latest_version(current_version: str) -> str:
     import requests  # type: ignore
 
     url = "https://pypi.org/pypi/redbrick-sdk/json"
-    data = requests.get(url).json()
+    data = requests.get(url, timeout=30).json()
     versions = sorted(map(Version, data["releases"].keys()), reverse=True)
     for version in versions:
         if not version.is_prerelease:
