@@ -26,7 +26,7 @@ type Series = {
   dimensions?: [number, number, number];
   segmentations?: string | string[];
   segmentMap?: {
-    [instanceId: number]: {
+    [instanceId: string]: number | string | string[] | {
       category: number | string | string[];
       attributes?: Attributes;
     };
@@ -39,6 +39,7 @@ type Series = {
   polygons?: Polygon[];
   polylines?: Polyline[];
   classifications?: Classification[];
+  instanceClassifications?: InstanceClassification[];
 };
 
 // Label Types
@@ -131,6 +132,12 @@ type Classification = {
   // video meta-data
   video?: VideoMetaData;
 };
+
+type InstanceClassification = {
+  fileIndex: number;
+  fileName?: string;
+  values: {[attributeName: string]: boolean};
+}
 
 type Attributes = {
   [attributeName: string]: string | boolean | string[];

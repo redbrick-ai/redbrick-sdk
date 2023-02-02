@@ -157,7 +157,7 @@ def parse_entry_latest(item: Dict) -> Dict:
 
 def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
     """Get standard rb flat format, same as import format."""
-    # pylint: disable=too-many-branches, too-many-statements
+    # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     labels = input_task.get("labels", []) or []
     labels_map = input_task.get("labelsMap", []) or []
     series = output_task["series"]
@@ -218,6 +218,8 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
                 }
             }
 
+        items: List[str] = volume.get("items", []) or []
+
         measurement_stats = {}
         if label.get("stats"):
             measurement_stats = {"stats": label["stats"]}
@@ -230,6 +232,19 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
                 {
                     **label_obj,
                     **video_metadata,
+                }
+            )
+        elif label.get("instanceclassify"):
+            volume["instanceClassifications"] = (
+                volume.get("instanceClassifications", []) or []
+            )
+            volume["instanceClassifications"].append(
+                {
+                    "fileIndex": label["frameindex"],
+                    "fileName": items[label["frameindex"]]
+                    if label["frameindex"] < len(items)
+                    else "",
+                    "values": label_obj["attributes"] or {},
                 }
             )
         elif label.get("dicom", {}).get("instanceid"):

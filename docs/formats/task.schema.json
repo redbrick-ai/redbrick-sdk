@@ -156,10 +156,12 @@
                             "patternProperties": {
                                 "^[0-9]+$": {
                                     "type": [
+                                        "number",
                                         "string",
                                         "array",
                                         "object"
                                     ],
+                                    "minimum": 0,
                                     "minLength": 1,
                                     "minItems": 1,
                                     "items": {
@@ -181,8 +183,8 @@
                             "additionalProperties": false
                         },
                         "classifications": {
-                            "title": "Multi-Classifications",
-                            "description": "Multi clasify labels",
+                            "title": "Series Classifications",
+                            "description": "Series classifications",
                             "type": "array",
                             "items": {
                                 "type": "object",
@@ -198,6 +200,42 @@
                                     }
                                 },
                                 "additionalProperties": false
+                            },
+                            "additionalItems": false
+                        },
+                        "instanceClassifications": {
+                            "title": "Instance Classifications",
+                            "description": "Instance classifications",
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "fileIndex": {
+                                        "title": "File index",
+                                        "description": "File or instance index",
+                                        "type": "number"
+                                    },
+                                    "fileName": {
+                                        "title": "File name",
+                                        "description": "File or instance name",
+                                        "type": "string"
+                                    },
+                                    "values": {
+                                        "title": "Values",
+                                        "description": "Label values",
+                                        "patternProperties": {
+                                            "^.{1,512}$": {
+                                                "type": "boolean"
+                                            }
+                                        },
+                                        "additionalProperties": false
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "fileIndex",
+                                    "values"
+                                ]
                             },
                             "additionalItems": false
                         },
@@ -622,8 +660,8 @@
                 "additionalItems": false
             },
             "classification": {
-                "title": "Task Classification",
-                "description": "Task classification",
+                "title": "Study Classification",
+                "description": "Study classification",
                 "type": "object",
                 "properties": {
                     "category": {
@@ -748,9 +786,12 @@
                 "string",
                 "number"
             ],
+            "minimum": 0,
+            "minLength": 1,
             "minItems": 1,
             "items": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
             },
             "additionalItems": false
         },
