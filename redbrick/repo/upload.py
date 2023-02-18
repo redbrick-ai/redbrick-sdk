@@ -86,6 +86,53 @@ class UploadRepo(UploadControllerInterface):
         )
         return response.get("createDatapoint", {})
 
+    async def update_items_async(
+        self,
+        aio_client: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        storage_id: str,
+        task_id: str,
+        items: List[str],
+        series_info: Optional[List[Dict]] = None,
+    ) -> Dict:
+        """Update items in a datapoint."""
+        query_string = """
+            mutation updateTaskItems(
+                $orgId: UUID!
+                $projectId: UUID!
+                $storageId: UUID!
+                $taskId: UUID!
+                $items: [String!]!
+                $seriesInfo: [SeriesInfoInput!]
+            ) {
+                updateTaskItems(
+                    orgId: $orgId
+                    projectId: $projectId
+                    storageId: $storageId
+                    taskId: $taskId
+                    items: $items
+                    seriesInfo: $seriesInfo
+                ) {
+                    ok
+                    message
+                }
+            }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "storageId": storage_id,
+            "taskId": task_id,
+            "items": items,
+            "seriesInfo": series_info,
+        }
+        response = await self.client.execute_query_async(
+            aio_client, query_string, query_variables
+        )
+        return response.get("updateTaskItems", {})
+
     def items_upload_presign(
         self, org_id: str, project_id: str, files: List[str], file_type: List[str]
     ) -> List[Dict[Any, Any]]:

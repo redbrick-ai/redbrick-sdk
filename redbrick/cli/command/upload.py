@@ -322,6 +322,8 @@ but may increase the upload time.""",
                     self.args.ground_truth,
                     label_storage_id,
                     self.args.label_validate,
+                    self.args.concurrency,
+                    False,
                 )
             )
 

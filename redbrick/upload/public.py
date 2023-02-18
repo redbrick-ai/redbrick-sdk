@@ -30,85 +30,6 @@ class Upload:
         self.org_id = org_id
         self.project_id = project_id
 
-    async def _create_datapoint(
-        self,
-        session: aiohttp.ClientSession,
-        storage_id: str,
-        point: Dict,
-        is_ground_truth: bool,
-        labels_map: Optional[List[Dict]] = None,
-    ) -> Dict:
-        """Try to create a datapoint."""
-        try:
-            # Basic structural validations, rest handled by API
-            assert (
-                isinstance(point, dict) and point
-            ), "Task object must be a non-empty dictionary"
-            assert (
-                "response" not in point and "error" not in point
-            ), "Task object must not contain `response` or `error`"
-            assert (
-                "name" in point and isinstance(point["name"], str) and point["name"]
-            ), "Task object must contain a valid `name`"
-            assert (
-                "items" in point
-                and isinstance(point["items"], list)
-                and point["items"]
-                and all(
-                    map(lambda item: isinstance(item, str) and item, point["items"])
-                )
-            ), "`items` must be a list of urls (one for image and multiple for videoframes)"
-            assert "labels" not in point or (
-                isinstance(point["labels"], list)
-                and all(
-                    map(
-                        lambda label: isinstance(label, dict) and label, point["labels"]
-                    )
-                )
-            ), "`labels` must be a list of label objects"
-            response = await self.context.upload.create_datapoint_async(
-                session,
-                self.org_id,
-                self.project_id,
-                storage_id,
-                point["name"],
-                point["items"],
-                json.dumps(point.get("labels", []), separators=(",", ":")),
-                labels_map,
-                point.get("seriesInfo"),
-                json.dumps(point["metaData"], separators=(",", ":"))
-                if point.get("metaData")
-                else None,
-                is_ground_truth,
-                point.get("preAssign"),
-            )
-            assert response.get("taskId"), "Failed to create task"
-            point_success = deepcopy(point)
-            point_success["response"] = response
-            return point_success
-        except Exception as error:  # pylint:disable=broad-except
-            if isinstance(error, AssertionError):
-                log_error(error)
-            point_error = deepcopy(point)
-            point_error["error"] = error
-            return point_error
-
-    async def _create_datapoints(
-        self, storage_id: str, points: List[Dict], is_ground_truth: bool
-    ) -> List[Dict]:
-        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
-        async with aiohttp.ClientSession(connector=conn) as session:
-            coros = [
-                self._create_datapoint(session, storage_id, point, is_ground_truth)
-                for point in points
-            ]
-            tasks = await gather_with_concurrency(
-                MAX_CONCURRENCY, coros, "Creating datapoints"
-            )
-
-        await asyncio.sleep(0.250)  # give time to close ssl connections
-        return tasks
-
     @tenacity.retry(
         stop=stop_after_attempt(1),
         retry_error_callback=lambda _: {},
@@ -122,6 +43,7 @@ class Upload:
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
+        update_items: bool,
     ) -> Dict:
         # pylint:disable=too-many-locals
         logger.debug(
@@ -187,9 +109,80 @@ class Upload:
             )
             return {}
 
-        return await self._create_datapoint(
-            session, storage_id, point, is_ground_truth, labels_map
-        )
+        try:
+            # Basic structural validations, rest handled by API
+            assert (
+                isinstance(point, dict) and point
+            ), "Task object must be a non-empty dictionary"
+            assert (
+                "response" not in point and "error" not in point
+            ), "Task object must not contain `response` or `error`"
+            assert (
+                "name" in point and isinstance(point["name"], str) and point["name"]
+            ), "Task object must contain a valid `name`"
+            assert (
+                "items" in point
+                and isinstance(point["items"], list)
+                and point["items"]
+                and all(
+                    map(lambda item: isinstance(item, str) and item, point["items"])
+                )
+            ), "`items` must be a list of urls (one for image and multiple for videoframes)"
+            assert "labels" not in point or (
+                isinstance(point["labels"], list)
+                and all(
+                    map(
+                        lambda label: isinstance(label, dict) and label, point["labels"]
+                    )
+                )
+            ), "`labels` must be a list of label objects"
+
+            if update_items:
+                assert (
+                    "taskId" in point
+                    and isinstance(point["taskId"], str)
+                    and point["taskId"]
+                ), "Task object must contain a valid `taskId`"
+                response = await self.context.upload.update_items_async(
+                    session,
+                    self.org_id,
+                    self.project_id,
+                    storage_id,
+                    point["taskId"],
+                    point["items"],
+                    point.get("seriesInfo"),
+                )
+                assert response.get("ok"), response.get(
+                    "message", "Failed to update items"
+                )
+            else:
+                response = await self.context.upload.create_datapoint_async(
+                    session,
+                    self.org_id,
+                    self.project_id,
+                    storage_id,
+                    point["name"],
+                    point["items"],
+                    json.dumps(point.get("labels", []), separators=(",", ":")),
+                    labels_map,
+                    point.get("seriesInfo"),
+                    json.dumps(point["metaData"], separators=(",", ":"))
+                    if point.get("metaData")
+                    else None,
+                    is_ground_truth,
+                    point.get("preAssign"),
+                )
+                assert response.get("taskId"), "Failed to create task"
+
+            point_success = deepcopy(point)
+            point_success["response"] = response
+            return point_success
+        except Exception as error:  # pylint:disable=broad-except
+            if isinstance(error, AssertionError):
+                log_error(error)
+            point_error = deepcopy(point)
+            point_error["error"] = error
+            return point_error
 
     @staticmethod
     def _map_segmentation_category(segmentation_mapping: Dict) -> List[Dict]:
@@ -257,6 +250,8 @@ class Upload:
         is_ground_truth: bool,
         label_storage_id: str,
         label_validate: bool,
+        concurrency: int = MAX_CONCURRENCY,
+        update_items: bool = False,
     ) -> List[Dict]:
         # pylint: disable=too-many-locals
         try:
@@ -291,7 +286,7 @@ class Upload:
             self.org_id, self.project_id
         )
 
-        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+        conn = aiohttp.TCPConnector(limit=min(concurrency, MAX_CONCURRENCY))
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
                 self._create_task(
@@ -302,10 +297,15 @@ class Upload:
                     label_storage_id,
                     project_label_storage_id,
                     label_validate,
+                    update_items,
                 )
                 for point in points
             ]
-            tasks = await gather_with_concurrency(10, coros, "Creating tasks")
+            tasks = await gather_with_concurrency(
+                min(concurrency, 10),
+                coros,
+                "Updating items" if update_items else "Creating tasks",
+            )
 
         await asyncio.sleep(0.250)  # give time to close ssl connections
 
@@ -315,7 +315,10 @@ class Upload:
 
         for point, task in zip(points, tasks):
             if not task:
-                log_error(f"Error uploading {point}")
+                if update_items:
+                    log_error(f"Error updating items for {point}")
+                else:
+                    log_error(f"Error uploading {point}")
 
         return tasks
 
@@ -447,6 +450,8 @@ class Upload:
                 is_ground_truth,
                 label_storage_id or storage_id,
                 label_validate,
+                concurrency,
+                False,
             )
         )
 
@@ -656,3 +661,61 @@ class Upload:
                     points.append(item)
 
         return points
+
+    def update_task_items(
+        self,
+        storage_id: str,
+        points: List[Dict],
+        concurrency: int = 50,
+    ) -> List[Dict]:
+        """
+        Update items paths for the mentioned task ids.
+
+        .. code:: python
+
+            project = redbrick.get_project(org_id, project_id, api_key, url)
+            points = [
+                {
+                    "taskId": "...",
+                    "series": [
+                        {
+                            "items": "...",
+                        }
+                    ]
+                }
+            ]
+            project.upload.update_task_items(storage_id, points)
+
+
+        Parameters
+        --------------
+        storage_id: str
+            Your RedBrick AI external storage_id. This can be found under the Storage Tab
+            on the RedBrick AI platform. To directly upload images to rbai,
+            use redbrick.StorageMathod.REDBRICK.
+
+        points: List[Dict]
+            List of objects with `taskId` and `series`, where `series` contains
+            a list of `items` paths to be updated for the task.
+
+        concurrency: int = 50
+
+        Returns
+        -------------
+        List[Dict]
+            List of task objects with key `response` if successful, else `error`
+
+        Note
+        ----------
+            1. If doing direct upload, please use ``redbrick.StorageMethod.REDBRICK``
+            as the storage id. Your items path must be a valid path to a locally stored image.
+        """
+        points = self.prepare_json_files(
+            [points], storage_id, None, None, None, concurrency
+        )
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(
+            self._create_tasks(
+                storage_id, points, {}, False, storage_id, False, concurrency, True
+            )
+        )

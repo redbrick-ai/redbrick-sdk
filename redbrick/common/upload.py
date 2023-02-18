@@ -32,6 +32,19 @@ class UploadControllerInterface(ABC):
         """
 
     @abstractmethod
+    async def update_items_async(
+        self,
+        aio_client: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        storage_id: str,
+        task_id: str,
+        items: List[str],
+        series_info: Optional[List[Dict]] = None,
+    ) -> Dict:
+        """Update items in a datapoint."""
+
+    @abstractmethod
     def items_upload_presign(
         self, org_id: str, project_id: str, files: List[str], file_type: List[str]
     ) -> List[Dict[Any, Any]]:
