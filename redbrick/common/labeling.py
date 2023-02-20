@@ -39,6 +39,17 @@ class LabelingControllerInterface(ABC):
         """Put Labeling results."""
 
     @abstractmethod
+    async def put_labeling_task_result(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
+        task_id: str,
+    ) -> None:
+        """Put labeling result for task."""
+
+    @abstractmethod
     async def put_review_task_result(
         self,
         session: aiohttp.ClientSession,

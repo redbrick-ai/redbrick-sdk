@@ -126,7 +126,6 @@ class CLIExportController(CLIExportInterface):
             self.args.concurrency,
             False,
             cache_timestamp,
-            None,
             False,
             bool(self.project.project.label_stages)
             and not bool(self.project.project.review_stages)

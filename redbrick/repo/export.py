@@ -51,7 +51,6 @@ class ExportRepo(ExportControllerInterface):
         project_id: str,
         stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
-        till_time: Optional[datetime] = None,
         presign_items: bool = False,
         with_consensus: bool = False,
         first: int = 50,
@@ -65,7 +64,6 @@ class ExportRepo(ExportControllerInterface):
             $projectId: UUID!
             $stageName: String
             $cacheTime: DateTime
-            $tillTime: DateTime
             $first: Int
             $after: String
         ) {{
@@ -74,7 +72,6 @@ class ExportRepo(ExportControllerInterface):
                 projectId: $projectId
                 stageName: $stageName
                 cacheTime: $cacheTime
-                tillTime: $tillTime
                 first: $first
                 after: $after
             ) {{
@@ -103,7 +100,6 @@ class ExportRepo(ExportControllerInterface):
             "projectId": project_id,
             "stageName": stage_name,
             "cacheTime": None if cache_time is None else cache_time.isoformat(),
-            "tillTime": None if till_time is None else till_time.isoformat(),
             "first": first,
             "after": cursor,
         }
@@ -242,6 +238,7 @@ class ExportRepo(ExportControllerInterface):
         org_id: str,
         project_id: str,
         stage_name: Optional[str] = None,
+        cache_time: Optional[datetime] = None,
         first: int = 10,
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
@@ -251,6 +248,7 @@ class ExportRepo(ExportControllerInterface):
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String
+            $cacheTime: DateTime
             $first: Int
             $after: String
         ) {
@@ -258,6 +256,7 @@ class ExportRepo(ExportControllerInterface):
                 orgId: $orgId
                 projectId: $projectId
                 stageName: $stageName
+                cacheTime: $cacheTime
                 first: $first
                 after: $after
             ) {
@@ -335,6 +334,7 @@ class ExportRepo(ExportControllerInterface):
             "orgId": org_id,
             "projectId": project_id,
             "stageName": stage_name,
+            "cacheTime": None if cache_time is None else cache_time.isoformat(),
             "first": first,
             "after": after,
         }

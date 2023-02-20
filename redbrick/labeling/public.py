@@ -158,6 +158,7 @@ class Labeling:
         project_label_storage_id: str,
         label_storage_id: str,
         label_validate: bool,
+        existing_labels: bool,
     ) -> Optional[Dict]:
         task_id = task["taskId"]
         try:
@@ -169,6 +170,14 @@ class Labeling:
                     stage_name,
                     task_id,
                     review_result,
+                )
+            elif not self.review and existing_labels:
+                await self.context.labeling.put_labeling_task_result(
+                    session,
+                    self.org_id,
+                    self.project_id,
+                    stage_name,
+                    task_id,
                 )
             else:
                 try:
@@ -215,6 +224,7 @@ class Labeling:
         project_label_storage_id: str,
         label_storage_id: str,
         label_validate: bool,
+        existing_labels: bool,
     ) -> List[Dict]:
         conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
         async with aiohttp.ClientSession(connector=conn) as session:
@@ -228,6 +238,7 @@ class Labeling:
                     project_label_storage_id,
                     label_storage_id,
                     label_validate,
+                    existing_labels,
                 )
                 for task in tasks
             ]
@@ -242,6 +253,7 @@ class Labeling:
         tasks: List[Dict],
         *,
         finalize: bool = True,
+        existing_labels: bool = False,
         review_result: Optional[bool] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = False,
@@ -281,6 +293,9 @@ class Labeling:
                 # Save tasks as draft with new labels
                 project.labeling.put_tasks("Label", tasks, finalize=False)
 
+                # Submit tasks with existing labels
+                project.labeling.put_tasks("Label", [{"taskId":"..."}], existing_labels=True)
+
 
         .. tab:: Review
 
@@ -311,6 +326,10 @@ class Labeling:
             Finalize the task. If you want to save the task as a draft, set this to False.
             Applies only to Label stage.
 
+        existing_labels: bool = False
+            If True, the tasks will be submitted with their existing labels.
+            Applies only to Label stage.
+
         review_result: Optional[bool] = None
             Accepts or rejects the task based on the boolean value.
             Applies only to Review stage.
@@ -329,7 +348,7 @@ class Labeling:
         List[Dict]
             A list of tasks that failed.
         """
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals, too-many-branches
 
         if not tasks:
             return []
@@ -352,8 +371,11 @@ class Labeling:
             elif self.review and review_result is not None and not review_result:
                 without_labels.append(point)
             # Submitted/Corrected (New label format)
-            elif isinstance(point.get("series"), list) and point["series"]:
+            elif point.get("classification") or (isinstance(point.get("series"), list)):
                 point["name"] = "test"
+                point["series"] = point.get("series") or [
+                    {"name": "test", "items": "test"}
+                ]
                 for series in point["series"]:
                     series["name"] = "test"
                     series["items"] = "test"
@@ -370,6 +392,9 @@ class Labeling:
             elif self.review:
                 logger.warning(f"Task {point} does not have `review_result`")
                 failed_tasks.append(point)
+            # Submitted with existing labels
+            elif existing_labels:
+                without_labels.append(point)
             # Invalid label state
             else:
                 logger.warning(f"Invalid task format {point}")
@@ -398,6 +423,7 @@ class Labeling:
                         project_label_storage_id,
                         label_storage_id or project_label_storage_id,
                         label_validate,
+                        False,
                     )
                 )
             )
@@ -413,6 +439,7 @@ class Labeling:
                         project_label_storage_id,
                         label_storage_id or project_label_storage_id,
                         label_validate,
+                        existing_labels,
                     )
                 )
             )
