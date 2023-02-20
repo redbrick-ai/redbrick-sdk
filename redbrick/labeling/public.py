@@ -367,6 +367,9 @@ class Labeling:
             ):
                 logger.warning(f"Task {point} does not have `taskId`")
                 failed_tasks.append(point)
+            # Submitted with existing labels
+            elif not self.review and existing_labels:
+                without_labels.append(point)
             # Rejected
             elif self.review and review_result is not None and not review_result:
                 without_labels.append(point)
@@ -392,9 +395,6 @@ class Labeling:
             elif self.review:
                 logger.warning(f"Task {point} does not have `review_result`")
                 failed_tasks.append(point)
-            # Submitted with existing labels
-            elif existing_labels:
-                without_labels.append(point)
             # Invalid label state
             else:
                 logger.warning(f"Invalid task format {point}")

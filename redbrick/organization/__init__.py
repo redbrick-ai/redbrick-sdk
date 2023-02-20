@@ -166,6 +166,7 @@ class RBOrganization:
                     "completedBy": task["user"]["email"],
                     "timeSpent": task["timeSpent"],
                     "completedAt": task["date"],
+                    "cycle": task["cycle"],
                 }
                 for task in progress
             ]

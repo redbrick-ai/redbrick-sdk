@@ -209,6 +209,7 @@ class ProjectRepo(ProjectRepoInterface):
                         email
                     }
                     timeSpent
+                    cycle
                     date
                 }
                 cursor
