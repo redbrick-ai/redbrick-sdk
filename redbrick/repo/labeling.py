@@ -163,6 +163,41 @@ class LabelingRepo(LabelingControllerInterface):
         }
         await self.client.execute_query_async(session, query, variables)
 
+    async def put_labeling_task_result(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
+        task_id: str,
+    ) -> None:
+        """Put labeling result for task."""
+        query = """
+        mutation putLabelingTask(
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String!
+            $taskId: UUID!
+        ) {
+            putManualLabelingTask(
+                orgId: $orgId
+                projectId: $projectId
+                stageName: $stageName
+                taskId: $taskId
+            ) {
+                ok
+            }
+        }
+        """
+
+        variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+            "taskId": task_id,
+        }
+        await self.client.execute_query_async(session, query, variables)
+
     async def put_review_task_result(
         self,
         session: aiohttp.ClientSession,
