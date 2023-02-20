@@ -23,7 +23,6 @@ class ExportControllerInterface(ABC):
         project_id: str,
         stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
-        till_time: Optional[datetime] = None,
         presign_items: bool = False,
         with_consensus: bool = False,
         first: int = 50,

@@ -54,7 +54,6 @@ class Export:
         concurrency: int,
         only_ground_truth: bool = False,
         from_timestamp: Optional[float] = None,
-        to_timestamp: Optional[float] = None,
         presign_items: bool = False,
         with_consensus: bool = False,
     ) -> Tuple[List[Dict], Dict]:
@@ -69,9 +68,6 @@ class Export:
                 stage_name,
                 datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
                 if from_timestamp is not None
-                else None,
-                datetime.fromtimestamp(to_timestamp, tz=timezone.utc)
-                if to_timestamp is not None
                 else None,
                 presign_items,
                 with_consensus,
@@ -164,7 +160,6 @@ class Export:
                 self.project_id,
                 stage_name,
                 cache_time,
-                None,
                 False,
                 False,
                 concurrency,
@@ -473,9 +468,6 @@ class Export:
             Format - output from datetime.timestamp()
 
         to_timestamp: Optional[float] = None
-            If the timestamp is mentioned, will only export tasks
-            that were labeled/updated till the given timestamp.
-            Format - output from datetime.timestamp()
 
         old_format: bool = False
             Whether to export tasks in old format.
@@ -495,6 +487,10 @@ class Export:
             Datapoint and labels in RedBrick AI format. See
             https://docs.redbrickai.com/python-sdk/reference/annotation-format
 
+        Note
+        ------------
+        - to_timestamp is deprecated and will be removed in future versions.
+
         """
         # pylint: disable=too-many-locals
 
@@ -502,11 +498,15 @@ class Export:
             no_consensus if no_consensus is not None else not self.consensus_enabled
         )
 
+        if to_timestamp:
+            logger.warning(
+                "to_timestamp is deprecated and will be removed in future versions."
+            )
+
         datapoints, taxonomy = self._get_raw_data_latest(
             concurrency,
             False if task_id else only_ground_truth,
             None if task_id else from_timestamp,
-            None if task_id else to_timestamp,
             True,
             self.has_label_stage_only and not no_consensus,
         )
