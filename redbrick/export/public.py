@@ -626,6 +626,7 @@ class Export:
         self,
         only_ground_truth: bool = True,
         concurrency: int = 10,
+        from_timestamp: Optional[float] = None,
     ) -> List[Dict]:
         """Generate an audit log of all actions performed on tasks.
 
@@ -649,6 +650,11 @@ class Export:
         concurrency: int = 10
             The number of requests that will be made in parallel.
 
+        from_timestamp: Optional[float] = None
+            If the timestamp is mentioned, will only export tasks
+            that were labeled/updated since the given timestamp.
+            Format - output from datetime.timestamp()
+
         Returns
         -----------
         List[Dict]
@@ -667,6 +673,9 @@ class Export:
                 self.org_id,
                 self.project_id,
                 "END" if only_ground_truth else None,
+                datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
+                if from_timestamp is not None
+                else None,
                 concurrency,
             )
         )
