@@ -347,7 +347,7 @@ class Export:
 
         for label, path in zip(labels_map, paths):
             if label and label.get("labelName"):
-                label["labelName"] = process_nifti_download(
+                label["labelName"] = await process_nifti_download(
                     task.get("labels", []) or [],
                     path,
                     png_mask,
@@ -362,7 +362,7 @@ class Export:
                 consensus_labels = consensus_task.get("labels", []) or []
                 consensus_labels_map = consensus_task.get("labelsMap", []) or []
                 for consensus_label_map in consensus_labels_map:
-                    consensus_label_map["labelName"] = process_nifti_download(
+                    consensus_label_map["labelName"] = await process_nifti_download(
                         consensus_labels,
                         paths[index],
                         png_mask,

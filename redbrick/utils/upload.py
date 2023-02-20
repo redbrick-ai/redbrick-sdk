@@ -158,7 +158,7 @@ async def process_segmentation_upload(
 
         if input_labels_path:
             labels = task.get("labels", [])
-            output_labels_path, group_map = process_nifti_upload(
+            output_labels_path, group_map = await process_nifti_upload(
                 input_labels_path,
                 set(
                     label["dicom"]["instanceid"]
