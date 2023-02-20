@@ -17,6 +17,17 @@ class ExportControllerInterface(ABC):
         """Get number of datapoints in project."""
 
     @abstractmethod
+    def get_datapoint_latest(
+        self,
+        org_id: str,
+        project_id: str,
+        task_id: str,
+        presign_items: bool = False,
+        with_consensus: bool = False,
+    ) -> Dict:
+        """Get the latest datapoint."""
+
+    @abstractmethod
     def get_datapoints_latest(
         self,
         org_id: str,

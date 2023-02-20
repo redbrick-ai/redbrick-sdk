@@ -7,7 +7,7 @@ import aiohttp
 
 from redbrick.common.export import ExportControllerInterface
 from redbrick.common.client import RBClient
-from redbrick.repo.shards import DATAPOINT_SHARD, TASK_DATA_SHARD, TASK_SHARD
+from redbrick.repo.shards import router_task_shard
 
 
 class ExportRepo(ExportControllerInterface):
@@ -45,6 +45,29 @@ class ExportRepo(ExportControllerInterface):
 
         return int(result["tasksPaged"]["count"])
 
+    def get_datapoint_latest(
+        self,
+        org_id: str,
+        project_id: str,
+        task_id: str,
+        presign_items: bool = False,
+        with_consensus: bool = False,
+    ) -> Dict:
+        """Get the latest datapoint."""
+        query_string = f"""
+        query taskSDK($orgId: UUID!, $projectId: UUID!, $taskId: UUID!) {{
+            task(orgId: $orgId, projectId: $projectId, taskId: $taskId) {{
+                {router_task_shard(presign_items, with_consensus)}
+            }}
+        }}
+        """
+        # EXECUTE THE QUERY
+        query_variables = {"orgId": org_id, "projectId": project_id, "taskId": task_id}
+
+        result = self.client.execute_query(query_string, query_variables)
+
+        return result["task"]
+
     def get_datapoints_latest(
         self,
         org_id: str,
@@ -76,18 +99,7 @@ class ExportRepo(ExportControllerInterface):
                 after: $after
             ) {{
                 entries {{
-                    taskId
-                    dpId
-                    currentStageName
-                    currentStageSubTask{"(consensus: true)" if with_consensus else ""} {{
-                        {TASK_SHARD}
-                    }}
-                    latestTaskData {{
-                        {DATAPOINT_SHARD.format(
-                            "itemsPresigned:items(presigned: true)" if presign_items else ""
-                        )}
-                        {TASK_DATA_SHARD}
-                    }}
+                    {router_task_shard(presign_items, with_consensus)}
                 }}
                 cursor
                 cacheTime
