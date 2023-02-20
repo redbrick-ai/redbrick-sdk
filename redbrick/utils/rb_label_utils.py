@@ -204,11 +204,7 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
             label_obj["attributes"] = attributes
 
         video_metadata = {}
-        if (
-            len(volume.get("items", []) or []) > 1
-            and isinstance(label.get("frameindex"), int)
-            and label["frameindex"] >= 0
-        ):
+        if isinstance(label.get("frameindex"), int) and label["frameindex"] >= 0:
             video_metadata = {
                 "video": {
                     "frameIndex": label["frameindex"],
