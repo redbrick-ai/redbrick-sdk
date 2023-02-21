@@ -56,13 +56,24 @@ class Export:
         from_timestamp: Optional[float] = None,
         presign_items: bool = False,
         with_consensus: bool = False,
+        task_id: Optional[str] = None,
     ) -> Tuple[List[Dict], Dict]:
         # pylint: disable=too-many-locals
-        temp = self.context.export.get_datapoints_latest
+        taxonomy = self.context.project.get_taxonomy(
+            self.org_id, tax_id=None, name=self.taxonomy_name
+        )
+        if task_id:
+            logger.info(f"Fetching task: {task_id}")
+            val = self.context.export.get_datapoint_latest(
+                self.org_id, self.project_id, task_id, presign_items, with_consensus
+            )
+            task = parse_entry_latest(val)
+            return ([task] if task else []), taxonomy
+
         stage_name = "END" if only_ground_truth else None
         my_iter = PaginationIterator(
             partial(
-                temp,
+                self.context.export.get_datapoints_latest,
                 self.org_id,
                 self.project_id,
                 stage_name,
@@ -75,9 +86,6 @@ class Export:
             )
         )
 
-        taxonomy = self.context.project.get_taxonomy(
-            self.org_id, tax_id=None, name=self.taxonomy_name
-        )
         datapoint_count = self.context.export.datapoints_in_project(
             self.org_id, self.project_id, stage_name
         )
@@ -509,6 +517,7 @@ class Export:
             None if task_id else from_timestamp,
             True,
             self.has_label_stage_only and not no_consensus,
+            task_id,
         )
 
         if task_id:

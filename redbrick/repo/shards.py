@@ -225,3 +225,21 @@ DATAPOINT_SHARD: str = """
         }}
     }}
 """
+
+
+def router_task_shard(presign_items: bool, with_consensus: bool) -> str:
+    """Return the task shard for the router query."""
+    return f"""
+        taskId
+        dpId
+        currentStageName
+        currentStageSubTask{"(consensus: true)" if with_consensus else ""} {{
+            {TASK_SHARD}
+        }}
+        latestTaskData {{
+            {DATAPOINT_SHARD.format(
+                "itemsPresigned:items(presigned: true)" if presign_items else ""
+            )}
+            {TASK_DATA_SHARD}
+        }}
+    """
