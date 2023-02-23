@@ -5,20 +5,20 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 install_requires = [
-    "aiofiles<=22.1.0",
-    "aiohttp<=3.8.3,>=3.7.4",
+    "aiofiles<=23.1.0",
+    "aiohttp<=3.8.4,>=3.7.4",
     "dicom2nifti<=2.4.7",
     "inquirerpy<=0.3.4,>=0.3.3",
     "natsort<=8.2.0,>=8.0.2",
     "nest-asyncio<=1.5.6,>=1.5.4",
-    "nibabel<=4.0.2,>=3.2.2",
-    "numpy<=1.24.1,>=1.15",
-    "packaging<=22.0",
+    "nibabel<=5.0.1,>=3.2.2",
+    "numpy<=1.24.2,>=1.15",
+    "packaging<=23.0",
     "Pillow<=9.4.0,>=9.0.1",
     "python-dateutil<=2.8.2",
-    "requests<=2.28.1,>=2.23.0",
-    "Rich<=13.0.0",
-    "tenacity<=8.1.0",
+    "requests<=2.28.2,>=2.23.0",
+    "Rich<=13.3.1",
+    "tenacity<=8.2.1",
     "tqdm<=4.64.1,>=4.50.0",
 ]
 
