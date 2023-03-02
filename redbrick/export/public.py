@@ -231,7 +231,7 @@ class Export:
                 trail, category["children"], class_id, color_map, taxonomy_color
             )
 
-    async def download_and_process_nifti(
+    async def process_labels(
         self,
         datapoint: Dict,
         nifti_dir: str,
@@ -241,11 +241,8 @@ class Export:
         png_mask: bool,
         is_tax_v2: bool,
     ) -> Dict:
-        """Download and process label maps."""
-        # pylint: disable=import-outside-toplevel, too-many-locals
-        # pylint: disable=too-many-branches, too-many-statements
-        from redbrick.utils.dicom import process_nifti_download
-
+        """Process labels."""
+        # pylint: disable=too-many-locals
         task = copy.deepcopy(datapoint)
         files: List[Tuple[Optional[str], Optional[str]]] = []
         labels_map: List[Optional[Dict]] = []
@@ -262,7 +259,7 @@ class Export:
             )
         ) == len(task["items"])
 
-        image_index_map = {}
+        image_index_map: Dict[int, int] = {}
         if has_series_info:
             for volume_index, series in enumerate(series_info):
                 image_index_map.update(
@@ -301,6 +298,42 @@ class Export:
                         )
                     ]
                 )
+
+        if any(presign_path for presign_path in presign_paths):
+            await self.download_and_process_segmentations(
+                task,
+                presign_paths,
+                files,
+                nifti_dir,
+                has_series_info,
+                series_info,
+                labels_map,
+                image_index_map,
+                color_map,
+                png_mask,
+                is_tax_v2,
+            )
+
+        return dicom_rb_format(task, old_format, no_consensus)
+
+    async def download_and_process_segmentations(
+        self,
+        task: Dict,
+        presign_paths: List[Optional[str]],
+        files: List[Tuple[Optional[str], Optional[str]]],
+        nifti_dir: str,
+        has_series_info: bool,
+        series_info: List[Dict],
+        labels_map: List[Optional[Dict]],
+        image_index_map: Dict[int, int],
+        color_map: Dict,
+        png_mask: bool,
+        is_tax_v2: bool,
+    ) -> None:
+        """Download and process segmentations."""
+        # pylint: disable=import-outside-toplevel, too-many-locals
+        # pylint: disable=too-many-branches, too-many-statements
+        from redbrick.utils.dicom import process_nifti_download
 
         presigned = self.context.export.presign_items(
             self.org_id, task["labelStorageId"], presign_paths
@@ -356,7 +389,7 @@ class Export:
                     png_mask,
                     color_map,
                     is_tax_v2,
-                    image_index_map.get(label.get("imageIndex")),
+                    image_index_map.get(label.get("imageIndex", -1)),
                 )
 
         if len(paths) > len(labels_map) and task.get("consensusTasks"):
@@ -374,8 +407,6 @@ class Export:
                         image_index_map.get(consensus_label_map.get("imageIndex")),
                     )
                     index += 1
-
-        return dicom_rb_format(task, old_format, no_consensus)
 
     def export_nifti_label_data(
         self,
@@ -418,7 +449,7 @@ class Export:
             gather_with_concurrency(
                 MAX_CONCURRENCY,
                 [
-                    self.download_and_process_nifti(
+                    self.process_labels(
                         datapoint,
                         nifti_dir,
                         color_map,
@@ -429,7 +460,7 @@ class Export:
                     )
                     for datapoint in datapoints
                 ],
-                "Processing nifti labels",
+                "Processing labels",
             )
         )
 

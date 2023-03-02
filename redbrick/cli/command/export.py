@@ -293,7 +293,7 @@ class CLIExportController(CLIExportInterface):
                     if series.get("segmentations"):
                         logger.debug(f"{task['taskId']} matching headers")
                         try:
-                            nii_seg = nb.load(
+                            nii_seg = nb.load(  # type: ignore
                                 os.path.abspath(
                                     series["segmentations"]
                                     if isinstance(series["segmentations"], str)
