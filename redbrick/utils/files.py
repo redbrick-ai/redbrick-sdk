@@ -30,7 +30,11 @@ VIDEO_FILE_TYPES = {
     "dcm": "application/dicom",
 }
 
-DICOM_FILE_TYPES = {"dcm": "application/dicom", "ima": "application/dicom"}
+DICOM_FILE_TYPES = {
+    "": "application/dicom",
+    "dcm": "application/dicom",
+    "ima": "application/dicom",
+}
 
 JSON_FILE_TYPES = {"json": "application/json"}
 
@@ -57,10 +61,10 @@ def get_file_type(file_path: str) -> Tuple[str, str]:
         file_ext: png, jpeg, jpg etc.
         file_type: this is the MIME file type e.g. image/png
     """
-    file_ext = file_path.split("?", 1)[0].rstrip("/").lower()
-    if file_ext.endswith(".gz"):
-        file_ext = file_ext[:-3]
-    file_ext = file_ext.rsplit(".", 1)[-1].lower()
+    file_path, file_ext = os.path.splitext(file_path.lower())
+    if file_ext == ".gz":
+        file_path, file_ext = os.path.splitext(file_path)
+    file_ext = file_ext.lstrip(".")
 
     if file_ext not in FILE_TYPES:
         raise ValueError(
