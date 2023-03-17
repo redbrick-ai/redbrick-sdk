@@ -6,6 +6,7 @@ from tqdm import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
+from redbrick.workspace import RBWorkspace
 from redbrick.utils.logging import logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_tax_utils import format_taxonomy
@@ -73,6 +74,40 @@ class RBOrganization:
     def __repr__(self) -> str:
         """Representation of object."""
         return str(self)
+
+    def create_workspace(self, name: str, exists_okay: bool = False) -> RBWorkspace:
+        """
+        Create a workspace within the organization.
+
+        This method creates an organization in a similar fashion to the
+        quickstart on the RedBrick Ai create project page.
+
+        Parameters
+        --------------
+        name: str
+            A unique name for your workspace
+
+        exists_okay: bool = False
+            Allow workspaces with the same name to be returned instead of trying to create
+            a new workspace. Useful for when running the same script repeatedly when you
+            do not want to keep creating new workspaces.
+
+        Returns
+        --------------
+        redbrick.workspace.RBWorkspace
+            A RedBrick Workspace object.
+        """
+        try:
+            workspace_data = self.context.workspace.create_workspace(
+                self._org_id, name, exists_okay=exists_okay
+            )
+        except ValueError as error:
+            raise Exception(
+                "Project with same name exists, try setting exists_okay=True to"
+                + " return this project instead of creating a new one"
+            ) from error
+
+        return RBWorkspace(self.context, self._org_id, workspace_data["workspaceId"])
 
     def create_project(
         self,

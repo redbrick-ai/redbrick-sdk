@@ -105,7 +105,7 @@ class RBClient:
         total_time = time.time() - start_time
         logger.debug(f"Response status: {response_status} took {total_time} seconds")
         if response_status == 413 or response_status >= 500:
-            if response_status == 413 or total_time >= 24:
+            if response_status == 413 or total_time >= 26:
                 raise TimeoutError(
                     "Request timed out/too large. Please consider using lower concurrency"
                 )

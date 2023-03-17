@@ -74,6 +74,7 @@ class ProjectRepo(ProjectRepoInterface):
                 $tdType: TaskDataType!
                 $taxonomyName: String!
                 $taxonomyVersion: Int!
+                $workspaceId: UUID
             ) {
                 createProjectSimple(
                 orgId: $orgId
@@ -82,6 +83,7 @@ class ProjectRepo(ProjectRepoInterface):
                 tdType: $tdType
                 taxonomyName: $taxonomyName
                 taxonomyVersion: $taxonomyVersion
+                workspaceId: $workspaceId
                 ) {
                 ok
                 errors
@@ -110,6 +112,7 @@ class ProjectRepo(ProjectRepoInterface):
             "tdType": td_type,
             "taxonomyName": tax_name,
             "taxonomyVersion": 1,
+            "workspaceId": "8c264baa-0768-43b4-8e9f-72ddb99c3474",
         }
 
         response: Dict[str, Dict] = self.client.execute_query(query, variables)

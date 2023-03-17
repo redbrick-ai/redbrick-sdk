@@ -25,7 +25,7 @@ from redbrick.utils.logging import logger
 
 from .version_check import version_check
 
-__version__ = "2.10.3"
+__version__ = "2.11.0"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -57,12 +57,19 @@ version_check(__version__)
 
 def _populate_context(context: RBContext) -> RBContext:
     # pylint: disable=import-outside-toplevel
-    from redbrick.repo import ExportRepo, LabelingRepo, UploadRepo, ProjectRepo
+    from redbrick.repo import (
+        ExportRepo,
+        LabelingRepo,
+        UploadRepo,
+        ProjectRepo,
+        WorkspaceRepo,
+    )
 
     context.export = ExportRepo(context.client)
     context.labeling = LabelingRepo(context.client)
     context.upload = UploadRepo(context.client)
     context.project = ProjectRepo(context.client)
+    context.workspace = WorkspaceRepo(context.client)
     return context
 
 
