@@ -268,3 +268,43 @@ class UploadRepo(UploadControllerInterface):
         )
 
         return result.get("validateAndConvertToImportFormat", {}) or {}
+
+    def import_tasks_from_workspace(
+        self,
+        org_id: str,
+        project_id: str,
+        source_project_id: str,
+        task_search: List[Dict],
+        with_labels: bool = False,
+    ) -> Dict:
+        """Import tasks from another project in the same workspace."""
+        query_string = """
+            mutation importTasksFromWorkspace(
+                $orgId: UUID!
+                $projectId: UUID!
+                $sourceProjectId: UUID!
+                $tasks: [TaskMetaDataInput!]!
+                $withLabels: Boolean
+            ) {
+                importTasksFromProject(
+                    orgId: $orgId
+                    projectId: $projectId
+                    sourceProjectId: $sourceProjectId
+                    tasks: $tasks
+                    withLabels: $withLabels
+                ) {
+                    ok
+                    message
+                }
+            }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "sourceProjectId": source_project_id,
+            "tasks": task_search,
+            "withLabels": with_labels,
+        }
+        result = self.client.execute_query(query_string, query_variables)
+        return result.get("importTasksFromProject", {}) or {}

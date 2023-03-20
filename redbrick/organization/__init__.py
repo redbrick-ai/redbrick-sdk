@@ -115,6 +115,7 @@ class RBOrganization:
         taxonomy_name: str,
         reviews: int = 0,
         exists_okay: bool = False,
+        workspace_id: Optional[str] = None,
     ) -> RBProject:
         """
         Create a project within the organization.
@@ -139,6 +140,9 @@ class RBOrganization:
             Allow projects with the same name to be returned instead of trying to create
             a new project. Useful for when running the same script repeatedly when you
             do not want to keep creating new projects.
+
+        workspace_id: Optional[str] = None
+            The workspace id that you want to add this project to.
 
         Returns
         --------------
@@ -169,7 +173,12 @@ class RBOrganization:
 
         try:
             project_data = self.context.project.create_project(
-                self.org_id, name, stages, "DICOM_SEGMENTATION", taxonomy_name
+                self.org_id,
+                name,
+                stages,
+                "DICOM_SEGMENTATION",
+                taxonomy_name,
+                workspace_id,
             )
         except ValueError as error:
             raise Exception(

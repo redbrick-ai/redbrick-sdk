@@ -74,3 +74,14 @@ class UploadControllerInterface(ABC):
         storage_id: Optional[str] = None,
     ) -> Dict:
         """Validate and convert tasks format."""
+
+    @abstractmethod
+    def import_tasks_from_workspace(
+        self,
+        org_id: str,
+        project_id: str,
+        source_project_id: str,
+        task_search: List[Dict],
+        with_labels: bool = False,
+    ) -> Dict:
+        """Import tasks from another project in the same workspace."""

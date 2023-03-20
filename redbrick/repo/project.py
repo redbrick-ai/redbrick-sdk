@@ -37,6 +37,9 @@ class ProjectRepo(ProjectRepoInterface):
                     consensusSettings {
                         enabled
                     }
+                    workspace {
+                        workspaceId
+                    }
                 }
             }
         """
@@ -63,7 +66,13 @@ class ProjectRepo(ProjectRepoInterface):
         return response["stages"]
 
     def create_project(
-        self, org_id: str, name: str, stages: List[dict], td_type: str, tax_name: str
+        self,
+        org_id: str,
+        name: str,
+        stages: List[dict],
+        td_type: str,
+        tax_name: str,
+        workspace_id: Optional[str],
     ) -> Dict:
         """Create a project and return project_id."""
         query = """
@@ -77,27 +86,30 @@ class ProjectRepo(ProjectRepoInterface):
                 $workspaceId: UUID
             ) {
                 createProjectSimple(
-                orgId: $orgId
-                name: $name
-                stages: $stages
-                tdType: $tdType
-                taxonomyName: $taxonomyName
-                taxonomyVersion: $taxonomyVersion
-                workspaceId: $workspaceId
+                    orgId: $orgId
+                    name: $name
+                    stages: $stages
+                    tdType: $tdType
+                    taxonomyName: $taxonomyName
+                    taxonomyVersion: $taxonomyVersion
+                    workspaceId: $workspaceId
                 ) {
-                ok
-                errors
-                project {
-                    projectId
-                    name
-                    desc
-                    projectUrl
-                    createdAt
-                }
-                stages {
-                    stageName
-                    brickName
-                }
+                    ok
+                    errors
+                    project {
+                        projectId
+                        name
+                        desc
+                        projectUrl
+                        createdAt
+                    }
+                    stages {
+                        stageName
+                        brickName
+                    }
+                    workspace {
+                        workspaceId
+                    }
                 }
             }
         """
@@ -112,7 +124,7 @@ class ProjectRepo(ProjectRepoInterface):
             "tdType": td_type,
             "taxonomyName": tax_name,
             "taxonomyVersion": 1,
-            "workspaceId": "8c264baa-0768-43b4-8e9f-72ddb99c3474",
+            "workspaceId": workspace_id,
         }
 
         response: Dict[str, Dict] = self.client.execute_query(query, variables)
