@@ -197,7 +197,11 @@ class CLIExportController(CLIExportInterface):
             try:
                 loop.run_until_complete(
                     self._download_tasks(
-                        tasks, storage_ids, export_dir, bool(self.args.dicom_to_nifti)
+                        tasks,
+                        storage_ids,
+                        export_dir,
+                        bool(self.args.dicom_to_nifti),
+                        self.args.concurrency,
                     )
                 )
             except Exception as err:  # pylint: disable=broad-except
@@ -220,6 +224,7 @@ class CLIExportController(CLIExportInterface):
         storage_ids: List[str],
         export_dir: str,
         dcm_to_nii: bool,
+        concurrency: int = 5,
     ) -> List[Dict]:
         # pylint: disable=too-many-locals, import-outside-toplevel, too-many-nested-blocks
 
@@ -227,7 +232,7 @@ class CLIExportController(CLIExportInterface):
         os.makedirs(images_dir, exist_ok=True)
 
         downloaded_tasks = await gather_with_concurrency(
-            5,
+            min(concurrency, 5),
             [
                 self._download_task(task, storage_id, images_dir)
                 for task, storage_id in zip(tasks, storage_ids)
