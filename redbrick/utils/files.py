@@ -13,7 +13,7 @@ from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_exponential
 from natsort import natsorted, ns
 
-from redbrick.common.constants import MAX_CONCURRENCY, MAX_RETRY_ATTEMPTS
+from redbrick.common.constants import MAX_FILE_BATCH, MAX_RETRY_ATTEMPTS
 from redbrick.utils.async_utils import gather_with_concurrency
 
 IMAGE_FILE_TYPES = {
@@ -171,8 +171,8 @@ async def upload_files(
                 return True
             raise ConnectionError(f"Error in uploading {path} to RedBrick")
 
-    # limit to 30, default is 100, cleanup is done by session
-    conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+    # limit to 5, default is 100, cleanup is done by session
+    conn = aiohttp.TCPConnector(limit=MAX_FILE_BATCH)
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [
             _upload_file(session, path, url, file_type)
@@ -228,8 +228,8 @@ async def download_files(
                 return path
             return None
 
-    # limit to 30, default is 100, cleanup is done by session
-    conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+    # limit to 5, default is 100, cleanup is done by session
+    conn = aiohttp.TCPConnector(limit=MAX_FILE_BATCH)
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [_download_file(session, url, path) for url, path in files]
         paths = await gather_with_concurrency(
