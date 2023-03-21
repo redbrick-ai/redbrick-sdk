@@ -24,6 +24,8 @@ class WorkspaceRepo(WorkspaceRepoInterface):
                     orgId
                     workspaceId
                     name
+                    status
+                    createdAt
                 }
             }
         """

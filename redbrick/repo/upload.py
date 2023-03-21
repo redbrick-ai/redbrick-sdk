@@ -286,7 +286,7 @@ class UploadRepo(UploadControllerInterface):
                 $tasks: [TaskMetaDataInput!]!
                 $withLabels: Boolean
             ) {
-                importTasksFromProject(
+                importTasksFromWorkspace(
                     orgId: $orgId
                     projectId: $projectId
                     sourceProjectId: $sourceProjectId

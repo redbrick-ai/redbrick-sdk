@@ -18,8 +18,9 @@ from redbrick.common.constants import (
     ORG_API_HAS_CHANGED,
     PROJECT_API_HAS_CHANGED,
 )
-from redbrick.project import RBProject
 from redbrick.organization import RBOrganization
+from redbrick.workspace import RBWorkspace
+from redbrick.project import RBProject
 
 from redbrick.utils.logging import logger
 
@@ -103,6 +104,35 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
     context = _populate_context(RBContext(api_key=api_key, url=url))
 
     return RBOrganization(context, org_id)
+
+
+def get_workspace(
+    org_id: str, workspace_id: str, api_key: str, url: str = DEFAULT_URL
+) -> RBWorkspace:
+    """
+    Get an existing RedBrick workspace object.
+
+    Workspace objects allow you to interact with your RedBrick AI workspaces,
+    and perform actions like importing data, exporting data etc.
+
+    >>> workspace = redbrick.get_workspace(org_id, workspace_id, api_key)
+
+    Parameters
+    ---------------
+    org_id: str
+        Your organizations unique id https://app.redbrickai.com/<org_id>/
+
+    workspace_id: str
+        Your workspaces unique id.
+
+    api_key: str
+        Your secret api_key, can be created from the RedBrick AI platform.
+
+    url: str = DEFAULT_URL
+        Should default to https://api.redbrickai.com
+    """
+    context = _populate_context(RBContext(api_key=api_key, url=url))
+    return RBWorkspace(context, org_id, workspace_id)
 
 
 def get_project(
