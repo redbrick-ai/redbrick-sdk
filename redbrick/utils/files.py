@@ -5,7 +5,6 @@ from typing import List, Optional, Tuple, Set
 
 import asyncio
 import aiohttp
-import aiofiles  # type: ignore
 from yarl import URL
 import tenacity
 from tenacity.retry import retry_if_not_exception_type
@@ -159,17 +158,21 @@ async def upload_files(
     ) -> bool:
         if not path or not url or not file_type:
             return False
-        async with aiofiles.open(path, mode="rb") as file_:  # type: ignore
-            data = await file_.read()
 
+        with open(path, mode="rb") as file_:
+            data = file_.read()
+
+        status: int = 0
         async with session.put(
             url,
             headers={"Content-Type": file_type, "Content-Encoding": "gzip"},
             data=data if path.endswith(".gz") else gzip.compress(data),
         ) as response:
-            if response.status == 200:
-                return True
-            raise ConnectionError(f"Error in uploading {path} to RedBrick")
+            status = response.status
+
+        if status == 200:
+            return True
+        raise ConnectionError(f"Error in uploading {path} to RedBrick")
 
     # limit to 5, default is 100, cleanup is done by session
     conn = aiohttp.TCPConnector(limit=MAX_FILE_BATCH)
@@ -209,24 +212,32 @@ async def download_files(
         # pylint: disable=no-member
         if not url or not path:
             return None
+
+        headers: Dict = {}
+        data: Optional[bytes] = None
+
         async with session.get(URL(url, encoded=True)) as response:
             if response.status == 200:
+                headers = dict(response.headers)
                 data = await response.read()
-                if not zipped and response.headers.get("Content-Encoding") == "gzip":
-                    try:
-                        data = gzip.decompress(data)
-                    except Exception:  # pylint: disable=broad-except
-                        pass
-                if zipped and not is_gzipped_data(data):
-                    data = gzip.compress(data)
-                if zipped and not path.endswith(".gz"):
-                    path += ".gz"
-                if not overwrite:
-                    path = uniquify_path(path)
-                async with aiofiles.open(path, "wb") as file_:  # type: ignore
-                    await file_.write(data)
-                return path
+
+        if not data:
             return None
+
+        if not zipped and headers.get("Content-Encoding") == "gzip":
+            try:
+                data = gzip.decompress(data)
+            except Exception:  # pylint: disable=broad-except
+                pass
+        if zipped and not is_gzipped_data(data):
+            data = gzip.compress(data)
+        if zipped and not path.endswith(".gz"):
+            path += ".gz"
+        if not overwrite:
+            path = uniquify_path(path)
+        with open(path, "wb") as file_:
+            file_.write(data)
+        return path
 
     # limit to 5, default is 100, cleanup is done by session
     conn = aiohttp.TCPConnector(limit=MAX_FILE_BATCH)

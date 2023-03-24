@@ -5,7 +5,6 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 install_requires = [
-    "aiofiles<=23.1.0",
     "aiohttp<=3.8.4,>=3.7.4",
     "dicom2nifti<=2.4.7",
     "inquirerpy<=0.3.4,>=0.3.3",
