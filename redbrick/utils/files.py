@@ -1,7 +1,7 @@
 """Handler for file upload/download."""
 import os
 import gzip
-from typing import List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Tuple, Set
 
 import asyncio
 import aiohttp
@@ -9,7 +9,7 @@ from yarl import URL
 import tenacity
 from tenacity.retry import retry_if_not_exception_type
 from tenacity.stop import stop_after_attempt
-from tenacity.wait import wait_exponential
+from tenacity.wait import wait_exponential, wait_random_exponential
 from natsort import natsorted, ns
 
 from redbrick.common.constants import MAX_FILE_BATCH_SIZE, MAX_RETRY_ATTEMPTS
@@ -204,7 +204,7 @@ async def download_files(
     @tenacity.retry(
         reraise=True,
         stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
+        wait=wait_random_exponential(multiplier=1, min=5, max=30),
         retry=retry_if_not_exception_type(
             (KeyboardInterrupt, PermissionError, ValueError)
         ),
@@ -254,7 +254,9 @@ async def download_files(
             coros,
             progress_bar_name,
             keep_progress_bar,
+            True,
         )
+        await session.close()
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
-    return paths
+    return [(path if isinstance(path, str) else None) for path in paths]
