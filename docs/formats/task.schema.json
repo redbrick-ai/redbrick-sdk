@@ -117,23 +117,6 @@
                             "type": "string",
                             "minLength": 1
                         },
-                        "numFrames": {
-                            "title": "Number of Frames/Slices",
-                            "description": "Number of frames or slices in the series",
-                            "type": "integer",
-                            "minimum": 1
-                        },
-                        "dimensions": {
-                            "title": "Dimensions",
-                            "description": "Dimensions of the image",
-                            "type": "array",
-                            "minItems": 3,
-                            "maxItems": 3,
-                            "items": {
-                                "type": "integer",
-                                "minimum": 1
-                            }
-                        },
                         "segmentations": {
                             "title": "Segmentation(s)",
                             "description": "NIfTI Segmentation(s)",
