@@ -12,7 +12,7 @@ from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_exponential
 from natsort import natsorted, ns
 
-from redbrick.common.constants import MAX_FILE_BATCH, MAX_RETRY_ATTEMPTS
+from redbrick.common.constants import MAX_FILE_BATCH_SIZE, MAX_RETRY_ATTEMPTS
 from redbrick.utils.async_utils import gather_with_concurrency
 
 IMAGE_FILE_TYPES = {
@@ -175,14 +175,17 @@ async def upload_files(
         raise ConnectionError(f"Error in uploading {path} to RedBrick")
 
     # limit to 5, default is 100, cleanup is done by session
-    conn = aiohttp.TCPConnector(limit=MAX_FILE_BATCH)
+    conn = aiohttp.TCPConnector(
+        limit=MAX_FILE_BATCH_SIZE * MAX_RETRY_ATTEMPTS,
+        loop=asyncio.get_running_loop(),
+    )
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [
             _upload_file(session, path, url, file_type)
             for path, url, file_type in files
         ]
         uploaded = await gather_with_concurrency(
-            10, coros, progress_bar_name, keep_progress_bar
+            MAX_FILE_BATCH_SIZE, coros, progress_bar_name, keep_progress_bar
         )
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
@@ -240,11 +243,17 @@ async def download_files(
         return path
 
     # limit to 5, default is 100, cleanup is done by session
-    conn = aiohttp.TCPConnector(limit=MAX_FILE_BATCH)
+    conn = aiohttp.TCPConnector(
+        limit=MAX_FILE_BATCH_SIZE * MAX_RETRY_ATTEMPTS,
+        loop=asyncio.get_running_loop(),
+    )
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [_download_file(session, url, path) for url, path in files]
         paths = await gather_with_concurrency(
-            5, coros, progress_bar_name, keep_progress_bar
+            MAX_FILE_BATCH_SIZE,
+            coros,
+            progress_bar_name,
+            keep_progress_bar,
         )
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
