@@ -132,14 +132,13 @@ class CLICache:
         if not self.exists:
             return
 
-        caches = list(
-            filter(
-                lambda cache: cache != self._fixed_cache_name,
-                os.listdir(self._cache_dir),
-            )
-        )
+        caches = os.listdir(self._cache_dir)
         if not all_caches:
-            caches = [cache for cache in caches if cache != self._cache_name]
+            caches = [
+                cache
+                for cache in caches
+                if cache not in (self._cache_name, self._fixed_cache_name)
+            ]
 
         for cache in caches:
             shutil.rmtree(os.path.join(self._cache_dir, cache), ignore_errors=True)
