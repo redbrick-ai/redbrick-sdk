@@ -5,7 +5,7 @@ from dateutil import parser  # type: ignore
 
 import aiohttp
 
-from redbrick.common.export import ExportControllerInterface
+from redbrick.common.export import ExportControllerInterface, TaskFilterParams
 from redbrick.common.client import RBClient
 from redbrick.repo.shards import router_task_shard
 
@@ -161,7 +161,7 @@ class ExportRepo(ExportControllerInterface):
         project_id: str,
         stage_name: Optional[str] = None,
         task_search: Optional[str] = None,
-        manual_labeling_filters: Optional[Dict] = None,
+        manual_labeling_filters: Optional[TaskFilterParams] = None,
         first: int = 50,
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:

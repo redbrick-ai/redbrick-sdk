@@ -1,10 +1,23 @@
 """Abstract interface to exporting data from a project."""
 
-from typing import Optional, List, Dict, Sequence, Tuple
+from typing import Optional, List, Dict, Sequence, Tuple, TypedDict
 from abc import ABC, abstractmethod
 from datetime import datetime
 
 import aiohttp
+
+from redbrick.common.enums import ReviewStates, TaskStates
+
+
+class TaskFilterParams(TypedDict, total=False):
+    """Task filter query."""
+
+    status: TaskStates
+    taskId: str
+    userId: Optional[str]
+    reviewState: ReviewStates
+    benchmark: bool
+    recentlyCompleted: bool
 
 
 class ExportControllerInterface(ABC):
@@ -54,7 +67,7 @@ class ExportControllerInterface(ABC):
         project_id: str,
         stage_name: Optional[str] = None,
         task_search: Optional[str] = None,
-        manual_labeling_filters: Optional[Dict] = None,
+        manual_labeling_filters: Optional[TaskFilterParams] = None,
         first: int = 50,
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:

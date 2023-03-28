@@ -14,6 +14,8 @@ import tqdm  # type: ignore
 
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.context import RBContext
+from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
+from redbrick.common.export import TaskFilterParams
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.files import uniquify_path, download_files
 from redbrick.utils.logging import logger
@@ -46,7 +48,8 @@ class Export:
         self.project_id = project_id
         self.output_stage_name = output_stage_name
         self.consensus_enabled = consensus_enabled
-        self.has_label_stage_only = bool(label_stages) and not bool(review_stages)
+        self.label_stages = label_stages
+        self.review_stages = review_stages
         self.taxonomy_name = taxonomy_name
 
     def _get_raw_data_latest(
@@ -72,7 +75,7 @@ class Export:
 
         stage_name = "END" if only_ground_truth else None
         my_iter = PaginationIterator(
-            partial(
+            partial(  # type: ignore
                 self.context.export.get_datapoints_latest,
                 self.org_id,
                 self.project_id,
@@ -82,8 +85,8 @@ class Export:
                 else None,
                 presign_items,
                 with_consensus,
-                concurrency,
-            )
+            ),
+            concurrency,
         )
 
         datapoint_count = self.context.export.datapoints_in_project(
@@ -547,7 +550,9 @@ class Export:
             False if task_id else only_ground_truth,
             None if task_id else from_timestamp,
             True,
-            self.has_label_stage_only and not no_consensus,
+            bool(self.label_stages)
+            and not bool(self.review_stages)
+            and not no_consensus,
             task_id,
         )
 
@@ -593,7 +598,11 @@ class Export:
         no_consensus: Optional[bool] = None,
         png: bool = False,
     ) -> List[Dict]:
-        """Alias to export_tasks method (Will be deprecated)."""
+        """Alias to export_tasks method."""
+        logger.warning(
+            "`redbrick_nifti` method has been deprecated and will be removed "
+            + "in a future release. Please use `export_tasks` method instead."
+        )
         return self.export_tasks(
             only_ground_truth,
             concurrency,
@@ -636,6 +645,10 @@ class Export:
         List[Dict]
             [{"taskId": str, "name": str, "createdAt": str}]
         """
+        logger.warning(
+            "`search_tasks` method has been deprecated and will be removed "
+            + "in a future release. Please use `list_tasks` method instead."
+        )
         my_iter = PaginationIterator(
             partial(
                 self.context.export.task_search,
@@ -644,8 +657,8 @@ class Export:
                 self.output_stage_name if only_ground_truth else None,
                 name,
                 None,
-                concurrency,
-            )
+            ),
+            concurrency,
         )
 
         with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
@@ -661,6 +674,98 @@ class Export:
             ]
 
         return datapoints
+
+    def list_tasks(
+        self,
+        search: TaskFilters = TaskFilters.ALL,
+        concurrency: int = 10,
+        limit: Optional[int] = 50,
+        *,
+        stage_name: Optional[str] = None,
+        user_id: Optional[str] = None,
+        task_id: Optional[str] = None,
+        task_name: Optional[str] = None,
+    ) -> List[Dict]:
+        """Get a task filter object to filter tasks by various parameters."""
+        # pylint: disable=too-many-branches, too-many-locals
+        label_stages: List[str] = [stage["stageName"] for stage in self.label_stages]
+        review_stages: List[str] = [stage["stageName"] for stage in self.review_stages]
+        all_stages: List[str] = label_stages + review_stages + [self.output_stage_name]
+
+        if stage_name and stage_name not in all_stages:
+            raise ValueError(f"Invalid stage name: {stage_name}")
+
+        filters: TaskFilterParams = TaskFilterParams()
+
+        if user_id:
+            filters["userId"] = user_id
+        if task_id:
+            filters["taskId"] = task_id
+            task_name = task_id
+
+        if search == TaskFilters.ALL:
+            stage_name = None
+            del filters["userId"]
+        elif search == TaskFilters.GROUNDTRUTH:
+            stage_name = self.output_stage_name
+            del filters["userId"]
+        elif search == TaskFilters.UNASSIGNED:
+            stage_name = stage_name or all_stages[0]
+            filters["userId"] = None
+        elif search == TaskFilters.QUEUED:
+            stage_name = stage_name or all_stages[0]
+        elif search == TaskFilters.DRAFT:
+            stage_name = stage_name or all_stages[0]
+            filters["status"] = TaskStates.STAGED
+        elif search == TaskFilters.SKIPPED:
+            stage_name = stage_name or all_stages[0]
+            filters["status"] = TaskStates.SKIPPED
+        elif search == TaskFilters.COMPLETED:
+            stage_name = stage_name or all_stages[0]
+            filters["recentlyCompleted"] = True
+        elif search == TaskFilters.FAILED:
+            stage_name = (
+                stage_name
+                if stage_name and stage_name in review_stages
+                else review_stages[0]
+            )
+            filters["reviewState"] = ReviewStates.FAILED
+            del filters["userId"]
+        elif search == TaskFilters.ISSUES:
+            stage_name = label_stages[0]
+            filters["status"] = TaskStates.PROBLEM
+            del filters["userId"]
+        elif search == TaskFilters.BENCHMARK:
+            stage_name = self.output_stage_name
+            filters["benchmark"] = True
+            del filters["userId"]
+
+        my_iter = PaginationIterator(
+            partial(
+                self.context.export.task_search,
+                self.org_id,
+                self.project_id,
+                stage_name,
+                task_name,
+                filters,
+            ),
+            concurrency,
+            limit,
+        )
+
+        tasks: List[Dict] = []
+        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
+            for task in progress:
+                if (task.get("datapoint", {}) or {}).get("name"):
+                    tasks.append(
+                        {
+                            "taskId": task["taskId"],
+                            "name": task["datapoint"]["name"],
+                            "createdAt": task["createdAt"],
+                        }
+                    )
+
+        return tasks
 
     def get_task_events(
         self,
@@ -716,8 +821,8 @@ class Export:
                 datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
                 if from_timestamp is not None
                 else None,
-                concurrency,
-            )
+            ),
+            concurrency,
         )
 
         tasks: List[Dict] = []

@@ -155,8 +155,8 @@ class RBOrganization:
                 self._org_id,
                 start_date,
                 end_date,
-                concurrency,
-            )
+            ),
+            concurrency,
         )
         with tqdm(my_iter, unit=" tasks") as progress:
             tasks = [
