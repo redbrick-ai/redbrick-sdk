@@ -205,7 +205,7 @@ class Labeling:
                     task_id,
                     json.dumps(task["labels"], separators=(",", ":")),
                     labels_map,
-                    True if self.review else finalize,
+                    finalize,
                 )
 
         except ValueError as error:
@@ -264,16 +264,10 @@ class Labeling:
 
         Use this method to programmatically submit tasks with labels in `Label stage`, or to
         programmatically accept/reject/correct tasks in a `Review stage`. If you don't already
-        have a list of ``task_id``, you can use :obj:`~redbrick.export.Export.export_tasks` to
-        get a list of all tasks in your project, or you can use :obj:`get_tasks`
-        to get a list of tasks assigned to you.
+        have a list of ``task_id``, you can use :obj:`~redbrick.export.Export.list_tasks` to
+        get a filtered list of tasks in your project, that you want to work upon.
 
         .. admonition:: Assign tasks to your API key
-            :class: caution
-
-            You must assign tasks to your API Key `before` you use :obj:`put_tasks`. You cannot
-            programmatically label/review tasks that are not assigned to you (in this case, your
-            API key).
 
         .. tab:: Label
 
@@ -290,7 +284,7 @@ class Labeling:
                 # Submit tasks with new labels
                 project.labeling.put_tasks("Label", tasks)
 
-                # Save tasks as draft with new labels
+                # Save tasks with new labels, without submitting
                 project.labeling.put_tasks("Label", tasks, finalize=False)
 
                 # Submit tasks with existing labels
@@ -323,8 +317,7 @@ class Labeling:
             Tasks with new labels or review result.
 
         finalize: bool = True
-            Finalize the task. If you want to save the task as a draft, set this to False.
-            Applies only to Label stage.
+            Finalize the task. If you want to save the task without submitting, set this to False.
 
         existing_labels: bool = False
             If True, the tasks will be submitted with their existing labels.
@@ -542,8 +535,8 @@ class Labeling:
                 stage_name,
                 None,
                 {"userId": user_id or email or self.context.key_id},
-                concurrency,
-            )
+            ),
+            concurrency,
         )
 
         with tqdm.tqdm(
@@ -573,8 +566,8 @@ class Labeling:
                     stage_name,
                     None,
                     {"userId": None},
-                    concurrency,
-                )
+                ),
+                concurrency,
             )
 
             with tqdm.tqdm(

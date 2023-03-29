@@ -76,6 +76,9 @@ Using this argument validates the files before upload,
 but may increase the upload time.""",
         )
         parser.add_argument(
+            "--clear-cache", action="store_true", help="Clear local cache"
+        )
+        parser.add_argument(
             "--concurrency",
             "-c",
             type=int,
@@ -130,6 +133,9 @@ but may increase the upload time.""",
             label_storage_id = str(self.args.label_storage).strip().lower()
         else:
             raise ArgumentError(None, "")
+
+        if self.args.clear_cache:
+            self.project.cache.clear_cache(True)
 
         items_list: Union[List[List[str]], List[Dict]]
         if self.args.json and directory.endswith(".json") and os.path.isfile(directory):

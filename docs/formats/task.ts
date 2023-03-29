@@ -22,8 +22,6 @@ type Task = {
 type Series = {
   items: string | string[];
   name?: string;
-  numFrames?: number;
-  dimensions?: [number, number, number];
   segmentations?: string | string[];
   segmentMap?: {
     [instanceId: string]: number | string | string[] | {

@@ -6,13 +6,20 @@ from typing import Any, Dict, List, Optional, Callable, Tuple
 class PaginationIterator:
     """Construct Labelset Iterator."""
 
-    def __init__(self, func: Callable[[Optional[str]], Tuple[Any, ...]]) -> None:
+    def __init__(
+        self,
+        func: Callable[[int, Optional[str]], Tuple[List[Dict], Optional[str]]],
+        concurrency: int = 10,
+        limit: Optional[int] = None,
+    ) -> None:
         """Construct LabelsetIterator."""
         self.cursor: Optional[str] = None
         self.datapoints_batch: Optional[List[Dict]] = None
         self.datapoints_batch_index: Optional[int] = None
 
         self.func = func
+        self.concurrency = concurrency
+        self.limit = limit
 
         self.total = 0
 
@@ -44,11 +51,24 @@ class PaginationIterator:
             # When no data is returned in the current iteration,
             # but there is still more data, go for the next iteration
             while True:
-                self.datapoints_batch, self.cursor, *_ = self.func(self.cursor)
+                self.datapoints_batch, self.cursor, *_ = self.func(
+                    max(0, min(self.concurrency, self.limit - self.total))
+                    if self.limit is not None
+                    else self.concurrency,
+                    self.cursor,
+                )
+                if (
+                    self.limit is not None
+                    and self.total + len(self.datapoints_batch) >= self.limit
+                ):
+                    self.datapoints_batch = self.datapoints_batch[
+                        : max(0, self.limit - self.total)
+                    ]
+                    self.cursor = None
                 if not self.datapoints_batch and self.cursor:
                     continue
                 self.datapoints_batch_index = 0
-                self.total += len(self.datapoints_batch)  # type: ignore
+                self.total += len(self.datapoints_batch)
                 break
 
         # Current entry to return

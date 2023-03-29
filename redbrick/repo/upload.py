@@ -172,7 +172,7 @@ class UploadRepo(UploadControllerInterface):
     def delete_tasks(self, org_id: str, project_id: str, task_ids: List[str]) -> bool:
         """Delete tasks in a project."""
         query_string = """
-        mutation deleteTasksSDK($orgId: UUID!, $projectId: UUID!, $taskIds: [UUID!]!) {
+        mutation deleteTasksSDK($orgId: UUID!, $projectId: UUID!, $taskIds: [UUID!]) {
             deleteTasks(
                 orgId: $orgId
                 projectId: $projectId
@@ -187,6 +187,34 @@ class UploadRepo(UploadControllerInterface):
             "orgId": org_id,
             "projectId": project_id,
             "taskIds": task_ids,
+        }
+
+        result: Dict[str, Dict] = self.client.execute_query(
+            query_string, query_variables
+        )
+
+        return (result.get("deleteTasks", {}) or {}).get("ok", False)
+
+    def delete_tasks_by_name(
+        self, org_id: str, project_id: str, task_names: List[str]
+    ) -> bool:
+        """Delete tasks in a project by task names."""
+        query_string = """
+        mutation deleteTasksNamesSDK($orgId: UUID!, $projectId: UUID!, $taskNames: [String!]) {
+            deleteTasks(
+                orgId: $orgId
+                projectId: $projectId
+                taskNames: $taskNames
+            ) {
+                ok
+            }
+        }
+        """
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "taskNames": task_names,
         }
 
         result: Dict[str, Dict] = self.client.execute_query(

@@ -21,6 +21,16 @@ class TaskStates(Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     PROBLEM = "PROBLEM"
+    SKIPPED = "SKIPPED"
+    STAGED = "STAGED"
+
+
+class ReviewStates(Enum):
+    """Task review states."""
+
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    CORRECTED = "CORRECTED"
 
 
 class ImportTypes(Enum):
@@ -54,3 +64,18 @@ class TaskEventTypes(Enum):
     CONSENSUS_COMPUTED = "CONSENSUS_COMPUTED"
     COMMENT_ADDED = "COMMENT_ADDED"
     CONSENSUS_TASK_EDITED = "CONSENSUS_TASK_EDITED"
+
+
+class TaskFilters(Enum):
+    """Enumerate the different task filters."""
+
+    ALL = "ALL"
+    GROUNDTRUTH = "GROUNDTRUTH"
+    UNASSIGNED = "UNASSIGNED"
+    QUEUED = "QUEUED"
+    DRAFT = "DRAFT"
+    SKIPPED = "SKIPPED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    ISSUES = "ISSUES"
+    BENCHMARK = "BENCHMARK"
