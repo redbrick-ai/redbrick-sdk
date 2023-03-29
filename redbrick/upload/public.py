@@ -473,6 +473,26 @@ class Upload:
         """
         return self.context.upload.delete_tasks(self.org_id, self.project_id, task_ids)
 
+    def delete_tasks_by_name(self, task_names: List[str]) -> bool:
+        """Delete project tasks based on task names.
+
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
+        >>> project.upload.delete_tasks_by_name([...])
+
+        Parameters
+        --------------
+        task_names: List[str]
+            List of task names to delete.
+
+        Returns
+        -------------
+        bool
+            True if successful, else False.
+        """
+        return self.context.upload.delete_tasks_by_name(
+            self.org_id, self.project_id, task_names
+        )
+
     async def generate_items_list(
         self,
         items_list: List[List[str]],
