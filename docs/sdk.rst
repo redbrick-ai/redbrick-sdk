@@ -6,7 +6,7 @@ functions for programmatically manipulating data, importing annotations, assigni
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes
+   :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, ReviewStates
    :show-inheritance:
 
 Organization
