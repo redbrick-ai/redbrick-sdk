@@ -8,6 +8,8 @@ from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import List, Dict, Tuple
 import shutil
 
+import shtab
+
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
 from redbrick.common.constants import MAX_FILE_BATCH_SIZE
@@ -84,7 +86,7 @@ class CLIExportController(CLIExportInterface):
             "-d",
             default=".",
             help="Destination directory (Default: current directory)",
-        )
+        ).complete = shtab.DIRECTORY  # type: ignore
 
     def handler(self, args: Namespace) -> None:
         """Handle export command."""

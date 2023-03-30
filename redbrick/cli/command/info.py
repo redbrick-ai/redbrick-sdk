@@ -5,6 +5,7 @@ from typing import List, Tuple
 from rich.console import Console
 from rich.table import Table
 from rich.box import ROUNDED
+import shtab
 
 from redbrick.cli.input.text import CLIInputText
 from redbrick.cli.input.uuid import CLIInputUUID
@@ -35,7 +36,7 @@ class CLIInfoController(CLIInfoInterface):
             nargs="?",
             default=".",
             help="Path of project (Default: current directory)",
-        )
+        ).complete = shtab.DIRECTORY  # type: ignore
 
     def handler(self, args: Namespace) -> None:
         """Handle info command."""

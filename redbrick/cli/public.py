@@ -3,6 +3,8 @@ import sys
 import argparse
 from typing import Any, List, Optional
 
+import shtab
+
 import redbrick
 from redbrick.cli.command import (
     CLIConfigController,
@@ -111,7 +113,7 @@ associated with every task, including:
             raise argparse.ArgumentError(None, "")
 
 
-def cli_parser(generate_docs: bool = True) -> Any:
+def cli_parser(only_parser: bool = True) -> Any:
     """Initialize argument parser."""
     parser = argparse.ArgumentParser(
         description="The RedBrick CLI offers a simple interface to quickly import and "
@@ -122,7 +124,9 @@ def cli_parser(generate_docs: bool = True) -> Any:
     )
     cli = CLIController(parser.add_subparsers(title="Commands", dest="command"))
 
-    if generate_docs:
+    shtab.add_argument_to(parser, "--completion")
+
+    if only_parser:
         return parser
 
     return parser, cli
