@@ -12,11 +12,7 @@ from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random_exponential
 from natsort import natsorted, ns
 
-from redbrick.common.constants import (
-    MAX_CONCURRENCY,
-    MAX_FILE_BATCH_SIZE,
-    MAX_RETRY_ATTEMPTS,
-)
+from redbrick.common.constants import MAX_FILE_BATCH_SIZE, MAX_RETRY_ATTEMPTS
 from redbrick.utils.async_utils import gather_with_concurrency
 
 IMAGE_FILE_TYPES = {
@@ -165,7 +161,7 @@ async def upload_files(
             for attempt in Retrying(
                 reraise=True,
                 stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
-                wait=wait_random_exponential(multiplier=1, min=5, max=30),
+                wait=wait_random_exponential(min=5, max=30),
                 retry=retry_if_not_exception_type(KeyboardInterrupt),
             ):
                 with attempt:
@@ -182,8 +178,7 @@ async def upload_files(
             return True
         raise ConnectionError(f"Error in uploading {path} to RedBrick")
 
-    # limit to 5, default is 100, cleanup is done by session
-    conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY, loop=asyncio.get_running_loop())
+    conn = aiohttp.TCPConnector()
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [
             _upload_file(session, path, url, file_type)
@@ -220,7 +215,7 @@ async def download_files(
             for attempt in Retrying(
                 reraise=True,
                 stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
-                wait=wait_random_exponential(multiplier=1, min=5, max=30),
+                wait=wait_random_exponential(min=5, max=30),
                 retry=retry_if_not_exception_type(KeyboardInterrupt),
             ):
                 with attempt:
@@ -249,8 +244,7 @@ async def download_files(
             file_.write(data)
         return path
 
-    # limit to 5, default is 100, cleanup is done by session
-    conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY, loop=asyncio.get_running_loop())
+    conn = aiohttp.TCPConnector()
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [_download_file(session, url, path) for url, path in files]
         paths = await gather_with_concurrency(
