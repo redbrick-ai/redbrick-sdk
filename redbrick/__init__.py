@@ -17,14 +17,8 @@ from redbrick.common.enums import (
     ImportTypes,
     TaskEventTypes,
     TaskFilters,
-    TaskStates,
-    ReviewStates,
 )
-from redbrick.common.constants import (
-    DEFAULT_URL,
-    ORG_API_HAS_CHANGED,
-    PROJECT_API_HAS_CHANGED,
-)
+from redbrick.common.constants import DEFAULT_URL
 from redbrick.organization import RBOrganization
 from redbrick.workspace import RBWorkspace
 from redbrick.project import RBProject
@@ -101,15 +95,7 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
     url: str = DEFAULT_URL
         Should default to https://api.redbrickai.com
     """
-    if len(org_id) != 36:
-        raise ValueError("Your first argument looks incorrect, " + ORG_API_HAS_CHANGED)
-    if "." in api_key:
-        raise ValueError(
-            "Your second argument looks like a url, " + ORG_API_HAS_CHANGED
-        )
-
     context = _populate_context(RBContext(api_key=api_key, url=url))
-
     return RBOrganization(context, org_id)
 
 
@@ -167,14 +153,5 @@ def get_project(
     url: str = DEFAULT_URL
         Should default to https://api.redbrickai.com
     """
-    if len(org_id) != 36:
-        raise ValueError(
-            "Your first argument looks incorrect, " + PROJECT_API_HAS_CHANGED
-        )
-    if "http" in project_id:
-        raise ValueError(
-            "Your second argument looks like a url, " + PROJECT_API_HAS_CHANGED
-        )
-
     context = _populate_context(RBContext(api_key=api_key, url=url))
     return RBProject(context, org_id, project_id)

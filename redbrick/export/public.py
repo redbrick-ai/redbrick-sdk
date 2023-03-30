@@ -643,7 +643,7 @@ class Export:
         Returns
         -----------
         List[Dict]
-            [{"taskId": str, "name": str, "createdAt": str}]
+            [{"taskId": str, "name": str, "createdAt": str, "currentStageName": str}]
         """
         logger.warning(
             "`search_tasks` method has been deprecated and will be removed "
@@ -657,6 +657,7 @@ class Export:
                 self.output_stage_name if only_ground_truth else None,
                 name,
                 None,
+                True,
             ),
             concurrency,
         )
@@ -667,6 +668,7 @@ class Export:
                     "taskId": task["taskId"],
                     "name": task["datapoint"]["name"],
                     "createdAt": task["createdAt"],
+                    "currentStageName": task["currentStageName"],
                 }
                 for task in progress
                 if (task.get("datapoint", {}) or {}).get("name")
@@ -686,7 +688,45 @@ class Export:
         task_id: Optional[str] = None,
         task_name: Optional[str] = None,
     ) -> List[Dict]:
-        """Get a task filter object to filter tasks by various parameters."""
+        """
+        Search tasks based on multiple queries for a project.
+        This function returns minimal meta-data about the queried tasks.
+
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
+        >>> result = project.export.search_tasks()
+
+        Parameters
+        -----------
+        search: TaskFilters = TaskFilters.ALL
+            Task filter type.
+
+        concurrency: int = 10
+            The number of requests that will be made in parallel.
+
+        limit: Optional[int] = 50
+            The number of tasks to return.
+            Use None to return all tasks matching the search query.
+
+        stage_name: Optional[str] = None
+            If present, will return tasks that are available in or
+            completed in the given stage.
+
+        user_id: Optional[str] = None
+            If present, will return tasks that are assigned to or
+            completed by the given user id/email.
+
+        task_id: Optional[str] = None
+            If present, will return data for the given task id.
+
+        task_name: Optional[str] = None
+            If present, will return data for the given task name.
+            This will do a prefix search with the given task name.
+
+        Returns
+        -----------
+        List[Dict]
+            [{"taskId": str, "name": str, "createdAt": str, "currentStageName": str}]
+        """
         # pylint: disable=too-many-branches, too-many-locals
         label_stages: List[str] = [stage["stageName"] for stage in self.label_stages]
         review_stages: List[str] = [stage["stageName"] for stage in self.review_stages]
@@ -748,6 +788,7 @@ class Export:
                 stage_name,
                 task_name,
                 filters,
+                True,
             ),
             concurrency,
             limit,
@@ -762,6 +803,7 @@ class Export:
                             "taskId": task["taskId"],
                             "name": task["datapoint"]["name"],
                             "createdAt": task["createdAt"],
+                            "currentStageName": task["currentStageName"],
                         }
                     )
 

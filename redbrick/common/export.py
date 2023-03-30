@@ -68,6 +68,7 @@ class ExportControllerInterface(ABC):
         stage_name: Optional[str] = None,
         task_search: Optional[str] = None,
         manual_labeling_filters: Optional[TaskFilterParams] = None,
+        only_meta_data: bool = True,
         first: int = 50,
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:

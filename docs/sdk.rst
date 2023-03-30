@@ -6,7 +6,7 @@ functions for programmatically manipulating data, importing annotations, assigni
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, ReviewStates
+   :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters
    :show-inheritance:
 
 Organization
@@ -30,7 +30,7 @@ Project
 Export
 ----------------------
 .. autoclass:: redbrick.export.Export
-   :members: export_tasks, search_tasks, get_task_events
+   :members: export_tasks, list_tasks, get_task_events
    :show-inheritance:
 
 Upload
@@ -42,5 +42,5 @@ Upload
 Labeling
 ----------------------
 .. autoclass:: redbrick.labeling.Labeling
-   :members: get_tasks, put_tasks, get_task_queue, assign_tasks, move_tasks_to_start
+   :members: put_tasks, assign_tasks, move_tasks_to_start
    :show-inheritance:

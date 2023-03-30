@@ -535,6 +535,7 @@ class Labeling:
                 stage_name,
                 None,
                 {"userId": user_id or email or self.context.key_id},
+                False,
             ),
             concurrency,
         )
@@ -566,6 +567,7 @@ class Labeling:
                     stage_name,
                     None,
                     {"userId": None},
+                    False,
                 ),
                 concurrency,
             )
