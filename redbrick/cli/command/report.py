@@ -40,7 +40,7 @@ class CLIIReportController(CLIReportInterface):
     def handle_report(self) -> None:
         """Handle empty sub command."""
         if self.args.type not in (self.TYPE_ALL, self.TYPE_GROUNDTRUTH):
-            raise ArgumentError(None, "")
+            raise ArgumentError(None, f"Invalid report type: {self.args.type}")
 
         report = self.project.project.export.get_task_events(
             self.args.type == self.TYPE_GROUNDTRUTH, self.args.concurrency

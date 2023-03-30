@@ -57,10 +57,14 @@ class CLIExportController(CLIExportInterface):
             if it is enabled for the given project.""",
         )
         parser.add_argument(
-            "--png", action="store_true", help="Export labels as png masks"
+            "--png",
+            action="store_true",
+            help="Export labels as png masks",
         )
         parser.add_argument(
-            "--clear-cache", action="store_true", help="Clear local cache"
+            "--clear-cache",
+            action="store_true",
+            help="Clear local cache",
         )
         parser.add_argument(
             "--concurrency",
@@ -102,7 +106,7 @@ class CLIExportController(CLIExportInterface):
             )
             is None
         ):
-            raise ArgumentError(None, "")
+            raise ArgumentError(None, f"Invalid export type: {self.args.type}")
 
         if self.args.clear_cache:
             self.project.cache.clear_cache(True)

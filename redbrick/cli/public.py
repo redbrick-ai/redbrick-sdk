@@ -14,7 +14,7 @@ from redbrick.cli.command import (
     CLIIReportController,
 )
 from redbrick.cli.cli_base import CLIInterface
-from redbrick.utils.logging import logger
+from redbrick.utils.logging import log_error, logger
 
 
 class CLIController(CLIInterface):
@@ -26,6 +26,7 @@ class CLIController(CLIInterface):
             command.add_parser(
                 self.CONFIG,
                 help="Setup the credentials for your CLI.",
+                description="Setup the credentials for your CLI.",
             )
         )
         self.init = CLIInitController(
@@ -54,18 +55,31 @@ The project will be cloned to a local directory named after your `project name`.
             )
         )
         self.info = CLIInfoController(
-            command.add_parser(self.INFO, help="Get a project's information")
+            command.add_parser(
+                self.INFO,
+                help="Get a project's information",
+                description="Get a project's information",
+            )
         )
         self.export = CLIExportController(
-            command.add_parser(self.EXPORT, help="Export data for a project")
+            command.add_parser(
+                self.EXPORT,
+                help="Export data for a project",
+                description="Export data for a project",
+            )
         )
         self.upload = CLIUploadController(
-            command.add_parser(self.UPLOAD, help="Upload files to a project")
+            command.add_parser(
+                self.UPLOAD,
+                help="Upload files to a project",
+                description="Upload files to a project",
+            )
         )
         self.report = CLIIReportController(
             command.add_parser(
                 self.REPORT,
-                help="""
+                help="Generate an audit report for a project",
+                description="""
 Generate an audit report for a project. Exports a JSON file containing all actions & events
 associated with every task, including:
 
@@ -134,7 +148,8 @@ def cli_main(argv: Optional[List[str]] = None) -> None:
             cli.handle_command(args)
         except KeyboardInterrupt:
             logger.warning("User interrupted")
-        except argparse.ArgumentError:
+        except argparse.ArgumentError as error:
+            log_error(error)
             parser.print_usage()
 
 
