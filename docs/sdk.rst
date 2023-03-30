@@ -30,7 +30,7 @@ Project
 Export
 ----------------------
 .. autoclass:: redbrick.export.Export
-   :members: export_tasks, list_tasks, get_task_events
+   :members: export_tasks, list_tasks, get_task_events, search_tasks, redbrick_nifti
    :show-inheritance:
 
 Upload
@@ -42,5 +42,5 @@ Upload
 Labeling
 ----------------------
 .. autoclass:: redbrick.labeling.Labeling
-   :members: put_tasks, assign_tasks, move_tasks_to_start
+   :members: put_tasks, assign_tasks, move_tasks_to_start, get_tasks, get_task_queue
    :show-inheritance:

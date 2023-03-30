@@ -473,15 +473,14 @@ class Export:
         self,
         only_ground_truth: bool = True,
         concurrency: int = 10,
+        *,
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
-        to_timestamp: Optional[float] = None,
         old_format: bool = False,
         no_consensus: Optional[bool] = None,
         png: bool = False,
     ) -> List[Dict]:
-        """
-        Export annotation data.
+        """Export annotation data.
 
         Meta-data and category information returned as an Object. Segmentations are written to
         your disk in NIfTI-1 format. Please `visit our
@@ -492,7 +491,7 @@ class Export:
         >>> project.export.export_tasks()
 
         Parameters
-        --------------
+        -----------
         only_ground_truth: bool = True
             If set to True, will only return data that has
             been completed in your workflow. If False, will
@@ -509,8 +508,6 @@ class Export:
             that were labeled/updated since the given timestamp.
             Format - output from datetime.timestamp()
 
-        to_timestamp: Optional[float] = None
-
         old_format: bool = False
             Whether to export tasks in old format.
 
@@ -523,27 +520,17 @@ class Export:
         png: bool = False
             Export nifti labels as png masks.
 
-        Returns:
-        -----------------
+        Returns
+        -----------
         List[Dict]
             Datapoint and labels in RedBrick AI format. See
             https://docs.redbrickai.com/python-sdk/reference/annotation-format
-
-        Note
-        ------------
-        - to_timestamp is deprecated and will be removed in future versions.
-
         """
         # pylint: disable=too-many-locals
 
         no_consensus = (
             no_consensus if no_consensus is not None else not self.consensus_enabled
         )
-
-        if to_timestamp:
-            logger.warning(
-                "to_timestamp is deprecated and will be removed in future versions."
-            )
 
         datapoints, taxonomy = self._get_raw_data_latest(
             concurrency,
@@ -593,25 +580,31 @@ class Export:
         concurrency: int = 10,
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
-        to_timestamp: Optional[float] = None,
         old_format: bool = False,
         no_consensus: Optional[bool] = None,
         png: bool = False,
     ) -> List[Dict]:
-        """Alias to export_tasks method."""
+        """
+        .. admonition:: Deprecation Notice
+
+            .. deprecated:: 2.11.0
+
+            Use :obj:`~redbrick.export.Export.export_tasks` instead.
+
+        Alias to export_tasks method.
+        """
         logger.warning(
-            "`redbrick_nifti` method has been deprecated and will be removed "
-            + "in a future release. Please use `export_tasks` method instead."
+            "`Export.redbrick_nifti` method has been deprecated and will be removed "
+            + "in a future release. Please use `Export.export_tasks` method instead."
         )
         return self.export_tasks(
             only_ground_truth,
             concurrency,
-            task_id,
-            from_timestamp,
-            to_timestamp,
-            old_format,
-            no_consensus,
-            png,
+            task_id=task_id,
+            from_timestamp=from_timestamp,
+            old_format=old_format,
+            no_consensus=no_consensus,
+            png=png,
         )
 
     def search_tasks(
@@ -621,6 +614,12 @@ class Export:
         name: Optional[str] = None,
     ) -> List[Dict]:
         """
+        .. admonition:: Deprecation Notice
+
+            .. deprecated:: 2.11.0
+
+            Use :obj:`~redbrick.export.Export.list_tasks` instead.
+
         Search tasks by ``task_id`` or ``name`` in any stage of your project workflow.
         This function returns minimal meta-data about the queried tasks.
 
@@ -646,8 +645,8 @@ class Export:
             [{"taskId": str, "name": str, "createdAt": str, "currentStageName": str}]
         """
         logger.warning(
-            "`search_tasks` method has been deprecated and will be removed "
-            + "in a future release. Please use `list_tasks` method instead."
+            "`Export.search_tasks` method has been deprecated and will be removed "
+            + "in a future release. Please use `Export.list_tasks` method instead."
         )
         my_iter = PaginationIterator(
             partial(

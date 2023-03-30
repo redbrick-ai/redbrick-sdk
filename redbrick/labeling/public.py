@@ -62,20 +62,7 @@ class Labeling:
       - :obj:`assign_tasks`.
         Use this method when you already have
         the ``task_ids`` you want to assign to a particular user. If you don't have the
-        ``task_ids``, you can query all the tasks using :obj:`~redbrick.export.Export.export_tasks`
-        or query tasks assigned to a particular user/unassigned tasks using :obj:`get_task_queue`.
-
-      - :obj:`get_task_queue`.
-        Use this method when you want to retrieve the tasks assigned to a particular user, or
-        you want to fetch all the unassigned tasks in your project. This can be useful in
-        preparation for using :obj:`assign_tasks` to programmatically assigning tasks,
-        or :obj:`put_tasks` to programmatically label/review tasks assigned to you.
-
-      - :obj:`get_tasks`.
-        Use this method to fetch all tasks `already assigned to the current API Key`.
-        This can be useful in preparation for re-assigned those tasks to another
-        user (through :obj:`assign_tasks`) or for programmatically submitting them
-        through :obj:`put_tasks`.
+        ``task_ids``, you can query the tasks using :obj:`~redbrick.export.Export.list_tasks`.
 
     """
 
@@ -97,6 +84,12 @@ class Labeling:
     @check_stage
     def get_tasks(self, stage_name: str, count: int = 1) -> List[Dict]:
         """
+        .. admonition:: Deprecation Notice
+
+            .. deprecated:: 2.11.0
+
+            Use :obj:`~redbrick.export.Export.list_tasks` instead.
+
         Get tasks assigned to the API Key.
 
         Get a list of tasks from ``stage_name`` for the current API Key to work upon. If
@@ -125,6 +118,10 @@ class Labeling:
             for formats.
             https://docs.redbrickai.com/python-sdk/reference#task-objects
         """
+        logger.warning(
+            "`Labeling.get_task_queue` method has been deprecated and will be removed "
+            + "in a future release. Please use `Export.list_tasks` method instead."
+        )
         tasks = self.context.labeling.get_labeling_tasks(
             self.org_id, self.project_id, stage_name, count=count
         )
@@ -266,8 +263,6 @@ class Labeling:
         programmatically accept/reject/correct tasks in a `Review stage`. If you don't already
         have a list of ``task_id``, you can use :obj:`~redbrick.export.Export.list_tasks` to
         get a filtered list of tasks in your project, that you want to work upon.
-
-        .. admonition:: Assign tasks to your API key
 
         .. tab:: Label
 
@@ -451,6 +446,12 @@ class Labeling:
         refresh: bool = True,
     ) -> List[Dict]:
         """
+        .. admonition:: Deprecation Notice
+
+            .. deprecated:: 2.11.0
+
+            Parameter `current_user` has been deprecated.
+
         Assign tasks to specified email or current API key.
 
         Unassigns all users from the task if neither of the ``email`` or ``current_user`` are set.
@@ -479,6 +480,11 @@ class Labeling:
         List[Dict]
             List of affected tasks - [{"taskId", "name", "stageName"}]
         """
+        if current_user:
+            logger.warning(
+                "`current_user` has been deprecated and will be removed in a future release."
+            )
+
         return self.context.labeling.assign_tasks(
             self.org_id,
             self.project_id,
@@ -497,7 +503,14 @@ class Labeling:
         email: Optional[str] = None,
         fetch_unassigned: bool = False,
     ) -> List[Dict]:
-        """Get all tasks in queue.
+        """
+        .. admonition:: Deprecation Notice
+
+            .. deprecated:: 2.11.0
+
+            Use :obj:`~redbrick.export.Export.list_tasks` instead.
+
+        Get all tasks in queue.
 
         Returns all the tasks assigned to a particular user and/or
         tasks that are unassigned.
@@ -527,6 +540,10 @@ class Labeling:
         List[Dict]
             List of tasks in queue - [{"taskId", "name", "createdAt"}]
         """
+        logger.warning(
+            "`Labeling.get_task_queue` method has been deprecated and will be removed "
+            + "in a future release. Please use `Export.list_tasks` method instead."
+        )
         my_iter = PaginationIterator(
             partial(
                 self.context.export.task_search,
