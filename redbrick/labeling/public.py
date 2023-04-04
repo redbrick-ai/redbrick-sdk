@@ -253,7 +253,7 @@ class Labeling:
         existing_labels: bool = False,
         review_result: Optional[bool] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
-        label_validate: bool = False,
+        label_validate: bool = True,
         concurrency: int = 50,
     ) -> List[Dict]:
         """
@@ -326,7 +326,7 @@ class Labeling:
             Optional label storage id to reference external nifti segmentations.
             Defaults to project settings' annotation storage_id if not specified.
 
-        label_validate: bool = False
+        label_validate: bool = True
             Validate label nifti instances and segment map.
 
         concurrency: int = 50

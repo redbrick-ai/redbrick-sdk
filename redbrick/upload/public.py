@@ -366,7 +366,7 @@ class Upload:
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
         label_storage_id: Optional[str] = None,
-        label_validate: bool = False,
+        label_validate: bool = True,
         concurrency: int = 50,
     ) -> List[Dict]:
         """
@@ -419,7 +419,7 @@ class Upload:
             Optional label storage id to reference nifti segmentations.
             Defaults to items storage_id if not specified.
 
-        label_validate: bool = False
+        label_validate: bool = True
             Validate label nifti instances and segment map.
 
         concurrency: int = 50
