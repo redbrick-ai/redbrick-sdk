@@ -6,6 +6,7 @@ from tqdm import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
+from redbrick.workspace import RBWorkspace
 from redbrick.utils.logging import logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_tax_utils import format_taxonomy
@@ -74,12 +75,47 @@ class RBOrganization:
         """Representation of object."""
         return str(self)
 
+    def create_workspace(self, name: str, exists_okay: bool = False) -> RBWorkspace:
+        """
+        Create a workspace within the organization.
+
+        This method creates an organization in a similar fashion to the
+        quickstart on the RedBrick Ai create project page.
+
+        Parameters
+        --------------
+        name: str
+            A unique name for your workspace
+
+        exists_okay: bool = False
+            Allow workspaces with the same name to be returned instead of trying to create
+            a new workspace. Useful for when running the same script repeatedly when you
+            do not want to keep creating new workspaces.
+
+        Returns
+        --------------
+        redbrick.workspace.RBWorkspace
+            A RedBrick Workspace object.
+        """
+        try:
+            workspace_data = self.context.workspace.create_workspace(
+                self._org_id, name, exists_okay=exists_okay
+            )
+        except ValueError as error:
+            raise Exception(
+                "Project with same name exists, try setting exists_okay=True to"
+                + " return this project instead of creating a new one"
+            ) from error
+
+        return RBWorkspace(self.context, self._org_id, workspace_data["workspaceId"])
+
     def create_project(
         self,
         name: str,
         taxonomy_name: str,
         reviews: int = 0,
         exists_okay: bool = False,
+        workspace_id: Optional[str] = None,
     ) -> RBProject:
         """
         Create a project within the organization.
@@ -104,6 +140,9 @@ class RBOrganization:
             Allow projects with the same name to be returned instead of trying to create
             a new project. Useful for when running the same script repeatedly when you
             do not want to keep creating new projects.
+
+        workspace_id: Optional[str] = None
+            The workspace id that you want to add this project to.
 
         Returns
         --------------
@@ -134,7 +173,12 @@ class RBOrganization:
 
         try:
             project_data = self.context.project.create_project(
-                self.org_id, name, stages, "DICOM_SEGMENTATION", taxonomy_name
+                self.org_id,
+                name,
+                stages,
+                "DICOM_SEGMENTATION",
+                taxonomy_name,
+                workspace_id,
             )
         except ValueError as error:
             raise Exception(
@@ -155,8 +199,8 @@ class RBOrganization:
                 self._org_id,
                 start_date,
                 end_date,
-                concurrency,
-            )
+            ),
+            concurrency,
         )
         with tqdm(my_iter, unit=" tasks") as progress:
             tasks = [
@@ -172,36 +216,6 @@ class RBOrganization:
             ]
 
         return tasks
-
-    def create_taxonomy(
-        self,
-        name: str,
-        categories: List[Dict],
-        attributes: Optional[List[Dict]] = None,
-        task_categories: Optional[List[Dict]] = None,
-        task_attributes: Optional[List[Dict]] = None,
-    ) -> None:
-        """Create Taxonomy V1.
-
-        Format reference for categories and attributes objects:
-        https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
-
-        .. caution:: We recommend using Taxonomy V2.
-           Taxonomy V1 will be deprecated in a future release. Read more
-           `here <https://docs.redbrickai.com/projects/taxonomies#taxonomy-v1-vs.-taxonomy-v2>`_
-
-        """
-        if self.context.project.create_taxonomy(
-            self.org_id,
-            name,
-            [{"name": "object", "children": categories}],
-            attributes,
-            [{"name": "object", "children": task_categories}]
-            if task_categories
-            else task_categories,
-            task_attributes,
-        ):
-            logger.info(f"Successfully created taxonomy: {name}")
 
     def create_taxonomy_new(
         self,

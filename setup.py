@@ -5,7 +5,6 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 install_requires = [
-    "aiofiles<=23.1.0",
     "aiohttp<=3.8.4,>=3.7.4",
     "dicom2nifti<=2.4.7",
     "inquirerpy<=0.3.4,>=0.3.3",
@@ -18,6 +17,7 @@ install_requires = [
     "python-dateutil<=2.8.2",
     "requests<=2.28.2,>=2.23.0",
     "Rich<=13.3.1",
+    "shtab<=1.5.8",
     "tenacity<=8.2.1",
     "tqdm<=4.64.1,>=4.50.0",
 ]
@@ -27,7 +27,7 @@ setup(
     url="https://github.com/redbrick-ai/redbrick-sdk",
     description="RedBrick platform Python SDK!",
     py_modules=["redbrick"],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     packages=find_packages(),
     long_description=long_description,
     long_description_content_type="text/markdown",

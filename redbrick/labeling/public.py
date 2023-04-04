@@ -62,20 +62,7 @@ class Labeling:
       - :obj:`assign_tasks`.
         Use this method when you already have
         the ``task_ids`` you want to assign to a particular user. If you don't have the
-        ``task_ids``, you can query all the tasks using :obj:`~redbrick.export.Export.export_tasks`
-        or query tasks assigned to a particular user/unassigned tasks using :obj:`get_task_queue`.
-
-      - :obj:`get_task_queue`.
-        Use this method when you want to retrieve the tasks assigned to a particular user, or
-        you want to fetch all the unassigned tasks in your project. This can be useful in
-        preparation for using :obj:`assign_tasks` to programmatically assigning tasks,
-        or :obj:`put_tasks` to programmatically label/review tasks assigned to you.
-
-      - :obj:`get_tasks`.
-        Use this method to fetch all tasks `already assigned to the current API Key`.
-        This can be useful in preparation for re-assigned those tasks to another
-        user (through :obj:`assign_tasks`) or for programmatically submitting them
-        through :obj:`put_tasks`.
+        ``task_ids``, you can query the tasks using :obj:`~redbrick.export.Export.list_tasks`.
 
     """
 
@@ -97,6 +84,12 @@ class Labeling:
     @check_stage
     def get_tasks(self, stage_name: str, count: int = 1) -> List[Dict]:
         """
+        .. admonition:: Deprecation Notice
+
+            .. deprecated:: 2.11.0
+
+            Use :obj:`~redbrick.export.Export.list_tasks` instead.
+
         Get tasks assigned to the API Key.
 
         Get a list of tasks from ``stage_name`` for the current API Key to work upon. If
@@ -125,6 +118,10 @@ class Labeling:
             for formats.
             https://docs.redbrickai.com/python-sdk/reference#task-objects
         """
+        logger.warning(
+            "`Labeling.get_task_queue` method has been deprecated and will be removed "
+            + "in a future release. Please use `Export.list_tasks` method instead."
+        )
         tasks = self.context.labeling.get_labeling_tasks(
             self.org_id, self.project_id, stage_name, count=count
         )
@@ -205,7 +202,7 @@ class Labeling:
                     task_id,
                     json.dumps(task["labels"], separators=(",", ":")),
                     labels_map,
-                    True if self.review else finalize,
+                    finalize,
                 )
 
         except ValueError as error:
@@ -256,7 +253,7 @@ class Labeling:
         existing_labels: bool = False,
         review_result: Optional[bool] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
-        label_validate: bool = False,
+        label_validate: bool = True,
         concurrency: int = 50,
     ) -> List[Dict]:
         """
@@ -264,16 +261,8 @@ class Labeling:
 
         Use this method to programmatically submit tasks with labels in `Label stage`, or to
         programmatically accept/reject/correct tasks in a `Review stage`. If you don't already
-        have a list of ``task_id``, you can use :obj:`~redbrick.export.Export.export_tasks` to
-        get a list of all tasks in your project, or you can use :obj:`get_tasks`
-        to get a list of tasks assigned to you.
-
-        .. admonition:: Assign tasks to your API key
-            :class: caution
-
-            You must assign tasks to your API Key `before` you use :obj:`put_tasks`. You cannot
-            programmatically label/review tasks that are not assigned to you (in this case, your
-            API key).
+        have a list of ``task_id``, you can use :obj:`~redbrick.export.Export.list_tasks` to
+        get a filtered list of tasks in your project, that you want to work upon.
 
         .. tab:: Label
 
@@ -290,7 +279,7 @@ class Labeling:
                 # Submit tasks with new labels
                 project.labeling.put_tasks("Label", tasks)
 
-                # Save tasks as draft with new labels
+                # Save tasks with new labels, without submitting
                 project.labeling.put_tasks("Label", tasks, finalize=False)
 
                 # Submit tasks with existing labels
@@ -323,8 +312,7 @@ class Labeling:
             Tasks with new labels or review result.
 
         finalize: bool = True
-            Finalize the task. If you want to save the task as a draft, set this to False.
-            Applies only to Label stage.
+            Finalize the task. If you want to save the task without submitting, set this to False.
 
         existing_labels: bool = False
             If True, the tasks will be submitted with their existing labels.
@@ -338,7 +326,7 @@ class Labeling:
             Optional label storage id to reference external nifti segmentations.
             Defaults to project settings' annotation storage_id if not specified.
 
-        label_validate: bool = False
+        label_validate: bool = True
             Validate label nifti instances and segment map.
 
         concurrency: int = 50
@@ -458,6 +446,12 @@ class Labeling:
         refresh: bool = True,
     ) -> List[Dict]:
         """
+        .. admonition:: Deprecation Notice
+
+            .. deprecated:: 2.11.0
+
+            Parameter `current_user` has been deprecated.
+
         Assign tasks to specified email or current API key.
 
         Unassigns all users from the task if neither of the ``email`` or ``current_user`` are set.
@@ -486,6 +480,11 @@ class Labeling:
         List[Dict]
             List of affected tasks - [{"taskId", "name", "stageName"}]
         """
+        if current_user:
+            logger.warning(
+                "`current_user` has been deprecated and will be removed in a future release."
+            )
+
         return self.context.labeling.assign_tasks(
             self.org_id,
             self.project_id,
@@ -504,7 +503,14 @@ class Labeling:
         email: Optional[str] = None,
         fetch_unassigned: bool = False,
     ) -> List[Dict]:
-        """Get all tasks in queue.
+        """
+        .. admonition:: Deprecation Notice
+
+            .. deprecated:: 2.11.0
+
+            Use :obj:`~redbrick.export.Export.list_tasks` instead.
+
+        Get all tasks in queue.
 
         Returns all the tasks assigned to a particular user and/or
         tasks that are unassigned.
@@ -534,6 +540,10 @@ class Labeling:
         List[Dict]
             List of tasks in queue - [{"taskId", "name", "createdAt"}]
         """
+        logger.warning(
+            "`Labeling.get_task_queue` method has been deprecated and will be removed "
+            + "in a future release. Please use `Export.list_tasks` method instead."
+        )
         my_iter = PaginationIterator(
             partial(
                 self.context.export.task_search,
@@ -542,8 +552,9 @@ class Labeling:
                 stage_name,
                 None,
                 {"userId": user_id or email or self.context.key_id},
-                concurrency,
-            )
+                False,
+            ),
+            concurrency,
         )
 
         with tqdm.tqdm(
@@ -573,8 +584,9 @@ class Labeling:
                     stage_name,
                     None,
                     {"userId": None},
-                    concurrency,
-                )
+                    False,
+                ),
+                concurrency,
             )
 
             with tqdm.tqdm(

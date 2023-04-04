@@ -12,20 +12,22 @@ import asyncio
 import nest_asyncio  # type: ignore
 
 from redbrick.common.context import RBContext
-from redbrick.common.enums import StorageMethod, ImportTypes
-from redbrick.common.constants import (
-    DEFAULT_URL,
-    ORG_API_HAS_CHANGED,
-    PROJECT_API_HAS_CHANGED,
+from redbrick.common.enums import (
+    StorageMethod,
+    ImportTypes,
+    TaskEventTypes,
+    TaskFilters,
 )
-from redbrick.project import RBProject
+from redbrick.common.constants import DEFAULT_URL
 from redbrick.organization import RBOrganization
+from redbrick.workspace import RBWorkspace
+from redbrick.project import RBProject
 
 from redbrick.utils.logging import logger
 
 from .version_check import version_check
 
-__version__ = "2.10.4"
+__version__ = "2.11.0"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -57,12 +59,19 @@ version_check(__version__)
 
 def _populate_context(context: RBContext) -> RBContext:
     # pylint: disable=import-outside-toplevel
-    from redbrick.repo import ExportRepo, LabelingRepo, UploadRepo, ProjectRepo
+    from redbrick.repo import (
+        ExportRepo,
+        LabelingRepo,
+        UploadRepo,
+        ProjectRepo,
+        WorkspaceRepo,
+    )
 
     context.export = ExportRepo(context.client)
     context.labeling = LabelingRepo(context.client)
     context.upload = UploadRepo(context.client)
     context.project = ProjectRepo(context.client)
+    context.workspace = WorkspaceRepo(context.client)
     return context
 
 
@@ -86,16 +95,37 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
     url: str = DEFAULT_URL
         Should default to https://api.redbrickai.com
     """
-    if len(org_id) != 36:
-        raise ValueError("Your first argument looks incorrect, " + ORG_API_HAS_CHANGED)
-    if "." in api_key:
-        raise ValueError(
-            "Your second argument looks like a url, " + ORG_API_HAS_CHANGED
-        )
-
     context = _populate_context(RBContext(api_key=api_key, url=url))
-
     return RBOrganization(context, org_id)
+
+
+def get_workspace(
+    org_id: str, workspace_id: str, api_key: str, url: str = DEFAULT_URL
+) -> RBWorkspace:
+    """
+    Get an existing RedBrick workspace object.
+
+    Workspace objects allow you to interact with your RedBrick AI workspaces,
+    and perform actions like importing data, exporting data etc.
+
+    >>> workspace = redbrick.get_workspace(org_id, workspace_id, api_key)
+
+    Parameters
+    ---------------
+    org_id: str
+        Your organizations unique id https://app.redbrickai.com/<org_id>/
+
+    workspace_id: str
+        Your workspaces unique id.
+
+    api_key: str
+        Your secret api_key, can be created from the RedBrick AI platform.
+
+    url: str = DEFAULT_URL
+        Should default to https://api.redbrickai.com
+    """
+    context = _populate_context(RBContext(api_key=api_key, url=url))
+    return RBWorkspace(context, org_id, workspace_id)
 
 
 def get_project(
@@ -123,14 +153,5 @@ def get_project(
     url: str = DEFAULT_URL
         Should default to https://api.redbrickai.com
     """
-    if len(org_id) != 36:
-        raise ValueError(
-            "Your first argument looks incorrect, " + PROJECT_API_HAS_CHANGED
-        )
-    if "http" in project_id:
-        raise ValueError(
-            "Your second argument looks like a url, " + PROJECT_API_HAS_CHANGED
-        )
-
     context = _populate_context(RBContext(api_key=api_key, url=url))
     return RBProject(context, org_id, project_id)

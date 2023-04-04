@@ -5,7 +5,7 @@ from dateutil import parser  # type: ignore
 
 import aiohttp
 
-from redbrick.common.export import ExportControllerInterface
+from redbrick.common.export import ExportControllerInterface, TaskFilterParams
 from redbrick.common.client import RBClient
 from redbrick.repo.shards import router_task_shard
 
@@ -161,12 +161,13 @@ class ExportRepo(ExportControllerInterface):
         project_id: str,
         stage_name: Optional[str] = None,
         task_search: Optional[str] = None,
-        manual_labeling_filters: Optional[Dict] = None,
+        manual_labeling_filters: Optional[TaskFilterParams] = None,
+        only_meta_data: bool = True,
         first: int = 50,
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Task search."""
-        query_string = """
+        query_string = f"""
         query tasksList(
             $orgId: UUID!
             $projectId: UUID!
@@ -175,7 +176,7 @@ class ExportRepo(ExportControllerInterface):
             $manualLabelingFilters: TasksFilter
             $first: Int
             $after: String
-        ) {
+        ) {{
             genericTasks(
                 orgId: $orgId
                 projectId: $projectId
@@ -184,16 +185,18 @@ class ExportRepo(ExportControllerInterface):
                 manualLabelingFilters: $manualLabelingFilters
                 first: $first
                 after: $after
-            ) {
-                entries {
+            ) {{
+                entries {{
                     taskId
-                    datapoint {
+                    currentStageName
+                    createdAt
+                    {'''datapoint {
+                        name
+                    }''' if only_meta_data else '''datapoint {
                         name
                         items
                         itemsPresigned: items(presigned: true)
                     }
-                    currentStageName
-                    createdAt
                     currentStageSubTask {
                         ... on LabelingTask {
                             state
@@ -202,11 +205,11 @@ class ExportRepo(ExportControllerInterface):
                                 email
                             }
                         }
-                    }
-                }
+                    }'''}
+                }}
                 cursor
-            }
-        }
+            }}
+        }}
         """
 
         query_variables = {

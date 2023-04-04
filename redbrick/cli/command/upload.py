@@ -24,13 +24,16 @@ class CLIUploadController(CLIUploadInterface):
             help="The directory containing files to upload to the project",
         )
         parser.add_argument(
-            "--as-frames", action="store_true", help="Upload video from image frames"
+            "--as-frames",
+            action="store_true",
+            help="Upload video from image frames",
         )
         parser.add_argument(
             "--type",
             "-t",
             nargs="?",
             default=ImportTypes.DICOM3D.value,
+            choices=[import_type.value for import_type in ImportTypes],
             help=f"""Import file type
 {['`' + import_type.value + '`' for import_type in ImportTypes]}\n
 Please refer to [our documentation](https://docs.redbrickai.com/importing-data/direct-data-upload),
@@ -38,7 +41,9 @@ to understand the required folder structure and supported file types.
 """,
         )
         parser.add_argument(
-            "--as-study", action="store_true", help="Group files by study"
+            "--as-study",
+            action="store_true",
+            help="Group files by study",
         )
         parser.add_argument(
             "--json",
@@ -46,7 +51,9 @@ to understand the required folder structure and supported file types.
             help="Upload json files with list of task objects",
         )
         parser.add_argument(
-            "--segment-map", "-m", help="Segmentation mapping file path"
+            "--segment-map",
+            "-m",
+            help="Segmentation mapping file path",
         )
         parser.add_argument(
             "--storage",
@@ -74,6 +81,9 @@ By default, the uploaded NIfTI files are not validated during upload,
 which can result in invalid files being uploaded.
 Using this argument validates the files before upload,
 but may increase the upload time.""",
+        )
+        parser.add_argument(
+            "--clear-cache", action="store_true", help="Clear local cache"
         )
         parser.add_argument(
             "--concurrency",
@@ -115,7 +125,7 @@ but may increase the upload time.""",
         ):
             storage_id = str(self.args.storage).strip().lower()
         else:
-            raise ArgumentError(None, "")
+            raise ArgumentError(None, f"Invalid upload storage: {self.args.storage}")
 
         if not self.args.label_storage:
             label_storage_id = storage_id
@@ -129,7 +139,12 @@ but may increase the upload time.""",
         ):
             label_storage_id = str(self.args.label_storage).strip().lower()
         else:
-            raise ArgumentError(None, "")
+            raise ArgumentError(
+                None, f"Invalid upload label storage: {self.args.label_storage}"
+            )
+
+        if self.args.clear_cache:
+            self.project.cache.clear_cache(True)
 
         items_list: Union[List[List[str]], List[Dict]]
         if self.args.json and directory.endswith(".json") and os.path.isfile(directory):

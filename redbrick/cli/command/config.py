@@ -37,18 +37,29 @@ class CLIConfigController(CLIConfigInterface):
         )
         parser.add_argument("--profile", "-p", help="Profile name")
         parser.add_argument(
-            "--force", "-f", action="store_true", help="Force create new credentials"
+            "--force",
+            "-f",
+            action="store_true",
+            help="Force create new credentials",
         )
 
         # list_sub_command
-        _ = sub_command.add_parser(self.LIST, help="List all credential profiles")
+        _ = sub_command.add_parser(
+            self.LIST,
+            help="List all credential profiles",
+            description="List all credential profiles",
+        )
 
         set_sub_command = sub_command.add_parser(
-            self.SET, help="Set your default credentials profile"
+            self.SET,
+            help="Set your default credentials profile",
+            description="Set your default credentials profile",
         )
         set_sub_command.add_argument("profile", nargs="?", help="Profile name")
 
-        add_sub_command = sub_command.add_parser(self.ADD, help="Add a new profile")
+        add_sub_command = sub_command.add_parser(
+            self.ADD, help="Add a new profile", description="Add a new profile"
+        )
         add_sub_command.add_argument("--org", "-o", help="Org ID")
         add_sub_command.add_argument("--key", "-k", help="Add your API Key.")
         add_sub_command.add_argument(
@@ -57,17 +68,25 @@ class CLIConfigController(CLIConfigInterface):
             help="Endpoint URL, should default to https://app.redbrickai.com.",
         )
         add_sub_command.add_argument(
-            "--profile", "-p", help="Define a name for your authentication profile."
+            "--profile",
+            "-p",
+            help="Define a name for your authentication profile.",
         )
 
-        unset_sub_command = sub_command.add_parser(self.REMOVE, help="Remove a profile")
+        unset_sub_command = sub_command.add_parser(
+            self.REMOVE, help="Remove a profile", description="Remove a profile"
+        )
         unset_sub_command.add_argument("profile", nargs="?", help="Profile name")
 
         # clear_sub_command
-        _ = sub_command.add_parser(self.CLEAR, help="Clear all credentials")
+        _ = sub_command.add_parser(
+            self.CLEAR,
+            help="Clear all credentials",
+            description="Clear all credentials",
+        )
 
         verify_sub_command = sub_command.add_parser(
-            self.VERIFY, help="Verify a profile"
+            self.VERIFY, help="Verify a profile", description="Verify a profile"
         )
         verify_sub_command.add_argument("profile", nargs="?", help="Profile name")
 
@@ -91,7 +110,7 @@ class CLIConfigController(CLIConfigInterface):
         elif args.sub_command == self.VERIFY:
             self.handle_verify()
         else:
-            raise ArgumentError(None, "")
+            raise ArgumentError(None, f"Invalid config sub command: {args.sub_command}")
 
     def handle_config(self) -> None:
         """Handle empty sub command."""
@@ -143,7 +162,7 @@ class CLIConfigController(CLIConfigInterface):
             table.add_row(
                 ("* " if name == default_profile else "") + name,
                 *row,
-                style="green" if name == default_profile else None
+                style="green" if name == default_profile else None,
             )
 
         console = Console()

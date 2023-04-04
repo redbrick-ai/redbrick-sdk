@@ -6,35 +6,41 @@ functions for programmatically manipulating data, importing annotations, assigni
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_project, get_org, StorageMethod, ImportTypes
+   :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters
+   :show-inheritance:
+
+Organization
+----------------------
+.. automodule:: redbrick.organization.RBOrganization
+   :members: name, org_id, create_workspace, create_project, labeling_time, create_taxonomy_new, get_taxonomy, update_taxonomy
+   :show-inheritance:
+
+Workspace
+----------------------
+.. automodule:: redbrick.workspace.RBWorkspace
+   :members: name, org_id, workspace_id
    :show-inheritance:
 
 Project
 ----------------------
 .. autoclass:: redbrick.project.RBProject
-   :members: name, org_id, project_id, url, taxonomy_name, label_storage, label_stages, review_stages, members, set_label_storage
-   :show-inheritance:
-
-Organization
-----------------------
-.. automodule:: redbrick.organization
-   :members:
+   :members: name, org_id, project_id, url, taxonomy_name, workspace_id, label_storage, label_stages, review_stages, members, set_label_storage
    :show-inheritance:
 
 Export
 ----------------------
 .. autoclass:: redbrick.export.Export
-   :members: export_tasks, search_tasks, get_task_events
+   :members: export_tasks, list_tasks, get_task_events, search_tasks, redbrick_nifti
    :show-inheritance:
 
 Upload
 ----------------------
 .. autoclass:: redbrick.upload.Upload
-   :members: create_datapoints, delete_tasks, update_task_items
+   :members: create_datapoints, delete_tasks, delete_tasks_by_name, update_task_items, import_tasks_from_workspace
    :show-inheritance:
 
 Labeling
 ----------------------
 .. autoclass:: redbrick.labeling.Labeling
-   :members: get_tasks, put_tasks, get_task_queue, assign_tasks, move_tasks_to_start
+   :members: put_tasks, assign_tasks, move_tasks_to_start, get_tasks, get_task_queue
    :show-inheritance:

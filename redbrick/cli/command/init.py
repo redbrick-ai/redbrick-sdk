@@ -17,7 +17,11 @@ class CLIInitController(CLIInitInterface):
         """Intialize init sub commands."""
         parser.add_argument("--name", "-n", help="Project name")
         parser.add_argument("--taxonomy", "-t", help="Taxonomy name")
-        parser.add_argument("--reviews", "-r", help="Number of review stages")
+        parser.add_argument(
+            "--reviews",
+            "-r",
+            help="Number of review stages",
+        )
         parser.add_argument(
             "path",
             nargs="?",

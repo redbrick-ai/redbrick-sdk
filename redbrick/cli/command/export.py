@@ -8,8 +8,11 @@ from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import List, Dict, Tuple
 import shutil
 
+import shtab
+
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
+from redbrick.common.constants import MAX_FILE_BATCH_SIZE
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.files import (
     uniquify_path,
@@ -56,10 +59,14 @@ class CLIExportController(CLIExportInterface):
             if it is enabled for the given project.""",
         )
         parser.add_argument(
-            "--png", action="store_true", help="Export labels as png masks"
+            "--png",
+            action="store_true",
+            help="Export labels as png masks",
         )
         parser.add_argument(
-            "--clear-cache", action="store_true", help="Clear local cache"
+            "--clear-cache",
+            action="store_true",
+            help="Clear local cache",
         )
         parser.add_argument(
             "--concurrency",
@@ -79,7 +86,7 @@ class CLIExportController(CLIExportInterface):
             "-d",
             default=".",
             help="Destination directory (Default: current directory)",
-        )
+        ).complete = shtab.DIRECTORY  # type: ignore
 
     def handler(self, args: Namespace) -> None:
         """Handle export command."""
@@ -101,7 +108,7 @@ class CLIExportController(CLIExportInterface):
             )
             is None
         ):
-            raise ArgumentError(None, "")
+            raise ArgumentError(None, f"Invalid export type: {self.args.type}")
 
         if self.args.clear_cache:
             self.project.cache.clear_cache(True)
@@ -232,7 +239,7 @@ class CLIExportController(CLIExportInterface):
         os.makedirs(images_dir, exist_ok=True)
 
         downloaded_tasks = await gather_with_concurrency(
-            min(concurrency, 5),
+            min(concurrency, MAX_FILE_BATCH_SIZE),
             [
                 self._download_task(task, storage_id, images_dir)
                 for task, storage_id in zip(tasks, storage_ids)
@@ -333,13 +340,16 @@ class CLIExportController(CLIExportInterface):
         storage_id: str,
         parent_dir: str,
     ) -> Tuple[Dict, List[str]]:
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals, too-many-branches
         path_pattern = re.compile(r"[^\w.]+")
         task_name = re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
         task_dir = os.path.join(parent_dir, task_name)
 
-        shutil.rmtree(task_dir, ignore_errors=True)
-        os.makedirs(task_dir)
+        if os.path.isfile(task_dir):
+            os.remove(task_dir)
+        else:
+            shutil.rmtree(task_dir, ignore_errors=True)
+        os.makedirs(task_dir, exist_ok=True)
 
         series_dirs: List[str] = []
         items_lists: List[List[str]] = []

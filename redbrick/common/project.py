@@ -21,7 +21,13 @@ class ProjectRepoInterface(ABC):
 
     @abstractmethod
     def create_project(
-        self, org_id: str, name: str, stages: List[dict], td_type: str, tax_name: str
+        self,
+        org_id: str,
+        name: str,
+        stages: List[dict],
+        td_type: str,
+        tax_name: str,
+        workspace_id: Optional[str],
     ) -> Dict:
         """Create a project and return project_id."""
 

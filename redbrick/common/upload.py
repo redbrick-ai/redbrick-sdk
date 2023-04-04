@@ -55,6 +55,12 @@ class UploadControllerInterface(ABC):
         """Delete tasks in a project."""
 
     @abstractmethod
+    def delete_tasks_by_name(
+        self, org_id: str, project_id: str, task_names: List[str]
+    ) -> bool:
+        """Delete tasks in a project by task names."""
+
+    @abstractmethod
     async def generate_items_list(
         self,
         aio_client: aiohttp.ClientSession,
@@ -74,3 +80,14 @@ class UploadControllerInterface(ABC):
         storage_id: Optional[str] = None,
     ) -> Dict:
         """Validate and convert tasks format."""
+
+    @abstractmethod
+    def import_tasks_from_workspace(
+        self,
+        org_id: str,
+        project_id: str,
+        source_project_id: str,
+        task_search: List[Dict],
+        with_labels: bool = False,
+    ) -> Dict:
+        """Import tasks from another project in the same workspace."""

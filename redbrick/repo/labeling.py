@@ -210,12 +210,12 @@ class LabelingRepo(LabelingControllerInterface):
         """Put review result for task."""
         query = """
         mutation putReviewTask(
-        $orgId: UUID!
-        $projectId: UUID!
-        $stageName: String!
-        $reviewVal: Boolean!
-        $taskId: UUID!
-        $elapsedTimeMs: Int!
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String!
+            $reviewVal: Boolean!
+            $taskId: UUID!
+            $elapsedTimeMs: Int!
         ) {
             putExpertReviewTask(
             orgId: $orgId
@@ -259,7 +259,7 @@ class LabelingRepo(LabelingControllerInterface):
             $emails: [String!]
             $currentUser: Boolean
             $refresh: Boolean
-        ){
+        ) {
             assignTasksMultipleUsers(
                 orgId: $orgId
                 projectId: $projectId

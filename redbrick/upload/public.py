@@ -366,7 +366,7 @@ class Upload:
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
         label_storage_id: Optional[str] = None,
-        label_validate: bool = False,
+        label_validate: bool = True,
         concurrency: int = 50,
     ) -> List[Dict]:
         """
@@ -419,7 +419,7 @@ class Upload:
             Optional label storage id to reference nifti segmentations.
             Defaults to items storage_id if not specified.
 
-        label_validate: bool = False
+        label_validate: bool = True
             Validate label nifti instances and segment map.
 
         concurrency: int = 50
@@ -472,6 +472,26 @@ class Upload:
             True if successful, else False.
         """
         return self.context.upload.delete_tasks(self.org_id, self.project_id, task_ids)
+
+    def delete_tasks_by_name(self, task_names: List[str]) -> bool:
+        """Delete project tasks based on task names.
+
+        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
+        >>> project.upload.delete_tasks_by_name([...])
+
+        Parameters
+        --------------
+        task_names: List[str]
+            List of task names to delete.
+
+        Returns
+        -------------
+        bool
+            True if successful, else False.
+        """
+        return self.context.upload.delete_tasks_by_name(
+            self.org_id, self.project_id, task_names
+        )
 
     async def generate_items_list(
         self,
@@ -718,4 +738,39 @@ class Upload:
             self._create_tasks(
                 storage_id, points, {}, False, storage_id, False, concurrency, True
             )
+        )
+
+    def import_tasks_from_workspace(
+        self, source_project_id: str, task_ids: List[str], with_labels: bool = False
+    ) -> None:
+        """
+        Import tasks from another project in the same workspace.
+
+        .. code:: python
+
+            project = redbrick.get_project(org_id, project_id, api_key, url)
+            project.upload.import_tasks_from_project(source_project_id, task_ids)
+
+
+        Parameters
+        --------------
+        source_project_id: str
+            The source project id from which tasks are to be imported.
+
+        task_ids: List[str]
+            List of task ids to be imported.
+
+        with_labels: bool = False
+            If True, the labels will also be imported.
+
+        Returns
+        -------------
+        None
+        """
+        self.context.upload.import_tasks_from_workspace(
+            self.org_id,
+            self.project_id,
+            source_project_id,
+            [{"taskId": task_id} for task_id in task_ids],
+            with_labels,
         )

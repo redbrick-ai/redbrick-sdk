@@ -1,19 +1,18 @@
 """Handler for file upload/download."""
 import os
 import gzip
-from typing import List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Tuple, Set
 
 import asyncio
 import aiohttp
-import aiofiles  # type: ignore
 from yarl import URL
-import tenacity
+from tenacity import Retrying, RetryError
 from tenacity.retry import retry_if_not_exception_type
 from tenacity.stop import stop_after_attempt
-from tenacity.wait import wait_exponential
+from tenacity.wait import wait_random_exponential
 from natsort import natsorted, ns
 
-from redbrick.common.constants import MAX_FILE_BATCH, MAX_RETRY_ATTEMPTS
+from redbrick.common.constants import MAX_FILE_BATCH_SIZE, MAX_RETRY_ATTEMPTS
 from redbrick.utils.async_utils import gather_with_concurrency
 
 IMAGE_FILE_TYPES = {
@@ -147,39 +146,46 @@ async def upload_files(
 ) -> List[bool]:
     """Upload files from local path to url (file path, presigned url, file type)."""
 
-    @tenacity.retry(
-        reraise=True,
-        stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_not_exception_type((KeyboardInterrupt,)),
-        retry_error_callback=lambda _: False,
-    )
     async def _upload_file(
         session: aiohttp.ClientSession, path: str, url: str, file_type: str
     ) -> bool:
         if not path or not url or not file_type:
             return False
-        async with aiofiles.open(path, mode="rb") as file_:  # type: ignore
-            data = await file_.read()
 
-        async with session.put(
-            url,
-            headers={"Content-Type": file_type, "Content-Encoding": "gzip"},
-            data=data if path.endswith(".gz") else gzip.compress(data),
-        ) as response:
-            if response.status == 200:
-                return True
-            raise ConnectionError(f"Error in uploading {path} to RedBrick")
+        with open(path, mode="rb") as file_:
+            data = file_.read()
 
-    # limit to 5, default is 100, cleanup is done by session
-    conn = aiohttp.TCPConnector(limit=MAX_FILE_BATCH)
+        status: int = 0
+
+        try:
+            for attempt in Retrying(
+                reraise=True,
+                stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
+                wait=wait_random_exponential(min=5, max=30),
+                retry=retry_if_not_exception_type(KeyboardInterrupt),
+            ):
+                with attempt:
+                    async with session.put(
+                        url,
+                        headers={"Content-Type": file_type, "Content-Encoding": "gzip"},
+                        data=data if path.endswith(".gz") else gzip.compress(data),
+                    ) as response:
+                        status = response.status
+        except RetryError as error:
+            raise Exception("Unknown problem occurred") from error
+
+        if status == 200:
+            return True
+        raise ConnectionError(f"Error in uploading {path} to RedBrick")
+
+    conn = aiohttp.TCPConnector()
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [
             _upload_file(session, path, url, file_type)
             for path, url, file_type in files
         ]
         uploaded = await gather_with_concurrency(
-            10, coros, progress_bar_name, keep_progress_bar
+            MAX_FILE_BATCH_SIZE, coros, progress_bar_name, keep_progress_bar
         )
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
@@ -195,46 +201,60 @@ async def download_files(
 ) -> List[Optional[str]]:
     """Download files from url to local path (presigned url, file path)."""
 
-    @tenacity.retry(
-        reraise=True,
-        stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_not_exception_type(
-            (KeyboardInterrupt, PermissionError, ValueError)
-        ),
-    )
     async def _download_file(
         session: aiohttp.ClientSession, url: Optional[str], path: Optional[str]
     ) -> Optional[str]:
         # pylint: disable=no-member
         if not url or not path:
             return None
-        async with session.get(URL(url, encoded=True)) as response:
-            if response.status == 200:
-                data = await response.read()
-                if not zipped and response.headers.get("Content-Encoding") == "gzip":
-                    try:
-                        data = gzip.decompress(data)
-                    except Exception:  # pylint: disable=broad-except
-                        pass
-                if zipped and not is_gzipped_data(data):
-                    data = gzip.compress(data)
-                if zipped and not path.endswith(".gz"):
-                    path += ".gz"
-                if not overwrite:
-                    path = uniquify_path(path)
-                async with aiofiles.open(path, "wb") as file_:  # type: ignore
-                    await file_.write(data)
-                return path
+
+        headers: Dict = {}
+        data: Optional[bytes] = None
+
+        try:
+            for attempt in Retrying(
+                reraise=True,
+                stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
+                wait=wait_random_exponential(min=5, max=30),
+                retry=retry_if_not_exception_type(KeyboardInterrupt),
+            ):
+                with attempt:
+                    async with session.get(URL(url, encoded=True)) as response:
+                        if response.status == 200:
+                            headers = dict(response.headers)
+                            data = await response.read()
+        except RetryError as error:
+            raise Exception("Unknown problem occurred") from error
+
+        if not data:
             return None
 
-    # limit to 5, default is 100, cleanup is done by session
-    conn = aiohttp.TCPConnector(limit=MAX_FILE_BATCH)
+        if not zipped and headers.get("Content-Encoding") == "gzip":
+            try:
+                data = gzip.decompress(data)
+            except Exception:  # pylint: disable=broad-except
+                pass
+        if zipped and not is_gzipped_data(data):
+            data = gzip.compress(data)
+        if zipped and not path.endswith(".gz"):
+            path += ".gz"
+        if not overwrite:
+            path = uniquify_path(path)
+        with open(path, "wb") as file_:
+            file_.write(data)
+        return path
+
+    conn = aiohttp.TCPConnector()
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [_download_file(session, url, path) for url, path in files]
         paths = await gather_with_concurrency(
-            5, coros, progress_bar_name, keep_progress_bar
+            MAX_FILE_BATCH_SIZE,
+            coros,
+            progress_bar_name,
+            keep_progress_bar,
+            True,
         )
+        await session.close()
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
-    return paths
+    return [(path if isinstance(path, str) else None) for path in paths]

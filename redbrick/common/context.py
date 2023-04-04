@@ -13,6 +13,7 @@ class RBContext:
         from .upload import UploadControllerInterface
         from .labeling import LabelingControllerInterface
         from .project import ProjectRepoInterface
+        from .workspace import WorkspaceRepoInterface
 
         self.client = RBClient(api_key=api_key, url=url)
 
@@ -20,6 +21,7 @@ class RBContext:
         self.upload: UploadControllerInterface
         self.labeling: LabelingControllerInterface
         self.project: ProjectRepoInterface
+        self.workspace: WorkspaceRepoInterface
 
         self._key_id: Optional[str] = None
 

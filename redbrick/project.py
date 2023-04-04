@@ -34,6 +34,7 @@ class RBProject:
         self._taxonomy_name: str
         self._project_url: str
         self._created_at: datetime
+        self._workspace_id: Optional[str]
 
         self.consensus_enabled: bool = False
         self._label_storage: Optional[Tuple[str, str]] = None
@@ -112,6 +113,15 @@ class RBProject:
         Retrieves the taxonomy name.
         """
         return self._taxonomy_name
+
+    @property
+    def workspace_id(self) -> Optional[str]:
+        """
+        Read only workspace_id property.
+
+        Retrieves the workspace id.
+        """
+        return self._workspace_id
 
     @property
     def label_storage(self) -> Tuple[str, str]:
@@ -196,6 +206,7 @@ class RBProject:
         self._project_name = project["name"]
         self.td_type = project["tdType"]
         self._taxonomy_name = project["taxonomy"]["name"]
+        self._workspace_id = (project.get("workspace", {}) or {}).get("workspaceId")
         self._stages = self.context.project.get_stages(self.org_id, self.project_id)
         self._project_url = project["projectUrl"]
         self._created_at = parser.parse(project["createdAt"])
