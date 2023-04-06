@@ -11,7 +11,6 @@ import aiohttp
 import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
-from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.upload import process_segmentation_upload, validate_json
 from redbrick.utils.logging import log_error, logger
@@ -223,7 +222,7 @@ class Labeling:
         label_validate: bool,
         existing_labels: bool,
     ) -> List[Dict]:
-        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+        conn = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
                 self._put_task(
@@ -608,7 +607,7 @@ class Labeling:
         return datapoints
 
     async def _tasks_to_start(self, task_ids: List[str]) -> None:
-        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+        conn = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
                 self.context.labeling.move_task_to_start(

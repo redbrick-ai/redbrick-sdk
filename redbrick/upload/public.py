@@ -250,7 +250,7 @@ class Upload:
         is_ground_truth: bool,
         label_storage_id: str,
         label_validate: bool,
-        concurrency: int = MAX_CONCURRENCY,
+        concurrency: int = 10,
         update_items: bool = False,
     ) -> List[Dict]:
         # pylint: disable=too-many-locals
@@ -286,7 +286,7 @@ class Upload:
             self.org_id, self.project_id
         )
 
-        conn = aiohttp.TCPConnector(limit=min(concurrency, MAX_CONCURRENCY))
+        conn = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
                 self._create_task(
@@ -521,7 +521,7 @@ class Upload:
         total_groups = len(items_list)
 
         is_win = sys.platform.startswith("win")
-        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+        conn = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
                 self.context.upload.generate_items_list(

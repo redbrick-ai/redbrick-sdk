@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 import aiohttp
 import tqdm  # type: ignore
 
-from redbrick.common.constants import MAX_CONCURRENCY
+from redbrick.common.constants import MAX_CONCURRENCY, MAX_FILE_BATCH_SIZE
 from redbrick.common.context import RBContext
 from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
 from redbrick.common.export import TaskFilterParams
@@ -119,7 +119,7 @@ class Export:
         return datapoints, taxonomy
 
     async def _get_input_labels(self, dp_ids: List[str]) -> List[Dict]:
-        conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+        conn = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=conn) as session:
             coros = [
                 self.context.export.get_labels(
@@ -414,6 +414,7 @@ class Export:
     def export_nifti_label_data(
         self,
         datapoints: List[Dict],
+        concurrency: int,
         taxonomy: Dict,
         nifti_dir: str,
         old_format: bool,
@@ -450,7 +451,7 @@ class Export:
         loop = asyncio.get_event_loop()
         tasks = loop.run_until_complete(
             gather_with_concurrency(
-                MAX_CONCURRENCY,
+                min(concurrency, MAX_FILE_BATCH_SIZE),
                 [
                     self.process_labels(
                         datapoint,
@@ -555,6 +556,7 @@ class Export:
         logger.info(f"Saving NIfTI files to {destination} directory")
         tasks, class_map = self.export_nifti_label_data(
             datapoints,
+            concurrency,
             taxonomy,
             nifti_dir,
             old_format,
@@ -744,10 +746,10 @@ class Export:
 
         if search == TaskFilters.ALL:
             stage_name = None
-            del filters["userId"]
+            filters.pop("userId", None)
         elif search == TaskFilters.GROUNDTRUTH:
             stage_name = self.output_stage_name
-            del filters["userId"]
+            filters.pop("userId", None)
         elif search == TaskFilters.UNASSIGNED:
             stage_name = stage_name or all_stages[0]
             filters["userId"] = None
@@ -769,15 +771,15 @@ class Export:
                 else review_stages[0]
             )
             filters["reviewState"] = ReviewStates.FAILED
-            del filters["userId"]
+            filters.pop("userId", None)
         elif search == TaskFilters.ISSUES:
             stage_name = label_stages[0]
             filters["status"] = TaskStates.PROBLEM
-            del filters["userId"]
+            filters.pop("userId", None)
         elif search == TaskFilters.BENCHMARK:
             stage_name = self.output_stage_name
             filters["benchmark"] = True
-            del filters["userId"]
+            filters.pop("userId", None)
 
         my_iter = PaginationIterator(
             partial(
