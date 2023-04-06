@@ -13,7 +13,7 @@ class StorageMethod:
     REDBRICK = "22222222-2222-2222-2222-222222222222"
 
 
-class TaskStates(Enum):
+class TaskStates(str, Enum):
     """Potential states of task status."""
 
     UNASSIGNED = "UNASSIGNED"
@@ -25,7 +25,7 @@ class TaskStates(Enum):
     STAGED = "STAGED"
 
 
-class ReviewStates(Enum):
+class ReviewStates(str, Enum):
     """Task review states."""
 
     PASSED = "PASSED"
@@ -33,7 +33,7 @@ class ReviewStates(Enum):
     CORRECTED = "CORRECTED"
 
 
-class ImportTypes(Enum):
+class ImportTypes(str, Enum):
     """
     Enumerates the supported data import types.
 
@@ -48,7 +48,7 @@ class ImportTypes(Enum):
     VIDEOFRAMES = "VIDEOFRAMES"
 
 
-class TaskEventTypes(Enum):
+class TaskEventTypes(str, Enum):
     """Enumerate the different types of task events."""
 
     TASK_CREATED = "TASK_CREATED"
@@ -66,7 +66,7 @@ class TaskEventTypes(Enum):
     CONSENSUS_TASK_EDITED = "CONSENSUS_TASK_EDITED"
 
 
-class TaskFilters(Enum):
+class TaskFilters(str, Enum):
     """Enumerate the different task filters."""
 
     ALL = "ALL"
