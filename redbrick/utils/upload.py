@@ -24,7 +24,7 @@ async def validate_json(
     for batch in range(0, total_input_data, concurrency):
         inputs.append(input_data[batch : batch + concurrency])
 
-    conn = aiohttp.TCPConnector(limit=MAX_CONCURRENCY)
+    conn = aiohttp.TCPConnector()
     async with aiohttp.ClientSession(connector=conn) as session:
         coros = [
             context.upload.validate_and_convert_to_import_format(

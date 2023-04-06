@@ -20,7 +20,25 @@ async def gather_with_concurrency(
     if not tasks:
         return []
 
-    max_concurrency = min(max_concurrency, MAX_CONCURRENCY)
+    max_concurrency = max(1, min(max_concurrency, MAX_CONCURRENCY))
+
+    if max_concurrency == 1:
+        output: List[ReturnType] = []
+        progress = (
+            tqdm.tqdm(tasks, desc=progress_bar_name, leave=keep_progress_bar)
+            if progress_bar_name
+            else tasks
+        )
+        for task in progress:
+            try:
+                output.append(await task)
+            except Exception as exc:  # pylint: disable=broad-except
+                if return_exceptions:
+                    output.append(exc)  # type: ignore
+                else:
+                    raise exc
+        return output
+
     semaphore = asyncio.Semaphore(max_concurrency)
 
     async def sem_task(task: Awaitable[ReturnType]) -> ReturnType:
@@ -47,10 +65,10 @@ async def gather_with_concurrency(
         ordered_coros, desc=progress_bar_name, leave=keep_progress_bar
     ):
         temp: Coroutine[Any, Any, Tuple[int, bool, ReturnType]] = coro
-        idx, success, output = await temp
+        idx, success, value = await temp
         if not success and not return_exceptions:
-            raise output  # type: ignore
+            raise value  # type: ignore
 
-        result.append((idx, output))
+        result.append((idx, value))
 
     return [res[1] for res in sorted(result, key=lambda x: x[0])]

@@ -192,6 +192,7 @@ class CLIExportController(CLIExportInterface):
         storage_ids = [task["storageId"] for task in data]
         tasks, class_map = self.project.project.export.export_nifti_label_data(
             data,
+            self.args.concurrency,
             taxonomy,
             segmentations_dir,
             bool(self.args.old_format),

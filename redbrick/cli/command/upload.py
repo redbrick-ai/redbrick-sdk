@@ -89,8 +89,8 @@ but may increase the upload time.""",
             "--concurrency",
             "-c",
             type=int,
-            default=50,
-            help="Concurrency value (Default: 50)",
+            default=10,
+            help="Concurrency value (Default: 10)",
         )
 
     def handler(self, args: Namespace) -> None:
