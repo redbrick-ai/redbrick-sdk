@@ -728,7 +728,7 @@ class Export:
         List[Dict]
             [{"taskId": str, "name": str, "createdAt": str, "currentStageName": str}]
         """
-        # pylint: disable=too-many-branches, too-many-locals
+        # pylint: disable=too-many-branches, too-many-locals, too-many-statements
         label_stages: List[str] = [stage["stageName"] for stage in self.label_stages]
         review_stages: List[str] = [stage["stageName"] for stage in self.review_stages]
         all_stages: List[str] = label_stages + review_stages + [self.output_stage_name]
@@ -780,6 +780,8 @@ class Export:
             stage_name = self.output_stage_name
             filters["benchmark"] = True
             filters.pop("userId", None)
+        else:
+            raise ValueError(f"Invalid task filter: {search}")
 
         my_iter = PaginationIterator(
             partial(
