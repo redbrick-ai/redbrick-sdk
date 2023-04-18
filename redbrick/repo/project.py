@@ -98,17 +98,6 @@ class ProjectRepo(ProjectRepoInterface):
                     errors
                     project {
                         projectId
-                        name
-                        desc
-                        projectUrl
-                        createdAt
-                    }
-                    stages {
-                        stageName
-                        brickName
-                    }
-                    workspace {
-                        workspaceId
                     }
                 }
             }
