@@ -139,6 +139,17 @@ def is_gzipped_data(data: bytes) -> bool:
     return data[:2] == b"\x1f\x8b"
 
 
+def is_dicom_file(file_name: str) -> bool:
+    """Check if data is dicom."""
+    with open(file_name, "rb") as fp_:
+        data = fp_.read()
+
+    if is_gzipped_data(data):
+        data = gzip.decompress(data)
+
+    return data[128:132] == b"\x44\x49\x43\x4d"
+
+
 async def upload_files(
     files: List[Tuple[str, str, str]],
     progress_bar_name: Optional[str] = "Uploading files",
