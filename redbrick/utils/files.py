@@ -157,6 +157,11 @@ async def upload_files(
 
         status: int = 0
 
+        headers = {"Content-Type": file_type}
+        if not is_gzipped_data(data):
+            headers["Content-Encoding"] = "gzip"
+            data = gzip.compress(data)
+
         try:
             for attempt in Retrying(
                 reraise=True,
@@ -165,11 +170,7 @@ async def upload_files(
                 retry=retry_if_not_exception_type(KeyboardInterrupt),
             ):
                 with attempt:
-                    async with session.put(
-                        url,
-                        headers={"Content-Type": file_type, "Content-Encoding": "gzip"},
-                        data=data if path.endswith(".gz") else gzip.compress(data),
-                    ) as response:
+                    async with session.put(url, headers=headers, data=data) as response:
                         status = response.status
         except RetryError as error:
             raise Exception("Unknown problem occurred") from error
