@@ -15,7 +15,6 @@ install_requires = [
     "packaging<=23.0",
     "Pillow<=9.4.0,>=9.0.1",
     "python-dateutil<=2.8.2",
-    "python-magic<=0.4.27",
     "pylibmagic<=0.3.0",
     "requests<=2.28.2,>=2.23.0",
     "Rich<=13.3.1",
