@@ -14,15 +14,17 @@ class StorageMethod:
 
 
 class TaskStates(str, Enum):
-    """Potential states of task status.
+    """Potential Task Status States.
 
-    - ``UNASSIGNED`` - The task has not been assigned to any worker.
-    - ``ASSIGNED`` - The task has been assigned to a worker but not yet started.
-    - ``IN_PROGRESS`` - The task is currently being worked on by a worker.
-    - ``COMPLETED`` - The task has been completed successfully.
-    - ``PROBLEM`` - The task has encountered an issue and cannot be worked upon.
-    - ``SKIPPED`` - The task has been skipped.
-    - ``STAGED`` - The task has been saved as draft.
+    - ``UNASSIGNED`` - The Task has not been assigned to a Project Admin or Member.
+    - ``ASSIGNED`` - The Task has been assigned to a Project Admin or Member,
+        but work has not begun on it.
+    - ``IN_PROGRESS`` - The Task is currently being worked on by a Project Admin or Member.
+    - ``COMPLETED`` - The Task has been completed successfully.
+    - ``PROBLEM`` - A Project Admin or Member has raised an Issue regarding the Task,
+        and work cannot continue until the Issue is resolved by a Project Admin.
+    - ``SKIPPED`` - The Task has been skipped.
+    - ``STAGED`` - The Task has been saved as a Draft.
     """
 
     UNASSIGNED = "UNASSIGNED"
@@ -37,9 +39,9 @@ class TaskStates(str, Enum):
 class ReviewStates(str, Enum):
     """Task review states.
 
-    - ``PASSED`` - The task has been accepted in review.
-    - ``FAILED`` - The task has been rejected in review.
-    - ``CORRECTED`` - The task has been accepted with corrections made in the review.
+    - ``PASSED`` - The Task has been accepted in review.
+    - ``FAILED`` - The Task has been rejected in review.
+    - ``CORRECTED`` - The Task has been accepted with the corrections made in review.
     """
 
     PASSED = "PASSED"
