@@ -171,6 +171,20 @@ class RBOrganization:
                 )
                 return temp
 
+        taxonomies: Dict[str, Dict] = {
+            taxonomy["name"]: taxonomy for taxonomy in self.taxonomies(False)  # type: ignore
+        }
+
+        if taxonomy_name not in taxonomies:
+            raise ValueError(f"Taxonomy `{taxonomy_name}` does not exist")
+        if taxonomies[taxonomy_name].get("archived"):
+            raise ValueError(f"Taxonomy `{taxonomy_name}` has been archived")
+        if not taxonomies[taxonomy_name].get("isNew"):
+            logger.warning(
+                f"Deprecated: `{taxonomy_name}` is of type Taxonomy V1."
+                + " We suggest creating new projects using Taxonomy V2."
+            )
+
         try:
             project_data = self.context.project.create_project(
                 self.org_id,

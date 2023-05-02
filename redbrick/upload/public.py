@@ -14,11 +14,11 @@ import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.constants import MAX_CONCURRENCY
-from redbrick.common.enums import StorageMethod
+from redbrick.common.enums import ImportTypes, StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.upload import process_segmentation_upload, validate_json
 from redbrick.utils.logging import log_error, logger
-from redbrick.utils.files import get_file_type, upload_files
+from redbrick.utils.files import get_file_type, is_dicom_file, upload_files
 
 
 class Upload:
@@ -501,7 +501,7 @@ class Upload:
         concurrency: int = 50,
     ) -> List[Dict]:
         """Generate items list from local files."""
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals, too-many-branches
         logger.debug(f"Concurrency: {concurrency} for {len(items_list)} items")
         grouped_items_list: Dict[str, List[str]] = {}
         for items in items_list:
@@ -519,6 +519,17 @@ class Upload:
 
         items_list = list(grouped_items_list.values())
         total_groups = len(items_list)
+        items_map: Dict[str, str] = {}
+
+        if import_file_type == ImportTypes.DICOM3D:
+            for items in items_list:
+                for idx, item in enumerate(items):
+                    file_ext, file_type = get_file_type(item)
+                    if (
+                        not file_ext or file_type != "application/dicom"
+                    ) and is_dicom_file(item):
+                        items[idx] = item + ".dcm"
+                        items_map[items[idx]] = item
 
         is_win = sys.platform.startswith("win")
         conn = aiohttp.TCPConnector()
@@ -544,6 +555,12 @@ class Upload:
         output_data: List[Dict] = []
         for output in outputs:
             output_data.extend(json.loads(output))
+
+        if import_file_type == ImportTypes.DICOM3D:
+            for data in output_data:
+                for idx, item in enumerate(data["items"]):
+                    if item in items_map:
+                        data["items"][idx] = items_map[item]
 
         return output_data
 

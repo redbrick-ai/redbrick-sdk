@@ -1,6 +1,7 @@
 """CLI init command."""
 import os
 from argparse import ArgumentParser, Namespace
+from typing import List
 
 from rich.console import Console
 
@@ -63,7 +64,11 @@ class CLIInitController(CLIInitInterface):
 
         with console.status("Fetching taxonomies") as status:
             try:
-                taxonomies = org.taxonomies()
+                taxonomies: List[str] = [
+                    taxonomy["name"]  # type: ignore
+                    for taxonomy in org.taxonomies(False)
+                    if taxonomy.get("isNew") and not taxonomy.get("archived")  # type: ignore
+                ]
             except Exception as error:
                 status.stop()
                 raise error

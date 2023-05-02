@@ -139,6 +139,17 @@ def is_gzipped_data(data: bytes) -> bool:
     return data[:2] == b"\x1f\x8b"
 
 
+def is_dicom_file(file_name: str) -> bool:
+    """Check if data is dicom."""
+    with open(file_name, "rb") as fp_:
+        data = fp_.read()
+
+    if is_gzipped_data(data):
+        data = gzip.decompress(data)
+
+    return data[128:132] == b"\x44\x49\x43\x4d"
+
+
 async def upload_files(
     files: List[Tuple[str, str, str]],
     progress_bar_name: Optional[str] = "Uploading files",
@@ -157,6 +168,11 @@ async def upload_files(
 
         status: int = 0
 
+        headers = {"Content-Type": file_type}
+        if not is_gzipped_data(data):
+            headers["Content-Encoding"] = "gzip"
+            data = gzip.compress(data)
+
         try:
             for attempt in Retrying(
                 reraise=True,
@@ -165,11 +181,7 @@ async def upload_files(
                 retry=retry_if_not_exception_type(KeyboardInterrupt),
             ):
                 with attempt:
-                    async with session.put(
-                        url,
-                        headers={"Content-Type": file_type, "Content-Encoding": "gzip"},
-                        data=data if path.endswith(".gz") else gzip.compress(data),
-                    ) as response:
+                    async with session.put(url, headers=headers, data=data) as response:
                         status = response.status
         except RetryError as error:
             raise Exception("Unknown problem occurred") from error
