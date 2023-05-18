@@ -104,6 +104,8 @@ studyClassify {
         archived
     }
     archived
+    parents
+    hint
 }
 seriesClassify {
     name
@@ -116,6 +118,8 @@ seriesClassify {
         archived
     }
     archived
+    parents
+    hint
 }
 instanceClassify {
     name
@@ -128,6 +132,8 @@ instanceClassify {
         archived
     }
     archived
+    parents
+    hint
 }
 objectTypes {
     category
@@ -144,9 +150,13 @@ objectTypes {
             archived
         }
         archived
+        parents
+        hint
     }
     color
     archived
+    parents
+    hint
 }
 """
 
