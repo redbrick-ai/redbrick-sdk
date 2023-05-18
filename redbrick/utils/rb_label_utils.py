@@ -94,10 +94,13 @@ def flat_rb_format(
         "labelStorageId": label_storage_id,
     }
 
-    if current_stage_sub_task and current_stage_sub_task.get("subTasks"):
-        task["consensusTasks"] = [from_rb_sub_task(current_stage_sub_task)]
-        for sub_task in current_stage_sub_task["subTasks"]:
-            task["consensusTasks"].append(from_rb_sub_task(sub_task))
+    if current_stage_sub_task:
+        if current_stage_sub_task.get("priority") is not None:
+            task["priority"] = current_stage_sub_task["priority"]
+        if current_stage_sub_task.get("subTasks"):
+            task["consensusTasks"] = [from_rb_sub_task(current_stage_sub_task)]
+            for sub_task in current_stage_sub_task["subTasks"]:
+                task["consensusTasks"].append(from_rb_sub_task(sub_task))
 
     elif (
         current_stage_sub_task
@@ -452,6 +455,11 @@ def dicom_rb_format(task: Dict, old_format: bool, no_consensus: bool) -> Dict:
         series = volume_series[volume_index]
         if series_info.get("name"):
             series["name"] = series_info["name"]
+
+        series_meta_data = series_info.get("metaData")
+        if isinstance(series_meta_data, str):
+            series["metaData"] = json.loads(series_meta_data)
+
         series["items"] = list(
             map(lambda idx: task["items"][idx], series_info["itemsIndices"])  # type: ignore
         )

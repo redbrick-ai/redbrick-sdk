@@ -218,6 +218,7 @@ DATAPOINT_SHARD: str = """
             name
             itemsIndices
             dataType
+            metaData
         }}
         storageMethod {{
             storageId

@@ -55,7 +55,7 @@
             },
             "metaData": {
                 "title": "Task MetaData",
-                "description": "Task properties or extra info",
+                "description": "Task level meta data",
                 "type": "object"
             },
             "preAssign": {
@@ -123,6 +123,11 @@
                             "description": "Unique series name",
                             "type": "string",
                             "minLength": 1
+                        },
+                        "metaData": {
+                            "title": "Series MetaData",
+                            "description": "Series level meta data",
+                            "type": "object"
                         },
                         "segmentations": {
                             "title": "Segmentation(s)",

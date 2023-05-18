@@ -150,7 +150,24 @@ class Upload:
                     storage_id,
                     point["taskId"],
                     point["items"],
-                    point.get("seriesInfo"),
+                    [
+                        {
+                            **series_info,
+                            "metaData": json.dumps(
+                                series_info["metaData"], separators=(",", ":")
+                            )
+                            if series_info.get("metaData")
+                            else None,
+                            "imageHeaders": json.dumps(
+                                series_info["imageHeaders"], separators=(",", ":")
+                            )
+                            if series_info.get("imageHeaders")
+                            else None,
+                        }
+                        for series_info in point["seriesInfo"]
+                    ]
+                    if point.get("seriesInfo")
+                    else None,
                 )
                 assert response.get("ok"), response.get(
                     "message", "Failed to update items"
@@ -165,7 +182,24 @@ class Upload:
                     point["items"],
                     json.dumps(point.get("labels", []), separators=(",", ":")),
                     labels_map,
-                    point.get("seriesInfo"),
+                    [
+                        {
+                            **series_info,
+                            "metaData": json.dumps(
+                                series_info["metaData"], separators=(",", ":")
+                            )
+                            if series_info.get("metaData")
+                            else None,
+                            "imageHeaders": json.dumps(
+                                series_info["imageHeaders"], separators=(",", ":")
+                            )
+                            if series_info.get("imageHeaders")
+                            else None,
+                        }
+                        for series_info in point["seriesInfo"]
+                    ]
+                    if point.get("seriesInfo")
+                    else None,
                     json.dumps(point["metaData"], separators=(",", ":"))
                     if point.get("metaData")
                     else None,
