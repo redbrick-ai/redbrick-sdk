@@ -403,6 +403,7 @@ def dicom_rb_format(task: Dict, old_format: bool, no_consensus: bool) -> Dict:
         keys = ["itemsPresigned", "seriesInfo", "storageId", "labelStorageId"]
         for key in [
             "currentStageName",
+            "priority",
             "createdBy",
             "createdAt",
             "updatedBy",
@@ -427,6 +428,9 @@ def dicom_rb_format(task: Dict, old_format: bool, no_consensus: bool) -> Dict:
 
     if task.get("currentStageName"):
         output["currentStageName"] = task["currentStageName"]
+
+    if task.get("priority") is not None:
+        output["priority"] = task["priority"]
 
     if task.get("createdBy"):
         output["createdBy"] = task["createdBy"]

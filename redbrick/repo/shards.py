@@ -170,6 +170,7 @@ TASK_SHARD = f"""
             userId
             email
         }}
+        priority
         taskData {{
             {TASK_DATA_SHARD}
         }}

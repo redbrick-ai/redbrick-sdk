@@ -12,6 +12,7 @@ type Task = {
   // Only required on export
   taskId?: string;
   currentStageName?: string;
+  priority?: number;
   createdBy?: string;
   createdAt?: string;
   updatedBy?: string;

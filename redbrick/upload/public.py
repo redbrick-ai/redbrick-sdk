@@ -313,7 +313,7 @@ class Upload:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
 
-        for point, task in zip(points, tasks):
+        for point, task in zip(points, tasks):  # type: ignore
             if not task:
                 if update_items:
                     log_error(f"Error updating items for {point}")
