@@ -22,7 +22,16 @@ class RBClient:
 
     def __init__(self, api_key: str, url: str) -> None:
         """Construct RBClient."""
-        self.url = (url or DEFAULT_URL).rstrip("/") + "/graphql/"
+        self.url = (url or DEFAULT_URL).lower().rstrip("/")
+        if DEFAULT_URL in self.url:
+            self.url = DEFAULT_URL
+        elif "amazonaws.com" not in self.url:
+            self.url = self.url.replace("https://", "", 1).replace("http://", "", 1)
+            pos = self.url.find("/")
+            pos = pos if pos >= 0 else len(self.url)
+            self.url = "https://" + self.url[:pos] + "/api"
+
+        self.url += "/graphql/"
         self.session = requests.Session()
 
         self.api_key = api_key
