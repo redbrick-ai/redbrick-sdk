@@ -666,6 +666,7 @@ class Labeling:
             The number of tasks to update at a time.
             We recommend keeping this <= 50.
         """
+        concurrency = min(concurrency, 50)
         loop = asyncio.get_event_loop()
         errors = loop.run_until_complete(
             self._update_tasks_priorities(stage_name, tasks, concurrency)

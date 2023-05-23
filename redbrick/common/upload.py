@@ -51,12 +51,22 @@ class UploadControllerInterface(ABC):
         """Get a presigned url for uploading items."""
 
     @abstractmethod
-    def delete_tasks(self, org_id: str, project_id: str, task_ids: List[str]) -> bool:
+    async def delete_tasks(
+        self,
+        aio_client: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_ids: List[str],
+    ) -> bool:
         """Delete tasks in a project."""
 
     @abstractmethod
-    def delete_tasks_by_name(
-        self, org_id: str, project_id: str, task_names: List[str]
+    async def delete_tasks_by_name(
+        self,
+        aio_client: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_names: List[str],
     ) -> bool:
         """Delete tasks in a project by task names."""
 
