@@ -82,3 +82,14 @@ class LabelingControllerInterface(ABC):
         task_id: str,
     ) -> None:
         """Move groundtruth task back to start."""
+
+    @abstractmethod
+    async def update_priority(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
+        tasks: List[Dict],
+    ) -> Optional[str]:
+        """Update tasks priorities."""

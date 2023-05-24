@@ -169,7 +169,13 @@ class UploadRepo(UploadControllerInterface):
         assert isinstance(result["itemsUploadPresign"]["items"], list)
         return result["itemsUploadPresign"]["items"]
 
-    def delete_tasks(self, org_id: str, project_id: str, task_ids: List[str]) -> bool:
+    async def delete_tasks(
+        self,
+        aio_client: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_ids: List[str],
+    ) -> bool:
         """Delete tasks in a project."""
         query_string = """
         mutation deleteTasksSDK($orgId: UUID!, $projectId: UUID!, $taskIds: [UUID!]) {
@@ -189,14 +195,18 @@ class UploadRepo(UploadControllerInterface):
             "taskIds": task_ids,
         }
 
-        result: Dict[str, Dict] = self.client.execute_query(
-            query_string, query_variables
+        result: Dict[str, Dict] = await self.client.execute_query_async(
+            aio_client, query_string, query_variables
         )
 
         return (result.get("deleteTasks", {}) or {}).get("ok", False)
 
-    def delete_tasks_by_name(
-        self, org_id: str, project_id: str, task_names: List[str]
+    async def delete_tasks_by_name(
+        self,
+        aio_client: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_names: List[str],
     ) -> bool:
         """Delete tasks in a project by task names."""
         query_string = """
@@ -217,8 +227,8 @@ class UploadRepo(UploadControllerInterface):
             "taskNames": task_names,
         }
 
-        result: Dict[str, Dict] = self.client.execute_query(
-            query_string, query_variables
+        result: Dict[str, Dict] = await self.client.execute_query_async(
+            aio_client, query_string, query_variables
         )
 
         return (result.get("deleteTasks", {}) or {}).get("ok", False)

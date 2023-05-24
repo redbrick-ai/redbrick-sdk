@@ -150,7 +150,24 @@ class Upload:
                     storage_id,
                     point["taskId"],
                     point["items"],
-                    point.get("seriesInfo"),
+                    [
+                        {
+                            **series_info,
+                            "metaData": json.dumps(
+                                series_info["metaData"], separators=(",", ":")
+                            )
+                            if series_info.get("metaData")
+                            else None,
+                            "imageHeaders": json.dumps(
+                                series_info["imageHeaders"], separators=(",", ":")
+                            )
+                            if series_info.get("imageHeaders")
+                            else None,
+                        }
+                        for series_info in point["seriesInfo"]
+                    ]
+                    if point.get("seriesInfo")
+                    else None,
                 )
                 assert response.get("ok"), response.get(
                     "message", "Failed to update items"
@@ -165,7 +182,24 @@ class Upload:
                     point["items"],
                     json.dumps(point.get("labels", []), separators=(",", ":")),
                     labels_map,
-                    point.get("seriesInfo"),
+                    [
+                        {
+                            **series_info,
+                            "metaData": json.dumps(
+                                series_info["metaData"], separators=(",", ":")
+                            )
+                            if series_info.get("metaData")
+                            else None,
+                            "imageHeaders": json.dumps(
+                                series_info["imageHeaders"], separators=(",", ":")
+                            )
+                            if series_info.get("imageHeaders")
+                            else None,
+                        }
+                        for series_info in point["seriesInfo"]
+                    ]
+                    if point.get("seriesInfo")
+                    else None,
                     json.dumps(point["metaData"], separators=(",", ":"))
                     if point.get("metaData")
                     else None,
@@ -313,7 +347,7 @@ class Upload:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
 
-        for point, task in zip(points, tasks):
+        for point, task in zip(points, tasks):  # type: ignore
             if not task:
                 if update_items:
                     log_error(f"Error updating items for {point}")
@@ -455,7 +489,23 @@ class Upload:
             )
         )
 
-    def delete_tasks(self, task_ids: List[str]) -> bool:
+    async def _delete_tasks(self, task_ids: List[str], concurrency: int) -> bool:
+        conn = aiohttp.TCPConnector()
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = [
+                self.context.upload.delete_tasks(
+                    session,
+                    self.org_id,
+                    self.project_id,
+                    task_ids[batch : batch + concurrency],
+                )
+                for batch in range(0, len(task_ids), concurrency)
+            ]
+            success = await gather_with_concurrency(10, coros, "Deleting tasks")
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        return all(success)
+
+    def delete_tasks(self, task_ids: List[str], concurrency: int = 50) -> bool:
         """Delete project tasks based on task ids.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key, url)
@@ -466,14 +516,40 @@ class Upload:
         task_ids: List[str]
             List of task ids to delete.
 
+        concurrency: int = 50
+            The number of tasks to delete at a time.
+            We recommend keeping this <= 50.
+
         Returns
         -------------
         bool
             True if successful, else False.
         """
-        return self.context.upload.delete_tasks(self.org_id, self.project_id, task_ids)
+        concurrency = min(concurrency, 50)
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self._delete_tasks(task_ids, concurrency))
 
-    def delete_tasks_by_name(self, task_names: List[str]) -> bool:
+    async def _delete_tasks_by_name(
+        self, task_names: List[str], concurrency: int
+    ) -> bool:
+        conn = aiohttp.TCPConnector()
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = [
+                self.context.upload.delete_tasks_by_name(
+                    session,
+                    self.org_id,
+                    self.project_id,
+                    task_names[batch : batch + concurrency],
+                )
+                for batch in range(0, len(task_names), concurrency)
+            ]
+            success = await gather_with_concurrency(10, coros, "Deleting tasks")
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        return all(success)
+
+    def delete_tasks_by_name(
+        self, task_names: List[str], concurrency: int = 50
+    ) -> bool:
         """Delete project tasks based on task names.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key, url)
@@ -484,13 +560,19 @@ class Upload:
         task_names: List[str]
             List of task names to delete.
 
+        concurrency: int = 50
+            The number of tasks to delete at a time.
+            We recommend keeping this <= 50.
+
         Returns
         -------------
         bool
             True if successful, else False.
         """
-        return self.context.upload.delete_tasks_by_name(
-            self.org_id, self.project_id, task_names
+        concurrency = min(concurrency, 50)
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(
+            self._delete_tasks_by_name(task_names, concurrency)
         )
 
     async def generate_items_list(

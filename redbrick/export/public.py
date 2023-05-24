@@ -135,7 +135,8 @@ class Export:
             for data in input_data
         ]
         return [
-            {**data, "inputLabels": label} for data, label in zip(input_data, labels)
+            {**data, "inputLabels": label}
+            for data, label in zip(input_data, labels)  # type: ignore
         ]
 
     def get_latest_data(
@@ -384,7 +385,7 @@ class Export:
             files, "Downloading segmentations", False, True, True
         )
 
-        for label, path in zip(labels_map, paths):
+        for label, path in zip(labels_map, paths):  # type: ignore
             if label and label.get("labelName"):
                 label["labelName"] = await process_nifti_download(
                     task.get("labels", []) or [],
@@ -651,7 +652,7 @@ class Export:
             + "in a future release. Please use `Export.list_tasks` method instead."
         )
         my_iter = PaginationIterator(
-            partial(
+            partial(  # type: ignore
                 self.context.export.task_search,
                 self.org_id,
                 self.project_id,
@@ -784,7 +785,7 @@ class Export:
             raise ValueError(f"Invalid task filter: {search}")
 
         my_iter = PaginationIterator(
-            partial(
+            partial(  # type: ignore
                 self.context.export.task_search,
                 self.org_id,
                 self.project_id,
@@ -858,7 +859,7 @@ class Export:
                 users[user["userId"]] = user["email"]
 
         my_iter = PaginationIterator(
-            partial(
+            partial(  # type: ignore
                 self.context.export.task_events,
                 self.org_id,
                 self.project_id,

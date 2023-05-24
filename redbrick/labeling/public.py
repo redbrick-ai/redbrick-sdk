@@ -544,7 +544,7 @@ class Labeling:
             + "in a future release. Please use `Export.list_tasks` method instead."
         )
         my_iter = PaginationIterator(
-            partial(
+            partial(  # type: ignore
                 self.context.export.task_search,
                 self.org_id,
                 self.project_id,
@@ -576,7 +576,7 @@ class Labeling:
 
         if fetch_unassigned:
             my_iter = PaginationIterator(
-                partial(
+                partial(  # type: ignore
                     self.context.export.task_search,
                     self.org_id,
                     self.project_id,
@@ -622,3 +622,55 @@ class Labeling:
         """Move groundtruth tasks back to start."""
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self._tasks_to_start(task_ids))
+
+    async def _update_tasks_priorities(
+        self, stage_name: str, tasks: List[Dict], concurrency: int
+    ) -> List[str]:
+        conn = aiohttp.TCPConnector()
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = [
+                self.context.labeling.update_priority(
+                    session,
+                    self.org_id,
+                    self.project_id,
+                    stage_name,
+                    tasks[batch : batch + concurrency],
+                )
+                for batch in range(0, len(tasks), concurrency)
+            ]
+            errors = await gather_with_concurrency(
+                10, coros, "Updating tasks' priorities"
+            )
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        return [error for error in errors if error]
+
+    @check_stage
+    def update_tasks_priority(
+        self, stage_name: str, tasks: List[Dict], concurrency: int = 50
+    ) -> None:
+        """
+        Update tasks' priorities.
+        Used to determine how the tasks get assigned to annotators/reviewers in auto-assignment.
+
+        Parameters
+        --------------
+        stage_name: str
+            The stage for which you want to update the task priorities.
+
+        tasks: List[Dict]
+            List of taskIds and their priorities.
+            - [{"taskId": str, "priority": float}]
+            - priority: [0, 1]
+
+        concurrency: int = 50
+            The number of tasks to update at a time.
+            We recommend keeping this <= 50.
+        """
+        concurrency = min(concurrency, 50)
+        loop = asyncio.get_event_loop()
+        errors = loop.run_until_complete(
+            self._update_tasks_priorities(stage_name, tasks, concurrency)
+        )
+
+        if errors:
+            log_error(errors[0])

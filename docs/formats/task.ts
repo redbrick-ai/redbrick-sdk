@@ -12,16 +12,19 @@ type Task = {
   // Only required on export
   taskId?: string;
   currentStageName?: string;
+  priority?: number;
   createdBy?: string;
   createdAt?: string;
   updatedBy?: string;
   updatedAt?: string;
+  metaData?: {};
 };
 
 // A single series can be 2D, 3D, video etc.
 type Series = {
   items: string | string[];
   name?: string;
+  metaData?: {};
   segmentations?: string | string[];
   segmentMap?: {
     [instanceId: string]: number | string | string[] | {
