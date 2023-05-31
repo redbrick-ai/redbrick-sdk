@@ -3,6 +3,7 @@ import os
 from typing import Dict, List, Optional, Set, Tuple, Union
 from asyncio import BoundedSemaphore
 import shutil
+from redbrick.utils.common_utils import config_path
 
 from redbrick.utils.files import uniquify_path
 from redbrick.utils.logging import log_error
@@ -22,8 +23,9 @@ async def process_nifti_download(
     """Process nifti download file."""
     # pylint: disable=too-many-locals, import-outside-toplevel, too-many-statements
     async with semaphore:
-        import nibabel  # type: ignore
         import numpy  # type: ignore
+        from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
+        from nibabel.nifti1 import Nifti1Image  # type: ignore
         from PIL import Image  # type: ignore
 
         try:
@@ -48,9 +50,9 @@ async def process_nifti_download(
             if not (png_mask or overlapping_labels):
                 return labels_path
 
-            img = nibabel.load(labels_path)
+            img = nib_load(labels_path)
 
-            if not isinstance(img, nibabel.Nifti1Image):
+            if not isinstance(img, Nifti1Image):
                 log_error(f"{labels_path} is not a valid NIfTI1 file.")
                 return labels_path
 
@@ -116,8 +118,8 @@ async def process_nifti_download(
                     filename = uniquify_path(
                         os.path.join(dirname, f"{label['dicom']['instanceid']}.nii.gz")
                     )
-                    new_img = nibabel.Nifti1Image(new_data, affine, header)
-                    nibabel.save(new_img, filename)
+                    new_img = Nifti1Image(new_data, affine, header)
+                    nib_save(new_img, filename)
 
                 files.append(filename)
 
@@ -135,8 +137,10 @@ async def process_nifti_upload(
     # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
     # pylint: disable=too-many-statements, too-many-return-statements
     async with semaphore:
-        import nibabel  # type: ignore
         import numpy  # type: ignore
+        from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
+        from nibabel.nifti1 import Nifti1Image  # type: ignore
+        from nibabel.nifti2 import Nifti2Image  # type: ignore
 
         if isinstance(files, str):
             files = [files]
@@ -151,10 +155,10 @@ async def process_nifti_upload(
         try:
             instance_map: Dict[int, List[int]] = {}
             reverse_instance_map: Dict[Tuple[int, ...], int] = {}
-            base_img = nibabel.load(files[0])
+            base_img = nib_load(files[0])
 
-            if not isinstance(base_img, nibabel.Nifti1Image) and not isinstance(
-                base_img, nibabel.Nifti2Image
+            if not isinstance(base_img, Nifti1Image) and not isinstance(
+                base_img, Nifti2Image
             ):
                 return None, {}
 
@@ -174,7 +178,7 @@ async def process_nifti_upload(
                     reverse_instance_map[(inst,)] = inst
 
             for file_ in files[1:]:
-                img = nibabel.load(file_)
+                img = nib_load(file_)
                 data = img.get_fdata()
                 if base_data.shape != data.shape:
                     return None, {}
@@ -200,9 +204,9 @@ async def process_nifti_upload(
             )
 
             for file_ in files[1:]:
-                img = nibabel.load(file_)
-                if not isinstance(img, nibabel.Nifti1Image) and not isinstance(
-                    img, nibabel.Nifti2Image
+                img = nib_load(file_)
+                if not isinstance(img, Nifti1Image) and not isinstance(
+                    img, Nifti2Image
                 ):
                     return None, {}
 
@@ -236,20 +240,16 @@ async def process_nifti_upload(
             else:
                 base_data = numpy.asarray(base_data, dtype=numpy.uint16)
 
-            if isinstance(base_img, nibabel.Nifti1Image):
-                new_img = nibabel.Nifti1Image(
-                    base_data, base_img.affine, base_img.header
-                )
+            if isinstance(base_img, Nifti1Image):
+                new_img = Nifti1Image(base_data, base_img.affine, base_img.header)
             else:
-                new_img = nibabel.Nifti2Image(
-                    base_data, base_img.affine, base_img.header
-                )
+                new_img = Nifti2Image(base_data, base_img.affine, base_img.header)
 
-            dirname = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
+            dirname = os.path.join(config_path(), "temp")
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
             filename = uniquify_path(os.path.join(dirname, "label.nii.gz"))
-            nibabel.save(new_img, filename)
+            nib_save(new_img, filename)
 
             group_map: Dict[int, List[int]] = {}
             for sub_ids, group_id in reverse_instance_map.items():

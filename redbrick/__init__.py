@@ -24,10 +24,11 @@ from redbrick.workspace import RBWorkspace
 from redbrick.project import RBProject
 
 from redbrick.utils.logging import logger
+from redbrick.utils.common_utils import config_migration
 
 from .version_check import version_check
 
-__version__ = "2.12.0a1"
+__version__ = "2.12.0"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -52,6 +53,11 @@ try:
         + " notebook and you can safely ignore this."
     )
 except (RuntimeError, AttributeError):
+    pass
+
+try:
+    config_migration()
+except Exception:  # pylint: disable=broad-except
     pass
 
 version_check(__version__)
