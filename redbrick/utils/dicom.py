@@ -3,6 +3,7 @@ import os
 from typing import Dict, List, Optional, Set, Tuple, Union
 from asyncio import BoundedSemaphore
 import shutil
+from redbrick.utils.common_utils import config_path
 
 from redbrick.utils.files import uniquify_path
 from redbrick.utils.logging import log_error
@@ -244,7 +245,7 @@ async def process_nifti_upload(
             else:
                 new_img = Nifti2Image(base_data, base_img.affine, base_img.header)
 
-            dirname = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
+            dirname = os.path.join(config_path(), "temp")
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
             filename = uniquify_path(os.path.join(dirname, "label.nii.gz"))

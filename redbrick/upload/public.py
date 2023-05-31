@@ -16,6 +16,7 @@ from redbrick.common.context import RBContext
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import ImportTypes, StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.common_utils import config_path
 from redbrick.utils.upload import process_segmentation_upload, validate_json
 from redbrick.utils.logging import log_error, logger
 from redbrick.utils.files import get_file_type, is_dicom_file, upload_files
@@ -343,7 +344,7 @@ class Upload:
 
         await asyncio.sleep(0.250)  # give time to close ssl connections
 
-        temp_dir = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
+        temp_dir = os.path.join(config_path(), "temp")
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
 

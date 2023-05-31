@@ -9,6 +9,7 @@ from redbrick.common.context import RBContext
 from redbrick.organization import RBOrganization
 from redbrick.project import RBProject
 from redbrick.cli.entity import CLICache, CLIConfiguration, CLICredentials
+from redbrick.utils.common_utils import config_path
 from redbrick.utils.logging import logger
 
 
@@ -31,13 +32,8 @@ class CLIProject:
         assert os.path.isdir(self.path), f"Not a valid directory {self.path}"
 
         self._rb_dir = os.path.join(self.path, ".redbrick")
-        self._creds_file = os.path.join(
-            os.path.expanduser("~"), ".redbrickai", "credentials"
-        )
-
-        self.creds = CLICredentials(
-            os.path.join(os.path.expanduser("~"), ".redbrickai", "credentials")
-        )
+        self._creds_file = os.path.join(config_path(), "credentials")
+        self.creds = CLICredentials(self._creds_file)
         self.conf = CLIConfiguration(os.path.join(self._rb_dir, "config"))
         self.cache = CLICache(os.path.join(self._rb_dir, "cache"), self.conf)
 

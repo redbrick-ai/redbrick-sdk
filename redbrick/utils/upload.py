@@ -7,6 +7,7 @@ from typing import List, Dict, Union, Optional, Sequence
 
 import aiohttp
 from redbrick.common.context import RBContext
+from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import NIFTI_FILE_TYPES, download_files, upload_files
 
 from redbrick.utils.logging import logger
@@ -91,7 +92,7 @@ async def process_segmentation_upload(
         del task["labelsPath"]
 
     labels_map = task.get("labelsMap", []) or []  # type: ignore
-    download_dir = os.path.join(os.path.expanduser("~"), ".redbrickai", "temp")
+    download_dir = os.path.join(config_path(), "temp")
     if not os.path.exists(download_dir):
         logger.debug(f"Creating temp directory: {download_dir}")
         os.makedirs(download_dir)

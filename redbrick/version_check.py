@@ -5,6 +5,8 @@ from configparser import ConfigParser
 from datetime import datetime
 
 from packaging.version import Version
+
+from .utils.common_utils import config_path
 from .utils.logging import logger  # pylint: disable=cyclic-import
 
 
@@ -24,7 +26,7 @@ def get_latest_version(current_version: str) -> str:
 
 def version_check(current_version: str) -> None:
     """Check if current installed version of the SDK is up to date with latest pypi release."""
-    cache_file = os.path.join(os.path.expanduser("~"), ".redbrickai", "version")
+    cache_file = os.path.join(config_path(), "version")
     os.makedirs(os.path.dirname(cache_file), exist_ok=True)
 
     cache_config = ConfigParser()
