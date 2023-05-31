@@ -17,7 +17,7 @@ from redbrick.common.context import RBContext
 from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
 from redbrick.common.export import TaskFilterParams
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.files import uniquify_path, download_files
+from redbrick.utils.files import download_files
 from redbrick.utils.logging import logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import (
@@ -481,6 +481,7 @@ class Export:
         old_format: bool = False,
         no_consensus: Optional[bool] = None,
         png: bool = False,
+        destination: Optional[str] = None,
     ) -> List[Dict]:
         """Export annotation data.
 
@@ -522,6 +523,9 @@ class Export:
         png: bool = False
             Export nifti labels as png masks.
 
+        destination: Optional[str] = None
+            Destination directory (Default: current directory)
+
         Returns
         -----------
         List[Dict]
@@ -551,7 +555,7 @@ class Export:
             ]
 
         # Create output directory
-        destination = uniquify_path(self.project_id)
+        destination = destination or self.project_id
         nifti_dir = os.path.join(destination, "nifti")
         os.makedirs(nifti_dir, exist_ok=True)
         logger.info(f"Saving NIfTI files to {destination} directory")
