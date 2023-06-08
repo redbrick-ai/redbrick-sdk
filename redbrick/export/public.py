@@ -699,11 +699,11 @@ class Export:
         This function returns minimal meta-data about the queried tasks.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key, url)
-        >>> result = project.export.search_tasks()
+        >>> result = project.export.list_tasks()
 
         Parameters
         -----------
-        search: TaskFilters = TaskFilters.ALL
+        search: :obj:`~redbrick.common.enums.TaskFilters` = TaskFilters.ALL
             Task filter type.
 
         concurrency: int = 10
@@ -715,11 +715,11 @@ class Export:
 
         stage_name: Optional[str] = None
             If present, will return tasks that are available in or
-            completed in the given stage.
+            completed in the given stage based on the search query.
 
         user_id: Optional[str] = None
             If present, will return tasks that are assigned to or
-            completed by the given user id/email.
+            completed by the given user id/email based on the search query.
 
         task_id: Optional[str] = None
             If present, will return data for the given task id.
