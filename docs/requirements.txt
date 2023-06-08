@@ -4,3 +4,4 @@ recommonmark==0.7.1
 sphinx_inline_tabs==2023.4.21
 sphinxcontrib-autoprogram==0.1.8
 furo==2023.5.20
+Cython==0.29.35
