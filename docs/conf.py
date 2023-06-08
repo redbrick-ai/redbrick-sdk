@@ -37,7 +37,8 @@ release = version
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
-    "sphinxcontrib.napoleon",
+    "sphinx.ext.napoleon",
+    "recommonmark",
     "sphinxarg.ext",
     "sphinx_inline_tabs",
     "sphinxcontrib.autoprogram",

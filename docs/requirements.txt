@@ -1,6 +1,6 @@
-Sphinx==4.5.0
-sphinxcontrib-napoleon==0.7
-sphinx-argparse==0.3.1
-sphinx_inline_tabs
-sphinxcontrib-autoprogram
-furo
+Sphinx==7.0.1
+sphinx-argparse==0.4.0
+recommonmark==0.7.1
+sphinx_inline_tabs==2023.4.21
+sphinxcontrib-autoprogram==0.1.8
+furo==2023.5.20
