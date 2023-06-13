@@ -346,3 +346,40 @@ class UploadRepo(UploadControllerInterface):
         }
         result = self.client.execute_query(query_string, query_variables)
         return result.get("importTasksFromProject", {}) or {}
+
+    async def update_priority(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        tasks: List[Dict],
+    ) -> Optional[str]:
+        """Update tasks priorities."""
+        query_string = """
+        mutation updateTasksPrioritiesSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $tasks: [UpdateTaskPriorityInput!]!
+        ) {
+            updateTasksPriorities(
+                orgId: $orgId
+                projectId: $projectId
+                tasks: $tasks
+            ) {
+                ok
+                message
+            }
+        }
+        """
+
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "tasks": tasks,
+        }
+
+        response = await self.client.execute_query_async(
+            session, query_string, query_variables
+        )
+        return (response.get("updateTasksPriorities", {}) or {}).get("message")

@@ -101,3 +101,13 @@ class UploadControllerInterface(ABC):
         with_labels: bool = False,
     ) -> Dict:
         """Import tasks from another project in the same workspace."""
+
+    @abstractmethod
+    async def update_priority(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        tasks: List[Dict],
+    ) -> Optional[str]:
+        """Update tasks priorities."""
