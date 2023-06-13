@@ -904,8 +904,7 @@ class Upload:
         --------------
         tasks: List[Dict]
             List of taskIds and their priorities.
-            - [{"taskId": str, "priority": float}]
-            - priority: [0, 1]
+            - [{"taskId": str, "priority": float([0, 1])}]
 
         concurrency: int = 50
             The number of tasks to update at a time.

@@ -67,6 +67,7 @@ def flat_rb_format(
     updated_at: str,
     task_id: str,
     current_stage_name: str,
+    priority: Optional[float],
     labels_map: List[Optional[Dict]],
     series_info: Optional[List[Dict]],
     meta_data: Optional[Dict],
@@ -92,11 +93,10 @@ def flat_rb_format(
         "metaData": meta_data,
         "storageId": storage_id,
         "labelStorageId": label_storage_id,
+        "priority": priority,
     }
 
     if current_stage_sub_task:
-        if current_stage_sub_task.get("priority") is not None:
-            task["priority"] = current_stage_sub_task["priority"]
         if current_stage_sub_task.get("subTasks"):
             task["consensusTasks"] = [from_rb_sub_task(current_stage_sub_task)]
             for sub_task in current_stage_sub_task["subTasks"]:
@@ -147,6 +147,7 @@ def parse_entry_latest(item: Dict) -> Dict:
             updated_at,
             task_id,
             item["currentStageName"],
+            item["priority"],
             task_data.get("labelsMap", []) or [],
             datapoint.get("seriesInfo"),
             json.loads(datapoint["metaData"]) if datapoint.get("metaData") else None,
