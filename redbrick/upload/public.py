@@ -206,6 +206,7 @@ class Upload:
                     else None,
                     is_ground_truth,
                     point.get("preAssign"),
+                    point.get("priority"),
                 )
                 assert response.get("taskId"), "Failed to create task"
 

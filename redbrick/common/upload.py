@@ -24,6 +24,7 @@ class UploadControllerInterface(ABC):
         meta_data: Optional[str] = None,
         is_ground_truth: bool = False,
         pre_assign: Optional[Dict] = None,
+        priority: Optional[float] = None,
     ) -> Dict:
         """
         Create a datapoint and returns its taskId.
