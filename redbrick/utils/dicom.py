@@ -179,7 +179,7 @@ async def process_nifti_upload(
 
             for file_ in files[1:]:
                 img = nib_load(file_)
-                data = img.get_fdata()
+                data = img.get_fdata()  # type: ignore
                 if base_data.shape != data.shape:
                     return None, {}
 

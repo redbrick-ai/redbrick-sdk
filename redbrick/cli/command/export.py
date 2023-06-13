@@ -316,13 +316,17 @@ class CLIExportController(CLIExportInterface):
                             imgh = nii_img["NII"].header
                             segh = nii_seg.header
                             if not (
-                                imgh.get_data_shape() == segh.get_data_shape()
-                                and imgh.get_data_offset() == segh.get_data_offset()
+                                imgh.get_data_shape() == segh.get_data_shape()  # type: ignore
+                                and imgh.get_data_offset() == segh.get_data_offset()  # type: ignore
                                 and np.array_equal(
-                                    imgh.get_best_affine(), segh.get_best_affine()
+                                    imgh.get_best_affine(), segh.get_best_affine()  # type: ignore
                                 )
-                                and np.array_equal(imgh.get_qform(), segh.get_qform())
-                                and np.array_equal(imgh.get_sform(), segh.get_sform())
+                                and np.array_equal(
+                                    imgh.get_qform(), segh.get_qform()  # type: ignore
+                                )
+                                and np.array_equal(
+                                    imgh.get_sform(), segh.get_sform()  # type: ignore
+                                )
                             ):
                                 logger.warning(
                                     f"Task: {task['taskId']} : Headers of converted "
