@@ -29,6 +29,7 @@ class UploadRepo(UploadControllerInterface):
         meta_data: Optional[str] = None,
         is_ground_truth: bool = False,
         pre_assign: Optional[Dict] = None,
+        priority: Optional[float] = None,
     ) -> Dict:
         """
         Create a datapoint and returns its taskId.
@@ -49,6 +50,7 @@ class UploadRepo(UploadControllerInterface):
                 $metaData: String
                 $isGroundTruth: Boolean!
                 $preAssign: String
+                $priority: Float
             ) {
                 createDatapoint(
                     orgId: $orgId
@@ -62,6 +64,7 @@ class UploadRepo(UploadControllerInterface):
                     metaData: $metaData
                     isGroundTruth: $isGroundTruth
                     preAssign: $preAssign
+                    priority: $priority
                 ) {
                     taskId
                 }
@@ -80,6 +83,7 @@ class UploadRepo(UploadControllerInterface):
             "metaData": meta_data,
             "isGroundTruth": is_ground_truth,
             "preAssign": json.dumps(pre_assign, separators=(",", ":")),
+            "priority": priority,
         }
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables
@@ -346,3 +350,40 @@ class UploadRepo(UploadControllerInterface):
         }
         result = self.client.execute_query(query_string, query_variables)
         return result.get("importTasksFromProject", {}) or {}
+
+    async def update_priority(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        tasks: List[Dict],
+    ) -> Optional[str]:
+        """Update tasks priorities."""
+        query_string = """
+        mutation updateTasksPrioritiesSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $tasks: [UpdateTaskPriorityInput!]!
+        ) {
+            updateTasksPriorities(
+                orgId: $orgId
+                projectId: $projectId
+                tasks: $tasks
+            ) {
+                ok
+                message
+            }
+        }
+        """
+
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "tasks": tasks,
+        }
+
+        response = await self.client.execute_query_async(
+            session, query_string, query_variables
+        )
+        return (response.get("updateTasksPriorities", {}) or {}).get("message")

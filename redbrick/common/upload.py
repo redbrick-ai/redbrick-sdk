@@ -24,6 +24,7 @@ class UploadControllerInterface(ABC):
         meta_data: Optional[str] = None,
         is_ground_truth: bool = False,
         pre_assign: Optional[Dict] = None,
+        priority: Optional[float] = None,
     ) -> Dict:
         """
         Create a datapoint and returns its taskId.
@@ -101,3 +102,13 @@ class UploadControllerInterface(ABC):
         with_labels: bool = False,
     ) -> Dict:
         """Import tasks from another project in the same workspace."""
+
+    @abstractmethod
+    async def update_priority(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        tasks: List[Dict],
+    ) -> Optional[str]:
+        """Update tasks priorities."""

@@ -206,6 +206,7 @@ class Upload:
                     else None,
                     is_ground_truth,
                     point.get("preAssign"),
+                    point.get("priority"),
                 )
                 assert response.get("taskId"), "Failed to create task"
 
@@ -874,3 +875,47 @@ class Upload:
             [{"taskId": task_id} for task_id in task_ids],
             with_labels,
         )
+
+    async def _update_tasks_priorities(
+        self, tasks: List[Dict], concurrency: int
+    ) -> List[str]:
+        conn = aiohttp.TCPConnector()
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = [
+                self.context.upload.update_priority(
+                    session,
+                    self.org_id,
+                    self.project_id,
+                    tasks[batch : batch + concurrency],
+                )
+                for batch in range(0, len(tasks), concurrency)
+            ]
+            errors = await gather_with_concurrency(
+                10, coros, "Updating tasks' priorities"
+            )
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        return [error for error in errors if error]
+
+    def update_tasks_priority(self, tasks: List[Dict], concurrency: int = 50) -> None:
+        """
+        Update tasks' priorities.
+        Used to determine how the tasks get assigned to annotators/reviewers in auto-assignment.
+
+        Parameters
+        --------------
+        tasks: List[Dict]
+            List of taskIds and their priorities.
+            - [{"taskId": str, "priority": float([0, 1])}]
+
+        concurrency: int = 50
+            The number of tasks to update at a time.
+            We recommend keeping this <= 50.
+        """
+        concurrency = min(concurrency, 50)
+        loop = asyncio.get_event_loop()
+        errors = loop.run_until_complete(
+            self._update_tasks_priorities(tasks, concurrency)
+        )
+
+        if errors:
+            log_error(errors[0])

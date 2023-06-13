@@ -180,7 +180,6 @@ TASK_SHARD = f"""
             userId
             email
         }}
-        priority
         taskData {{
             {TASK_DATA_SHARD}
         }}
@@ -243,6 +242,7 @@ def router_task_shard(presign_items: bool, with_consensus: bool) -> str:
         taskId
         dpId
         currentStageName
+        priority
         currentStageSubTask{"(consensus: true)" if with_consensus else ""} {{
             {TASK_SHARD}
         }}
