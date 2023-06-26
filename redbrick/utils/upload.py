@@ -122,7 +122,7 @@ async def process_segmentation_upload(
             ):
                 input_labels_path = None
             else:
-                external_paths = [
+                external_paths: List[str] = [
                     input_path
                     for input_path in input_labels_path
                     if not os.path.isfile(input_path)
@@ -136,8 +136,13 @@ async def process_segmentation_upload(
                     )
 
                     download_paths = [
-                        os.path.join(download_dir, f"{uuid4()}.nii")
-                        for _ in range(len(external_paths))
+                        os.path.join(
+                            download_dir,
+                            str(uuid4())
+                            + ".nii"
+                            + (".gz" if ".nii.gz" in external_path.lower() else ""),
+                        )
+                        for external_path in external_paths
                     ]
                     downloaded_paths = await download_files(
                         list(zip(presigned_paths, download_paths)),
@@ -190,7 +195,16 @@ async def process_segmentation_upload(
                         [
                             (
                                 presigned_path,
-                                os.path.join(download_dir, f"{uuid4()}.nii"),
+                                os.path.join(
+                                    download_dir,
+                                    str(uuid4())
+                                    + ".nii"
+                                    + (
+                                        ".gz"
+                                        if ".nii.gz" in (presigned_path or "").lower()
+                                        else ""
+                                    ),
+                                ),
                             )
                         ],
                         f"Downloading labels for {task.get('name') or task['items'][0]}",
