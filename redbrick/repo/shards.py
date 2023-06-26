@@ -1,5 +1,25 @@
 """Partial queries to prevent duplication."""
 
+PROJECT_SHARD = """
+orgId
+projectId
+name
+desc
+status
+tdType
+taxonomy {
+    name
+}
+projectUrl
+createdAt
+consensusSettings {
+    enabled
+}
+workspace {
+    workspaceId
+}
+"""
+
 TAXONOMY_SHARD = """
 orgId
 name

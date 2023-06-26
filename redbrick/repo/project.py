@@ -5,7 +5,7 @@ from datetime import datetime
 
 from redbrick.common.client import RBClient
 from redbrick.common.project import ProjectRepoInterface
-from redbrick.repo.shards import TAXONOMY_SHARD
+from redbrick.repo.shards import PROJECT_SHARD, TAXONOMY_SHARD
 
 
 class ProjectRepo(ProjectRepoInterface):
@@ -21,27 +21,12 @@ class ProjectRepo(ProjectRepoInterface):
 
         Raise an exception if project does not exist.
         """
-        query = """
-            query sdkGetProjectName($orgId: UUID!, $projectId: UUID!){
-                project(orgId: $orgId, projectId: $projectId){
-                    orgId
-                    projectId
-                    name
-                    status
-                    tdType
-                    taxonomy {
-                        name
-                    }
-                    projectUrl
-                    createdAt
-                    consensusSettings {
-                        enabled
-                    }
-                    workspace {
-                        workspaceId
-                    }
-                }
-            }
+        query = f"""
+            query sdkGetProjectName($orgId: UUID!, $projectId: UUID!) {{
+                project(orgId: $orgId, projectId: $projectId) {{
+                    {PROJECT_SHARD}
+                }}
+            }}
         """
         variables = {"orgId": org_id, "projectId": project_id}
         response: Dict[str, Dict] = self.client.execute_query(query, variables)
@@ -137,18 +122,12 @@ class ProjectRepo(ProjectRepoInterface):
 
     def get_projects(self, org_id: str) -> List[Dict]:
         """Get all projects in organization."""
-        query = """
-            query getProjectsSDK($orgId: UUID!) {
-                projects(orgId: $orgId) {
-                    orgId
-                    name
-                    projectId
-                    status
-                    desc
-                    projectUrl
-                    createdAt
-                }
-            }
+        query = f"""
+            query getProjectsSDK($orgId: UUID!) {{
+                projects(orgId: $orgId) {{
+                    {PROJECT_SHARD}
+                }}
+            }}
         """
         response: Dict[str, List[Dict]] = self.client.execute_query(
             query, {"orgId": org_id}
