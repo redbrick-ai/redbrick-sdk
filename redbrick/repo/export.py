@@ -7,7 +7,7 @@ import aiohttp
 
 from redbrick.common.export import ExportControllerInterface, TaskFilterParams
 from redbrick.common.client import RBClient
-from redbrick.repo.shards import router_task_shard
+from redbrick.repo.shards import datapoint_shard, router_task_shard
 
 
 class ExportRepo(ExportControllerInterface):
@@ -190,22 +190,23 @@ class ExportRepo(ExportControllerInterface):
                     taskId
                     currentStageName
                     createdAt
-                    {'''datapoint {
-                        name
-                    }''' if only_meta_data else '''datapoint {
-                        name
-                        items
-                        itemsPresigned: items(presigned: true)
-                    }
-                    currentStageSubTask {
-                        ... on LabelingTask {
+                    priority
+                    datapoint {{
+                        {datapoint_shard(not only_meta_data, not only_meta_data)}
+                    }}
+                    currentStageSubTask {{
+                        ... on LabelingTask {{
                             state
-                            assignedTo {
+                            assignedTo {{
                                 userId
                                 email
-                            }
-                        }
-                    }'''}
+                            }}
+                            consensusAssignees {{
+                                userId
+                                email
+                            }}
+                        }}
+                    }}
                 }}
                 cursor
             }}

@@ -200,3 +200,4 @@ venv386/
 LOCAL
 LOCAL*
 .vscode
+.graphqlrc

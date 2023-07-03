@@ -233,13 +233,16 @@ TASK_SHARD = f"""
     }}
 """
 
-DATAPOINT_SHARD: str = """
-    dataPoint {{
+
+def datapoint_shard(raw_items: bool, presigned_items: bool) -> str:
+    """Return the datapoint shard."""
+    return f"""
         name
-        items(presigned: false)
-        {}
+        {"items(presigned: false)" if raw_items else ""}
+        {"itemsPresigned:items(presigned: true)" if presigned_items else ""}
         createdAt
         createdByEntity {{
+            userId
             email
         }}
         metaData
@@ -252,11 +255,10 @@ DATAPOINT_SHARD: str = """
         storageMethod {{
             storageId
         }}
-    }}
-"""
+    """
 
 
-def router_task_shard(presign_items: bool, with_consensus: bool) -> str:
+def router_task_shard(presigned_items: bool, with_consensus: bool) -> str:
     """Return the task shard for the router query."""
     return f"""
         taskId
@@ -267,9 +269,9 @@ def router_task_shard(presign_items: bool, with_consensus: bool) -> str:
             {TASK_SHARD}
         }}
         latestTaskData {{
-            {DATAPOINT_SHARD.format(
-                "itemsPresigned:items(presigned: true)" if presign_items else ""
-            )}
+            dataPoint {{
+                {datapoint_shard(True, presigned_items)}
+            }}
             {TASK_DATA_SHARD}
         }}
     """
