@@ -23,6 +23,7 @@ from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import (
     clean_rb_label,
     dicom_rb_format,
+    from_rb_assignee,
     parse_entry_latest,
 )
 from redbrick.utils.rb_event_utils import task_event_format
@@ -731,7 +732,17 @@ class Export:
         Returns
         -----------
         List[Dict]
-            [{"taskId": str, "name": str, "createdAt": str, "currentStageName": str}]
+            [{
+                "taskId": str,
+                "name": str,
+                "createdAt": str,
+                "currentStageName": str,
+                "createdBy"?: {"userId": str, "email": str},
+                "priority"?: float([0, 1]),
+                "metaData"?: dict,
+                "series"?: [{"name"?: str, "metaData"?: dict}],
+                "assignees"?: [{"userId": str, "email": str}]
+            }]
         """
         # pylint: disable=too-many-branches, too-many-locals, too-many-statements
         label_stages: List[str] = [stage["stageName"] for stage in self.label_stages]
@@ -805,15 +816,49 @@ class Export:
         tasks: List[Dict] = []
         with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
             for task in progress:
-                if (task.get("datapoint", {}) or {}).get("name"):
-                    tasks.append(
-                        {
-                            "taskId": task["taskId"],
-                            "name": task["datapoint"]["name"],
-                            "createdAt": task["createdAt"],
-                            "currentStageName": task["currentStageName"],
-                        }
+                datapoint = task["datapoint"] or {}
+                task_obj = {
+                    "taskId": task["taskId"],
+                    "name": datapoint.get("name"),
+                    "createdAt": task["createdAt"],
+                    "currentStageName": task["currentStageName"],
+                }
+
+                if datapoint.get("createdByEntity"):
+                    task_obj["createdBy"] = from_rb_assignee(
+                        datapoint["createdByEntity"]
                     )
+                if task["priority"]:
+                    task_obj["priority"] = task["priority"]
+                if datapoint.get("metaData"):
+                    task_obj["metaData"] = json.loads(datapoint["metaData"])
+
+                if isinstance(datapoint.get("seriesInfo"), list):
+                    series_list = []
+                    for series in datapoint["seriesInfo"]:
+                        series_obj = {}
+                        if series["name"]:
+                            series_obj["name"] = series["name"]
+                        if series["metaData"]:
+                            series_obj["metaData"] = json.loads(series["metaData"])
+                        series_list.append(series_obj)
+                    if any(series for series in series_list):
+                        task_obj["series"] = series_list
+
+                assignees = [
+                    from_rb_assignee(assignee)
+                    for assignee in (
+                        (task["currentStageSubTask"] or {}).get(
+                            "consensusAssignees", []
+                        )
+                        or []
+                    )
+                ]
+
+                if assignees:
+                    task_obj["assignees"] = assignees
+
+                tasks.append(task_obj)
 
         return tasks
 
