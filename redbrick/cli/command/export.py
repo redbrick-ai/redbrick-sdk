@@ -134,9 +134,7 @@ class CLIExportController(CLIExportInterface):
             False,
             cache_timestamp,
             False,
-            bool(self.project.project.label_stages)
-            and not bool(self.project.project.review_stages)
-            and not no_consensus,
+            not no_consensus,
         )
 
         logger.info(f"Refreshed {len(datapoints)} newly updated tasks")

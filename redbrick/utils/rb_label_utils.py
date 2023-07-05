@@ -102,17 +102,14 @@ def flat_rb_format(
             for sub_task in current_stage_sub_task["subTasks"]:
                 task["consensusTasks"].append(from_rb_sub_task(sub_task))
 
-    elif (
-        current_stage_sub_task
-        and len(current_stage_sub_task.get("consensusInfo", []) or []) > 1
-    ):
-        task["consensusScore"] = (
-            current_stage_sub_task.get("overallConsensusScore", 0) or 0
-        ) * 100
+        elif len(current_stage_sub_task.get("consensusInfo", []) or []) > 1:
+            task["consensusScore"] = (
+                current_stage_sub_task.get("overallConsensusScore", 0) or 0
+            ) * 100
 
-        task["consensusTasks"] = []
-        for consensus_task in current_stage_sub_task["consensusInfo"]:
-            task["consensusTasks"].append(from_rb_consensus_info(consensus_task))
+            task["consensusTasks"] = []
+            for consensus_task in current_stage_sub_task["consensusInfo"]:
+                task["consensusTasks"].append(from_rb_consensus_info(consensus_task))
 
     return task
 
@@ -400,9 +397,16 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
             )
 
 
-def dicom_rb_format(task: Dict, old_format: bool, no_consensus: bool) -> Dict:
+def dicom_rb_format(
+    task: Dict,
+    old_format: bool,
+    no_consensus: bool,
+    label_stages: List[Dict],
+    review_stages: List[Dict],
+    output_stage_name: str,
+) -> Dict:
     """Get new dicom rb task format."""
-    # pylint: disable=too-many-branches, too-many-statements, too-many-locals
+    # pylint: disable=too-many-branches, too-many-statements, too-many-locals, unused-argument
     if old_format:
         keys = ["itemsPresigned", "seriesInfo", "storageId", "labelStorageId"]
         for key in [
@@ -473,20 +477,27 @@ def dicom_rb_format(task: Dict, old_format: bool, no_consensus: bool) -> Dict:
         output["series"] = volume_series
         dicom_rb_series(task, output)
     else:
-        if not task.get("consensusTasks"):
-            task["consensusTasks"] = [
-                {
-                    "email": task.get("updatedBy"),
-                    "updatedAt": task.get("updatedAt"),
-                    "labels": task.get("labels"),
-                    "labelsMap": task.get("labelsMap"),
-                }
-            ]
-
         output["consensus"] = True
-        if "consensusScore" in task:
+        if "consensusScore" in task:  # Review_1, END
             output["consensusScore"] = task["consensusScore"]
-        output["consensusTasks"] = [{} for _ in range(len(task["consensusTasks"]))]
+
+        if (
+            task["currentStageName"] in [stage["stageName"] for stage in review_stages]
+            and "consensusScore" not in task
+        ) or task[
+            "currentStageName"
+        ] == "END":  # Review_2...n, END
+            output["superTruth"] = {}
+            if task.get("updatedBy"):
+                output["superTruth"]["updatedBy"] = task["updatedBy"]
+            if task.get("updatedAt"):
+                output["superTruth"]["updatedAt"] = task["updatedAt"]
+            output["superTruth"]["series"] = [{**series} for series in volume_series]
+            dicom_rb_series(task, output["superTruth"])
+
+        output["consensusTasks"] = [
+            {} for _ in range(len(task.get("consensusTasks", []) or []))
+        ]
         for consensus_idx, output_consensus_task in enumerate(output["consensusTasks"]):
             consensus_task = task["consensusTasks"][consensus_idx]
             if consensus_task.get("status"):
