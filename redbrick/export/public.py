@@ -319,7 +319,14 @@ class Export:
                 is_tax_v2,
             )
 
-        return dicom_rb_format(task, old_format, no_consensus)
+        return dicom_rb_format(
+            task,
+            old_format,
+            no_consensus,
+            self.label_stages,
+            self.review_stages,
+            self.output_stage_name,
+        )
 
     async def download_and_process_segmentations(
         self,
