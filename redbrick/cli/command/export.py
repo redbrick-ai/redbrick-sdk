@@ -5,7 +5,7 @@ import re
 import json
 from datetime import datetime, timezone
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import List, Dict, Tuple
+from typing import List, Dict, Optional, Tuple
 import shutil
 
 import shtab
@@ -224,6 +224,22 @@ class CLIExportController(CLIExportInterface):
 
             logger.info(f"Exported: {class_file}")
 
+    @staticmethod
+    def _get_task_series(task: Dict) -> List[Dict]:
+        return (
+            (
+                task.get("series")
+                or (task.get("superTruth", {}) or {}).get("series")
+                or (task.get("consensusTasks", []) or [])[0].get("series")
+            )
+            if (
+                task.get("series")
+                or task.get("superTruth")
+                or task.get("consensusTasks")
+            )
+            else []
+        )
+
     async def _download_tasks(
         self,
         tasks: List[Dict],
@@ -274,9 +290,10 @@ class CLIExportController(CLIExportInterface):
             + r")(\.gz)?$"
         )
         for task, series_dirs in downloaded_tasks:
-            if not task.get("series") or len(task["series"]) != len(series_dirs):
+            task_series = CLIExportController._get_task_series(task)
+            if not task_series or len(task_series) != len(series_dirs):
                 continue
-            for series, series_dir in zip(task["series"], series_dirs):
+            for series, series_dir in zip(task_series, series_dirs):
                 items = (
                     [series["items"]]
                     if isinstance(series["items"], str)
@@ -343,7 +360,7 @@ class CLIExportController(CLIExportInterface):
         storage_id: str,
         parent_dir: str,
     ) -> Tuple[Dict, List[str]]:
-        # pylint: disable=too-many-locals, too-many-branches
+        # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         path_pattern = re.compile(r"[^\w.]+")
         task_name = re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
         task_dir = os.path.join(parent_dir, task_name)
@@ -358,15 +375,16 @@ class CLIExportController(CLIExportInterface):
         items_lists: List[List[str]] = []
 
         try:
-            if task.get("series"):
-                for series_idx, series in enumerate(task["series"]):
+            task_series = CLIExportController._get_task_series(task)
+            if task_series:
+                for series_idx, series in enumerate(task_series):
                     series_dir = uniquify_path(
                         os.path.join(
                             task_dir,
                             re.sub(path_pattern, "-", series.get("name", "") or "")
                             or (
                                 task_name
-                                if len(task["series"]) == 1
+                                if len(task_series) == 1
                                 else chr(series_idx + ord("A"))
                             ),
                         )
@@ -430,19 +448,31 @@ class CLIExportController(CLIExportInterface):
             if any(not downloaded_file for downloaded_file in downloaded):
                 raise Exception("Failed to download some files")
 
-            if task.get("series"):
+            if task_series:
+                series_items: List[List[Optional[str]]] = []
                 prev_count = 0
-                for series_dir, series in zip(series_dirs, task["series"]):
+                for series_dir, series in zip(series_dirs, task_series):
                     count = (
                         1 if isinstance(series["items"], str) else len(series["items"])
                     )
-                    series["items"] = downloaded[prev_count : prev_count + count]
+                    series_items.append(downloaded[prev_count : prev_count + count])
                     prev_count += count
+                for idx, series in enumerate(task.get("series", []) or []):
+                    series["items"] = series_items[idx]
+                for idx, series in enumerate(
+                    (task.get("superTruth", {}) or {}).get("series", []) or []
+                ):
+                    series["items"] = series_items[idx]
+                for sub_task in task.get("consensusTasks", []) or []:
+                    for idx, series in enumerate(sub_task.get("series", []) or []):
+                        series["items"] = series_items[idx]
             else:
                 task["items"] = downloaded
 
         except Exception as err:  # pylint: disable=broad-except
-            log_error(f"Failed to download files for task {task['taskId']}: {err}")
+            log_error(
+                f"Error for task {task['taskId']}: {err}\n Please try using a lower --concurrency"
+            )
             shutil.rmtree(task_dir, ignore_errors=True)
 
         return task, series_dirs
