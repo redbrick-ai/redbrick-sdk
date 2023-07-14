@@ -1,6 +1,6 @@
 """Dicom/nifti related functions."""
 import os
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from asyncio import BoundedSemaphore
 import shutil
 from redbrick.utils.common_utils import config_path
@@ -58,7 +58,7 @@ async def process_nifti_download(
 
             affine = img.affine
             header = img.header
-            data = img.get_fdata()
+            data = img.get_fdata(caching="unchanged")
 
             dirname = (
                 os.path.splitext(labels_path)[0]
@@ -69,7 +69,7 @@ async def process_nifti_download(
 
             mask_arr: numpy.ndarray = numpy.array([0])
             if png_mask:
-                mask_arr = numpy.transpose(data, (1, 0, 2))
+                mask_arr = data.swapaxes(0, 1)
                 mask_arr = mask_arr.reshape(mask_arr.shape[0], mask_arr.shape[1])
 
                 if not overlapping_labels:
@@ -153,19 +153,19 @@ async def process_nifti_upload(
             return files[0], {}
 
         try:
+            imgs = list(map(nib_load, files))
             instance_map: Dict[int, List[int]] = {}
             reverse_instance_map: Dict[Tuple[int, ...], int] = {}
-            base_img = nib_load(files[0])
 
-            if not isinstance(base_img, Nifti1Image) and not isinstance(
-                base_img, Nifti2Image
+            if not isinstance(imgs[0], Nifti1Image) and not isinstance(
+                imgs[0], Nifti2Image
             ):
                 return None, {}
 
-            base_data = base_img.get_fdata()
+            base_data = imgs[0].get_fdata(caching="unchanged")
 
-            if base_img.get_data_dtype() != numpy.uint16:
-                base_img.set_data_dtype(numpy.uint16)
+            if imgs[0].get_data_dtype() != numpy.uint16:
+                imgs[0].set_data_dtype(numpy.uint16)
                 base_data = numpy.round(base_data).astype(numpy.uint16)  # type: ignore
 
             if base_data.ndim != 3:
@@ -177,8 +177,7 @@ async def process_nifti_upload(
                     instance_map[inst] = [inst]
                     reverse_instance_map[(inst,)] = inst
 
-            for file_ in files[1:]:
-                img = nib_load(file_)
+            for img in imgs[1:]:
                 data = img.get_fdata()  # type: ignore
                 if base_data.shape != data.shape:
                     return None, {}
@@ -203,8 +202,7 @@ async def process_nifti_upload(
                 set(range(1, 65536)) - instances - used_instances, reverse=True
             )
 
-            for file_ in files[1:]:
-                img = nib_load(file_)
+            for img in imgs[1:]:
                 if not isinstance(img, Nifti1Image) and not isinstance(
                     img, Nifti2Image
                 ):
@@ -235,15 +233,15 @@ async def process_nifti_upload(
                 base_data = numpy.where(data, data, base_data)
 
             if group_instances and group_instances[0] <= 255:
-                base_img.set_data_dtype(numpy.uint8)
+                imgs[0].set_data_dtype(numpy.uint8)
                 base_data = numpy.asarray(base_data, dtype=numpy.uint8)
             else:
                 base_data = numpy.asarray(base_data, dtype=numpy.uint16)
 
-            if isinstance(base_img, Nifti1Image):
-                new_img = Nifti1Image(base_data, base_img.affine, base_img.header)
+            if isinstance(imgs[0], Nifti1Image):
+                new_img = Nifti1Image(base_data, imgs[0].affine, imgs[0].header)
             else:
-                new_img = Nifti2Image(base_data, base_img.affine, base_img.header)
+                new_img = Nifti2Image(base_data, imgs[0].affine, imgs[0].header)
 
             dirname = os.path.join(config_path(), "temp")
             if not os.path.exists(dirname):
@@ -264,3 +262,99 @@ async def process_nifti_upload(
         except Exception as error:  # pylint: disable=broad-except
             log_error(error)
             return None, {}
+
+
+async def convert_nii_to_rtstruct(
+    nifti_files: List[str],
+    dicom_series_path: str,
+    categories: List[Dict],
+    segment_map: Dict,
+) -> Optional[Any]:
+    """Convert nifti mask to dicom rt-struct."""
+    # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
+    # pylint: disable=too-many-statements, too-many-return-statements
+    async with semaphore:
+        import numpy  # type: ignore
+        from nibabel.loadsave import load as nib_load  # type: ignore
+        from nibabel.nifti1 import Nifti1Image  # type: ignore
+        from nibabel.nifti2 import Nifti2Image  # type: ignore
+        from rt_utils import RTStructBuilder  # type: ignore
+
+        try:
+            category_map = {
+                category.get("category", ""): (
+                    category.get("classId"),
+                    category.get("color", ""),
+                    category.get("parents", []) or [],
+                )
+                for category in categories
+            }
+            rtstruct = RTStructBuilder.create_new(dicom_series_path=dicom_series_path)
+            for nifti_file in nifti_files:
+                img: Nifti1Image = nib_load(nifti_file)  # type: ignore
+
+                if not isinstance(img, Nifti1Image) and not isinstance(
+                    img, Nifti2Image
+                ):
+                    return None
+
+                # Load NIfTI file
+                data = img.get_fdata(caching="unchanged")
+
+                if data.ndim != 3:
+                    return None
+
+                data = data.swapaxes(0, 1)
+
+                if img.get_data_dtype() != numpy.uint16:
+                    img.set_data_dtype(numpy.uint16)
+                    data = numpy.round(data).astype(numpy.uint16)  # type: ignore
+
+                for label in numpy.unique(data)[1:]:
+                    kwargs = {}
+                    cat = segment_map.get(str(label))
+                    if (
+                        cat
+                        and cat.get("category")
+                        and category_map.get(cat["category"])
+                    ):
+                        selected_cat = category_map[cat["category"]]
+                        kwargs["color"] = selected_cat[1]
+                        kwargs["description"] = (
+                            f"{selected_cat[0]} - "
+                            + "".join((parent + "/") for parent in selected_cat[2])
+                            + cat["category"]
+                        )
+
+                    rtstruct.add_roi(
+                        mask=data == label, name=f"Segment_{label}", **kwargs
+                    )
+
+            return rtstruct
+        except Exception as error:  # pylint: disable=broad-except
+            log_error(error)
+            return None
+
+
+def merge_rtstructs(rtstruct1: Any, rtstruct2: Any) -> Any:
+    """Merge two rtstructs."""
+    for roi_contour_seq, struct_set_roi_seq, rt_roi_observation_seq in zip(
+        rtstruct1.ds.ROIContourSequence,
+        rtstruct1.ds.StructureSetROISequence,
+        rtstruct1.ds.RTROIObservationsSequence,
+    ):
+        roi_number = len(rtstruct2.ds.StructureSetROISequence) + 1
+        roi_contour_seq.ReferencedROINumber = roi_number
+        struct_set_roi_seq.ROINumber = roi_number
+        rt_roi_observation_seq.ReferencedROINumber = roi_number
+
+        # check for ROI name duplication
+        for struct_set_roi_seq2 in rtstruct2.ds.StructureSetROISequence:
+            if struct_set_roi_seq.ROIName == struct_set_roi_seq2.ROIName:
+                struct_set_roi_seq += "_2"
+
+        rtstruct2.ds.ROIContourSequence.append(roi_contour_seq)
+        rtstruct2.ds.StructureSetROISequence.append(struct_set_roi_seq)
+        rtstruct2.ds.RTROIObservationsSequence.append(rt_roi_observation_seq)
+
+    return rtstruct2

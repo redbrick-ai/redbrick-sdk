@@ -17,6 +17,7 @@ install_requires = [
     "python-dateutil<=2.8.2",
     "requests<=2.31.0,>=2.23.0",
     "Rich<=13.4.2",
+    "rt-utils<=1.2.7",
     "shtab<=1.6.1",
     "tenacity<=8.2.2",
     "tqdm<=4.65.0,>=4.50.0",

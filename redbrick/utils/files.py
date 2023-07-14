@@ -220,6 +220,9 @@ async def download_files(
         if not url or not path:
             return None
 
+        if not overwrite and os.path.isfile(path):
+            return path
+
         headers: Dict = {}
         data: Optional[bytes] = None
 
