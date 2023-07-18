@@ -17,15 +17,24 @@ def get_updated_versions(current_version: str) -> List[Dict]:
     from packaging.version import Version
 
     url = "https://api.github.com/repos/redbrick-ai/redbrick-sdk/releases"
-    releases = requests.get(url, timeout=30).json()
-    releases = [(Version(release["tag_name"]), release) for release in releases]
-    releases.sort(key=lambda release: release[0], reverse=True)
+    try:
+        releases = requests.get(url, timeout=30).json()
+        releases = [
+            (Version(release["tag_name"]), release)
+            for release in releases
+            if isinstance(release, dict) and release.get("tag_name")
+        ]
+        releases.sort(key=lambda release: release[0], reverse=True)
+    except Exception:  # pylint: disable=broad-except
+        return []
 
     current_release = Version(current_version)
     updated_versions = []
 
     for release in releases:
-        if not release[0].is_prerelease and release[0] > current_release:
+        if release[0] > current_release and (
+            current_release.is_prerelease or not release[0].is_prerelease
+        ):
             updated_versions.append(release[1])
 
     return updated_versions
