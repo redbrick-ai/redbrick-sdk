@@ -231,6 +231,30 @@ class RBOrganization:
 
         return tasks
 
+    def create_taxonomy(
+        self,
+        name: str,
+        study_classify: Optional[List[Dict]] = None,
+        series_classify: Optional[List[Dict]] = None,
+        instance_classify: Optional[List[Dict]] = None,
+        object_types: Optional[List[Dict]] = None,
+    ) -> None:
+        """
+        Create a Taxonomy V2.
+
+        Format reference for categories and attributes objects:
+        https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
+        """
+        if self.context.project.create_taxonomy(
+            self.org_id,
+            name,
+            study_classify,
+            series_classify,
+            instance_classify,
+            object_types,
+        ):
+            logger.info(f"Successfully created taxonomy: {name}")
+
     def create_taxonomy_new(
         self,
         name: str,
@@ -245,18 +269,13 @@ class RBOrganization:
         Format reference for categories and attributes objects:
         https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
         """
-        if self.context.project.create_taxonomy_new(
-            self.org_id,
-            name,
-            study_classify,
-            series_classify,
-            instance_classify,
-            object_types,
-        ):
-            logger.info(f"Successfully created taxonomy: {name}")
+        logger.warning("Deprecated: Please use `create_taxonomy()`")
+        self.create_taxonomy(
+            name, study_classify, series_classify, instance_classify, object_types
+        )
 
     def get_taxonomy(
-        self, tax_id: Optional[str] = None, name: Optional[str] = None
+        self, name: Optional[str] = None, tax_id: Optional[str] = None
     ) -> Dict:
         """Get a taxonomy created in your organization."""
         taxonomy = self.context.project.get_taxonomy(self._org_id, tax_id, name)

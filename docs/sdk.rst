@@ -12,7 +12,7 @@ RedBrick
 Organization
 ----------------------
 .. automodule:: redbrick.organization.RBOrganization
-   :members: name, org_id, create_workspace, create_project, labeling_time, create_taxonomy_new, get_taxonomy, update_taxonomy
+   :members: name, org_id, create_workspace, create_project, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy
    :show-inheritance:
 
 Workspace
@@ -30,7 +30,7 @@ Project
 Export
 ----------------------
 .. autoclass:: redbrick.export.Export
-   :members: export_tasks, list_tasks, get_task_events, search_tasks, redbrick_nifti
+   :members: export_tasks, list_tasks, get_task_events
    :show-inheritance:
 
 Upload
@@ -42,5 +42,5 @@ Upload
 Labeling
 ----------------------
 .. autoclass:: redbrick.labeling.Labeling
-   :members: put_tasks, assign_tasks, move_tasks_to_start, get_tasks, get_task_queue
+   :members: put_tasks, assign_tasks, move_tasks_to_start
    :show-inheritance:
