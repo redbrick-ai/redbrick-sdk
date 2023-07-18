@@ -30,7 +30,7 @@ Project
 Export
 ----------------------
 .. autoclass:: redbrick.export.Export
-   :members: export_tasks, list_tasks, get_task_events
+   :members: export_tasks, list_tasks, get_task_events, get_active_time
    :show-inheritance:
 
 Upload

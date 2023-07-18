@@ -22,7 +22,7 @@ class ProjectRepo(ProjectRepoInterface):
         Raise an exception if project does not exist.
         """
         query = f"""
-            query sdkGetProjectName($orgId: UUID!, $projectId: UUID!) {{
+            query sdkGetProjectNameSDK($orgId: UUID!, $projectId: UUID!) {{
                 project(orgId: $orgId, projectId: $projectId) {{
                     {PROJECT_SHARD}
                 }}
@@ -38,7 +38,7 @@ class ProjectRepo(ProjectRepoInterface):
     def get_stages(self, org_id: str, project_id: str) -> List[Dict]:
         """Get stages."""
         query = """
-            query sdkGetStages($orgId: UUID!, $projectId: UUID!){
+            query sdkGetStagesSDK($orgId: UUID!, $projectId: UUID!){
                 stages(orgId: $orgId, projectId: $projectId){
                     stageName
                     brickName
@@ -61,7 +61,7 @@ class ProjectRepo(ProjectRepoInterface):
     ) -> Dict:
         """Create a project and return project_id."""
         query = """
-            mutation createProjectSimple(
+            mutation createProjectSimpleSDK(
                 $orgId: UUID!
                 $name: String!
                 $stages: [StageInputSimple!]!
@@ -361,7 +361,7 @@ class ProjectRepo(ProjectRepoInterface):
     def get_current_user(self) -> Dict:
         """Get current user."""
         query_string = """
-        query currentUser {
+        query currentUserSDK {
             me {
                 userId
             }

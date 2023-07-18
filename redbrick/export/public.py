@@ -33,7 +33,7 @@ from redbrick.utils.rb_label_utils import (
     from_rb_assignee,
     parse_entry_latest,
 )
-from redbrick.utils.rb_event_utils import task_event_format
+from redbrick.utils.rb_event_utils import task_event_format, user_format
 
 
 # pylint: disable=too-many-lines
@@ -1106,7 +1106,7 @@ class Export:
         only_ground_truth: bool = True,
         concurrency: int = 10,
         from_timestamp: Optional[float] = None,
-    ) -> List[Dict]:
+    ) -> Iterator[Dict]:
         """Generate an audit log of all actions performed on tasks.
 
         Use this method to get a detailed summary of all the actions performed on your
@@ -1136,8 +1136,12 @@ class Export:
 
         Returns
         -----------
-        List[Dict]
-            >>> [{"taskId": str, "currentStageName": str, "events": List[Dict]}]
+        Iterator[Dict]
+            >>> [{
+                "taskId": string,
+                "currentStageName": string,
+                "events": List[Dict]
+            }]
         """
         members = self.context.project.get_members(self.org_id, self.project_id)
         users = {}
@@ -1159,9 +1163,71 @@ class Export:
             concurrency,
         )
 
-        tasks: List[Dict] = []
         with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
             for task in progress:
-                tasks.append(task_event_format(task, users))
+                yield task_event_format(task, users)
 
-        return tasks
+    def get_active_time(
+        self,
+        *,
+        stage_name: str,
+        task_id: Optional[str] = None,
+        concurrency: int = 100,
+    ) -> Iterator[Dict]:
+        """Get active time spent on tasks for labeling/reviewing.
+
+        Parameters
+        -----------
+        stage_name: str
+            Stage for which to return the time info.
+
+        task_id: Optional[str] = None
+            If set, will return info for the given task in the given stage.
+
+        concurrency: int = 100
+            Request batch size.
+
+        Returns
+        -----------
+        Iterator[Dict]
+            >>> [{
+                "orgId": string,
+                "projectId": string,
+                "stageName": string,
+                "taskId": string,
+                "completedBy": string,
+                "timeSpent": number,  # In milliseconds
+                "completedAt": datetime,
+                "cycle": number  # Task cycle
+            }]
+        """
+        members = self.context.project.get_members(self.org_id, self.project_id)
+        users = {}
+        for member in members:
+            user = member.get("member", {}).get("user", {})
+            if user.get("userId") and user.get("email"):
+                users[user["userId"]] = user["email"]
+
+        my_iter = PaginationIterator(
+            partial(  # type: ignore
+                self.context.export.active_time,
+                self.org_id,
+                self.project_id,
+                stage_name,
+                task_id,
+            ),
+            concurrency,
+        )
+
+        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
+            for task in progress:
+                yield {
+                    "orgId": self.org_id,
+                    "projectId": self.project_id,
+                    "stageName": stage_name,
+                    "taskId": task["taskId"],
+                    "completedBy": user_format(task["user"]["userId"], users),
+                    "timeSpent": task["timeSpent"],
+                    "completedAt": task["date"],
+                    "cycle": task["cycle"],
+                }

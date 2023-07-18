@@ -219,6 +219,7 @@ class RBOrganization:
         with tqdm(my_iter, unit=" tasks") as progress:
             tasks = [
                 {
+                    "orgId": self._org_id,
                     "projectId": task["project"]["projectId"],
                     "taskId": task["taskId"],
                     "completedBy": task["user"]["email"],
