@@ -2,14 +2,18 @@
 import os
 import re
 import json
+import asyncio
 from datetime import datetime, timezone
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import Dict
+from typing import Dict, Set
 
 import shtab
+import tqdm  # type: ignore
 
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
+from redbrick.common.constants import MAX_FILE_BATCH_SIZE
+from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import logger
 
 
@@ -112,93 +116,121 @@ class CLIExportController(CLIExportInterface):
             else not self.project.project.consensus_enabled
         )
 
-        cached_datapoints: Dict = {}
+        cached_tasks: Set[str] = set()
         cache_timestamp = None
         dp_conf = self.project.conf.get_section("datapoints")
         if dp_conf and "timestamp" in dp_conf:
-            cached_dp = self.project.cache.get_data("datapoints", dp_conf["cache"])
-            if isinstance(cached_dp, dict):
-                cached_datapoints = cached_dp
+            cached_tasks = set(
+                self.project.cache.get_data("tasks", dp_conf["cache"]) or []
+            )
+            if cached_tasks:
                 cache_timestamp = int(dp_conf["timestamp"]) or None
+            else:  # Migration
+                cached_dps = self.project.cache.get_data("datapoints", dp_conf["cache"])
+                if cached_dps:
+                    for task_id, cached_dp in (
+                        cached_dps if isinstance(cached_dps, dict) else {}
+                    ).items():
+                        cached_tasks.add(task_id)
+                        self.project.cache.set_entity(task_id, cached_dp)
+                    self.project.cache.remove_data("datapoints")
 
         current_timestamp = int(datetime.now(timezone.utc).timestamp())
-        datapoints, taxonomy = self.project.project.export._get_raw_data_latest(
+        taxonomy = self.project.project.context.project.get_taxonomy(
+            self.project.project.org_id,
+            tax_id=None,
+            name=self.project.project.taxonomy_name,
+        )
+        datapoint_count = self.project.project.context.export.datapoints_in_project(
+            self.project.project.org_id, self.project.project.project_id, None
+        )
+        datapoints = self.project.project.export._get_raw_data_latest(
             self.args.concurrency,
             False,
             cache_timestamp,
             False,
             not no_consensus,
         )
+        fetched = 0
+        with tqdm.tqdm(
+            datapoints, unit=" datapoints", total=datapoint_count
+        ) as progress:
+            for task in progress:
+                cached_tasks.add(task["taskId"])
+                self.project.cache.set_entity(task["taskId"], task)
+                fetched += 1
+            try:
+                disable = progress.disable
+                progress.disable = False
+                progress.update(datapoint_count - progress.n)
+                progress.disable = disable
+            except Exception:  # pylint: disable=broad-except
+                pass
 
-        logger.info(f"Refreshed {len(datapoints)} newly updated tasks")
+        logger.info(f"Refreshed {fetched} newly updated tasks")
 
-        for datapoint in datapoints:
-            cached_datapoints[datapoint["taskId"]] = datapoint
-
-        dp_hash = self.project.cache.set_data("datapoints", cached_datapoints)
+        cache_hash = self.project.cache.set_data("tasks", list(cached_tasks))
         self.project.conf.set_section(
             "datapoints",
             {
                 "timestamp": str(
-                    current_timestamp if datapoints else (cache_timestamp or 0)
+                    current_timestamp if fetched else (cache_timestamp or 0)
                 ),
-                "cache": dp_hash,
+                "cache": cache_hash,
             },
         )
-        self.project.conf.save()
-
-        data = list(cached_datapoints.values())
-
-        if self.args.type == self.TYPE_LATEST:
-            if self.args.stage:
-                data = [
-                    task
-                    for task in data
-                    if task["currentStageName"].lower() == self.args.stage.lower()
-                ]
-        elif self.args.type == self.TYPE_GROUNDTRUTH:
-            data = [task for task in data if task["currentStageName"] == "END"]
-        else:
-            task_id = self.args.type.strip().lower()
-            task = None
-            for dpoint in data:
-                if dpoint["taskId"] == task_id:
-                    task = dpoint
-                    break
-            data = [task] if task else []
-
         self.project.conf.save()
 
         export_dir = self.args.destination
         os.makedirs(export_dir, exist_ok=True)
 
+        old_format = bool(self.args.old_format)
         with_files = bool(self.args.with_files)
         png_mask = bool(self.args.png)
         rt_struct = bool(self.args.rt_struct)
         dicom_to_nifti = bool(self.args.dicom_to_nifti)
 
-        segmentations_dir = os.path.join(export_dir, "segmentations")
-        os.makedirs(segmentations_dir, exist_ok=True)
         task_file = os.path.join(export_dir, "tasks.json")
+
+        image_dir = os.path.join(export_dir, "images")
+        os.makedirs(image_dir, exist_ok=True)
+
+        segmentation_dir = os.path.join(export_dir, "segmentations")
+        os.makedirs(segmentation_dir, exist_ok=True)
+
         class_file = os.path.join(export_dir, "class_map.json")
-        tasks, class_map = self.project.project.export.export_nifti_label_data(
-            data,
-            self.args.concurrency,
-            taxonomy,
-            export_dir,
-            segmentations_dir,
-            bool(self.args.old_format),
-            no_consensus,
-            with_files,
-            dicom_to_nifti,
-            png_mask,
-            rt_struct,
+        class_map, color_map = self.project.project.export.preprocess_export(
+            taxonomy, png_mask
         )
-        logger.info(f"Exported segmentations to: {segmentations_dir}")
 
-        with open(task_file, "w", encoding="utf-8") as tasks_file:
-            json.dump(tasks, tasks_file, indent=2)
+        if os.path.isfile(task_file):
+            os.remove(task_file)
 
+        asyncio.get_event_loop().run_until_complete(
+            gather_with_concurrency(
+                min(self.args.concurrency, MAX_FILE_BATCH_SIZE),
+                [
+                    self._process_task(
+                        cached_task,
+                        taxonomy,
+                        task_file,
+                        image_dir,
+                        segmentation_dir,
+                        old_format,
+                        no_consensus,
+                        color_map,
+                        with_files,
+                        dicom_to_nifti,
+                        png_mask,
+                        rt_struct,
+                    )
+                    for cached_task in cached_tasks
+                ],
+                "Processing labels",
+            )
+        )
+
+        logger.info(f"Exported segmentations to: {segmentation_dir}")
         logger.info(f"Exported: {task_file}")
 
         if png_mask:
@@ -206,3 +238,55 @@ class CLIExportController(CLIExportInterface):
                 json.dump(class_map, classes_file, indent=2)
 
             logger.info(f"Exported: {class_file}")
+
+    async def _process_task(
+        self,
+        cached_task: str,
+        taxonomy: Dict,
+        task_file: str,
+        image_dir: str,
+        segmentation_dir: str,
+        old_format: bool,
+        no_consensus: bool,
+        color_map: Dict,
+        with_files: bool,
+        dicom_to_nifti: bool,
+        png_mask: bool,
+        rt_struct: bool,
+    ) -> None:
+        # pylint: disable=too-many-locals, too-many-boolean-expressions
+        task: Dict = self.project.cache.get_entity(cached_task)  # type: ignore
+
+        if (
+            (
+                self.args.type == self.TYPE_LATEST
+                and self.args.stage
+                and task["currentStageName"].lower() != self.args.stage.lower()
+            )
+            or (
+                self.args.type == self.TYPE_GROUNDTRUTH
+                and task["currentStageName"].lower() != "END"
+            )
+            or (
+                self.args.type != self.TYPE_LATEST
+                and self.args.type != self.TYPE_GROUNDTRUTH
+                and task["taskId"] != self.args.type.strip().lower()
+            )
+        ):
+            return
+
+        await self.project.project.export.export_nifti_label_data(
+            task,
+            taxonomy,
+            task_file,
+            image_dir,
+            segmentation_dir,
+            old_format,
+            no_consensus,
+            color_map,
+            with_files,
+            dicom_to_nifti,
+            png_mask,
+            rt_struct,
+            False,
+        )
