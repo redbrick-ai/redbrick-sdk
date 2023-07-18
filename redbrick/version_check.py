@@ -1,27 +1,34 @@
 """Management of versions to help users update."""
-
+from typing import List, Dict
 import os
+import re
 from configparser import ConfigParser
 from datetime import datetime
 
-from packaging.version import Version
 
 from .utils.common_utils import config_path
 from .utils.logging import logger  # pylint: disable=cyclic-import
 
 
-def get_latest_version(current_version: str) -> str:
+def get_updated_versions(current_version: str) -> List[Dict]:
     """Get latest version from PyPI."""
     # pylint: disable=import-outside-toplevel
     import requests  # type: ignore
+    from packaging.version import Version
 
-    url = "https://pypi.org/pypi/redbrick-sdk/json"
-    data = requests.get(url, timeout=30).json()
-    versions = sorted(map(Version, data["releases"].keys()), reverse=True)
-    for version in versions:
-        if not version.is_prerelease:
-            return str(version)
-    return current_version
+    url = "https://api.github.com/repos/redbrick-ai/redbrick-sdk/releases"
+    releases = requests.get(url, timeout=30).json()
+    releases = [(Version(release["tag_name"]), release) for release in releases]
+    releases.sort(key=lambda release: release[0], reverse=True)
+
+    current_release = Version(current_version)
+    updated_versions = []
+
+    for release in releases:
+        if not release[0].is_prerelease and release[0] > current_release:
+            updated_versions.append(release[1])
+
+    return updated_versions
 
 
 def version_check(current_version: str) -> None:
@@ -50,15 +57,37 @@ def version_check(current_version: str) -> None:
         or "last_checked" not in cache_config["version"]
         or current_timestamp - int(cache_config["version"]["last_checked"]) > 86400
     ):
-        latest_version = get_latest_version(current_version)
+        updated_versions = get_updated_versions(current_version)
+        latest_version = re.sub(
+            r"^v",
+            "",
+            updated_versions[0]["tag_name"] if updated_versions else current_version,
+        )
         # Comparing with current installed version
-        if Version(current_version) < Version(latest_version):
+        if latest_version != current_version:
             warn = (
                 "You are using version '%s' of the SDK. However, version '%s' is available!\n"
                 + "Please update as soon as possible to get the latest features and bug fixes.\n"
                 + "You can use 'python -m pip install redbrick-sdk==%s' to get the latest version."
             )
             logger.warning(warn, current_version, latest_version, latest_version)
+            logger.info("\nCHANGELOG:\n" + "=" * 20 + "\n")
+            for updated_version in updated_versions:
+                version_name: str = updated_version["name"]
+                version_log: str = updated_version["body"]
+
+                version_log = re.sub(
+                    r" by @[\w-]+ in https://github.com/redbrick-ai/redbrick-sdk/pull/\d+",
+                    "",
+                    re.sub(
+                        r".*: https://github.com/redbrick-ai/redbrick-sdk/compare/.*",
+                        "",
+                        version_log,
+                    ),
+                ).strip()
+                logger.info(
+                    f"{version_name}\n{'-'*len(version_name)}\n{version_log}\n\n"
+                )
 
         cache_config["version"]["latest_version"] = latest_version
         cache_config["version"]["last_checked"] = str(current_timestamp)
