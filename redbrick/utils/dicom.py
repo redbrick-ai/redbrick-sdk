@@ -290,6 +290,9 @@ async def convert_nii_to_rtstruct(
                 for category in categories
             }
             rtstruct = RTStructBuilder.create_new(dicom_series_path=dicom_series_path)
+            rtstruct.ds.InstitutionName = "RedBrick AI"
+            rtstruct.ds.Manufacturer = "RedBrick AI"
+            rtstruct.ds.ManufacturerModelName = "redbrick-sdk"
             for nifti_file in nifti_files:
                 img: Nifti1Image = nib_load(nifti_file)  # type: ignore
 
