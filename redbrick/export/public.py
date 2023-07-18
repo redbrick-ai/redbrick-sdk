@@ -30,10 +30,10 @@ from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import (
     clean_rb_label,
     dicom_rb_format,
-    from_rb_assignee,
     parse_entry_latest,
+    user_format,
 )
-from redbrick.utils.rb_event_utils import task_event_format, user_format
+from redbrick.utils.rb_event_utils import task_event_format
 
 
 # pylint: disable=too-many-lines
@@ -941,6 +941,7 @@ class Export:
         user_id: Optional[str] = None,
         task_id: Optional[str] = None,
         task_name: Optional[str] = None,
+        completed_at: Optional[Tuple[Optional[float], Optional[float]]] = None,
     ) -> Iterator[Dict]:
         """
         Search tasks based on multiple queries for a project.
@@ -976,6 +977,10 @@ class Export:
             If present, will return data for the given task name.
             This will do a prefix search with the given task name.
 
+        completed_at: Optional[Tuple[Optional[float], Optional[float]]] = None
+            If present, will return tasks that were completed in the given time range.
+            The tuple contains the `from` and `to` timestamps respectively.
+
         Returns
         -----------
         Iterator[Dict]
@@ -983,6 +988,7 @@ class Export:
                 "taskId": str,
                 "name": str,
                 "createdAt": str,
+                "updatedAt": str,
                 "currentStageName": str,
                 "createdBy"?: {"userId": str, "email": str},
                 "priority"?: float([0, 1]),
@@ -1027,6 +1033,15 @@ class Export:
         elif search == TaskFilters.COMPLETED:
             stage_name = stage_name or all_stages[0]
             filters["recentlyCompleted"] = True
+            if completed_at:
+                if completed_at[0] is not None:
+                    filters["completedAtFrom"] = datetime.fromtimestamp(
+                        completed_at[0], tz=timezone.utc
+                    ).isoformat()
+                if completed_at[1] is not None:
+                    filters["completedAtTo"] = datetime.fromtimestamp(
+                        completed_at[1], tz=timezone.utc
+                    ).isoformat()
         elif search == TaskFilters.FAILED:
             stage_name = (
                 stage_name
@@ -1045,6 +1060,13 @@ class Export:
             filters.pop("userId", None)
         else:
             raise ValueError(f"Invalid task filter: {search}")
+
+        members = self.context.project.get_members(self.org_id, self.project_id)
+        users = {}
+        for member in members:
+            user = member.get("member", {}).get("user", {})
+            if user.get("userId") and user.get("email"):
+                users[user["userId"]] = user["email"]
 
         my_iter = PaginationIterator(
             partial(  # type: ignore
@@ -1069,8 +1091,13 @@ class Export:
                 "currentStageName": task["currentStageName"],
             }
 
+            if task["updatedAt"]:
+                task_obj["updatedAt"] = task["updatedAt"]
+
             if datapoint.get("createdByEntity"):
-                task_obj["createdBy"] = from_rb_assignee(datapoint["createdByEntity"])
+                task_obj["createdBy"] = user_format(
+                    datapoint["createdByEntity"].get("userId"), users
+                )
             if task["priority"]:
                 task_obj["priority"] = task["priority"]
             if datapoint.get("metaData"):
@@ -1089,12 +1116,13 @@ class Export:
                     task_obj["series"] = series_list
 
             assignees = [
-                from_rb_assignee(assignee)
+                user_format(assignee.get("userId"), users)
                 for assignee in (
                     (task["currentStageSubTask"] or {}).get("consensusAssignees", [])
                     or []
                 )
             ]
+            assignees = [assignee for assignee in assignees if assignee]
 
             if assignees:
                 task_obj["assignees"] = assignees

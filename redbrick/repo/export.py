@@ -168,7 +168,7 @@ class ExportRepo(ExportControllerInterface):
     ) -> Tuple[List[Dict], Optional[str]]:
         """Task search."""
         query_string = f"""
-        query tasksList(
+        query tasksListSDK(
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String
@@ -177,7 +177,7 @@ class ExportRepo(ExportControllerInterface):
             $first: Int
             $after: String
         ) {{
-            genericTasksSDK(
+            genericTasks(
                 orgId: $orgId
                 projectId: $projectId
                 stageName: $stageName
@@ -190,6 +190,7 @@ class ExportRepo(ExportControllerInterface):
                     taskId
                     currentStageName
                     createdAt
+                    updatedAt
                     priority
                     datapoint {{
                         {datapoint_shard(not only_meta_data, not only_meta_data)}

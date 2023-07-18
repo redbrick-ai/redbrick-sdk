@@ -18,6 +18,8 @@ class TaskFilterParams(TypedDict, total=False):
     reviewState: ReviewStates
     benchmark: bool
     recentlyCompleted: bool
+    completedAtFrom: str
+    completedAtTo: str
 
 
 class ExportControllerInterface(ABC):

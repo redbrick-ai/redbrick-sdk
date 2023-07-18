@@ -1,18 +1,8 @@
 """Utilities for working with event objects."""
-from typing import Optional, List, Dict
+from typing import List, Dict
 
 from redbrick.common.enums import TaskEventTypes
-
-
-def user_format(user: Optional[str], users: Dict[str, str]) -> Optional[str]:
-    """User format."""
-    if not user:
-        return user
-    if user.startswith("RB:"):
-        return "System"
-    if user.startswith("API:"):
-        return "API Key"
-    return users.get(user, user)
+from redbrick.utils.rb_label_utils import user_format
 
 
 def comment_format(comment: Dict, users: Dict[str, str]) -> Dict:
