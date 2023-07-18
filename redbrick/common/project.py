@@ -63,18 +63,6 @@ class ProjectRepoInterface(ABC):
         self,
         org_id: str,
         name: str,
-        categories: List[Dict],
-        attributes: Optional[List[Dict]],
-        task_categories: Optional[List[Dict]],
-        task_attributes: Optional[List[Dict]],
-    ) -> bool:
-        """Create taxonomy."""
-
-    @abstractmethod
-    def create_taxonomy_new(
-        self,
-        org_id: str,
-        name: str,
         study_classify: Optional[List[Dict]],
         series_classify: Optional[List[Dict]],
         instance_classify: Optional[List[Dict]],

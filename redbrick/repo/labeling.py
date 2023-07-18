@@ -18,7 +18,7 @@ class LabelingRepo(LabelingControllerInterface):
     ) -> List[Dict]:
         """Get labeling tasks."""
         query = """
-        mutation assignLabelingTasks(
+        mutation assignLabelingTasksSDK(
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String!
@@ -126,7 +126,7 @@ class LabelingRepo(LabelingControllerInterface):
     ) -> None:
         """Put Labeling results."""
         query = """
-        mutation putTaskAndLabels(
+        mutation putTaskAndLabelsSDK(
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String!
@@ -173,7 +173,7 @@ class LabelingRepo(LabelingControllerInterface):
     ) -> None:
         """Put labeling result for task."""
         query = """
-        mutation putLabelingTask(
+        mutation putLabelingTaskSDK(
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String!
@@ -209,7 +209,7 @@ class LabelingRepo(LabelingControllerInterface):
     ) -> None:
         """Put review result for task."""
         query = """
-        mutation putReviewTask(
+        mutation putReviewTaskSDK(
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String!
@@ -252,7 +252,7 @@ class LabelingRepo(LabelingControllerInterface):
     ) -> List[Dict]:
         """Assign tasks to specified email or current API key."""
         query_string = """
-        mutation assignTasksMultipleUsers(
+        mutation assignTasksMultipleUsersSDK(
             $orgId: UUID!
             $projectId: UUID!
             $taskIds: [UUID!]!
@@ -298,7 +298,7 @@ class LabelingRepo(LabelingControllerInterface):
     ) -> None:
         """Move groundtruth task back to start."""
         query = """
-        mutation moveTaskToStart(
+        mutation moveTaskToStartSDK(
             $orgId: UUID!
             $projectId: UUID!
             $taskId: UUID!

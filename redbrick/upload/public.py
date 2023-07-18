@@ -378,7 +378,7 @@ class Upload:
         Returns
         ------------
         List[Dict]
-            [
+            >>> [
                 {
                     "presignedUrl: "...", # url to upload to
                     "filePath": "..." # remote file path

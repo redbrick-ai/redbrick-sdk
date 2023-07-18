@@ -22,7 +22,7 @@ class ProjectRepo(ProjectRepoInterface):
         Raise an exception if project does not exist.
         """
         query = f"""
-            query sdkGetProjectName($orgId: UUID!, $projectId: UUID!) {{
+            query sdkGetProjectNameSDK($orgId: UUID!, $projectId: UUID!) {{
                 project(orgId: $orgId, projectId: $projectId) {{
                     {PROJECT_SHARD}
                 }}
@@ -38,7 +38,7 @@ class ProjectRepo(ProjectRepoInterface):
     def get_stages(self, org_id: str, project_id: str) -> List[Dict]:
         """Get stages."""
         query = """
-            query sdkGetStages($orgId: UUID!, $projectId: UUID!){
+            query sdkGetStagesSDK($orgId: UUID!, $projectId: UUID!){
                 stages(orgId: $orgId, projectId: $projectId){
                     stageName
                     brickName
@@ -61,7 +61,7 @@ class ProjectRepo(ProjectRepoInterface):
     ) -> Dict:
         """Create a project and return project_id."""
         query = """
-            mutation createProjectSimple(
+            mutation createProjectSimpleSDK(
                 $orgId: UUID!
                 $name: String!
                 $stages: [StageInputSimple!]!
@@ -215,48 +215,6 @@ class ProjectRepo(ProjectRepoInterface):
         self,
         org_id: str,
         name: str,
-        categories: List[Dict],
-        attributes: Optional[List[Dict]],
-        task_categories: Optional[List[Dict]],
-        task_attributes: Optional[List[Dict]],
-    ) -> bool:
-        """Create taxonomy."""
-        query_string = """
-        mutation createTaxonomySDK(
-            $orgId: UUID!
-            $name: String!
-            $categories: [CategoryRootInput!]!
-            $attributes: [AttributeInput]
-            $taskCategories: [CategoryRootInput!]
-            $taskAttributes: [AttributeInput!]
-        ) {
-            createTaxonomy(
-                orgId: $orgId
-                name: $name
-                categories: $categories
-                attributes: $attributes
-                taskCategories: $taskCategories
-                taskAttributes: $taskAttributes
-            ) {
-                ok
-            }
-        }
-        """
-        query_variables = {
-            "orgId": org_id,
-            "name": name,
-            "categories": categories,
-            "attributes": attributes,
-            "taskCategories": task_categories,
-            "taskAttributes": task_attributes,
-        }
-        result = self.client.execute_query(query_string, query_variables, False)
-        return bool(result and result.get("createTaxonomy", {}).get("ok"))
-
-    def create_taxonomy_new(
-        self,
-        org_id: str,
-        name: str,
         study_classify: Optional[List[Dict]],
         series_classify: Optional[List[Dict]],
         instance_classify: Optional[List[Dict]],
@@ -403,7 +361,7 @@ class ProjectRepo(ProjectRepoInterface):
     def get_current_user(self) -> Dict:
         """Get current user."""
         query_string = """
-        query currentUser {
+        query currentUserSDK {
             me {
                 userId
             }

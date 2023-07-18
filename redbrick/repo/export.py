@@ -131,7 +131,7 @@ class ExportRepo(ExportControllerInterface):
     ) -> Dict:
         """Get input labels."""
         query = """
-        query dataPoint(
+        query dataPointSDK(
             $orgId: UUID!
             $dpId: UUID!
             $name: String!
@@ -168,7 +168,7 @@ class ExportRepo(ExportControllerInterface):
     ) -> Tuple[List[Dict], Optional[str]]:
         """Task search."""
         query_string = f"""
-        query tasksList(
+        query tasksListSDK(
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String
@@ -190,6 +190,7 @@ class ExportRepo(ExportControllerInterface):
                     taskId
                     currentStageName
                     createdAt
+                    updatedAt
                     priority
                     datapoint {{
                         {datapoint_shard(not only_meta_data, not only_meta_data)}
@@ -234,7 +235,7 @@ class ExportRepo(ExportControllerInterface):
     ) -> List[Optional[str]]:
         """Presign download items."""
         query = """
-        query presignItems(
+        query presignItemsSDK(
             $orgId: UUID!
             $storageId: UUID!
             $items: [String]!
@@ -260,7 +261,7 @@ class ExportRepo(ExportControllerInterface):
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get task events."""
         query_string = """
-        query taskEvents(
+        query taskEventsSDK(
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String
@@ -359,3 +360,58 @@ class ExportRepo(ExportControllerInterface):
         task_events = result.get("tasksPaged", {}) or {}
         entries: List[Dict] = task_events.get("entries", []) or []
         return entries, task_events.get("cursor")
+
+    def active_time(
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
+        task_id: Optional[str] = None,
+        first: int = 100,
+        after: Optional[str] = None,
+    ) -> Tuple[List[Dict], Optional[str]]:
+        """Get task active time."""
+        query_string = """
+        query taskActiveTimeSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String!
+            $taskId: String
+            $first: Int
+            $after: String
+        ) {
+            taskActiveTime(
+                orgId: $orgId
+                projectId: $projectId
+                stageName: $stageName
+                taskId: $taskId
+                first: $first
+                after: $after
+            ) {
+                entries {
+                    taskId
+                    user {
+                        userId
+                    }
+                    timeSpent
+                    cycle
+                    date
+                }
+                cursor
+            }
+        }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+            "taskId": task_id,
+            "first": first,
+            "after": after,
+        }
+
+        result = self.client.execute_query(query_string, query_variables, False)
+        task_times = result.get("taskActiveTime", {}) or {}
+        entries: List[Dict] = task_times.get("entries", []) or []
+        return entries, task_times.get("cursor")

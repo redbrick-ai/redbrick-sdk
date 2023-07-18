@@ -2,7 +2,7 @@
 import asyncio
 import re
 import shutil
-from typing import List, Dict, Optional, Set, Tuple, Any
+from typing import Iterator, List, Dict, Optional, Set, Tuple, Any
 from functools import partial
 import os
 import json
@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 import aiohttp
 import tqdm  # type: ignore
 
-from redbrick.common.constants import MAX_CONCURRENCY, MAX_FILE_BATCH_SIZE
+from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.context import RBContext
 from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
 from redbrick.common.export import TaskFilterParams
@@ -30,8 +30,8 @@ from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import (
     clean_rb_label,
     dicom_rb_format,
-    from_rb_assignee,
     parse_entry_latest,
+    user_format,
 )
 from redbrick.utils.rb_event_utils import task_event_format
 
@@ -71,18 +71,16 @@ class Export:
         presign_items: bool = False,
         with_consensus: bool = False,
         task_id: Optional[str] = None,
-    ) -> Tuple[List[Dict], Dict]:
+    ) -> Iterator[Dict]:
         # pylint: disable=too-many-locals
-        taxonomy = self.context.project.get_taxonomy(
-            self.org_id, tax_id=None, name=self.taxonomy_name
-        )
         if task_id:
             logger.info(f"Fetching task: {task_id}")
             val = self.context.export.get_datapoint_latest(
                 self.org_id, self.project_id, task_id, presign_items, with_consensus
             )
             task = parse_entry_latest(val)
-            return ([task] if task else []), taxonomy
+            yield task
+            return
 
         stage_name = "END" if only_ground_truth else None
         my_iter = PaginationIterator(
@@ -100,10 +98,6 @@ class Export:
             concurrency,
         )
 
-        datapoint_count = self.context.export.datapoints_in_project(
-            self.org_id, self.project_id, stage_name
-        )
-
         logger.info(
             f"Downloading {'groundtruth' if only_ground_truth else 'all'} tasks"
             + (
@@ -113,21 +107,10 @@ class Export:
             )
         )
 
-        with tqdm.tqdm(my_iter, unit=" datapoints", total=datapoint_count) as progress:
-            datapoints = []
-            for val in progress:
-                task = parse_entry_latest(val)
-                if task:
-                    datapoints.append(task)
-            try:
-                disable = progress.disable
-                progress.disable = False
-                progress.update(datapoint_count - progress.n)
-                progress.disable = disable
-            except Exception:  # pylint: disable=broad-except
-                pass
-
-        return datapoints, taxonomy
+        for val in my_iter:
+            task = parse_entry_latest(val)
+            if task:
+                yield task
 
     async def _get_input_labels(self, dp_ids: List[str]) -> List[Dict]:
         conn = aiohttp.TCPConnector()
@@ -262,39 +245,24 @@ class Export:
             else []
         )
 
-    async def _download_tasks(
+    async def _download_task(
         self,
-        tasks: List[Dict],
-        storage_ids: List[str],
+        original_task: Dict,
+        storage_id: str,
         taxonomy: Dict,
-        export_dir: str,
+        image_dir: str,
         dcm_to_nii: bool,
         rt_struct: bool,
-        is_tax_v2: bool,
-        concurrency: int = 5,
-    ) -> List[Dict]:
+    ) -> Dict:
         # pylint: disable=too-many-locals, import-outside-toplevel, too-many-nested-blocks
-
-        images_dir = os.path.join(export_dir, "images")
-        os.makedirs(images_dir, exist_ok=True)
-
-        downloaded_tasks = await gather_with_concurrency(
-            min(concurrency, MAX_FILE_BATCH_SIZE),
-            [
-                self._download_task(
-                    task, storage_id, images_dir, taxonomy, rt_struct, is_tax_v2
-                )
-                for task, storage_id in zip(tasks, storage_ids)
-            ],
-            progress_bar_name="Downloading images",
-            keep_progress_bar=False,
+        task, series_dirs = await self._download_task_items(
+            original_task, storage_id, image_dir, taxonomy, rt_struct
         )
-        tasks = [task for task, _ in downloaded_tasks]
 
-        logger.info(f"Exported images to: {images_dir}")
+        logger.info(f"Exported images to: {image_dir}")
 
         if not dcm_to_nii:
-            return tasks
+            return task
 
         import numpy as np  # type: ignore
         import nibabel as nb  # type: ignore
@@ -316,79 +284,80 @@ class Export:
             )
             + r")(\.gz)?$"
         )
-        for task, series_dirs in downloaded_tasks:
-            task_series = Export._get_task_series(task)
-            if not task_series or len(task_series) != len(series_dirs):
-                continue
-            for series, series_dir in zip(task_series, series_dirs):
-                items = (
-                    [series["items"]]
-                    if isinstance(series["items"], str)
-                    else series["items"]
+
+        task_series = Export._get_task_series(task)
+        if not task_series or len(task_series) != len(series_dirs):
+            return task
+
+        for series, series_dir in zip(task_series, series_dirs):
+            items = (
+                [series["items"]]
+                if isinstance(series["items"], str)
+                else series["items"]
+            )
+            if (
+                dcm_to_nii
+                and len(items) > 1
+                and not any(
+                    re.search(dcm_ext, item.split("?", 1)[0].rstrip("/"))
+                    for item in items
                 )
-                if (
-                    dcm_to_nii
-                    and len(items) > 1
-                    and not any(
-                        re.search(dcm_ext, item.split("?", 1)[0].rstrip("/"))
-                        for item in items
+            ):
+                logger.info(f"Converting {task['taskId']} image to nifti")
+                try:
+                    nii_img = dicom_series_to_nifti(
+                        series_dir, uniquify_path(series_dir + ".nii.gz")
                     )
-                ):
-                    logger.info(f"Converting {task['taskId']} image to nifti")
+                except Exception as err:  # pylint: disable=broad-except
+                    logger.warning(
+                        f"Task {task['taskId']} : Failed to convert {series_dir} - {err}"
+                    )
+                    return task
+
+                series["items"] = nii_img["NII_FILE"]
+                if series.get("segmentations"):
+                    logger.debug(f"{task['taskId']} matching headers")
                     try:
-                        nii_img = dicom_series_to_nifti(
-                            series_dir, uniquify_path(series_dir + ".nii.gz")
+                        nii_seg = nb.load(  # type: ignore
+                            os.path.abspath(
+                                series["segmentations"]
+                                if isinstance(series["segmentations"], str)
+                                else series["segmentations"][0]
+                            )
                         )
+                        imgh = nii_img["NII"].header
+                        segh = nii_seg.header
+                        if not (
+                            imgh.get_data_shape() == segh.get_data_shape()  # type: ignore
+                            and imgh.get_data_offset() == segh.get_data_offset()  # type: ignore
+                            and np.array_equal(
+                                imgh.get_best_affine(), segh.get_best_affine()  # type: ignore
+                            )
+                            and np.array_equal(
+                                imgh.get_qform(), segh.get_qform()  # type: ignore
+                            )
+                            and np.array_equal(
+                                imgh.get_sform(), segh.get_sform()  # type: ignore
+                            )
+                        ):
+                            logger.warning(
+                                f"Task: {task['taskId']} : Headers of converted "
+                                + "nifti image and segmentation do not match."
+                            )
                     except Exception as err:  # pylint: disable=broad-except
                         logger.warning(
-                            f"Task {task['taskId']} : Failed to convert {series_dir} - {err}"
+                            f"Task {task['taskId']} : Failed to match headers - {err}"
                         )
-                        continue
-                    series["items"] = nii_img["NII_FILE"]
-                    if series.get("segmentations"):
-                        logger.debug(f"{task['taskId']} matching headers")
-                        try:
-                            nii_seg = nb.load(  # type: ignore
-                                os.path.abspath(
-                                    series["segmentations"]
-                                    if isinstance(series["segmentations"], str)
-                                    else series["segmentations"][0]
-                                )
-                            )
-                            imgh = nii_img["NII"].header
-                            segh = nii_seg.header
-                            if not (
-                                imgh.get_data_shape() == segh.get_data_shape()  # type: ignore
-                                and imgh.get_data_offset() == segh.get_data_offset()  # type: ignore
-                                and np.array_equal(
-                                    imgh.get_best_affine(), segh.get_best_affine()  # type: ignore
-                                )
-                                and np.array_equal(
-                                    imgh.get_qform(), segh.get_qform()  # type: ignore
-                                )
-                                and np.array_equal(
-                                    imgh.get_sform(), segh.get_sform()  # type: ignore
-                                )
-                            ):
-                                logger.warning(
-                                    f"Task: {task['taskId']} : Headers of converted "
-                                    + "nifti image and segmentation do not match."
-                                )
-                        except Exception as err:  # pylint: disable=broad-except
-                            logger.warning(
-                                f"Task {task['taskId']} : Failed to match headers - {err}"
-                            )
 
-        return tasks
+        return task
 
-    async def _download_task(
+    async def _download_task_items(
         self,
         task: Dict,
         storage_id: str,
         parent_dir: str,
         taxonomy: Dict,
         rt_struct: bool,
-        is_tax_v2: bool,
     ) -> Tuple[Dict, List[str]]:
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         path_pattern = re.compile(r"[^\w.]+")
@@ -499,7 +468,7 @@ class Export:
                     for idx, series in enumerate(sub_task.get("series", []) or []):
                         series["items"] = series_items[idx]
 
-                if is_tax_v2 and rt_struct:
+                if taxonomy.get("isNew") and rt_struct:
                     # pylint: disable=import-outside-toplevel
                     from redbrick.utils.dicom import convert_nii_to_rtstruct
 
@@ -740,27 +709,14 @@ class Export:
                     )
                     index += 1
 
-    def export_nifti_label_data(
-        self,
-        datapoints: List[Dict],
-        concurrency: int,
-        taxonomy: Dict,
-        export_dir: str,
-        nifti_dir: str,
-        old_format: bool,
-        no_consensus: bool,
-        with_files: bool,
-        dicom_to_nifti: bool,
-        png_mask: bool,
-        rt_struct: bool,
-    ) -> Tuple[List[Dict], Dict]:
-        """Export nifti label maps."""
-        # pylint: disable=too-many-locals
+    def preprocess_export(
+        self, taxonomy: Dict, get_color_map: bool
+    ) -> Tuple[Dict, Dict]:
+        """Get classMap and colorMap."""
         class_map: Dict = {}
         color_map: Dict = {}
-        is_tax_v2 = bool(taxonomy.get("isNew"))
-        if png_mask:
-            if is_tax_v2:
+        if get_color_map:
+            if bool(taxonomy.get("isNew")):
                 object_types = taxonomy.get("objectTypes", []) or []
                 for object_type in object_types:
                     if object_type["labelType"] == "SEGMENTATION":
@@ -780,45 +736,62 @@ class Export:
                     taxonomy.get("colorMap"),
                 )
                 class_map = color_map
-        os.makedirs(nifti_dir, exist_ok=True)
-        loop = asyncio.get_event_loop()
-        tasks = loop.run_until_complete(
-            gather_with_concurrency(
-                min(concurrency, MAX_FILE_BATCH_SIZE),
-                [
-                    self.process_labels(
-                        datapoint,
-                        nifti_dir,
-                        color_map,
-                        old_format,
-                        no_consensus,
-                        png_mask,
-                        is_tax_v2,
-                    )
-                    for datapoint in datapoints
-                ],
-                "Processing labels",
-            )
-        )
 
+        return class_map, color_map
+
+    async def export_nifti_label_data(
+        self,
+        datapoint: Dict,
+        taxonomy: Dict,
+        task_file: str,
+        image_dir: str,
+        segmentation_dir: str,
+        old_format: bool,
+        no_consensus: bool,
+        color_map: Dict,
+        with_files: bool,
+        dicom_to_nifti: bool,
+        png_mask: bool,
+        rt_struct: bool,
+        get_task: bool,
+    ) -> Optional[Dict]:
+        """Export nifti label maps."""
+        # pylint: disable=too-many-locals
+        task = await self.process_labels(
+            datapoint,
+            segmentation_dir,
+            color_map,
+            old_format,
+            no_consensus,
+            png_mask,
+            bool(taxonomy.get("isNew")),
+        )
         if with_files or rt_struct:
             try:
-                loop.run_until_complete(
-                    self._download_tasks(
-                        tasks,
-                        [datapoint["storageId"] for datapoint in datapoints],
-                        taxonomy,
-                        export_dir,
-                        dicom_to_nifti,
-                        rt_struct,
-                        is_tax_v2,
-                        concurrency,
-                    )
+                task = await self._download_task(
+                    task,
+                    datapoint["storageId"],
+                    taxonomy,
+                    image_dir,
+                    dicom_to_nifti,
+                    rt_struct,
                 )
             except Exception as err:  # pylint: disable=broad-except
                 log_error(f"Failed to download files: {err}")
 
-        return tasks, class_map
+        if os.path.isfile(task_file):
+            with open(task_file, "rb+") as task_file_:
+                task_file_.seek(-1, 2)
+                task_file_.write(
+                    b"," + json.dumps(task, indent=2).encode("utf-8") + b"]"
+                )
+        else:
+            with open(task_file, "wb") as task_file_:
+                task_file_.write(
+                    b"[" + json.dumps(task, indent=2).encode("utf-8") + b"]"
+                )
+
+        return task if get_task else None
 
     def export_tasks(
         self,
@@ -834,7 +807,7 @@ class Export:
         png: bool = False,
         rt_struct: bool = False,
         destination: Optional[str] = None,
-    ) -> List[Dict]:
+    ) -> Iterator[Dict]:
         """Export annotation data.
 
         Meta-data and category information returned as an Object. Segmentations are written to
@@ -889,7 +862,7 @@ class Export:
 
         Returns
         -----------
-        List[Dict]
+        Iterator[Dict]
             Datapoint and labels in RedBrick AI format. See
             https://docs.redbrickai.com/python-sdk/reference/annotation-format
         """
@@ -899,7 +872,31 @@ class Export:
             no_consensus if no_consensus is not None else not self.consensus_enabled
         )
 
-        datapoints, taxonomy = self._get_raw_data_latest(
+        taxonomy = self.context.project.get_taxonomy(
+            self.org_id, tax_id=None, name=self.taxonomy_name
+        )
+
+        # Create output directory
+        destination = destination or self.project_id
+
+        task_file = os.path.join(destination, "tasks.json")
+
+        image_dir = os.path.join(destination, "images")
+        os.makedirs(image_dir, exist_ok=True)
+
+        segmentation_dir = os.path.join(destination, "segmentations")
+        os.makedirs(segmentation_dir, exist_ok=True)
+
+        logger.info(f"Saving NIfTI files to {destination} directory")
+        class_map, color_map = self.preprocess_export(taxonomy, png)
+
+        if png:
+            with open(
+                os.path.join(destination, "class_map.json"), "w", encoding="utf-8"
+            ) as classes_file:
+                json.dump(class_map, classes_file, indent=2)
+
+        datapoints = self._get_raw_data_latest(
             concurrency,
             False if task_id else only_ground_truth,
             None if task_id else from_timestamp,
@@ -910,143 +907,29 @@ class Export:
             task_id,
         )
 
-        if task_id:
-            datapoints = [
-                datapoint for datapoint in datapoints if datapoint["taskId"] == task_id
-            ]
+        if os.path.isfile(task_file):
+            os.remove(task_file)
 
-        # Create output directory
-        destination = destination or self.project_id
-        nifti_dir = os.path.join(destination, "nifti")
-        os.makedirs(nifti_dir, exist_ok=True)
-        logger.info(f"Saving NIfTI files to {destination} directory")
-        tasks, class_map = self.export_nifti_label_data(
-            datapoints,
-            concurrency,
-            taxonomy,
-            destination,
-            nifti_dir,
-            old_format,
-            no_consensus,
-            with_files,
-            dicom_to_nifti,
-            png,
-            rt_struct,
-        )
-        with open(
-            os.path.join(destination, "tasks.json"), "w", encoding="utf-8"
-        ) as tasks_file:
-            json.dump(tasks, tasks_file, indent=2)
-
-        if png:
-            with open(
-                os.path.join(destination, "class_map.json"), "w", encoding="utf-8"
-            ) as classes_file:
-                json.dump(class_map, classes_file, indent=2)
-
-        return tasks
-
-    def redbrick_nifti(
-        self,
-        only_ground_truth: bool = True,
-        concurrency: int = 10,
-        task_id: Optional[str] = None,
-        from_timestamp: Optional[float] = None,
-        old_format: bool = False,
-        no_consensus: Optional[bool] = None,
-        png: bool = False,
-    ) -> List[Dict]:
-        """
-        .. admonition:: Deprecation Notice
-
-            .. deprecated:: 2.11.0
-
-            Use :obj:`~redbrick.export.Export.export_tasks` instead.
-
-        Alias to export_tasks method.
-        """
-        logger.warning(
-            "`Export.redbrick_nifti` method has been deprecated and will be removed "
-            + "in a future release. Please use `Export.export_tasks` method instead."
-        )
-        return self.export_tasks(
-            only_ground_truth,
-            concurrency,
-            task_id=task_id,
-            from_timestamp=from_timestamp,
-            old_format=old_format,
-            no_consensus=no_consensus,
-            png=png,
-        )
-
-    def search_tasks(
-        self,
-        only_ground_truth: bool = True,
-        concurrency: int = 10,
-        name: Optional[str] = None,
-    ) -> List[Dict]:
-        """
-        .. admonition:: Deprecation Notice
-
-            .. deprecated:: 2.11.0
-
-            Use :obj:`~redbrick.export.Export.list_tasks` instead.
-
-        Search tasks by ``task_id`` or ``name`` in any stage of your project workflow.
-        This function returns minimal meta-data about the queried tasks.
-
-        >>> project = redbrick.get_project(org_id, project_id, api_key, url)
-        >>> result = project.export.search_tasks()
-
-        Parameters
-        -----------
-        only_ground_truth: bool = True
-            If set to True, will return all tasks
-            that have been completed in your workflow.
-
-        concurrency: int = 10
-            The number of requests that will be made in parallel.
-
-        name: Optional[str] = None
-            If present, will return the task with task_id == name.
-            If no match found, will return the task with task name == name
-
-        Returns
-        -----------
-        List[Dict]
-            [{"taskId": str, "name": str, "createdAt": str, "currentStageName": str}]
-        """
-        logger.warning(
-            "`Export.search_tasks` method has been deprecated and will be removed "
-            + "in a future release. Please use `Export.list_tasks` method instead."
-        )
-        my_iter = PaginationIterator(
-            partial(  # type: ignore
-                self.context.export.task_search,
-                self.org_id,
-                self.project_id,
-                self.output_stage_name if only_ground_truth else None,
-                name,
-                None,
-                True,
-            ),
-            concurrency,
-        )
-
-        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
-            datapoints = [
-                {
-                    "taskId": task["taskId"],
-                    "name": task["datapoint"]["name"],
-                    "createdAt": task["createdAt"],
-                    "currentStageName": task["currentStageName"],
-                }
-                for task in progress
-                if (task.get("datapoint", {}) or {}).get("name")
-                and (not only_ground_truth or task["currentStageName"] == "END")
-            ]
-
-        return datapoints
+        loop = asyncio.get_event_loop()
+        for datapoint in datapoints:
+            task: Dict = loop.run_until_complete(
+                self.export_nifti_label_data(  # type: ignore
+                    datapoint,
+                    taxonomy,
+                    task_file,
+                    image_dir,
+                    segmentation_dir,
+                    old_format,
+                    no_consensus,
+                    color_map,
+                    with_files,
+                    dicom_to_nifti,
+                    png,
+                    rt_struct,
+                    True,
+                )
+            )
+            yield task
 
     def list_tasks(
         self,
@@ -1058,7 +941,8 @@ class Export:
         user_id: Optional[str] = None,
         task_id: Optional[str] = None,
         task_name: Optional[str] = None,
-    ) -> List[Dict]:
+        completed_at: Optional[Tuple[Optional[float], Optional[float]]] = None,
+    ) -> Iterator[Dict]:
         """
         Search tasks based on multiple queries for a project.
         This function returns minimal meta-data about the queried tasks.
@@ -1093,13 +977,18 @@ class Export:
             If present, will return data for the given task name.
             This will do a prefix search with the given task name.
 
+        completed_at: Optional[Tuple[Optional[float], Optional[float]]] = None
+            If present, will return tasks that were completed in the given time range.
+            The tuple contains the `from` and `to` timestamps respectively.
+
         Returns
         -----------
-        List[Dict]
-            [{
+        Iterator[Dict]
+            >>> [{
                 "taskId": str,
                 "name": str,
                 "createdAt": str,
+                "updatedAt": str,
                 "currentStageName": str,
                 "createdBy"?: {"userId": str, "email": str},
                 "priority"?: float([0, 1]),
@@ -1144,6 +1033,15 @@ class Export:
         elif search == TaskFilters.COMPLETED:
             stage_name = stage_name or all_stages[0]
             filters["recentlyCompleted"] = True
+            if completed_at:
+                if completed_at[0] is not None:
+                    filters["completedAtFrom"] = datetime.fromtimestamp(
+                        completed_at[0], tz=timezone.utc
+                    ).isoformat()
+                if completed_at[1] is not None:
+                    filters["completedAtTo"] = datetime.fromtimestamp(
+                        completed_at[1], tz=timezone.utc
+                    ).isoformat()
         elif search == TaskFilters.FAILED:
             stage_name = (
                 stage_name
@@ -1163,6 +1061,13 @@ class Export:
         else:
             raise ValueError(f"Invalid task filter: {search}")
 
+        members = self.context.project.get_members(self.org_id, self.project_id)
+        users = {}
+        for member in members:
+            user = member.get("member", {}).get("user", {})
+            if user.get("userId") and user.get("email"):
+                users[user["userId"]] = user["email"]
+
         my_iter = PaginationIterator(
             partial(  # type: ignore
                 self.context.export.task_search,
@@ -1177,61 +1082,59 @@ class Export:
             limit,
         )
 
-        tasks: List[Dict] = []
-        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
-            for task in progress:
-                datapoint = task["datapoint"] or {}
-                task_obj = {
-                    "taskId": task["taskId"],
-                    "name": datapoint.get("name"),
-                    "createdAt": task["createdAt"],
-                    "currentStageName": task["currentStageName"],
-                }
+        for task in my_iter:
+            datapoint = task["datapoint"] or {}
+            task_obj = {
+                "taskId": task["taskId"],
+                "name": datapoint.get("name"),
+                "createdAt": task["createdAt"],
+                "currentStageName": task["currentStageName"],
+            }
 
-                if datapoint.get("createdByEntity"):
-                    task_obj["createdBy"] = from_rb_assignee(
-                        datapoint["createdByEntity"]
-                    )
-                if task["priority"]:
-                    task_obj["priority"] = task["priority"]
-                if datapoint.get("metaData"):
-                    task_obj["metaData"] = json.loads(datapoint["metaData"])
+            if task["updatedAt"]:
+                task_obj["updatedAt"] = task["updatedAt"]
 
-                if isinstance(datapoint.get("seriesInfo"), list):
-                    series_list = []
-                    for series in datapoint["seriesInfo"]:
-                        series_obj = {}
-                        if series["name"]:
-                            series_obj["name"] = series["name"]
-                        if series["metaData"]:
-                            series_obj["metaData"] = json.loads(series["metaData"])
-                        series_list.append(series_obj)
-                    if any(series for series in series_list):
-                        task_obj["series"] = series_list
+            if datapoint.get("createdByEntity"):
+                task_obj["createdBy"] = user_format(
+                    datapoint["createdByEntity"].get("userId"), users
+                )
+            if task["priority"]:
+                task_obj["priority"] = task["priority"]
+            if datapoint.get("metaData"):
+                task_obj["metaData"] = json.loads(datapoint["metaData"])
 
-                assignees = [
-                    from_rb_assignee(assignee)
-                    for assignee in (
-                        (task["currentStageSubTask"] or {}).get(
-                            "consensusAssignees", []
-                        )
-                        or []
-                    )
-                ]
+            if isinstance(datapoint.get("seriesInfo"), list):
+                series_list = []
+                for series in datapoint["seriesInfo"]:
+                    series_obj = {}
+                    if series["name"]:
+                        series_obj["name"] = series["name"]
+                    if series["metaData"]:
+                        series_obj["metaData"] = json.loads(series["metaData"])
+                    series_list.append(series_obj)
+                if any(series for series in series_list):
+                    task_obj["series"] = series_list
 
-                if assignees:
-                    task_obj["assignees"] = assignees
+            assignees = [
+                user_format(assignee.get("userId"), users)
+                for assignee in (
+                    (task["currentStageSubTask"] or {}).get("consensusAssignees", [])
+                    or []
+                )
+            ]
+            assignees = [assignee for assignee in assignees if assignee]
 
-                tasks.append(task_obj)
+            if assignees:
+                task_obj["assignees"] = assignees
 
-        return tasks
+            yield task_obj
 
     def get_task_events(
         self,
         only_ground_truth: bool = True,
         concurrency: int = 10,
         from_timestamp: Optional[float] = None,
-    ) -> List[Dict]:
+    ) -> Iterator[Dict]:
         """Generate an audit log of all actions performed on tasks.
 
         Use this method to get a detailed summary of all the actions performed on your
@@ -1261,8 +1164,12 @@ class Export:
 
         Returns
         -----------
-        List[Dict]
-            [{"taskId": str, "currentStageName": str, "events": List[Dict]}]
+        Iterator[Dict]
+            >>> [{
+                "taskId": string,
+                "currentStageName": string,
+                "events": List[Dict]
+            }]
         """
         members = self.context.project.get_members(self.org_id, self.project_id)
         users = {}
@@ -1284,9 +1191,71 @@ class Export:
             concurrency,
         )
 
-        tasks: List[Dict] = []
         with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
             for task in progress:
-                tasks.append(task_event_format(task, users))
+                yield task_event_format(task, users)
 
-        return tasks
+    def get_active_time(
+        self,
+        *,
+        stage_name: str,
+        task_id: Optional[str] = None,
+        concurrency: int = 100,
+    ) -> Iterator[Dict]:
+        """Get active time spent on tasks for labeling/reviewing.
+
+        Parameters
+        -----------
+        stage_name: str
+            Stage for which to return the time info.
+
+        task_id: Optional[str] = None
+            If set, will return info for the given task in the given stage.
+
+        concurrency: int = 100
+            Request batch size.
+
+        Returns
+        -----------
+        Iterator[Dict]
+            >>> [{
+                "orgId": string,
+                "projectId": string,
+                "stageName": string,
+                "taskId": string,
+                "completedBy": string,
+                "timeSpent": number,  # In milliseconds
+                "completedAt": datetime,
+                "cycle": number  # Task cycle
+            }]
+        """
+        members = self.context.project.get_members(self.org_id, self.project_id)
+        users = {}
+        for member in members:
+            user = member.get("member", {}).get("user", {})
+            if user.get("userId") and user.get("email"):
+                users[user["userId"]] = user["email"]
+
+        my_iter = PaginationIterator(
+            partial(  # type: ignore
+                self.context.export.active_time,
+                self.org_id,
+                self.project_id,
+                stage_name,
+                task_id,
+            ),
+            concurrency,
+        )
+
+        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
+            for task in progress:
+                yield {
+                    "orgId": self.org_id,
+                    "projectId": self.project_id,
+                    "stageName": stage_name,
+                    "taskId": task["taskId"],
+                    "completedBy": user_format(task["user"]["userId"], users),
+                    "timeSpent": task["timeSpent"],
+                    "completedAt": task["date"],
+                    "cycle": task["cycle"],
+                }

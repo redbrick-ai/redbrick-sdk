@@ -19,7 +19,7 @@ class WorkspaceRepo(WorkspaceRepoInterface):
         Raise an exception if workspace does not exist.
         """
         query = """
-            query sdkGetWorkspace($orgId: UUID!, $workspaceId: UUID!){
+            query sdkGetWorkspaceSDK($orgId: UUID!, $workspaceId: UUID!){
                 workspace(orgId: $orgId, workspaceId: $workspaceId){
                     orgId
                     workspaceId
@@ -45,7 +45,7 @@ class WorkspaceRepo(WorkspaceRepoInterface):
         Raise an exception if workspace already exists.
         """
         query = """
-            mutation sdkCreateWorkspace($orgId: UUID!, $workspaceName: String!){
+            mutation sdkCreateWorkspaceSDK($orgId: UUID!, $workspaceName: String!){
                 createWorkspace(orgId: $orgId, workspaceName: $workspaceName){
                     orgId
                     workspaceId

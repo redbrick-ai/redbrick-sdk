@@ -5,18 +5,14 @@ import json
 import asyncio
 from typing import Callable, List, Dict, Optional, Any, TypeVar, cast
 from copy import deepcopy
-from functools import partial
 
 import aiohttp
-import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
 from redbrick.utils.upload import process_segmentation_upload, validate_json
 from redbrick.utils.logging import log_error, logger
-from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.rb_label_utils import clean_rb_label
 
 
 TFun = TypeVar("TFun", bound=Callable[..., Any])  # pylint: disable=invalid-name
@@ -79,70 +75,6 @@ class Labeling:
         self.project_id = project_id
         self.stages = stages
         self.review = review
-
-    @check_stage
-    def get_tasks(self, stage_name: str, count: int = 1) -> List[Dict]:
-        """
-        .. admonition:: Deprecation Notice
-
-            .. deprecated:: 2.11.0
-
-            Use :obj:`~redbrick.export.Export.list_tasks` instead.
-
-        Get tasks assigned to the API Key.
-
-        Get a list of tasks from ``stage_name`` for the current API Key to work upon. If
-        the current API Key is not assigned any tasks, calling this method will automatically
-        assign tasks to the API Key.
-
-        >>> project = redbrick.get_project(...)
-        >>> label_tasks = project.labeling.get_tasks(...)
-        >>> review_tasks = project.review.get_tasks...)
-
-        Parameters
-        -------------
-        stage_name: str
-            The name of the stage your want to get tasks from. You can
-            find the stage name on the workflow overview on the project
-            dashboard.
-
-        count: int = 1
-            The number of tasks to retrieve. We recommend keeping this
-            < 50.
-
-        Returns
-        ----------
-        List[Dict]
-            Tasks that are queued in this stage. Please see reference doc
-            for formats.
-            https://docs.redbrickai.com/python-sdk/reference#task-objects
-        """
-        logger.warning(
-            "`Labeling.get_task_queue` method has been deprecated and will be removed "
-            + "in a future release. Please use `Export.list_tasks` method instead."
-        )
-        tasks = self.context.labeling.get_labeling_tasks(
-            self.org_id, self.project_id, stage_name, count=count
-        )
-
-        def _clean_tasks(task: Dict) -> Dict:
-            task_id = task["taskId"]
-            labels = json.loads(task.get("taskData", {}).get("labelsData", "[]"))
-            labels_cleaned = [clean_rb_label(label) for label in labels]
-
-            items = task["datapoint"]["items"]
-            items_presigned = task["datapoint"]["itemsPresigned"]
-            name = task["datapoint"]["name"]
-
-            return {
-                "taskId": task_id,
-                "labels": labels_cleaned,
-                "items": items,
-                "itemsPresigned": items_presigned,
-                "name": name,
-            }
-
-        return [_clean_tasks(task) for task in tasks]
 
     async def _put_task(
         self,
@@ -441,16 +373,9 @@ class Labeling:
         self,
         task_ids: List[str],
         email: Optional[str] = None,
-        current_user: bool = False,
         refresh: bool = True,
     ) -> List[Dict]:
         """
-        .. admonition:: Deprecation Notice
-
-            .. deprecated:: 2.11.0
-
-            Parameter `current_user` has been deprecated.
-
         Assign tasks to specified email or current API key.
 
         Unassigns all users from the task if neither of the ``email`` or ``current_user`` are set.
@@ -467,9 +392,6 @@ class Labeling:
             The email of the user you want to assign this task to. Make sure the
             user has adequate permissions to be assigned this task in the project.
 
-        current_user: bool = False
-            If `True`, will assign the task to the API KEY being used with the SDK.
-
         refresh: bool = True
             Used for projects with Consensus activated.
             If `True`, will `overwrite` the assignment to the current users.
@@ -477,134 +399,17 @@ class Labeling:
         Returns
         ---------------
         List[Dict]
-            List of affected tasks - [{"taskId", "name", "stageName"}]
+            List of affected tasks.
+                >>> [{"taskId", "name", "stageName"}]
         """
-        if current_user:
-            logger.warning(
-                "`current_user` has been deprecated and will be removed in a future release."
-            )
-
         return self.context.labeling.assign_tasks(
             self.org_id,
             self.project_id,
             task_ids,
             [email] if email else None,
-            current_user,
+            False,
             refresh,
         )
-
-    @check_stage
-    def get_task_queue(
-        self,
-        stage_name: str,
-        concurrency: int = 50,
-        user_id: Optional[str] = None,
-        email: Optional[str] = None,
-        fetch_unassigned: bool = False,
-    ) -> List[Dict]:
-        """
-        .. admonition:: Deprecation Notice
-
-            .. deprecated:: 2.11.0
-
-            Use :obj:`~redbrick.export.Export.list_tasks` instead.
-
-        Get all tasks in queue.
-
-        Returns all the tasks assigned to a particular user and/or
-        tasks that are unassigned.
-
-        Parameters
-        --------------
-        stage_name: str
-            The stage for which you want to query the task queue.
-
-        concurrency: int = 50
-            The number of tasks to retrieve at a time.
-            We recommend keeping this <= 50.
-
-        user_id: Optional[str] = None
-            The user id for which you want to query the task queue.
-            Will be preferred if both ``user_id`` and ``email`` are set.
-
-        email: Optional[str] = None
-            The user email for which you want to query the task queue.
-            If both ``user_id`` and ``email`` are None, will query for current API Key.
-
-        fetch_unassigned: bool = False
-            Whether to fetch unassigned tasks.
-
-        Returns
-        ---------------
-        List[Dict]
-            List of tasks in queue - [{"taskId", "name", "createdAt"}]
-        """
-        logger.warning(
-            "`Labeling.get_task_queue` method has been deprecated and will be removed "
-            + "in a future release. Please use `Export.list_tasks` method instead."
-        )
-        my_iter = PaginationIterator(
-            partial(  # type: ignore
-                self.context.export.task_search,
-                self.org_id,
-                self.project_id,
-                stage_name,
-                None,
-                {"userId": user_id or email or self.context.key_id},
-                False,
-            ),
-            concurrency,
-        )
-
-        with tqdm.tqdm(
-            my_iter, unit=" datapoints", desc="Fetching assigned tasks"
-        ) as progress:
-            datapoints = [
-                {
-                    "taskId": task["taskId"],
-                    "name": task["datapoint"]["name"],
-                    "assignedTo": (
-                        (task["currentStageSubTask"] or {}).get("assignedTo") or {}
-                    ).get("email"),
-                    "status": (task["currentStageSubTask"] or {}).get("state"),
-                    "items": task["datapoint"]["items"],
-                    "itemsPresigned": task["datapoint"]["itemsPresigned"],
-                    "createdAt": task["createdAt"],
-                }
-                for task in progress
-            ]
-
-        if fetch_unassigned:
-            my_iter = PaginationIterator(
-                partial(  # type: ignore
-                    self.context.export.task_search,
-                    self.org_id,
-                    self.project_id,
-                    stage_name,
-                    None,
-                    {"userId": None},
-                    False,
-                ),
-                concurrency,
-            )
-
-            with tqdm.tqdm(
-                my_iter, unit=" datapoints", desc="Fetching unassigned tasks"
-            ) as progress:
-                datapoints += [
-                    {
-                        "taskId": task["taskId"],
-                        "name": task["datapoint"]["name"],
-                        "assignedTo": None,
-                        "status": (task["currentStageSubTask"] or {}).get("state"),
-                        "items": task["datapoint"]["items"],
-                        "itemsPresigned": task["datapoint"]["itemsPresigned"],
-                        "createdAt": task["createdAt"],
-                    }
-                    for task in progress
-                ]
-
-        return datapoints
 
     async def _tasks_to_start(self, task_ids: List[str]) -> None:
         conn = aiohttp.TCPConnector()

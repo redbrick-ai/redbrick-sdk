@@ -11,12 +11,15 @@ def clean_rb_label(label: Dict) -> Dict:
     return label
 
 
-def from_rb_assignee(assignee: Dict) -> Dict:
-    """Get assignee object from assignee."""
-    return {
-        "userId": assignee.get("userId"),
-        "email": assignee.get("email"),
-    }
+def user_format(user: Optional[str], users: Dict[str, str]) -> Optional[str]:
+    """User format."""
+    if not user:
+        return user
+    if user.startswith("RB:"):
+        return "System"
+    if user.startswith("API:"):
+        return "API Key"
+    return users.get(user, user)
 
 
 def from_rb_task_data(task_data: Dict) -> Dict:
@@ -34,9 +37,17 @@ def from_rb_task_data(task_data: Dict) -> Dict:
 
 def from_rb_sub_task(task: Dict) -> Dict:
     """Get task object from sub task."""
+    assignee = task.get("assignedTo", {}) or {}
     return {
         "status": task.get("state"),
-        **from_rb_assignee(task.get("assignedTo", {}) or {}),
+        "assignee": user_format(
+            assignee.get("userId"),
+            {
+                assignee.get("userId", ""): assignee.get(
+                    "email", assignee.get("userId", "")
+                )
+            },
+        ),
         **from_rb_task_data(task.get("taskData", {}) or {}),
     }
 
@@ -45,12 +56,30 @@ def from_rb_consensus_info(task: Dict) -> Dict:
     """Get consensus info from task."""
     scores = []
     for task_score in task.get("scores", []) or []:
-        score = {**from_rb_assignee(task_score["user"])}
+        assignee = task_score["user"]
+        score: Dict[str, Any] = {
+            "assignee": user_format(
+                assignee.get("userId"),
+                {
+                    assignee.get("userId", ""): assignee.get(
+                        "email", assignee.get("userId", "")
+                    )
+                },
+            )
+        }
         score["score"] = (task_score.get("score", 0) or 0) * 100
         scores.append(score)
 
+    assignee = task.get("user", {}) or {}
     return {
-        **from_rb_assignee(task.get("user", {}) or {}),
+        "assignee": user_format(
+            assignee.get("userId"),
+            {
+                assignee.get("userId", ""): assignee.get(
+                    "email", assignee.get("userId", "")
+                )
+            },
+        ),
         **from_rb_task_data(task.get("taskData", {}) or {}),
         "scores": scores,
     }

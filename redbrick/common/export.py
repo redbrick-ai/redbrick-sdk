@@ -18,6 +18,8 @@ class TaskFilterParams(TypedDict, total=False):
     reviewState: ReviewStates
     benchmark: bool
     recentlyCompleted: bool
+    completedAtFrom: str
+    completedAtTo: str
 
 
 class ExportControllerInterface(ABC):
@@ -91,3 +93,15 @@ class ExportControllerInterface(ABC):
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get task events."""
+
+    @abstractmethod
+    def active_time(
+        self,
+        org_id: str,
+        project_id: str,
+        stage_name: str,
+        task_id: Optional[str] = None,
+        first: int = 100,
+        after: Optional[str] = None,
+    ) -> Tuple[List[Dict], Optional[str]]:
+        """Get task active time."""

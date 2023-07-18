@@ -102,7 +102,7 @@ class UploadRepo(UploadControllerInterface):
     ) -> Dict:
         """Update items in a datapoint."""
         query_string = """
-            mutation updateTaskItems(
+            mutation updateTaskItemsSDK(
                 $orgId: UUID!
                 $projectId: UUID!
                 $storageId: UUID!
@@ -142,7 +142,7 @@ class UploadRepo(UploadControllerInterface):
     ) -> List[Dict[Any, Any]]:
         """Return presigned URLs to upload files."""
         query_string = """
-            query itemsUploadPresign(
+            query itemsUploadPresignSDK(
                 $orgId:UUID!,
                 $projectId: UUID!,
                 $files: [String]!,
@@ -247,7 +247,7 @@ class UploadRepo(UploadControllerInterface):
     ) -> str:
         """Generate direct upload items list."""
         query_string = """
-            query generateItemsList(
+            query generateItemsListSDK(
                 $importType: ImportType!
                 $files: [String]!
                 $groupedByStudy: Boolean!
@@ -283,7 +283,7 @@ class UploadRepo(UploadControllerInterface):
     ) -> Dict:
         """Validate and convert tasks format."""
         query_string = """
-        query validateAndConvertToImportFormat(
+        query validateAndConvertToImportFormatSDK(
             $original: String!
             $convert: Boolean
             $storageId: UUID
@@ -321,7 +321,7 @@ class UploadRepo(UploadControllerInterface):
     ) -> Dict:
         """Import tasks from another project in the same workspace."""
         query_string = """
-            mutation importTasksFromWorkspace(
+            mutation importTasksFromWorkspaceSDK(
                 $orgId: UUID!
                 $projectId: UUID!
                 $sourceProjectId: UUID!

@@ -127,6 +127,46 @@ class CLICache:
             file_.write(data)
         return cache_hash
 
+    def remove_data(self, name: str, fixed_cache: bool = False) -> None:
+        """Remove cache data."""
+        cache_file = self.cache_path(name, fixed_cache=fixed_cache)
+        if os.path.isfile(cache_file):
+            os.remove(cache_file)
+
+    def get_entity(
+        self, name: str, fixed_cache: bool = False
+    ) -> Optional[Union[str, Dict, List]]:
+        """Get cache entity."""
+        cache_file = self.cache_path(*self._task_path(name), fixed_cache=fixed_cache)
+        with open(cache_file, "r", encoding="utf-8") as file_:
+            data = json.load(file_)
+        return data
+
+    def set_entity(
+        self, name: str, entity: Union[str, Dict, List], fixed_cache: bool = False
+    ) -> None:
+        """Set cache entity."""
+        cache_file = self.cache_path(*self._task_path(name), fixed_cache=fixed_cache)
+        with open(cache_file, "w", encoding="utf-8") as file_:
+            json.dump(entity, file_, separators=(",", ":"))
+
+    def remove_entity(self, name: str, fixed_cache: bool = False) -> None:
+        """Remove cache entity."""
+        cache_file = self.cache_path(*self._task_path(name), fixed_cache=fixed_cache)
+        if os.path.isfile(cache_file):
+            os.remove(cache_file)
+
+    def _task_path(self, task_id: str) -> List[str]:
+        """Get task dir from id."""
+        return [
+            task_id[6:8],
+            task_id[11:13],
+            task_id[16:18],
+            task_id[21:23],
+            task_id[34:36],
+            task_id,
+        ]
+
     def clear_cache(self, all_caches: bool = False) -> None:
         """Clear project cache."""
         if not self.exists:
