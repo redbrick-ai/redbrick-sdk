@@ -578,7 +578,6 @@ class Export:
         ]
 
         if task.get("consensusTasks"):
-            presign_paths = [None for _ in presign_paths]
             for consensus_task in task["consensusTasks"]:
                 presign_paths.extend(
                     [
