@@ -59,6 +59,7 @@ class ImportTypes(str, Enum):
 
     DICOM3D = "DICOM3D"
     NIFTI3D = "NIFTI3D"
+    NRRD3D = "NRRD3D"
     IMAGE2D = "IMAGE2D"
     VIDEO = "VIDEO"
     VIDEOFRAMES = "VIDEOFRAMES"

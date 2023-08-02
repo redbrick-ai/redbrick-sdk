@@ -39,12 +39,15 @@ JSON_FILE_TYPES = {"json": "application/json"}
 
 NIFTI_FILE_TYPES = {"nii": "application/octet-stream"}
 
+NRRD_FILE_TYPES = {"nrrd": "application/octet-stream"}
+
 FILE_TYPES = {
     **IMAGE_FILE_TYPES,
     **VIDEO_FILE_TYPES,
     **DICOM_FILE_TYPES,
     **JSON_FILE_TYPES,
     **NIFTI_FILE_TYPES,
+    **NRRD_FILE_TYPES,
 }
 
 ALL_FILE_TYPES = {"*": "*/*"}

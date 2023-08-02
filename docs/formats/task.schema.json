@@ -81,13 +81,13 @@
                                         "array",
                                         "string"
                                     ],
-                                    "pattern": "\\.(nii|mp4|avi)\\b",
+                                    "pattern": "\\.(nii|nrrd|mp4|avi)\\b",
                                     "minLength": 1,
                                     "minItems": 1,
                                     "maxItems": 1,
                                     "items": {
                                         "type": "string",
-                                        "pattern": "\\.(nii|mp4|avi)\\b",
+                                        "pattern": "\\.(nii|nrrd|mp4|avi)\\b",
                                         "minLength": 1
                                     },
                                     "additionalItems": false
@@ -104,12 +104,12 @@
                                         "array",
                                         "string"
                                     ],
-                                    "pattern": "^((?!(\\.(nii|mp4|avi)\\b)).)*$",
+                                    "pattern": "^((?!(\\.(nii|nrrd|mp4|avi)\\b)).)*$",
                                     "minLength": 1,
                                     "minItems": 1,
                                     "items": {
                                         "type": "string",
-                                        "pattern": "^((?!(\\.(nii|mp4|avi)\\b)).)*$",
+                                        "pattern": "^((?!(\\.(nii|nrrd|mp4|avi)\\b)).)*$",
                                         "minLength": 1
                                     },
                                     "additionalItems": false
