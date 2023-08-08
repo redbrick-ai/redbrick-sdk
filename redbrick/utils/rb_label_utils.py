@@ -191,7 +191,8 @@ def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
     labels = input_task.get("labels", []) or []
     labels_map = input_task.get("labelsMap", []) or []
     series = output_task["series"]
-    for volume_index, label_map in enumerate(labels_map):
+    for idx, label_map in enumerate(labels_map):
+        volume_index = label_map.get("imageIndex", idx)
         if volume_index >= len(series):
             series.extend([{} for _ in range(volume_index - len(series) + 1)])
         if label_map and label_map.get("labelName"):
