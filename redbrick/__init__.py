@@ -60,7 +60,11 @@ try:
 except Exception:  # pylint: disable=broad-except
     pass
 
-version_check(__version__)
+
+def version() -> str:
+    """Check for latest version and return the current one."""
+    version_check(__version__)
+    return f"v{__version__}"
 
 
 def _populate_context(context: RBContext) -> RBContext:

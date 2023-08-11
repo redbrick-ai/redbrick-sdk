@@ -119,9 +119,7 @@ def cli_parser(only_parser: bool = True) -> Any:
         description="The RedBrick CLI offers a simple interface to quickly import and "
         + "export your images & annotations, and perform other high-level actions."
     )
-    parser.add_argument(
-        "-v", "--version", action="version", version=f"v{redbrick.__version__}"
-    )
+    parser.add_argument("-v", "--version", action="version", version=redbrick.version())
     cli = CLIController(parser.add_subparsers(title="Commands", dest="command"))
 
     shtab.add_argument_to(parser, "--completion")

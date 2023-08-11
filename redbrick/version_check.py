@@ -42,7 +42,9 @@ def get_updated_versions(current_version: str) -> List[Dict]:
 
 def version_check(current_version: str) -> None:
     """Check if current installed version of the SDK is up to date with latest pypi release."""
-    logger.debug(f"SDK version: {current_version}")
+    if os.environ.get("REDBRICK_DISABLE_VERSION_CHECK"):
+        return
+
     cache_file = os.path.join(config_path(), "version")
     os.makedirs(os.path.dirname(cache_file), exist_ok=True)
 
