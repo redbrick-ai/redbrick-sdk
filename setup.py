@@ -29,10 +29,11 @@ setup(
     description="RedBrick platform Python SDK!",
     py_modules=["redbrick"],
     python_requires=">=3.8",
-    packages=find_packages(),
+    packages=find_packages(".", exclude=["tests"]),
     long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True,
+    package_data={"redbrick": ["py.typed"]},
     install_requires=install_requires,
     entry_points={
         "console_scripts": ["redbrick=redbrick.cli:cli_main"],
