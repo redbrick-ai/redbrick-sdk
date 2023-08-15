@@ -9,7 +9,7 @@ from redbrick.project import RBProject
 from redbrick.workspace import RBWorkspace
 from redbrick.utils.logging import logger
 from redbrick.utils.pagination import PaginationIterator
-from redbrick.utils.rb_tax_utils import format_taxonomy
+from redbrick.utils.rb_tax_utils import format_taxonomy, validate_taxonomy
 from .basic_project import get_basic_project
 
 
@@ -245,7 +245,15 @@ class RBOrganization:
 
         Format reference for categories and attributes objects:
         https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
+
+        Raises
+        ----------
+        ValueError:
+            If there are validation errors.
         """
+        validate_taxonomy(
+            study_classify, series_classify, instance_classify, object_types
+        )
         if self.context.project.create_taxonomy(
             self.org_id,
             name,
@@ -256,29 +264,14 @@ class RBOrganization:
         ):
             logger.info(f"Successfully created taxonomy: {name}")
 
-    def create_taxonomy_new(
-        self,
-        name: str,
-        study_classify: Optional[List[Dict]] = None,
-        series_classify: Optional[List[Dict]] = None,
-        instance_classify: Optional[List[Dict]] = None,
-        object_types: Optional[List[Dict]] = None,
-    ) -> None:
-        """
-        Create a Taxonomy V2.
+    def get_taxonomy(
+        self, name: Optional[str] = None, tax_id: Optional[str] = None
+    ) -> Dict:
+        """Get a taxonomy created in your organization based on id or name.
 
         Format reference for categories and attributes objects:
         https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
         """
-        logger.warning("Deprecated: Please use `create_taxonomy()`")
-        self.create_taxonomy(
-            name, study_classify, series_classify, instance_classify, object_types
-        )
-
-    def get_taxonomy(
-        self, name: Optional[str] = None, tax_id: Optional[str] = None
-    ) -> Dict:
-        """Get a taxonomy created in your organization."""
         taxonomy = self.context.project.get_taxonomy(self._org_id, tax_id, name)
         return format_taxonomy(taxonomy)
 
@@ -290,16 +283,19 @@ class RBOrganization:
         instance_classify: Optional[List[Dict]] = None,
         object_types: Optional[List[Dict]] = None,
     ) -> None:
-        """Update the categories/attributes of taxonomy in the organization.
+        """Update the categories/attributes of Taxonomy (V2) in the organization.
 
         Format reference for categories and attributes objects:
         https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
 
-
-        Warnings
+        Raises
         ----------
-        Only applicable for Taxonomy V2.
+        ValueError:
+            If there are validation errors.
         """
+        validate_taxonomy(
+            study_classify, series_classify, instance_classify, object_types
+        )
         if self.context.project.update_taxonomy(
             self._org_id,
             tax_id,

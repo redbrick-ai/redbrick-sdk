@@ -250,7 +250,7 @@ class ProjectRepo(ProjectRepoInterface):
             "instanceClassify": instance_classify,
             "objectTypes": object_types,
         }
-        result = self.client.execute_query(query_string, query_variables, False)
+        result = self.client.execute_query(query_string, query_variables)
         return bool(result and result.get("createTaxonomyNew", {}).get("ok"))
 
     def get_taxonomy(
@@ -308,7 +308,7 @@ class ProjectRepo(ProjectRepoInterface):
             "instanceClassify": instance_classify,
             "objectTypes": object_types,
         }
-        result = self.client.execute_query(query_string, query_variables, False)
+        result = self.client.execute_query(query_string, query_variables)
         return bool(result and result.get("updateTaxonomy", {}).get("ok"))
 
     def get_label_storage(self, org_id: str, project_id: str) -> Tuple[str, str]:
@@ -355,7 +355,7 @@ class ProjectRepo(ProjectRepoInterface):
             "storageId": storage_id,
             "path": path,
         }
-        result = self.client.execute_query(query_string, query_variables, False)
+        result = self.client.execute_query(query_string, query_variables)
         return bool(result and result.get("updateLabelStorage", {}).get("ok"))
 
     def get_current_user(self) -> Dict:

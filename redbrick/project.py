@@ -249,6 +249,10 @@ class RBProject:
         ------------
         - You only need to run this command once per project.
 
+        Raises
+        ----------
+        ValueError:
+            If there are validation errors.
         """
         path = (
             f"{self.org_id}/{self.project_id}"
