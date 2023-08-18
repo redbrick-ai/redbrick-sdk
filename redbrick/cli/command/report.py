@@ -42,11 +42,29 @@ class CLIIReportController(CLIReportInterface):
         if self.args.type not in (self.TYPE_ALL, self.TYPE_GROUNDTRUTH):
             raise ArgumentError(None, f"Invalid report type: {self.args.type}")
 
-        report = self.project.project.export.get_task_events(
+        reports = self.project.project.export.get_task_events(
             self.args.type == self.TYPE_GROUNDTRUTH, self.args.concurrency
         )
-        report_path = os.path.abspath(f"report-{int(datetime.now().timestamp())}.json")
-        with open(report_path, "w", encoding="utf-8") as file_:
-            json.dump(report, file_, indent=2)
 
-        logger.info(f"Exported successfully to: {report_path}")
+        report_file = os.path.abspath(f"report-{int(datetime.now().timestamp())}.json")
+        if os.path.isfile(report_file):
+            os.remove(report_file)
+
+        for idx, report in enumerate(reports):
+            if idx == 0:
+                with open(report_file, "wb") as report_file_:
+                    report_file_.write(
+                        b"[" + json.dumps(report, indent=2).encode("utf-8") + b"]"
+                    )
+            else:
+                with open(report_file, "rb+") as report_file_:
+                    report_file_.seek(-1, 2)
+                    report_file_.write(
+                        b"," + json.dumps(report, indent=2).encode("utf-8") + b"]"
+                    )
+
+        if not os.path.isfile(report_file):
+            with open(report_file, "w", encoding="utf-8") as report_file_:
+                report_file_.write("[]")
+
+        logger.info(f"Exported successfully to: {report_file}")

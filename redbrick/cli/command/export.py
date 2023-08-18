@@ -230,6 +230,10 @@ class CLIExportController(CLIExportInterface):
             )
         )
 
+        if not os.path.isfile(task_file):
+            with open(task_file, "w", encoding="utf-8") as task_file_:
+                task_file_.write("[]")
+
         logger.info(f"Exported segmentations to: {segmentation_dir}")
         logger.info(f"Exported: {task_file}")
 

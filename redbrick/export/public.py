@@ -114,7 +114,7 @@ class Export:
 
     async def _get_input_labels(self, dp_ids: List[str]) -> List[Dict]:
         conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        async with aiohttp.ClientSession(connector=conn) as session:  # type: ignore
             coros = [
                 self.context.export.get_labels(
                     session, self.org_id, self.project_id, dp_id
@@ -929,6 +929,10 @@ class Export:
                 )
             )
             yield task
+
+        if not os.path.isfile(task_file):
+            with open(task_file, "w", encoding="utf-8") as task_file_:
+                task_file_.write("[]")
 
     def list_tasks(
         self,
