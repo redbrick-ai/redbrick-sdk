@@ -376,7 +376,7 @@ class ExportRepo(ExportControllerInterface):
             $orgId: UUID!
             $projectId: UUID!
             $stageName: String!
-            $taskId: String
+            $taskId: UUID
             $first: Int
             $after: String
         ) {
