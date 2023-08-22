@@ -532,8 +532,12 @@ def dicom_rb_format(
             consensus_task = task["consensusTasks"][consensus_idx]
             if consensus_task.get("status"):
                 output_consensus_task["status"] = consensus_task["status"]
-            if consensus_task.get("email"):
+
+            if consensus_task.get("assignee"):
+                output_consensus_task["updatedBy"] = consensus_task["assignee"]
+            elif consensus_task.get("email"):
                 output_consensus_task["updatedBy"] = consensus_task["email"]
+
             if consensus_task.get("userId"):
                 output_consensus_task["updatedByUserId"] = consensus_task["userId"]
             if consensus_task.get("updatedAt"):
@@ -545,8 +549,12 @@ def dicom_rb_format(
                     score = {}
                     if consensus_score.get("userId"):
                         score["secondaryUserId"] = consensus_score["userId"]
-                    if consensus_score.get("email"):
+
+                    if consensus_score.get("assignee"):
+                        score["secondaryUser"] = consensus_score["assignee"]
+                    elif consensus_score.get("email"):
                         score["secondaryUserEmail"] = consensus_score["email"]
+
                     if consensus_score.get("score"):
                         score["score"] = consensus_score["score"]
                     output_consensus_task["scores"].append(score)
