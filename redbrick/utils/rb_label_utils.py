@@ -185,14 +185,21 @@ def parse_entry_latest(item: Dict) -> Dict:
         return {}
 
 
-def dicom_rb_series(input_task: Dict, output_task: Dict) -> None:
+def dicom_rb_series(
+    item_index_map: Dict[int, int], input_task: Dict, output_task: Dict
+) -> None:
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     labels = input_task.get("labels", []) or []
     labels_map = input_task.get("labelsMap", []) or []
     series = output_task["series"]
     for idx, label_map in enumerate(labels_map):
-        volume_index = label_map.get("imageIndex", idx)
+        volume_index = (
+            item_index_map[label_map["imageIndex"]]
+            if "imageIndex" in label_map and label_map["imageIndex"] in item_index_map
+            else idx
+        )
+
         if volume_index >= len(series):
             series.extend([{} for _ in range(volume_index - len(series) + 1)])
         if label_map and label_map.get("labelName"):
@@ -486,6 +493,7 @@ def dicom_rb_format(
         output["metaData"] = task["metaData"]
 
     volume_series: List[Dict] = [{} for _ in range(len(task["seriesInfo"]))]
+    item_index_map: Dict[int, int] = {}
     for volume_index, series_info in enumerate(task["seriesInfo"]):
         series = volume_series[volume_index]
         if series_info.get("name"):
@@ -495,9 +503,10 @@ def dicom_rb_format(
         if isinstance(series_meta_data, str):
             series["metaData"] = json.loads(series_meta_data)
 
-        series["items"] = list(
-            map(lambda idx: task["items"][idx], series_info["itemsIndices"])  # type: ignore
-        )
+        series["items"] = []
+        for item_index in series_info["itemsIndices"]:
+            item_index_map[item_index] = volume_index
+            series["items"].append(task["items"][item_index])
 
     if no_consensus:
         if task.get("consensusTasks"):
@@ -505,7 +514,7 @@ def dicom_rb_format(
             task["labels"] = consensus_task.get("labels")
             task["labelsMap"] = consensus_task.get("labelsMap")
         output["series"] = volume_series
-        dicom_rb_series(task, output)
+        dicom_rb_series(item_index_map, task, output)
     else:
         output["consensus"] = True
         if "consensusScore" in task:  # Review_1, END
@@ -523,7 +532,7 @@ def dicom_rb_format(
             if task.get("updatedAt"):
                 output["superTruth"]["updatedAt"] = task["updatedAt"]
             output["superTruth"]["series"] = [{**series} for series in volume_series]
-            dicom_rb_series(task, output["superTruth"])
+            dicom_rb_series(item_index_map, task, output["superTruth"])
 
         output["consensusTasks"] = [
             {} for _ in range(len(task.get("consensusTasks", []) or []))
@@ -561,6 +570,6 @@ def dicom_rb_format(
 
             output_consensus_task["series"] = [{**series} for series in volume_series]
 
-            dicom_rb_series(consensus_task, output_consensus_task)
+            dicom_rb_series(item_index_map, consensus_task, output_consensus_task)
 
     return output
