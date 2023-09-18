@@ -244,7 +244,7 @@ class RBOrganization:
         Create a Taxonomy V2.
 
         Format reference for categories and attributes objects:
-        https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
+        https://docs.redbrickai.com/python-sdk/format-reference#taxonomy-v2
 
         Raises
         ----------
