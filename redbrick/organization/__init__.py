@@ -270,7 +270,7 @@ class RBOrganization:
         """Get a taxonomy created in your organization based on id or name.
 
         Format reference for categories and attributes objects:
-        https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
+        https://docs.redbrickai.com/python-sdk/format-reference#taxonomy-v2
         """
         taxonomy = self.context.project.get_taxonomy(self._org_id, tax_id, name)
         return format_taxonomy(taxonomy)
@@ -286,7 +286,7 @@ class RBOrganization:
         """Update the categories/attributes of Taxonomy (V2) in the organization.
 
         Format reference for categories and attributes objects:
-        https://docs.redbrickai.com/python-sdk/sdk-overview/reference#taxonomy-objects
+        https://docs.redbrickai.com/python-sdk/format-reference#taxonomy-v2
 
         Raises
         ----------
