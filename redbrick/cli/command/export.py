@@ -235,6 +235,8 @@ class CLIExportController(CLIExportInterface):
                 task_file_.write("[]")
 
         logger.info(f"Exported segmentations to: {segmentation_dir}")
+        if with_files:
+            logger.info(f"Exported images to: {image_dir}")
         logger.info(f"Exported: {task_file}")
 
         if png_mask:
@@ -269,7 +271,7 @@ class CLIExportController(CLIExportInterface):
             )
             or (
                 self.args.type == self.TYPE_GROUNDTRUTH
-                and task["currentStageName"].lower() != "END"
+                and task["currentStageName"].lower() != "end"
             )
             or (
                 self.args.type != self.TYPE_LATEST

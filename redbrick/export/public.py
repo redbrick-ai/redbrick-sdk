@@ -259,8 +259,6 @@ class Export:
             original_task, storage_id, image_dir, taxonomy, rt_struct
         )
 
-        logger.info(f"Exported images to: {image_dir}")
-
         if not dcm_to_nii:
             return task
 
