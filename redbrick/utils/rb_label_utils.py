@@ -534,11 +534,17 @@ def dicom_rb_format(
             output["superTruth"]["series"] = [{**series} for series in volume_series]
             dicom_rb_series(item_index_map, task, output["superTruth"])
 
+        has_no_series = "consensusScore" not in output and "superTruth" not in output
         output["consensusTasks"] = [
-            {} for _ in range(len(task.get("consensusTasks", []) or []))
+            {}
+            for _ in range(
+                len(task.get("consensusTasks", []) or []) or (1 if has_no_series else 0)
+            )
         ]
         for consensus_idx, output_consensus_task in enumerate(output["consensusTasks"]):
-            consensus_task = task["consensusTasks"][consensus_idx]
+            consensus_task = (
+                task if has_no_series else task["consensusTasks"][consensus_idx]
+            )
             if consensus_task.get("status"):
                 output_consensus_task["status"] = consensus_task["status"]
 
