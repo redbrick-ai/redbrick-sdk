@@ -28,7 +28,7 @@ setup(
     url="https://github.com/redbrick-ai/redbrick-sdk",
     description="RedBrick platform Python SDK!",
     py_modules=["redbrick"],
-    python_requires=">=3.8",
+    python_requires=">=3.8,<4",
     packages=find_packages(".", exclude=["tests"]),
     long_description=long_description,
     long_description_content_type="text/markdown",
