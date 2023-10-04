@@ -37,6 +37,7 @@ type Series = {
   measurements?: (MeasureLength | MeasureAngle)[];
   ellipses?: Ellipse[];
   boundingBoxes?: BoundingBox[];
+  cuboids?: Cuboid[];
   polygons?: Polygon[];
   polylines?: Polyline[];
   classifications?: Classification[];
@@ -108,6 +109,16 @@ type BoundingBox = {
   video?: VideoMetaData;
 };
 
+type Cuboid = {
+  point1: VoxelPoint;
+  point2: VoxelPoint;
+  absolutePoint1: WorldPoint;
+  absolutePoint2: WorldPoint;
+  category: number | string | string[];
+  attributes?: Attributes;
+  stats?: MeasurementStats;
+}
+
 type Polygon = {
   points: Point2D[];
 
@@ -170,7 +181,8 @@ type Point2D = {
 
 type MeasurementStats = {
   average: number;
-  area: number;
+  area?: number;
+  volume?: number;
   minimum: number;
   maximum: number;
 }

@@ -129,6 +129,23 @@
                             "description": "Series level meta data",
                             "type": "object"
                         },
+                        "numFrames": {
+                            "title": "Number of Frames/Slices",
+                            "description": "Number of frames or slices in the series",
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "dimensions": {
+                            "title": "Dimensions",
+                            "description": "Dimensions of the image",
+                            "type": "array",
+                            "minItems": 3,
+                            "maxItems": 3,
+                            "items": {
+                                "type": "integer",
+                                "minimum": 1
+                            }
+                        },
                         "segmentations": {
                             "title": "Segmentation(s)",
                             "description": "NIfTI Segmentation(s)",
@@ -545,6 +562,50 @@
                                     "pointTopLeft",
                                     "wNorm",
                                     "hNorm",
+                                    "category"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "additionalItems": false
+                        },
+                        "cuboids": {
+                            "title": "Cuboid",
+                            "description": "Cuboid labels",
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "point1": {
+                                        "title": "First Point",
+                                        "$ref": "#/$defs/voxelPoint"
+                                    },
+                                    "point2": {
+                                        "title": "Second Point",
+                                        "$ref": "#/$defs/voxelPoint"
+                                    },
+                                    "absolutePoint1": {
+                                        "title": "First Point (absolute)",
+                                        "$ref": "#/$defs/worldPoint"
+                                    },
+                                    "absolutePoint2": {
+                                        "title": "Second Point (absolute)",
+                                        "$ref": "#/$defs/worldPoint"
+                                    },
+                                    "category": {
+                                        "$ref": "#/$defs/category"
+                                    },
+                                    "attributes": {
+                                        "$ref": "#/$defs/attributes"
+                                    },
+                                    "stats": {
+                                        "$ref": "#/$defs/stats"
+                                    }
+                                },
+                                "required": [
+                                    "point1",
+                                    "point2",
+                                    "absolutePoint1",
+                                    "absolutePoint2",
                                     "category"
                                 ],
                                 "additionalProperties": false
@@ -994,6 +1055,11 @@
                     "description": "Region area",
                     "type": "number"
                 },
+                "volume": {
+                    "title": "Volume",
+                    "description": "Region volume",
+                    "type": "number"
+                },
                 "minimum": {
                     "title": "Minimum",
                     "description": "Minimum value",
@@ -1007,7 +1073,6 @@
             },
             "required": [
                 "average",
-                "area",
                 "minimum",
                 "maximum"
             ],

@@ -255,8 +255,12 @@ def dicom_rb_series(
         items: List[str] = volume.get("items", []) or []
 
         measurement_stats = {}
-        if label.get("stats"):
-            measurement_stats = {"stats": label["stats"]}
+        if isinstance(label.get("stats"), dict):
+            measurement_stats = {
+                "stats": {
+                    prop: val for prop, val in label["stats"].items() if val is not None
+                }
+            }
 
         if label.get("tasklevelclassify") or label.get("studyclassify"):
             output_task["classification"] = {**label_obj}
@@ -402,6 +406,22 @@ def dicom_rb_series(
                     **measurement_stats,
                 }
             )
+        elif label.get("cuboid"):
+            volume["cuboids"] = volume.get("cuboids", [])
+            volume["cuboids"].append(
+                {
+                    "point1": dict(zip("ijk", label["cuboid"]["point1"])),
+                    "point2": dict(zip("ijk", label["cuboid"]["point2"])),
+                    "absolutePoint1": dict(
+                        zip("xyz", label["cuboid"]["computedpoint1world"])
+                    ),
+                    "absolutePoint2": dict(
+                        zip("xyz", label["cuboid"]["computedpoint2world"])
+                    ),
+                    **label_obj,
+                    **measurement_stats,
+                }
+            )
         elif label.get("bbox3d"):
             volume["boundingBoxes3d"] = volume.get("boundingBoxes3d", [])
             volume["boundingBoxes3d"].append(
@@ -429,7 +449,7 @@ def dicom_rb_series(
                     ],
                     **label_obj,  # type: ignore
                     **video_metadata,  # type: ignore
-                    **measurement_stats,
+                    **measurement_stats,  # type: ignore
                 }
             )
 
