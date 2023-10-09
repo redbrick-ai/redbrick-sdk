@@ -437,7 +437,7 @@ class Upload:
         storage_id: str
             Your RedBrick AI external storage_id. This can be found under the Storage Tab
             on the RedBrick AI platform. To directly upload images to rbai,
-            use redbrick.StorageMathod.REDBRICK.
+            use redbrick.StorageMethod.REDBRICK.
 
         points: List[Dict]
             Please see the RedBrick AI reference documentation for overview of the format.
@@ -813,7 +813,7 @@ class Upload:
         storage_id: str
             Your RedBrick AI external storage_id. This can be found under the Storage Tab
             on the RedBrick AI platform. To directly upload images to rbai,
-            use redbrick.StorageMathod.REDBRICK.
+            use redbrick.StorageMethod.REDBRICK.
 
         points: List[Dict]
             List of objects with `taskId` and `series`, where `series` contains
