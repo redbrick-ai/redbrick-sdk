@@ -44,3 +44,9 @@ Labeling
 .. autoclass:: redbrick.labeling.Labeling
    :members: put_tasks, assign_tasks, move_tasks_to_start
    :show-inheritance:
+
+Settings
+----------------------
+.. autoclass:: redbrick.settings.Settings
+   :members: label_validation, hanging_protocol, toggle_reference_standard_task
+   :show-inheritance:

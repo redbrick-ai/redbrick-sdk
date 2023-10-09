@@ -12,6 +12,7 @@ class RBContext:
         from .export import ExportControllerInterface
         from .upload import UploadControllerInterface
         from .labeling import LabelingControllerInterface
+        from .settings import SettingsControllerInterface
         from .project import ProjectRepoInterface
         from .workspace import WorkspaceRepoInterface
 
@@ -20,6 +21,7 @@ class RBContext:
         self.export: ExportControllerInterface
         self.upload: UploadControllerInterface
         self.labeling: LabelingControllerInterface
+        self.settings: SettingsControllerInterface
         self.project: ProjectRepoInterface
         self.workspace: WorkspaceRepoInterface
 

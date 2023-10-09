@@ -23,6 +23,7 @@ class RBProject:
         from redbrick.upload import Upload
         from redbrick.labeling import Labeling
         from redbrick.export import Export
+        from redbrick.settings import Settings
 
         self.context = context
 
@@ -68,6 +69,7 @@ class RBProject:
             self.review_stages,
             self.taxonomy_name,
         )
+        self.settings = Settings(context, org_id, project_id)
 
     @property
     def org_id(self) -> str:
