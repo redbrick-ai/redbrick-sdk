@@ -45,8 +45,7 @@ async def validate_json(
                 out.get(
                     "error",
                     "Error: Invalid format\n"
-                    + "Docs: https://docs.redbrickai.com/python-sdk/reference"
-                    + "/annotation-format-nifti#items-json",
+                    + "Docs: https://docs.redbrickai.com/python-sdk/format-reference",
                 )
             )
             return []

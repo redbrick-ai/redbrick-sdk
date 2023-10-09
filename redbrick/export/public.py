@@ -809,7 +809,7 @@ class Export:
 
         Meta-data and category information returned as an Object. Segmentations are written to
         your disk in NIfTI-1 format. Please `visit our
-        documentation <https://docs.redbrickai.com/python-sdk/reference/annotation-format>`_
+        documentation <https://docs.redbrickai.com/python-sdk/format-reference>`_
         for more information on the format.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key, url)
@@ -861,7 +861,7 @@ class Export:
         -----------
         Iterator[Dict]
             Datapoint and labels in RedBrick AI format. See
-            https://docs.redbrickai.com/python-sdk/reference/annotation-format
+            https://docs.redbrickai.com/python-sdk/format-reference
         """
         # pylint: disable=too-many-locals
 
