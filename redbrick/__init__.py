@@ -28,7 +28,7 @@ from redbrick.utils.common_utils import config_migration
 
 from .version_check import version_check
 
-__version__ = "2.13.13"
+__version__ = "2.13.14"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -73,6 +73,7 @@ def _populate_context(context: RBContext) -> RBContext:
         ExportRepo,
         LabelingRepo,
         UploadRepo,
+        SettingsRepo,
         ProjectRepo,
         WorkspaceRepo,
     )
@@ -80,6 +81,7 @@ def _populate_context(context: RBContext) -> RBContext:
     context.export = ExportRepo(context.client)
     context.labeling = LabelingRepo(context.client)
     context.upload = UploadRepo(context.client)
+    context.settings = SettingsRepo(context.client)
     context.project = ProjectRepo(context.client)
     context.workspace = WorkspaceRepo(context.client)
     return context
