@@ -323,7 +323,7 @@ class Labeling:
             self.org_id, self.project_id
         )
         if with_labels:
-            with_labels = loop.run_until_complete(
+            validated = loop.run_until_complete(
                 validate_json(
                     self.context,
                     with_labels,
@@ -331,6 +331,12 @@ class Labeling:
                     concurrency,
                 )
             )
+
+            if validated:
+                with_labels = validated
+            else:
+                failed_tasks.extend(with_labels)
+                with_labels = []
 
             failed_tasks.extend(
                 loop.run_until_complete(
