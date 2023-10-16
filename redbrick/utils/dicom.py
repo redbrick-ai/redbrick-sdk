@@ -176,7 +176,6 @@ def convert_to_png(
     is_tax_v2: bool,
 ) -> Tuple[bool, List[str]]:
     """Convert masks to png."""
-
     import numpy  # type: ignore
     from nibabel.loadsave import load as nib_load  # type: ignore
     from nibabel.nifti1 import Nifti1Image  # type: ignore
