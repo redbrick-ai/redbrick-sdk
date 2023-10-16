@@ -186,7 +186,7 @@ def parse_entry_latest(item: Dict) -> Dict:
 
 
 def dicom_rb_series(
-    item_index_map: Dict[int, int], input_task: Dict, output_task: Dict
+    item_index_map: Dict[int, int], input_task: Dict, output_task: Dict, taxonomy: Dict
 ) -> None:
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
@@ -205,6 +205,13 @@ def dicom_rb_series(
         if label_map and label_map.get("labelName"):
             series[volume_index]["segmentations"] = label_map["labelName"]
             series[volume_index]["segmentMap"] = {}
+            series[volume_index]["binaryMask"] = (
+                label_map.get("binaryMask", False) or False
+            )
+            series[volume_index]["semanticMask"] = (
+                label_map.get("semanticMask", False) or False
+            )
+            series[volume_index]["pngMask"] = label_map.get("pngMask", False) or False
 
     for label in labels:
         volume_index = label.get("volumeindex", 0)
@@ -296,9 +303,16 @@ def dicom_rb_series(
                 series[volume_index]["segmentMap"] = series[volume_index].get(
                     "segmentMap", {}
                 )
-                series[volume_index]["segmentMap"][
-                    str(label["dicom"]["instanceid"])
-                ] = {**label_obj}
+                if bool(taxonomy.get("isNew")) and series[volume_index]["semanticMask"]:
+                    cat_id = str(label["classid"] + 1)
+                    if cat_id not in series[volume_index]["segmentMap"]:
+                        series[volume_index]["segmentMap"][cat_id] = {**label_obj}
+                    elif "attributes" in series[volume_index]["segmentMap"]:
+                        del series[volume_index]["segmentMap"][cat_id]["attributes"]
+                else:
+                    series[volume_index]["segmentMap"][
+                        str(label["dicom"]["instanceid"])
+                    ] = {**label_obj}
         elif label.get("length3d"):
             volume["measurements"] = volume.get("measurements", [])
             volume["measurements"].append(
@@ -456,11 +470,10 @@ def dicom_rb_series(
 
 def dicom_rb_format(
     task: Dict,
+    taxonomy: Dict,
     old_format: bool,
     no_consensus: bool,
-    label_stages: List[Dict],
     review_stages: List[Dict],
-    output_stage_name: str,
 ) -> Dict:
     """Get new dicom rb task format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals, unused-argument
@@ -534,7 +547,7 @@ def dicom_rb_format(
             task["labels"] = consensus_task.get("labels")
             task["labelsMap"] = consensus_task.get("labelsMap")
         output["series"] = volume_series
-        dicom_rb_series(item_index_map, task, output)
+        dicom_rb_series(item_index_map, task, output, taxonomy)
     else:
         output["consensus"] = True
         if "consensusScore" in task:  # Review_1, END
@@ -552,7 +565,7 @@ def dicom_rb_format(
             if task.get("updatedAt"):
                 output["superTruth"]["updatedAt"] = task["updatedAt"]
             output["superTruth"]["series"] = [{**series} for series in volume_series]
-            dicom_rb_series(item_index_map, task, output["superTruth"])
+            dicom_rb_series(item_index_map, task, output["superTruth"], taxonomy)
 
         has_no_series = "consensusScore" not in output and "superTruth" not in output
         output["consensusTasks"] = [
@@ -596,6 +609,8 @@ def dicom_rb_format(
 
             output_consensus_task["series"] = [{**series} for series in volume_series]
 
-            dicom_rb_series(item_index_map, consensus_task, output_consensus_task)
+            dicom_rb_series(
+                item_index_map, consensus_task, output_consensus_task, taxonomy
+            )
 
     return output

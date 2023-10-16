@@ -528,10 +528,12 @@ class Export:
         datapoint: Dict,
         nifti_dir: str,
         color_map: Dict,
+        semantic_mask: bool,
+        binary_mask: Optional[bool],
         old_format: bool,
         no_consensus: bool,
         png_mask: bool,
-        is_tax_v2: bool,
+        taxonomy: Dict,
     ) -> Dict:
         """Process labels."""
         # pylint: disable=too-many-locals
@@ -601,17 +603,14 @@ class Export:
                 labels_map,
                 image_index_map,
                 color_map,
+                semantic_mask,
+                binary_mask,
                 png_mask,
-                is_tax_v2,
+                taxonomy,
             )
 
         return dicom_rb_format(
-            task,
-            old_format,
-            no_consensus,
-            self.label_stages,
-            self.review_stages,
-            self.output_stage_name,
+            task, taxonomy, old_format, no_consensus, self.review_stages
         )
 
     async def download_and_process_segmentations(
@@ -625,8 +624,10 @@ class Export:
         labels_map: List[Optional[Dict]],
         image_index_map: Dict[int, int],
         color_map: Dict,
+        semantic_mask: bool,
+        binary_mask: Optional[bool],
         png_mask: bool,
-        is_tax_v2: bool,
+        taxonomy: Dict,
     ) -> None:
         """Download and process segmentations."""
         # pylint: disable=import-outside-toplevel, too-many-locals
@@ -681,14 +682,20 @@ class Export:
 
         for label, path in zip(labels_map, paths):  # type: ignore
             if label and label.get("labelName"):
-                label["labelName"] = await process_nifti_download(
+                label_map_data = await process_nifti_download(
                     task.get("labels", []) or [],
                     path,
                     png_mask,
                     color_map,
-                    is_tax_v2,
+                    semantic_mask,
+                    binary_mask,
+                    taxonomy,
                     image_index_map.get(label.get("imageIndex", -1)),
                 )
+                label["labelName"] = label_map_data["masks"]
+                label["binaryMask"] = label_map_data["binary_mask"]
+                label["semanticMask"] = label_map_data["semantic_mask"]
+                label["pngMask"] = label_map_data["png_mask"]
 
         if len(paths) > len(labels_map) and task.get("consensusTasks"):
             index = len(labels_map)
@@ -696,14 +703,22 @@ class Export:
                 consensus_labels = consensus_task.get("labels", []) or []
                 consensus_labels_map = consensus_task.get("labelsMap", []) or []
                 for consensus_label_map in consensus_labels_map:
-                    consensus_label_map["labelName"] = await process_nifti_download(
+                    label_map_data = await process_nifti_download(
                         consensus_labels,
                         paths[index],
                         png_mask,
                         color_map,
-                        is_tax_v2,
+                        semantic_mask,
+                        binary_mask,
+                        taxonomy,
                         image_index_map.get(consensus_label_map.get("imageIndex")),
                     )
+                    consensus_label_map["labelName"] = label_map_data["masks"]
+                    consensus_label_map["binaryMask"] = label_map_data["binary_mask"]
+                    consensus_label_map["semanticMask"] = label_map_data[
+                        "semantic_mask"
+                    ]
+                    consensus_label_map["pngMask"] = label_map_data["png_mask"]
                     index += 1
 
     def preprocess_export(
@@ -743,6 +758,8 @@ class Export:
         task_file: str,
         image_dir: str,
         segmentation_dir: str,
+        semantic_mask: bool,
+        binary_mask: Optional[bool],
         old_format: bool,
         no_consensus: bool,
         color_map: Dict,
@@ -758,10 +775,12 @@ class Export:
             datapoint,
             segmentation_dir,
             color_map,
+            semantic_mask,
+            binary_mask,
             old_format,
             no_consensus,
             png_mask,
-            bool(taxonomy.get("isNew")),
+            taxonomy,
         )
         if with_files or rt_struct:
             try:
@@ -798,6 +817,8 @@ class Export:
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
         old_format: bool = False,
+        semantic_mask: bool = False,
+        binary_mask: Optional[bool] = None,
         no_consensus: Optional[bool] = None,
         with_files: bool = False,
         dicom_to_nifti: bool = False,
@@ -836,6 +857,18 @@ class Export:
         old_format: bool = False
             Whether to export tasks in old format.
 
+        semantic_mask: bool = False
+            Whether to export all segmentations as semantic_mask.
+            This will create one instance per class.
+            If this is set to True and a task has multiple instances per class,
+            then attributes belonging to each instance will not be exported.
+
+        binary_mask: Optional[bool] = None
+            Whether to export all segmentations as binary masks.
+            This will create one segmentation file per instance.
+            If this is set to None and a task has overlapping labels,
+            then binary_mask option will be True for that particular task.
+
         no_consensus: Optional[bool] = None
             Whether to export tasks without consensus info.
             If None, will default to export with consensus info,
@@ -862,6 +895,10 @@ class Export:
         Iterator[Dict]
             Datapoint and labels in RedBrick AI format. See
             https://docs.redbrickai.com/python-sdk/format-reference
+
+
+        .. note:: If both `semantic_mask` and `binary_mask` options are True,
+            then one binary mask will be generated per class.
         """
         # pylint: disable=too-many-locals
 
@@ -916,6 +953,8 @@ class Export:
                     task_file,
                     image_dir,
                     segmentation_dir,
+                    semantic_mask,
+                    binary_mask,
                     old_format,
                     no_consensus,
                     color_map,

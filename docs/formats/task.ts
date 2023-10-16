@@ -32,6 +32,9 @@ type Series = {
       attributes?: Attributes;
     };
   };
+  binaryMask?: boolean;
+  semanticMask?: boolean;
+  pngMask?: boolean;
   landmarks?: Landmarks[];
   landmarks3d?: Landmarks3D[];
   measurements?: (MeasureLength | MeasureAngle)[];

@@ -194,6 +194,21 @@
                             },
                             "additionalProperties": false
                         },
+                        "binaryMask": {
+                            "title": "Binary Mask",
+                            "description": "Indicator if segmentation files are binary masks",
+                            "type": "boolean"
+                        },
+                        "semanticMask": {
+                            "title": "Semantic Mask",
+                            "description": "Indicator if segmentations are semantic",
+                            "type": "boolean"
+                        },
+                        "pngMask": {
+                            "title": "PNG Mask",
+                            "description": "Indicator if segmentations are in png masks",
+                            "type": "boolean"
+                        },
                         "classifications": {
                             "title": "Series Classifications",
                             "description": "Series classifications",

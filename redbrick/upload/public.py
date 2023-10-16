@@ -449,7 +449,7 @@ class Upload:
             is set to true, the labels will be added to the Ground Truth stage.
 
         segmentation_mapping: Optional[Dict] = None
-            Optional mapping of semantic segmentation class ids and RedBrick categories.
+            Optional mapping of semantic_mask segmentation class ids and RedBrick categories.
 
         label_storage_id: Optional[str] = None
             Optional label storage id to reference nifti segmentations.

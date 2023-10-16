@@ -5,7 +5,7 @@ import json
 import asyncio
 from datetime import datetime, timezone
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import Dict, Set
+from typing import Dict, Set, Optional
 
 import shtab
 import tqdm  # type: ignore
@@ -43,6 +43,29 @@ class CLIExportController(CLIExportInterface):
             action="store_true",
             help="""Whether to export tasks in old format. (Default: False)""",
         )
+        parser.add_argument(
+            "--semantic",
+            action="store_true",
+            help="""Whether to export all segmentations as semantic_mask.
+            This will create one segmentation file per class.
+            If this is set to True and a task has multiple instances per class,
+            then attributes belonging to each instance will not be exported.""",
+        )
+
+        parser.add_argument(
+            "--binary-mask",
+            action="store_true",
+            help="""Whether to export all segmentations as binary masks.
+            This will create one segmentation file per instance.""",
+        )
+
+        parser.add_argument(
+            "--single-mask",
+            action="store_true",
+            help="""Whether to export all segmentations in a single file.
+            Binary mask will be considered if both binary_mask and single_mask are set.""",
+        )
+
         parser.add_argument(
             "--no-consensus",
             action="store_true",
@@ -184,6 +207,14 @@ class CLIExportController(CLIExportInterface):
         export_dir = self.args.destination
         os.makedirs(export_dir, exist_ok=True)
 
+        semantic_mask = bool(self.args.semantic)
+        binary_mask = (
+            True
+            if bool(self.args.binary_mask)
+            else False
+            if bool(self.args.single_mask)
+            else None
+        )
         old_format = bool(self.args.old_format)
         with_files = bool(self.args.with_files)
         png_mask = bool(self.args.png)
@@ -216,6 +247,8 @@ class CLIExportController(CLIExportInterface):
                         task_file,
                         image_dir,
                         segmentation_dir,
+                        semantic_mask,
+                        binary_mask,
                         old_format,
                         no_consensus,
                         color_map,
@@ -252,6 +285,8 @@ class CLIExportController(CLIExportInterface):
         task_file: str,
         image_dir: str,
         segmentation_dir: str,
+        semantic_mask: bool,
+        binary_mask: Optional[bool],
         old_format: bool,
         no_consensus: bool,
         color_map: Dict,
@@ -287,6 +322,8 @@ class CLIExportController(CLIExportInterface):
             task_file,
             image_dir,
             segmentation_dir,
+            semantic_mask,
+            binary_mask,
             old_format,
             no_consensus,
             color_map,

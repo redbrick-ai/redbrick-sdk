@@ -1,15 +1,252 @@
 """Dicom/nifti related functions."""
 import os
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, TypedDict
 from asyncio import BoundedSemaphore
 import shutil
-from redbrick.utils.common_utils import config_path
 
+from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import uniquify_path
 from redbrick.utils.logging import log_error
 
 
+# pylint: disable=too-many-locals, import-outside-toplevel, too-many-branches, too-many-statements
+
+
 semaphore = BoundedSemaphore(1)
+
+
+class LabelMapData(TypedDict):
+    """Label map data."""
+
+    semantic_mask: bool
+    binary_mask: bool
+    png_mask: bool
+    masks: Optional[Union[str, List[str]]]
+
+
+def merge_segmentations(
+    input_file: str, input_instance: int, output_file: str, output_instance: int
+) -> bool:
+    """Merge segmentations from input to output."""
+    import numpy  # type: ignore
+    from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
+    from nibabel.nifti1 import Nifti1Image  # type: ignore
+
+    try:
+        input_img = nib_load(input_file)
+
+        if not isinstance(input_img, Nifti1Image):
+            log_error(f"{input_file} is not a valid NIfTI1 file.")
+            return False
+
+        input_data = input_img.get_fdata(caching="unchanged")
+
+        if os.path.isfile(output_file):
+            output_img = nib_load(output_file)
+
+            if not isinstance(output_img, Nifti1Image):
+                log_error(f"{output_img} is not a valid NIfTI1 file.")
+                return False
+
+            output_affine = output_img.affine
+            output_header = output_img.header
+            output_data = output_img.get_fdata(caching="unchanged")
+            output_data = numpy.round(output_data).astype(numpy.uint16)
+        else:
+            output_affine = input_img.affine
+            output_header = input_img.header
+            output_data = numpy.zeros(input_data.shape, dtype=numpy.uint16).astype(
+                numpy.uint16
+            )
+
+        output_data[input_data == input_instance] = output_instance
+        new_img = Nifti1Image(output_data, output_affine, output_header)
+        new_img.set_data_dtype(output_data.dtype)
+        nib_save(new_img, output_file)
+        return True
+    except Exception as err:  # pylint: disable=broad-except
+        log_error(err)
+        return False
+
+
+def convert_to_binary(
+    mask: str, labels: List[Dict], dirname: str
+) -> Tuple[bool, List[str]]:
+    """Convert segmentation to binary."""
+    import numpy  # type: ignore
+    from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
+    from nibabel.nifti1 import Nifti1Image  # type: ignore
+
+    img = nib_load(mask)
+
+    if not isinstance(img, Nifti1Image):
+        log_error(f"{mask} is not a valid NIfTI1 file.")
+        return False, [mask]
+
+    affine = img.affine
+    header = img.header
+    data = img.get_fdata(caching="unchanged")
+
+    files: List[str] = []
+
+    for label in labels:
+        instances = set(
+            [label["dicom"]["instanceid"]] + (label["dicom"].get("groupids", []) or [])
+        )
+        new_data = numpy.zeros(
+            data.shape, dtype=numpy.uint8 if max(instances) <= 255 else numpy.uint16
+        )
+        for instance in instances:
+            new_data[data == instance] = 1
+
+        if not numpy.any(new_data):
+            continue
+
+        filename = os.path.join(
+            dirname, f"instance-{label['dicom']['instanceid']}.nii.gz"
+        )
+        if os.path.isfile(filename):
+            os.remove(filename)
+
+        new_img = Nifti1Image(new_data, affine, header)
+        if new_data.dtype == numpy.uint16:
+            new_img.set_data_dtype(numpy.uint16)
+        nib_save(new_img, filename)
+        files.append(filename)
+
+    return True, files
+
+
+def convert_to_semantic(
+    masks: List[str],
+    taxonomy: Dict,
+    labels: List[Dict],
+    dirname: str,
+    binary_mask: bool,
+) -> Tuple[bool, List[str]]:
+    """Convert segmentation to semantic."""
+    if not taxonomy.get("isNew"):
+        log_error("Taxonomy V1 is not supported")
+        return False, masks
+
+    if not (binary_mask or len(masks) == 1):
+        log_error(f"Cannot process labels: {labels}")
+        return False, masks
+
+    visited: Set[int] = set()
+    files: Set[str] = set()
+    for label in labels:
+        instance = label["dicom"]["instanceid"]
+        category = label["classid"] + 1
+        if binary_mask:
+            filename = os.path.join(dirname, f"category-{category}.nii.gz")
+            merged = merge_segmentations(
+                os.path.join(dirname, f"instance-{instance}.nii.gz"), 1, filename, 1
+            )
+        else:
+            filename = masks[0]
+            merged = merge_segmentations(masks[0], instance, filename, category)
+            visited.add(instance)
+            for group_id in label["dicom"].get("groupids", []) or []:
+                if group_id in visited:
+                    continue
+                group_merged = merge_segmentations(
+                    masks[0], group_id, filename, category
+                )
+                if group_merged:
+                    visited.add(group_id)
+                else:
+                    log_error(f"Error processing semantic mask for: {label}")
+
+        if merged:
+            files.add(filename)
+        else:
+            log_error(f"Error processing semantic mask for: {label}")
+
+    return True, list(files)
+
+
+def convert_to_png(
+    masks: List[str],
+    color_map: Dict,
+    labels: List[Dict],
+    dirname: str,
+    binary_mask: bool,
+    semantic_mask: bool,
+    is_tax_v2: bool,
+) -> Tuple[bool, List[str]]:
+    """Convert masks to png."""
+
+    import numpy  # type: ignore
+    from nibabel.loadsave import load as nib_load  # type: ignore
+    from nibabel.nifti1 import Nifti1Image  # type: ignore
+    from PIL import Image  # type: ignore
+
+    cat_class_map: Dict[str, str] = {}
+    instance_class_map: Dict[int, int] = {}
+    for label in labels:
+        instance_class_map[label["dicom"]["instanceid"]] = label["classid"] + 1
+        category = "::".join(label["category"][0][1:])
+        cat_class_map[f"category-{label['classid']+1}"] = category
+        cat_class_map[f"instance-{label['dicom']['instanceid']}"] = category
+        for group_id in label["dicom"].get("groupids", []) or []:
+            if f"instance-{group_id}" in cat_class_map:
+                continue
+            cat_class_map[f"instance-{group_id}"] = category
+
+    files: Set[str] = set()
+    for mask in masks:
+        mask_img = nib_load(mask)
+        if not isinstance(mask_img, Nifti1Image):
+            log_error(f"{mask} is not a valid NIfTI1 file.")
+            continue
+
+        input_filename = os.path.basename(mask)[:-7]
+        mask_data = mask_img.get_fdata(caching="unchanged")
+        if mask_data.shape[2] != 1:
+            log_error(f"{mask} is not a 2D image")
+            continue
+
+        mask_arr = numpy.round(mask_data).astype(numpy.uint16).swapaxes(0, 1)
+        mask_arr = mask_arr.reshape(mask_arr.shape[0], mask_arr.shape[1])
+        if binary_mask:
+            color_mask = numpy.zeros((mask_arr.shape[0], mask_arr.shape[1], 3))
+            cat = int(input_filename.split("-")[-1])
+            if not semantic_mask:
+                cat = instance_class_map.get(cat, 0)
+            color_mask[mask_arr == 1] = (
+                color_map.get(cat - 1, (255, 255, 255))
+                if is_tax_v2
+                else color_map.get(
+                    cat_class_map.get(input_filename, ""), (255, 255, 255)
+                )
+            )
+            filename = os.path.join(dirname, f"mask-{cat}.png")
+            pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
+            pil_color_mask.save(filename)
+            files.add(filename)
+
+        else:
+            color_mask = numpy.zeros((mask_arr.shape[0], mask_arr.shape[1], 3))
+            for seg in numpy.unique(mask_arr):
+                if not seg:
+                    continue
+                cat = int(seg)
+                if not semantic_mask:
+                    cat = instance_class_map.get(cat, 0)
+                color_mask[mask_arr == seg] = (
+                    color_map.get(cat - 1, (255, 255, 255))
+                    if is_tax_v2
+                    else color_map.get(
+                        cat_class_map.get(input_filename, ""), (255, 255, 255)
+                    )
+                )
+            filename = os.path.join(dirname, f"{input_filename}.png")
+            pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
+            pil_color_mask.save(filename)
+            files.add(filename)
+
+    return bool(files), list(files)
 
 
 async def process_nifti_download(
@@ -17,20 +254,19 @@ async def process_nifti_download(
     labels_path: Optional[str],
     png_mask: bool,
     color_map: Dict,
-    is_tax_v2: bool,
+    semantic_mask: bool,
+    binary_mask: Optional[bool],
+    taxonomy: Dict,
     volume_index: Optional[int],
-) -> Optional[Union[str, List[str]]]:
+) -> LabelMapData:
     """Process nifti download file."""
-    # pylint: disable=too-many-locals, import-outside-toplevel, too-many-statements
+    label_map_data = LabelMapData(
+        semantic_mask=False, binary_mask=False, png_mask=False, masks=labels_path
+    )
     async with semaphore:
-        import numpy  # type: ignore
-        from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
-        from nibabel.nifti1 import Nifti1Image  # type: ignore
-        from PIL import Image  # type: ignore
-
         try:
             if not (labels_path and os.path.isfile(labels_path)):
-                return labels_path
+                return label_map_data
 
             filtered_labels = [
                 label
@@ -43,22 +279,14 @@ async def process_nifti_download(
                 )
             ]
 
-            overlapping_labels = any(
-                label["dicom"].get("groupids") for label in filtered_labels
+            binary_mask = (
+                binary_mask
+                if binary_mask is not None
+                else any(label["dicom"].get("groupids") for label in filtered_labels)
             )
 
-            if not (png_mask or overlapping_labels):
-                return labels_path
-
-            img = nib_load(labels_path)
-
-            if not isinstance(img, Nifti1Image):
-                log_error(f"{labels_path} is not a valid NIfTI1 file.")
-                return labels_path
-
-            affine = img.affine
-            header = img.header
-            data = img.get_fdata(caching="unchanged")
+            if not (png_mask or binary_mask or semantic_mask):
+                return label_map_data
 
             dirname = (
                 os.path.splitext(labels_path)[0]
@@ -66,68 +294,62 @@ async def process_nifti_download(
                 else labels_path
             )
             dirname = os.path.splitext(dirname)[0]
-
-            mask_arr: numpy.ndarray = numpy.array([0])
-            if png_mask:
-                mask_arr = data.swapaxes(0, 1)
-                mask_arr = mask_arr.reshape(mask_arr.shape[0], mask_arr.shape[1])
-
-                if not overlapping_labels:
-                    color_mask = numpy.zeros((mask_arr.shape[0], mask_arr.shape[1], 3))
-                    for label in filtered_labels:
-                        color_mask[mask_arr == label["dicom"]["instanceid"]] = (
-                            color_map.get(label.get("classid", -1), (255, 255, 255))
-                            if is_tax_v2
-                            else color_map.get(
-                                "::".join(label["category"][0][1:]), (255, 255, 255)
-                            )
-                        )
-
-                    pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
-                    pil_color_mask.save(uniquify_path(f"{dirname}.png"))
-                    return [labels_path]
-
             shutil.rmtree(dirname, ignore_errors=True)
             os.makedirs(dirname, exist_ok=True)
-            files: List[str] = []
+            parent_dir = os.path.dirname(dirname)
 
-            for label in filtered_labels:
-                instances: List[int] = [label["dicom"]["instanceid"]] + (
-                    label["dicom"].get("groupids", []) or []
+            if binary_mask:
+                (
+                    label_map_data["binary_mask"],
+                    label_map_data["masks"],
+                ) = convert_to_binary(labels_path, filtered_labels, dirname)
+            else:
+                label_map_data["masks"] = [labels_path]
+
+            if semantic_mask and label_map_data["masks"]:
+                (
+                    label_map_data["semantic_mask"],
+                    label_map_data["masks"],
+                ) = convert_to_semantic(
+                    [label_map_data["masks"]]
+                    if isinstance(label_map_data["masks"], str)
+                    else label_map_data["masks"],
+                    taxonomy,
+                    filtered_labels,
+                    dirname,
+                    label_map_data["binary_mask"],
                 )
 
-                if png_mask:
-                    indices = numpy.where(numpy.isin(mask_arr, instances))
-                    if not indices[0].size:
-                        continue
-                    color_mask = numpy.zeros((mask_arr.shape[0], mask_arr.shape[1], 3))
-                    color_mask[indices] = color_map.get(
-                        "::".join(label["category"][0][1:]), (255, 255, 255)
-                    )
-                    filename = uniquify_path(
-                        os.path.join(dirname, f"{label['dicom']['instanceid']}.png")
-                    )
-                    pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
-                    pil_color_mask.save(filename)
-                else:
-                    indices = numpy.where(numpy.isin(data, instances))
-                    if not indices[0].size:
-                        continue
-                    new_data = numpy.zeros(data.shape)
-                    new_data[indices] = label["dicom"]["instanceid"]
-                    filename = uniquify_path(
-                        os.path.join(dirname, f"{label['dicom']['instanceid']}.nii.gz")
-                    )
-                    new_img = Nifti1Image(new_data, affine, header)
-                    nib_save(new_img, filename)
+            if label_map_data["semantic_mask"]:
+                for path in os.listdir(parent_dir):
+                    if path.startswith("instance-"):
+                        os.remove(os.path.join(parent_dir, path))
 
-                files.append(filename)
+            if png_mask and label_map_data["masks"]:
+                label_map_data["png_mask"], label_map_data["masks"] = convert_to_png(
+                    [label_map_data["masks"]]
+                    if isinstance(label_map_data["masks"], str)
+                    else label_map_data["masks"],
+                    color_map,
+                    filtered_labels,
+                    dirname,
+                    label_map_data["binary_mask"],
+                    label_map_data["semantic_mask"],
+                    bool(taxonomy.get("isNew")),
+                )
 
-            return files
+            if label_map_data["png_mask"]:
+                for path in os.listdir(parent_dir):
+                    if path.startswith("instance-") or path.startswith("category-"):
+                        os.remove(os.path.join(parent_dir, path))
+
+            if not os.listdir(dirname):
+                shutil.rmtree(dirname)
 
         except Exception as error:  # pylint: disable=broad-except
             log_error(f"Failed to process {labels_path}: {error}")
-            return labels_path
+
+        return label_map_data
 
 
 async def process_nifti_upload(
