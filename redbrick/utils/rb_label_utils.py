@@ -307,8 +307,6 @@ def dicom_rb_series(
                     cat_id = str(label["classid"] + 1)
                     if cat_id not in series[volume_index]["segmentMap"]:
                         series[volume_index]["segmentMap"][cat_id] = {**label_obj}
-                    elif "attributes" in series[volume_index]["segmentMap"]:
-                        del series[volume_index]["segmentMap"][cat_id]["attributes"]
                 else:
                     series[volume_index]["segmentMap"][
                         str(label["dicom"]["instanceid"])

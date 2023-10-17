@@ -133,25 +133,30 @@ def convert_to_semantic(
         log_error(f"Cannot process labels: {labels}")
         return False, masks
 
+    input_filename = output_filename = masks[0]
+    if not binary_mask:
+        input_filename = f"{output_filename}.old.nii.gz"
+        os.rename(output_filename, input_filename)
+
     visited: Set[int] = set()
     files: Set[str] = set()
     for label in labels:
         instance = label["dicom"]["instanceid"]
         category = label["classid"] + 1
         if binary_mask:
-            filename = os.path.join(dirname, f"category-{category}.nii.gz")
-            merged = merge_segmentations(
-                os.path.join(dirname, f"instance-{instance}.nii.gz"), 1, filename, 1
-            )
+            input_filename = os.path.join(dirname, f"instance-{instance}.nii.gz")
+            output_filename = os.path.join(dirname, f"category-{category}.nii.gz")
+            merged = merge_segmentations(input_filename, 1, output_filename, 1)
         else:
-            filename = masks[0]
-            merged = merge_segmentations(masks[0], instance, filename, category)
+            merged = merge_segmentations(
+                input_filename, instance, output_filename, category
+            )
             visited.add(instance)
             for group_id in label["dicom"].get("groupids", []) or []:
                 if group_id in visited:
                     continue
                 group_merged = merge_segmentations(
-                    masks[0], group_id, filename, category
+                    input_filename, group_id, output_filename, category
                 )
                 if group_merged:
                     visited.add(group_id)
@@ -159,9 +164,12 @@ def convert_to_semantic(
                     log_error(f"Error processing semantic mask for: {label}")
 
         if merged:
-            files.add(filename)
+            files.add(output_filename)
         else:
             log_error(f"Error processing semantic mask for: {label}")
+
+    if not binary_mask:
+        os.remove(input_filename)
 
     return True, list(files)
 
@@ -295,7 +303,6 @@ async def process_nifti_download(
             dirname = os.path.splitext(dirname)[0]
             shutil.rmtree(dirname, ignore_errors=True)
             os.makedirs(dirname, exist_ok=True)
-            parent_dir = os.path.dirname(dirname)
 
             if binary_mask:
                 (
@@ -320,9 +327,9 @@ async def process_nifti_download(
                 )
 
             if label_map_data["semantic_mask"]:
-                for path in os.listdir(parent_dir):
+                for path in os.listdir(dirname):
                     if path.startswith("instance-"):
-                        os.remove(os.path.join(parent_dir, path))
+                        os.remove(os.path.join(dirname, path))
 
             if png_mask and label_map_data["masks"]:
                 label_map_data["png_mask"], label_map_data["masks"] = convert_to_png(
@@ -338,9 +345,9 @@ async def process_nifti_download(
                 )
 
             if label_map_data["png_mask"]:
-                for path in os.listdir(parent_dir):
+                for path in os.listdir(dirname):
                     if path.startswith("instance-") or path.startswith("category-"):
-                        os.remove(os.path.join(parent_dir, path))
+                        os.remove(os.path.join(dirname, path))
 
             if not os.listdir(dirname):
                 shutil.rmtree(dirname)
