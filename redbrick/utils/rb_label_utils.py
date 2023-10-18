@@ -303,6 +303,15 @@ def dicom_rb_series(
                 series[volume_index]["segmentMap"] = series[volume_index].get(
                     "segmentMap", {}
                 )
+                series[volume_index]["binaryMask"] = (
+                    series[volume_index].get("binaryMask", False) or False
+                )
+                series[volume_index]["semanticMask"] = (
+                    series[volume_index].get("semanticMask", False) or False
+                )
+                series[volume_index]["pngMask"] = (
+                    series[volume_index].get("pngMask", False) or False
+                )
                 if bool(taxonomy.get("isNew")) and series[volume_index]["semanticMask"]:
                     cat_id = str(label["classid"] + 1)
                     if cat_id not in series[volume_index]["segmentMap"]:
