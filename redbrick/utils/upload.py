@@ -69,7 +69,7 @@ async def process_segmentation_upload(
 ):
     """Process segmentation upload."""
     # pylint: disable=too-many-branches, too-many-locals, too-many-statements
-    # pylint: disable=import-outside-toplevel
+    # pylint: disable=import-outside-toplevel, too-many-nested-blocks
     from redbrick.utils.dicom import process_nifti_upload
 
     labels_map: List[Dict] = []
@@ -102,6 +102,7 @@ async def process_segmentation_upload(
             continue
 
         input_labels_path: Optional[Union[str, List[str]]] = label_map["labelName"]
+        path_mapping: Dict[str, str] = {}
         if isinstance(input_labels_path, str) and os.path.isdir(input_labels_path):
             logger.debug("Label path is a directory")
             input_labels_path = [
@@ -148,6 +149,9 @@ async def process_segmentation_upload(
                         f"Downloading labels for {task.get('name') or task['items'][0]}",
                         False,
                     )
+                    for ext_path, down_path in zip(external_paths, downloaded_paths):
+                        if down_path:
+                            path_mapping[ext_path] = down_path
                 if any(not downloaded_path for downloaded_path in downloaded_paths):
                     input_labels_path = None
                 else:
@@ -162,7 +166,13 @@ async def process_segmentation_upload(
                     ]
 
         if input_labels_path:
-            labels = task.get("labels", [])
+            labels = task.get("labels", []) or []
+            all_series_info = task.get("seriesInfo", []) or []
+            series_info = (
+                all_series_info[volume_index]
+                if len(all_series_info) > volume_index
+                else {}
+            )
             output_labels_path, group_map = await process_nifti_upload(
                 input_labels_path,
                 set(
@@ -174,6 +184,15 @@ async def process_segmentation_upload(
                         or int(label.get("volumeindex")) == volume_index
                     )
                 ),
+                series_info.get("binaryMask", False) or False,
+                series_info.get("semanticMask", False) or False,
+                series_info.get("pngMask", False) or False,
+                {
+                    series_key: path_mapping.get(series_val, series_val) or series_val
+                    for series_key, series_val in (
+                        series_info.get("masks", {}) or {}
+                    ).items()
+                },
                 label_validate,
             )
 

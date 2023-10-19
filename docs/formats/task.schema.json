@@ -186,6 +186,12 @@
                                         },
                                         "attributes": {
                                             "$ref": "#/$defs/attributes"
+                                        },
+                                        "mask": {
+                                            "title": "Segmentation file path",
+                                            "description": "Segmentation file path",
+                                            "type": "string",
+                                            "minLength": 1
                                         }
                                     },
                                     "additionalProperties": false,
@@ -806,6 +812,12 @@
                             },
                             "attributes": {
                                 "$ref": "#/$defs/attributes"
+                            },
+                            "mask": {
+                                "title": "Segmentation file path",
+                                "description": "Segmentation file path",
+                                "type": "string",
+                                "minLength": 1
                             }
                         },
                         "additionalProperties": false,

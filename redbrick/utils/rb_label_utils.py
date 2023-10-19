@@ -1,4 +1,5 @@
 """Utilities for working with label objects."""
+import os
 from typing import Any, Dict, List, Optional
 import json
 
@@ -193,12 +194,15 @@ def dicom_rb_series(
     labels = input_task.get("labels", []) or []
     labels_map = input_task.get("labelsMap", []) or []
     series = output_task["series"]
+
+    segmentation_mapping: Dict[int, Dict[Optional[str], str]] = {}
     for idx, label_map in enumerate(labels_map):
         volume_index = (
             item_index_map[label_map["imageIndex"]]
             if "imageIndex" in label_map and label_map["imageIndex"] in item_index_map
             else idx
         )
+        segmentation_mapping[volume_index] = {}
 
         if volume_index >= len(series):
             series.extend([{} for _ in range(volume_index - len(series) + 1)])
@@ -212,6 +216,18 @@ def dicom_rb_series(
                 label_map.get("semanticMask", False) or False
             )
             series[volume_index]["pngMask"] = label_map.get("pngMask", False) or False
+
+            if isinstance(series[volume_index]["segmentations"], str):
+                segmentation_mapping[volume_index][None] = series[volume_index][
+                    "segmentations"
+                ]
+            elif series[volume_index]["binaryMask"] and isinstance(
+                series[volume_index]["segmentations"], list
+            ):
+                for segmentation in series[volume_index]["segmentations"]:
+                    segmentation_mapping[volume_index][
+                        os.path.basename(segmentation)
+                    ] = segmentation
 
     for label in labels:
         volume_index = label.get("volumeindex", 0)
@@ -312,14 +328,33 @@ def dicom_rb_series(
                 series[volume_index]["pngMask"] = (
                     series[volume_index].get("pngMask", False) or False
                 )
+                instance: Optional[str] = None
                 if bool(taxonomy.get("isNew")) and series[volume_index]["semanticMask"]:
-                    cat_id = str(label["classid"] + 1)
-                    if cat_id not in series[volume_index]["segmentMap"]:
-                        series[volume_index]["segmentMap"][cat_id] = {**label_obj}
+                    instance = (
+                        str(label["classid"] + 1)
+                        if label["classid"] + 1
+                        not in series[volume_index]["segmentMap"]
+                        else None
+                    )
                 else:
-                    series[volume_index]["segmentMap"][
-                        str(label["dicom"]["instanceid"])
-                    ] = {**label_obj}
+                    instance = str(label["dicom"]["instanceid"])
+                if instance is not None:
+                    mask = (segmentation_mapping.get(volume_index, {}) or {}).get(
+                        f"mask-{instance}.png"
+                        if series[volume_index]["pngMask"]
+                        else f"category-{instance}.nii.gz"
+                        if series[volume_index]["semanticMask"]
+                        else f"instance-{instance}.nii.gz"
+                        if series[volume_index]["binaryMask"]
+                        else None
+                    )
+                    if mask:
+                        series[volume_index]["segmentMap"][instance] = {
+                            **label_obj,
+                            "mask": mask,
+                        }
+                    else:
+                        series[volume_index]["segmentMap"][instance] = {**label_obj}
         elif label.get("length3d"):
             volume["measurements"] = volume.get("measurements", [])
             volume["measurements"].append(

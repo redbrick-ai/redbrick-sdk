@@ -30,6 +30,7 @@ type Series = {
     [instanceId: string]: number | string | string[] | {
       category: number | string | string[];
       attributes?: Attributes;
+      mask?: string;
     };
   };
   binaryMask?: boolean;

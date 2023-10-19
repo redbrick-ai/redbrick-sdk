@@ -153,7 +153,17 @@ class Upload:
                     point["items"],
                     [
                         {
-                            **series_info,
+                            **{
+                                series_key: series_val
+                                for series_key, series_val in series_info.items()
+                                if series_key
+                                not in (
+                                    "binaryMask",
+                                    "semanticMask",
+                                    "pngMask",
+                                    "masks",
+                                )
+                            },
                             "metaData": json.dumps(
                                 series_info["metaData"], separators=(",", ":")
                             )
@@ -185,7 +195,17 @@ class Upload:
                     labels_map,
                     [
                         {
-                            **series_info,
+                            **{
+                                series_key: series_val
+                                for series_key, series_val in series_info.items()
+                                if series_key
+                                not in (
+                                    "binaryMask",
+                                    "semanticMask",
+                                    "pngMask",
+                                    "masks",
+                                )
+                            },
                             "metaData": json.dumps(
                                 series_info["metaData"], separators=(",", ":")
                             )
@@ -744,21 +764,32 @@ class Upload:
                         ]
                     del item["labelsPath"]
 
-                if item.get("labelsMap"):
-                    for label_map in item["labelsMap"]:
-                        if not isinstance(label_map, dict):
-                            label_map = {}
-                        if not isinstance(label_map["labelName"], list):
-                            label_map["labelName"] = [label_map["labelName"]]
-                        label_map["labelName"] = [
-                            label_name
-                            if os.path.isabs(label_name)
-                            or not os.path.exists(os.path.join(task_dir, label_name))
-                            else os.path.abspath(os.path.join(task_dir, label_name))
-                            for label_name in label_map["labelName"]
-                        ]
-                        if len(label_map["labelName"]) == 1:
-                            label_map["labelName"] = label_map["labelName"][0]
+                for label_map in item.get("labelsMap", []) or []:
+                    if not isinstance(label_map, dict):
+                        label_map = {}
+                    if not isinstance(label_map["labelName"], list):
+                        label_map["labelName"] = [label_map["labelName"]]
+                    label_map["labelName"] = [
+                        label_name
+                        if os.path.isabs(label_name)
+                        or not os.path.exists(os.path.join(task_dir, label_name))
+                        else os.path.abspath(os.path.join(task_dir, label_name))
+                        for label_name in label_map["labelName"]
+                    ]
+                    if len(label_map["labelName"]) == 1:
+                        label_map["labelName"] = label_map["labelName"][0]
+
+                for series_info in item.get("seriesInfo", []) or []:
+                    for instance_id, mask in (
+                        series_info.get("masks", {}) or {}
+                    ).items():
+                        series_info["masks"][instance_id] = (
+                            mask
+                            if not isinstance(mask, str)
+                            or os.path.isabs(mask)
+                            or not os.path.exists(os.path.join(task_dir, mask))
+                            else os.path.abspath(os.path.join(task_dir, mask))
+                        )
 
                 if storage_id != str(StorageMethod.REDBRICK):
                     uploading.add(item["name"])

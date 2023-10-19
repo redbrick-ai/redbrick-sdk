@@ -25,7 +25,11 @@ class LabelMapData(TypedDict):
 
 
 def merge_segmentations(
-    input_file: str, input_instance: int, output_file: str, output_instance: int
+    input_file: str,
+    input_instance: int,
+    equals: bool,
+    output_file: str,
+    output_instance: int,
 ) -> bool:
     """Merge segmentations from input to output."""
     import numpy  # type: ignore
@@ -59,7 +63,10 @@ def merge_segmentations(
                 numpy.uint16
             )
 
-        output_data[input_data == input_instance] = output_instance
+        if equals:
+            output_data[input_data == input_instance] = output_instance
+        else:
+            output_data[input_data != input_instance] = output_instance
         new_img = Nifti1Image(output_data, output_affine, output_header)
         new_img.set_data_dtype(output_data.dtype)
         nib_save(new_img, output_file)
@@ -146,17 +153,17 @@ def convert_to_semantic(
         if binary_mask:
             input_filename = os.path.join(dirname, f"instance-{instance}.nii.gz")
             output_filename = os.path.join(dirname, f"category-{category}.nii.gz")
-            merged = merge_segmentations(input_filename, 1, output_filename, 1)
+            merged = merge_segmentations(input_filename, 1, True, output_filename, 1)
         else:
             merged = merge_segmentations(
-                input_filename, instance, output_filename, category
+                input_filename, instance, True, output_filename, category
             )
             visited.add(instance)
             for group_id in label["dicom"].get("groupids", []) or []:
                 if group_id in visited:
                     continue
                 group_merged = merge_segmentations(
-                    input_filename, group_id, output_filename, category
+                    input_filename, group_id, True, output_filename, category
                 )
                 if group_merged:
                     visited.add(group_id)
@@ -359,16 +366,26 @@ async def process_nifti_download(
 
 
 async def process_nifti_upload(
-    files: Union[str, List[str]], instances: Set[int], label_validate: bool
+    files: Union[str, List[str]],
+    instances: Set[int],
+    binary_mask: bool,
+    semantic_mask: bool,
+    png_mask: bool,
+    masks: Dict[str, str],
+    label_validate: bool,
 ) -> Tuple[Optional[str], Dict[int, List[int]]]:
     """Process nifti upload files."""
     # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
-    # pylint: disable=too-many-statements, too-many-return-statements
+    # pylint: disable=too-many-statements, too-many-return-statements, unused-argument
     async with semaphore:
         import numpy  # type: ignore
         from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
         from nibabel.nifti1 import Nifti1Image  # type: ignore
         from nibabel.nifti2 import Nifti2Image  # type: ignore
+
+        if png_mask:
+            log_error("PNG mask upload is not supported yet")
+            return None, {}
 
         if isinstance(files, str):
             files = [files]
@@ -381,6 +398,28 @@ async def process_nifti_upload(
             return files[0], {}
 
         try:
+            reverse_masks: Dict[str, Tuple[int, ...]] = {}
+            for inst_id, mask in masks.items():
+                if mask not in reverse_masks:
+                    reverse_masks[mask] = tuple()
+                reverse_masks[mask] = reverse_masks[mask] + (int(inst_id),)
+
+            delete_files: List[str] = []
+            if binary_mask:
+                for file_idx, file_path in enumerate(files):
+                    new_filename = uniquify_path(f"{file_idx}.nii.gz")
+                    if len(
+                        reverse_masks.get(file_path, tuple()) or tuple()
+                    ) == 1 and merge_segmentations(
+                        file_path,
+                        0,
+                        False,
+                        new_filename,
+                        reverse_masks[file_path][0],
+                    ):
+                        delete_files.append(new_filename)
+                        files[file_idx] = new_filename
+
             imgs = list(map(nib_load, files))
             instance_map: Dict[int, List[int]] = {}
             reverse_instance_map: Dict[Tuple[int, ...], int] = {}
@@ -399,20 +438,29 @@ async def process_nifti_upload(
             if base_data.ndim != 3:
                 return None, {}
 
-            for instance in numpy.unique(base_data):  # type: ignore
-                if instance and instance not in instance_map:
-                    inst = int(instance)
+            unique_instances = numpy.unique(base_data)  # type: ignore
+            for instance in unique_instances:
+                inst = int(round(instance))
+                if not inst:
+                    continue
+                if inst not in instance_map:
                     instance_map[inst] = [inst]
                     reverse_instance_map[(inst,)] = inst
 
-            for img in imgs[1:]:
+            for img_idx, img in enumerate(imgs):
+                if not img_idx:
+                    continue
+
                 data = img.get_fdata()  # type: ignore
                 if base_data.shape != data.shape:
                     return None, {}
 
-                for instance in numpy.unique(data):  # type: ignore
-                    if instance and instance not in instance_map:
-                        inst = int(instance)
+                unique_instances = numpy.unique(data)  # type: ignore
+                for instance in unique_instances:
+                    inst = int(round(instance))
+                    if not inst:
+                        continue
+                    if inst not in instance_map:
                         instance_map[inst] = [inst]
                         reverse_instance_map[(inst,)] = inst
 
@@ -484,6 +532,9 @@ async def process_nifti_upload(
                         if sub_id not in group_map:
                             group_map[sub_id] = []
                         group_map[sub_id].append(group_id)
+
+            for delete_file in delete_files:
+                os.remove(delete_file)
 
             return (filename, group_map)
 
