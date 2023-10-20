@@ -933,10 +933,6 @@ class Export:
         # Create output directory
         destination = destination or self.project_id
 
-        task_file: Optional[str] = None
-        if not without_json:
-            task_file = os.path.join(destination, "tasks.json")
-
         image_dir: Optional[str] = None
         if with_files or rt_struct:
             image_dir = os.path.join(destination, "images")
@@ -946,8 +942,14 @@ class Export:
         if not without_masks:
             segmentation_dir = os.path.join(destination, "segmentations")
             os.makedirs(segmentation_dir, exist_ok=True)
+            logger.info(f"Saving masks to {segmentation_dir} directory")
 
-        logger.info(f"Saving NIfTI files to {destination} directory")
+        task_file: Optional[str] = None
+        if not without_json:
+            task_file = os.path.join(destination, "tasks.json")
+            if not image_dir and not segmentation_dir:
+                os.makedirs(destination, exist_ok=True)
+
         class_map, color_map = self.preprocess_export(taxonomy, png)
 
         if png:
