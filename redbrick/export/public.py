@@ -526,7 +526,7 @@ class Export:
     async def process_labels(
         self,
         datapoint: Dict,
-        nifti_dir: str,
+        segmentation_dir: Optional[str],
         color_map: Dict,
         semantic_mask: bool,
         binary_mask: Optional[bool],
@@ -597,7 +597,7 @@ class Export:
                 task,
                 presign_paths,
                 files,
-                nifti_dir,
+                segmentation_dir,
                 has_series_info,
                 series_info,
                 labels_map,
@@ -618,7 +618,7 @@ class Export:
         task: Dict,
         presign_paths: List[Optional[str]],
         files: List[Tuple[Optional[str], Optional[str]]],
-        nifti_dir: str,
+        segmentation_dir: Optional[str],
         has_series_info: bool,
         series_info: List[Dict],
         labels_map: List[Optional[Dict]],
@@ -639,10 +639,15 @@ class Export:
         )
 
         path_pattern = re.compile(r"[^\w.]+")
-        task_name = re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
-        task_dir = os.path.join(nifti_dir, task_name)
-        shutil.rmtree(task_dir, ignore_errors=True)
-        os.makedirs(task_dir, exist_ok=True)
+        task_name: str = (
+            re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
+        )
+        if segmentation_dir:
+            task_dir = os.path.join(segmentation_dir, task_name)
+            shutil.rmtree(task_dir, ignore_errors=True)
+            os.makedirs(task_dir, exist_ok=True)
+        else:
+            task_dir = task_name
         series_names: List[str] = []
 
         if has_series_info and (len(series_info) > 1 or series_info[0].get("name")):
@@ -676,9 +681,13 @@ class Export:
             added.add(new_series_name)
             files.append((url, f"{new_series_name}.nii.gz"))
 
-        paths = await download_files(
-            files, "Downloading segmentations", False, True, True
-        )
+        paths: List[Optional[str]]
+        if segmentation_dir:
+            paths = await download_files(
+                files, "Downloading segmentations", False, True, True
+            )
+        else:
+            paths = list(list(zip(*files))[0])
 
         for label, path in zip(labels_map, paths):  # type: ignore
             if label and label.get("labelName"):
@@ -755,15 +764,14 @@ class Export:
         self,
         datapoint: Dict,
         taxonomy: Dict,
-        task_file: str,
-        image_dir: str,
-        segmentation_dir: str,
+        task_file: Optional[str],
+        image_dir: Optional[str],
+        segmentation_dir: Optional[str],
         semantic_mask: bool,
         binary_mask: Optional[bool],
         old_format: bool,
         no_consensus: bool,
         color_map: Dict,
-        with_files: bool,
         dicom_to_nifti: bool,
         png_mask: bool,
         rt_struct: bool,
@@ -782,7 +790,7 @@ class Export:
             png_mask,
             taxonomy,
         )
-        if with_files or rt_struct:
+        if image_dir:
             try:
                 task = await self._download_task(
                     task,
@@ -794,6 +802,9 @@ class Export:
                 )
             except Exception as err:  # pylint: disable=broad-except
                 log_error(f"Failed to download files: {err}")
+
+        if not task_file:
+            return task if get_task else None
 
         if os.path.isfile(task_file):
             with open(task_file, "rb+") as task_file_:
@@ -817,6 +828,8 @@ class Export:
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
         old_format: bool = False,
+        without_masks: bool = False,
+        without_json: bool = False,
         semantic_mask: bool = False,
         binary_mask: Optional[bool] = None,
         no_consensus: Optional[bool] = None,
@@ -856,6 +869,13 @@ class Export:
 
         old_format: bool = False
             Whether to export tasks in old format.
+
+        without_masks: bool = False
+            Exports only tasks JSON without downloading any segmentation masks.
+            Note: This is not recommended for tasks with overlapping labels.
+
+        without_json: bool = False
+            Doesn't create the tasks JSON file.
 
         semantic_mask: bool = False
             Whether to export all segmentations as semantic_mask.
@@ -913,13 +933,19 @@ class Export:
         # Create output directory
         destination = destination or self.project_id
 
-        task_file = os.path.join(destination, "tasks.json")
+        task_file: Optional[str] = None
+        if not without_json:
+            task_file = os.path.join(destination, "tasks.json")
 
-        image_dir = os.path.join(destination, "images")
-        os.makedirs(image_dir, exist_ok=True)
+        image_dir: Optional[str] = None
+        if with_files or rt_struct:
+            image_dir = os.path.join(destination, "images")
+            os.makedirs(image_dir, exist_ok=True)
 
-        segmentation_dir = os.path.join(destination, "segmentations")
-        os.makedirs(segmentation_dir, exist_ok=True)
+        segmentation_dir: Optional[str] = None
+        if not without_masks:
+            segmentation_dir = os.path.join(destination, "segmentations")
+            os.makedirs(segmentation_dir, exist_ok=True)
 
         logger.info(f"Saving NIfTI files to {destination} directory")
         class_map, color_map = self.preprocess_export(taxonomy, png)
@@ -941,7 +967,7 @@ class Export:
             task_id,
         )
 
-        if os.path.isfile(task_file):
+        if task_file and os.path.isfile(task_file):
             os.remove(task_file)
 
         loop = asyncio.get_event_loop()
@@ -958,7 +984,6 @@ class Export:
                     old_format,
                     no_consensus,
                     color_map,
-                    with_files,
                     dicom_to_nifti,
                     png,
                     rt_struct,
@@ -967,7 +992,7 @@ class Export:
             )
             yield task
 
-        if not os.path.isfile(task_file):
+        if task_file and not os.path.isfile(task_file):
             with open(task_file, "w", encoding="utf-8") as task_file_:
                 task_file_.write("[]")
 

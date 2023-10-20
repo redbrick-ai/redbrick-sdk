@@ -43,6 +43,14 @@ class CLIExportController(CLIExportInterface):
             action="store_true",
             help="""Whether to export tasks in old format. (Default: False)""",
         )
+
+        parser.add_argument(
+            "--without-masks",
+            action="store_true",
+            help="""Exports only tasks JSON without downloading any segmentation masks.
+            Note: This is not recommended for tasks with overlapping labels.""",
+        )
+
         parser.add_argument(
             "--semantic",
             action="store_true",
@@ -217,17 +225,22 @@ class CLIExportController(CLIExportInterface):
         )
         old_format = bool(self.args.old_format)
         with_files = bool(self.args.with_files)
+        without_masks = bool(self.args.without_masks)
         png_mask = bool(self.args.png)
         rt_struct = bool(self.args.rt_struct)
         dicom_to_nifti = bool(self.args.dicom_to_nifti)
 
         task_file = os.path.join(export_dir, "tasks.json")
 
-        image_dir = os.path.join(export_dir, "images")
-        os.makedirs(image_dir, exist_ok=True)
+        image_dir: Optional[str] = None
+        if with_files or rt_struct:
+            image_dir = os.path.join(export_dir, "images")
+            os.makedirs(image_dir, exist_ok=True)
 
-        segmentation_dir = os.path.join(export_dir, "segmentations")
-        os.makedirs(segmentation_dir, exist_ok=True)
+        segmentation_dir: Optional[str] = None
+        if not without_masks:
+            segmentation_dir = os.path.join(export_dir, "segmentations")
+            os.makedirs(segmentation_dir, exist_ok=True)
 
         class_file = os.path.join(export_dir, "class_map.json")
         class_map, color_map = self.project.project.export.preprocess_export(
@@ -252,7 +265,6 @@ class CLIExportController(CLIExportInterface):
                         old_format,
                         no_consensus,
                         color_map,
-                        with_files,
                         dicom_to_nifti,
                         png_mask,
                         rt_struct,
@@ -267,8 +279,9 @@ class CLIExportController(CLIExportInterface):
             with open(task_file, "w", encoding="utf-8") as task_file_:
                 task_file_.write("[]")
 
-        logger.info(f"Exported segmentations to: {segmentation_dir}")
-        if with_files:
+        if segmentation_dir:
+            logger.info(f"Exported segmentations to: {segmentation_dir}")
+        if image_dir:
             logger.info(f"Exported images to: {image_dir}")
         logger.info(f"Exported: {task_file}")
 
@@ -282,15 +295,14 @@ class CLIExportController(CLIExportInterface):
         self,
         cached_task: str,
         taxonomy: Dict,
-        task_file: str,
-        image_dir: str,
-        segmentation_dir: str,
+        task_file: Optional[str],
+        image_dir: Optional[str],
+        segmentation_dir: Optional[str],
         semantic_mask: bool,
         binary_mask: Optional[bool],
         old_format: bool,
         no_consensus: bool,
         color_map: Dict,
-        with_files: bool,
         dicom_to_nifti: bool,
         png_mask: bool,
         rt_struct: bool,
@@ -327,7 +339,6 @@ class CLIExportController(CLIExportInterface):
             old_format,
             no_consensus,
             color_map,
-            with_files,
             dicom_to_nifti,
             png_mask,
             rt_struct,
