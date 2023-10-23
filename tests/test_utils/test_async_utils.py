@@ -33,7 +33,9 @@ async def test_gather_with_concurrency__progress_bar():
         return index
 
     tasks = [sample_task(i) for i in range(5)]
-    result = await async_utils.gather_with_concurrency(2, tasks, progress_bar_name="Testing", keep_progress_bar=True)
+    result = await async_utils.gather_with_concurrency(
+        2, tasks, progress_bar_name="Testing", keep_progress_bar=True
+    )
     assert result == [0, 1, 2, 3, 4]
 
 

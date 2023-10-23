@@ -21,7 +21,7 @@ Unless explicitly stated, the following args are sent with concerned call
     storage_id = "11111111-1111-1111-1111-111111111111"
 
 """
-
+# fmt: off
 
 datapoints_in_project_resp = {'tasksPaged': {'count': 7}}
 
@@ -161,3 +161,4 @@ def active_time_resp(mock_task_id: str):
         }
     }
     return resp
+# fmt: on
