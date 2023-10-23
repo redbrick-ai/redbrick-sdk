@@ -1,3 +1,4 @@
+# flake8: noqa
 import typing as t
 
 import pytest
@@ -22,7 +23,6 @@ Unless explicitly stated, the following args are sent with concerned call
 
 """
 # fmt: off
-
 datapoints_in_project_resp = {'tasksPaged': {'count': 7}}
 
 
