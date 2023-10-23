@@ -1,3 +1,4 @@
+"""Fixtures for tests in `tests.test_repo`"""
 # flake8: noqa
 import typing as t
 
@@ -7,7 +8,8 @@ from redbrick.repo import ExportRepo
 
 
 @pytest.fixture(scope="function")
-def mock_export_repo(request, rb_client):
+def mock_export_repo(rb_client):
+    """Get a new mock ExportRepo object for each test"""
     export_repo = ExportRepo(rb_client)
     return export_repo
 
