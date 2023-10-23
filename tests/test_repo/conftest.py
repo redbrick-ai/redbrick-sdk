@@ -1,5 +1,4 @@
 """Fixtures for tests in `tests.test_repo`"""
-# flake8: noqa
 import typing as t
 
 import pytest
@@ -14,6 +13,7 @@ def mock_export_repo(rb_client):
     return export_repo
 
 
+# flake8: noqa
 # pylint: disable=all
 # fmt: off
 """
