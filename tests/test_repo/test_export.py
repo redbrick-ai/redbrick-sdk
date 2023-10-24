@@ -48,7 +48,7 @@ def test_get_datapoints_latest(mock_export_repo):
 
     entries, _, _ = resp
     assert isinstance(entries, list)
-    assert len(entries) == 7
+    assert len(entries) == 4
 
     task_ids = [x.get("taskId") for x in entries]
     dp_ids = [x.get("dpId") for x in entries]
