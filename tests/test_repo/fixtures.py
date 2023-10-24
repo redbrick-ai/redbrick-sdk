@@ -1,18 +1,6 @@
 """Fixtures for tests in `tests.test_repo`"""
 import typing as t
 
-import pytest
-
-from redbrick.repo import ExportRepo
-
-
-@pytest.fixture(scope="function")
-def mock_export_repo(rb_client):
-    """Get a new mock ExportRepo object for each test"""
-    export_repo = ExportRepo(rb_client)
-    return export_repo
-
-
 # flake8: noqa
 # pylint: disable=all
 # fmt: off
