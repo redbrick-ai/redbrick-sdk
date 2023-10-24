@@ -108,7 +108,10 @@ def task_search_resp(mock_stage_name):  # noqa: D103
     return resp
 
 
-presign_items_resp = {'presignItems': ["mock_item"]}
+def presign_items_resp(items: t.Optional[t.List[str]] = None):
+    items = items or ["mock_item"]
+    return {'presignItems': items}
+
 
 task_events_resp = {
     'tasksPaged': {
