@@ -5,9 +5,9 @@ from unittest.mock import patch, Mock, AsyncMock, MagicMock, mock_open
 
 import pytest
 
-from redbrick.export import Export
+import redbrick.export
 from tests.fixtures import export as export_fixtures
-from tests.test_repo import conftest as repo_conftest
+from tests.test_repo import fixtures as repo_fixtures
 
 
 def test_get_raw_data_latest(mock_export):
@@ -15,7 +15,7 @@ def test_get_raw_data_latest(mock_export):
     concurrency = 2
 
     mock_query = Mock(
-        return_value=repo_conftest.get_datapoint_latest_resp(mock_task_id)
+        return_value=repo_fixtures.get_datapoint_latest_resp(mock_task_id)
     )
     mock_export.context.export.client.execute_query = mock_query
     resp = mock_export._get_raw_data_latest(concurrency, task_id=mock_task_id)
@@ -112,7 +112,6 @@ async def test_export_nifti_label_data(mock_export, task_file, get_task, returns
         ],
     }
     open_mock = MagicMock(spec=open)
-    import redbrick.export
     with patch.object(redbrick.export.public, "open", mock_open(mock=open_mock)):
         with io.BytesIO() as mock_file:
             task = await mock_export.export_nifti_label_data(
@@ -126,3 +125,61 @@ async def test_export_nifti_label_data(mock_export, task_file, get_task, returns
         assert isinstance(task, dict)
     else:
         assert task is None
+
+
+def test_export_tasks(mock_export):
+    # Mock the _get_raw_data_latest method
+    taxonomy = {
+        "isNew": True,
+        "objectTypes": [
+            {
+                "labelType": "SEGMENTATION",
+                "classId": "class1",
+                "color": "FF0000",
+                "category": "Category1",
+            }
+        ],
+    }
+    class_map = {"Category1": [255, 0, 0]}
+    color_map = {"class1": [255, 0, 0]}
+    tasks = export_fixtures.get_tasks()
+    task_id_to_tasks = {x["taskId"]: x for x in tasks}
+
+    # patch methods
+    mock_export.context.project.get_taxonomy = MagicMock(return_value=taxonomy)
+    mock_export.preprocess_export = MagicMock(return_value=(class_map, color_map))
+    # patch "self.context.export.get_datapoints_latest" and
+    # by extension, "_get_raw_data_latest"
+    mock_query = Mock(
+        return_value=repo_fixtures.get_datapoints_latest_resp
+    )
+    mock_export.context.export.client.execute_query = mock_query
+
+    async def _mock_nifti(dp, *args):
+        return task_id_to_tasks[dp["taskId"]]
+
+    mock_export.export_nifti_label_data = _mock_nifti
+
+    # Mock with_files=True and test
+    task_ids = set()
+    for task_ in mock_export.export_tasks():
+        assert isinstance(task_, dict)
+        task_ids.add(task_["taskId"])
+    assert task_ids == set(task_id_to_tasks)
+
+    # Mock rt_struct=True and test
+    mock_makedirs = MagicMock()
+    open_mock = MagicMock(spec=open)
+    with patch.object(redbrick.export.public, "open", mock_open(mock=open_mock)):
+        with patch.object(redbrick.export.public.os, "makedirs", mock_makedirs):
+            task_ = next(mock_export.export_tasks(
+                rt_struct=True,
+                with_files=True,
+                without_json=False,
+                without_masks=False,
+                png=True,
+                destination="/tmp/mock_segmentation_dir",
+            ))
+    open_mock.assert_called_once()
+    assert mock_makedirs.call_count == 2
+    assert task_["taskId"] in task_id_to_tasks
