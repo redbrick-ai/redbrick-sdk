@@ -58,10 +58,10 @@ def mock_export(rb_client, mock_export_repo):
         context=context,
         org_id="mock_org_id",
         project_id="mock_project_id",
-        output_stage_name="mock_stage_name",
+        output_stage_name="END",
         consensus_enabled=True,
-        label_stages=[],
-        review_stages=[],
+        label_stages=[{"stageName": "Label"}],
+        review_stages=[{"stageName": "Review_1"}, {"stageName": "Review_2"}],
         taxonomy_name="mock_taxonomy_name",
     )
     return export
