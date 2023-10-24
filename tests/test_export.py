@@ -183,3 +183,49 @@ def test_export_tasks(mock_export):
     open_mock.assert_called_once()
     assert mock_makedirs.call_count == 2
     assert task_["taskId"] in task_id_to_tasks
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "expected_filters", "expected_stage_name"),
+    [
+        ({"user_id": "mock"}, {"userId"}, "Label"),
+        ({"task_id": "mock", "user_id": "mock"}, {"userId", "taskId"}, "Label"),
+        ({"user_id": "mock", "search": "ALL"}, {}, None),
+        ({"user_id": "mock", "search": "GROUNDTRUTH"}, {}, "END"),
+        ({"search": "QUEUED"}, {}, "Label"),
+        ({"search": "DRAFT"}, {"status"}, "Label"),
+        ({"search": "SKIPPED"}, {"status"}, "Label"),
+        ({"search": "COMPLETED"}, {"recentlyCompleted"}, "Label"),
+        ({"search": "FAILED", "user_id": "mock"}, {"reviewState"}, "Review_1"),
+        ({"search": "ISSUES", "user_id": "mock"}, {"status"}, "Label"),
+        ({"search": "BENCHMARK", "user_id": "mock"}, {"benchmark"}, "END"),
+        ({"search": "InvalidFilter"}, None, "Label"),
+    ]
+)
+def test_list_tasks(mock_export, kwargs: t.Dict, expected_filters: t.Optional[t.Set], expected_stage_name: t.Optional[str]):
+    """Ensure the right filters gets passed to the Repo method"""
+    # Simulate a call to list_tasks with some parameters
+    _tasks = repo_fixtures.task_search_resp("Label")["genericTasks"]["entries"]
+    # mock_task_search = MagicMock(return_value=_tasks)
+    mock_export.context.export.task_search = MagicMock(return_value=(_tasks, None))
+    mock_export.context.project.get_members = MagicMock(return_value={})
+
+    search = kwargs.pop("search", "QUEUED")
+
+    if expected_filters is None:
+        with pytest.raises(ValueError):
+            next(mock_export.list_tasks(search=search, limit=10, stage_name="Label", **kwargs))
+        return
+    else:
+        task = next(mock_export.list_tasks(search=search, limit=10, stage_name="Label", **kwargs))
+
+    calls = mock_export.context.export.task_search.mock_calls
+    call_args = calls[0].args
+    stage_name_ = call_args[2]
+    filters = call_args[4]
+
+    print(f"assertion1={stage_name_ == expected_stage_name}, assertion2={set(filters) == set(expected_filters)}, {kwargs=}, {expected_filters=}, {expected_stage_name=}, {calls=}")
+    assert set(filters) == set(expected_filters)
+    assert isinstance(task, dict)
+    assert isinstance(task.get("taskId"), str)
+    assert stage_name_ == expected_stage_name
