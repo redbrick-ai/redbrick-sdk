@@ -9,6 +9,7 @@ from tests.fixtures import export as export_fixtures
 from tests.test_repo import fixtures as repo_fixtures
 
 
+@pytest.mark.unit
 def test_get_raw_data_latest(mock_export):
     """Test `redbrick.export.public.Export._get_raw_data_latest`"""
     mock_task_id = "mock_task_id"
@@ -28,6 +29,7 @@ def test_get_raw_data_latest(mock_export):
 
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 @pytest.mark.parametrize(
     ("rt_struct", "taxonomy", "check_convert_called"),
     [
@@ -70,6 +72,7 @@ async def test_download_task_items(
     assert len(series_dirs) == len(task["series"])
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize("get_color_map", [False, True])
 def test_preprocess_export(mock_export, get_color_map):
     """Test `redbrick.export.public.Export.preprocess_export`"""
@@ -94,6 +97,7 @@ def test_preprocess_export(mock_export, get_color_map):
         assert class_map == color_map == {}
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("task_file", "get_task", "returns_task"),
@@ -159,6 +163,7 @@ async def test_export_nifti_label_data(mock_export, task_file, get_task, returns
         assert task is None
 
 
+@pytest.mark.unit
 def test_export_tasks(mock_export):
     """Test `redbrick.export.public.Export.export_tasks`"""
     # Mock the _get_raw_data_latest method
@@ -217,6 +222,7 @@ def test_export_tasks(mock_export):
     assert task_["taskId"] in task_id_to_tasks
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize(
     ("kwargs", "expected_filters", "expected_stage_name"),
     [

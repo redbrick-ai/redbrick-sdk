@@ -5,6 +5,7 @@ import pytest
 from redbrick.utils import async_utils
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_gather_with_concurrency__single_task():
     """Ensure `gather_with_concurrency` works with a single_task"""
@@ -18,6 +19,7 @@ async def test_gather_with_concurrency__single_task():
     assert result == [42]
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_gather_with_concurrency__multiple_tasks():
     """Ensure `gather_with_concurrency` works with a multiple tasks"""
@@ -31,6 +33,7 @@ async def test_gather_with_concurrency__multiple_tasks():
     assert result == [0, 1, 2, 3, 4]
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_gather_with_concurrency__progress_bar():
     """Ensure `gather_with_concurrency` works with the progress bar set"""
@@ -46,6 +49,7 @@ async def test_gather_with_concurrency__progress_bar():
     assert result == [0, 1, 2, 3, 4]
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_gather_with_concurrency__return_exceptions():
     """Ensure `gather_with_concurrency` return (and not raise) exceptions when the flag is set"""
@@ -61,6 +65,7 @@ async def test_gather_with_concurrency__return_exceptions():
     assert isinstance(result[2], Exception)
 
 
+@pytest.mark.unit
 @pytest.mark.slow
 @pytest.mark.asyncio
 async def test_gather_with_concurrency__large_concurrency():
@@ -75,6 +80,7 @@ async def test_gather_with_concurrency__large_concurrency():
     assert result == list(range(1_000))
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_gather_with_concurrency__no_tasks():
     """Ensure `gather_with_concurrency` returns an empty result list when there are no tasks"""
