@@ -44,7 +44,7 @@ def get_datapoint_latest_resp(task_id):  # noqa: D103
                             "userId": "API:08f698f7-4cf3-4299-bb83-52a3fe9c7517",
                         },
                     }
-                ],  # noqa: E501
+                ],
                 "overallConsensusScore": None,
                 "state": "ASSIGNED",
                 "subTasks": [],
@@ -57,7 +57,7 @@ def get_datapoint_latest_resp(task_id):  # noqa: D103
                         "storageId": "22222222-2222-2222-2222-222222222222"
                     },
                 },
-            },  # noqa: E501
+            },
             "dpId": "b76d5137-3cb2-4496-91e3-bc1defaab99d",
             "latestTaskData": {
                 "createdAt": "2023-10-20T14:31:38.610700+00:00",
@@ -109,7 +109,7 @@ def get_datapoint_latest_resp(task_id):  # noqa: D103
                 "labelsData": "[]",
                 "labelsMap": None,
                 "labelsStorage": {"storageId": "22222222-2222-2222-2222-222222222222"},
-            },  # noqa: E501
+            },
             "priority": None,
             "taskId": task_id,
         }
@@ -117,7 +117,7 @@ def get_datapoint_latest_resp(task_id):  # noqa: D103
     return resp
 
 
-get_datapoints_latest_resp: t.Dict[str, t.Any] = {  # noqa: E501
+get_datapoints_latest_resp: t.Dict[str, t.Any] = {
     "tasksPaged": {
         "cacheTime": None,
         "cursor": None,
@@ -191,7 +191,7 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {  # noqa: E501
                     },
                     "labelsMap": None,
                 },
-            },  # noqa: E501
+            },
             {
                 "taskId": "af454bb5-9fc8-4b22-a2b9-033d49e28539",
                 "dpId": "b76d5137-3cb2-4496-91e3-bc1defaab99d",
@@ -286,7 +286,7 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {  # noqa: E501
                     },
                     "labelsMap": None,
                 },
-            },  # noqa: E501
+            },
             {
                 "taskId": "6a12cb11-ce37-43a1-b8b6-20b1317afffd",
                 "dpId": "3037045c-ca3c-4bb4-8b87-8ea2d45c6b34",
@@ -405,7 +405,7 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {  # noqa: E501
                         },
                     ],
                 },
-            },  # noqa: E501
+            },
             {
                 "taskId": "2067f35a-90e6-4243-965d-8d64868021bd",
                 "dpId": "9b97c9c1-eebb-4e5f-b969-1da2bdb18d49",
@@ -478,7 +478,7 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {  # noqa: E501
                         },
                     ],
                 },
-            },  # noqa: E501
+            },
         ],
     },
 }
@@ -580,7 +580,7 @@ task_events_resp = {
                             "stageName": "Input",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskEvent",
                         "eventId": "38dae1f7-dc36-4ff5-b8ae-d4eecc11a230",
@@ -595,7 +595,7 @@ task_events_resp = {
                             "stageName": "Label",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskStateChanges",
                         "stageNameAfter": "Label",
@@ -609,7 +609,7 @@ task_events_resp = {
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
                         "consensusStatusesAfter": [],
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskStateChanges",
                         "stageNameAfter": "Label",
@@ -623,7 +623,7 @@ task_events_resp = {
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
                         "consensusStatusesAfter": [],
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskEvent",
                         "eventId": "35bc57ee-44c8-476f-82db-eec3968a99df",
@@ -638,7 +638,7 @@ task_events_resp = {
                             "stageName": "Label",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskEvent",
                         "eventId": "1b567611-8a1d-4d7b-9ef0-72b80e30ec36",
@@ -653,7 +653,7 @@ task_events_resp = {
                             "stageName": "Review_1",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                 ],
             },
             {
@@ -675,7 +675,7 @@ task_events_resp = {
                             "stageName": "Input",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskEvent",
                         "eventId": "2ba390fa-6d4c-4497-8e2e-c62a94ec3666",
@@ -690,7 +690,7 @@ task_events_resp = {
                             "stageName": "Label",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskStateChanges",
                         "stageNameAfter": "Label",
@@ -704,7 +704,7 @@ task_events_resp = {
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
                         "consensusStatusesAfter": [],
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskStateChanges",
                         "stageNameAfter": "Label",
@@ -718,7 +718,7 @@ task_events_resp = {
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
                         "consensusStatusesAfter": [],
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskEvent",
                         "eventId": "c8d5ef0b-58a9-4b92-8074-5e9ca985e867",
@@ -733,7 +733,7 @@ task_events_resp = {
                             "stageName": "Label",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskEvent",
                         "eventId": "6d8cfc43-16c6-4428-a10a-ab12900da6fd",
@@ -748,7 +748,7 @@ task_events_resp = {
                             "stageName": "Review_1",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskStateChanges",
                         "stageNameAfter": "Review_1",
@@ -762,7 +762,7 @@ task_events_resp = {
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
                         "consensusStatusesAfter": [],
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskStateChanges",
                         "stageNameAfter": "Review_1",
@@ -776,7 +776,7 @@ task_events_resp = {
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
                         "consensusStatusesAfter": [],
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskEvent",
                         "eventId": "b63041fa-3c0e-45f2-ae9b-a26f76ef860d",
@@ -791,7 +791,7 @@ task_events_resp = {
                             "stageName": "Review_1",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskEvent",
                         "eventId": "cff7487c-a3fd-4261-b8e2-cdd32579b43b",
@@ -806,7 +806,7 @@ task_events_resp = {
                             "stageName": "Output",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                     {
                         "__typename": "TaskEvent",
                         "eventId": "c6ccb3ba-86d1-46a3-af34-2b475ab2d14f",
@@ -821,7 +821,7 @@ task_events_resp = {
                             "stageName": "Output",
                             "createdBy": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
                         },
-                    },  # noqa: E501
+                    },
                 ],
             },
         ],
