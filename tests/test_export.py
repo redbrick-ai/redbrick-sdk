@@ -270,7 +270,6 @@ def test_list_tasks(
     stage_name_ = call_args[2]
     filters = call_args[4]
 
-    print(f"assertion1={stage_name_ == expected_stage_name}, assertion2={set(filters) == set(expected_filters)}, {kwargs=}, {expected_filters=}, {expected_stage_name=}, {calls=}")
     assert set(filters) == set(expected_filters)
     assert isinstance(task, dict)
     assert isinstance(task.get("taskId"), str)
