@@ -2,7 +2,6 @@
 import typing as t
 
 
-# flake8: noqa
 # pylint: disable=line-too-long
 # mock Task object
 get_tasks_resp: t.List[t.Dict] = [

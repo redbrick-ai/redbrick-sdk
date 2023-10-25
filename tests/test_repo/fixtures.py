@@ -1,7 +1,6 @@
 """Fixtures for tests in `tests.test_repo.*`"""
 import typing as t
 
-# flake8: noqa
 # pylint: disable=line-too-long
 # pylint: disable=pointless-string-statement
 # fmt: off
@@ -40,7 +39,6 @@ def get_datapoint_latest_resp(task_id):  # noqa: D103
     return resp
 
 
-# stage_name = None
 get_datapoints_latest_resp: t.Dict[str, t.Any] = {  # noqa: E501
     "tasksPaged": {
         "cacheTime": None,
@@ -142,8 +140,7 @@ task_events_resp = {
 }
 
 
-# stage_name=Label
-def active_time_resp(mock_task_id: str):  # noqa: D103
+def active_time_resp(mock_task_id: str):
     """Mock response for `ExportRepo.active_time`"""
     resp = {
         'taskActiveTime': {
@@ -160,6 +157,5 @@ def active_time_resp(mock_task_id: str):  # noqa: D103
         }
     }
     return resp
-# fmt: on
 # pylint: enable=pointless-string-statement
 # pylint: enable=line-too-long
