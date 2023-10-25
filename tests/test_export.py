@@ -34,8 +34,11 @@ def test_get_raw_data_latest(mock_export):
         (True, {"isNew": True, "objectTypes": []}, True),
     ]
 )
-async def test_download_task_items(mock_export, rt_struct, taxonomy, check_convert_called):
-    task = export_fixtures.get_tasks()[2]
+async def test_download_task_items(
+    mock_export, rt_struct, taxonomy, check_convert_called
+):
+    """Test `redbrick.export.public.Export._download_task_items`"""
+    task = export_fixtures.get_tasks_resp[2]
     storage_id = "storage_id"
     parent_dir = "parent_dir"
 
@@ -90,9 +93,10 @@ async def test_export_nifti_label_data(mock_export, task_file, get_task, returns
     async def mock_download_task(_task, *args):
         return _task
 
-    mock_export._download_task = mock_download_task
-    tasks = export_fixtures.get_tasks()
-    mock_export.process_labels = AsyncMock(return_value=tasks[2])
+    mock_export._download_task = mock_download_task  # pylint: disable=protected-access
+    mock_export.process_labels = AsyncMock(
+        return_value=export_fixtures.get_tasks_resp[2]
+    )
 
     datapoint = {
         "labelStorageId": "storage123",
@@ -142,8 +146,7 @@ def test_export_tasks(mock_export):
     }
     class_map = {"Category1": [255, 0, 0]}
     color_map = {"class1": [255, 0, 0]}
-    tasks = export_fixtures.get_tasks()
-    task_id_to_tasks = {x["taskId"]: x for x in tasks}
+    task_id_to_tasks = {x["taskId"]: x for x in export_fixtures.get_tasks_resp}
 
     # patch methods
     mock_export.context.project.get_taxonomy = MagicMock(return_value=taxonomy)
