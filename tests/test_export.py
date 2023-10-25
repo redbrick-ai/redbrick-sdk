@@ -133,10 +133,22 @@ async def test_export_nifti_label_data(mock_export, task_file, get_task, returns
     }
     open_mock = MagicMock(spec=open)
     with patch.object(redbrick.export.public, "open", mock_open(mock=open_mock)):
-        with io.BytesIO() as mock_file:
-            task = await mock_export.export_nifti_label_data(
-                datapoint, taxonomy, task_file, None, None, False, None, False, False, False, False, False, False, get_task
-            )
+        task = await mock_export.export_nifti_label_data(
+            datapoint,
+            taxonomy,
+            task_file,
+            None,
+            None,
+            False,
+            None,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            get_task,
+        )
     mock_export.process_labels.assert_called_once()
     if task_file:
         open_mock.assert_called_once()
