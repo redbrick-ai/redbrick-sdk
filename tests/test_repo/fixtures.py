@@ -1,8 +1,9 @@
-"""Fixtures for tests in `tests.test_repo`"""
+"""Fixtures for tests in `tests.test_repo.*`"""
 import typing as t
 
 # flake8: noqa
-# pylint: disable=all
+# pylint: disable=line-too-long
+# pylint: disable=pointless-string-statement
 # fmt: off
 """
 MOCK API RESPONSES for tests
@@ -19,6 +20,7 @@ datapoints_in_project_resp = {'tasksPaged': {'count': 7}}
 
 
 def get_datapoint_latest_resp(task_id):  # noqa: D103
+    """Mock response for `ExportRepo.get_datapoint_latest`"""
     resp = {
         "task": {
             "currentStageName": "Label",
@@ -54,6 +56,7 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {  # noqa: E501
 
 
 def get_labels_resp(mock_data: t.Optional[t.Dict]):  # noqa: D103
+    """Mock response for `ExportRepo.get_labels`"""
     resp = {
         "dataPoint": {
             "labelData": mock_data
@@ -63,6 +66,7 @@ def get_labels_resp(mock_data: t.Optional[t.Dict]):  # noqa: D103
 
 
 def task_search_resp(mock_stage_name):  # noqa: D103
+    """Mock response for `ExportRepo.task_search`"""
     resp = {
         'genericTasks': {
             'entries': [
@@ -94,6 +98,7 @@ def task_search_resp(mock_stage_name):  # noqa: D103
 
 
 def presign_items_resp(items: t.Optional[t.List[str]] = None):
+    """Mock response for `ExportRepo.presign_items`"""
     items = items or ["mock_item"]
     return {'presignItems': items}
 
@@ -139,6 +144,7 @@ task_events_resp = {
 
 # stage_name=Label
 def active_time_resp(mock_task_id: str):  # noqa: D103
+    """Mock response for `ExportRepo.active_time`"""
     resp = {
         'taskActiveTime': {
             'cursor': None,
@@ -155,4 +161,5 @@ def active_time_resp(mock_task_id: str):  # noqa: D103
     }
     return resp
 # fmt: on
-# pylint: enable=C, W commented-out-code
+# pylint: enable=pointless-string-statement
+# pylint: enable=line-too-long

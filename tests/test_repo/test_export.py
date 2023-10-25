@@ -24,9 +24,7 @@ def test_datapoints_in_project(mock_export_repo):
 def test_get_datapoint_latest(mock_export_repo):
     """Test `redbrick.repo.export.Export.get_datapoint_latest`"""
     mock_task_id = "mock_task_id"
-    mock_query = Mock(
-        return_value=fixtures.get_datapoint_latest_resp(mock_task_id)
-    )
+    mock_query = Mock(return_value=fixtures.get_datapoint_latest_resp(mock_task_id))
     with patch.object(mock_export_repo.client, "execute_query", mock_query):
         resp = mock_export_repo.get_datapoint_latest(
             org_id="mock", project_id="mock", task_id=mock_task_id

@@ -1,5 +1,4 @@
 """Tests for redbrick.mock_export.public"""
-import io
 import typing as t
 from unittest.mock import patch, Mock, AsyncMock, MagicMock, mock_open
 
@@ -11,6 +10,7 @@ from tests.test_repo import fixtures as repo_fixtures
 
 
 def test_get_raw_data_latest(mock_export):
+    """Test `redbrick.export.public.Export._get_raw_data_latest`"""
     mock_task_id = "mock_task_id"
     concurrency = 2
 
@@ -18,7 +18,9 @@ def test_get_raw_data_latest(mock_export):
         return_value=repo_fixtures.get_datapoint_latest_resp(mock_task_id)
     )
     mock_export.context.export.client.execute_query = mock_query
-    resp = mock_export._get_raw_data_latest(concurrency, task_id=mock_task_id)
+    resp = mock_export._get_raw_data_latest(  # pylint: disable=protected-access
+        concurrency, task_id=mock_task_id
+    )
 
     tasks = list(resp)
     assert len(tasks) == 1
@@ -32,7 +34,7 @@ def test_get_raw_data_latest(mock_export):
         (True, {"taxonomy": []}, False),
         (False, {"isNew": True, "objectTypes": []}, False),
         (True, {"isNew": True, "objectTypes": []}, True),
-    ]
+    ],
 )
 async def test_download_task_items(
     mock_export, rt_struct, taxonomy, check_convert_called
@@ -42,24 +44,35 @@ async def test_download_task_items(
     storage_id = "storage_id"
     parent_dir = "parent_dir"
 
-    async def mock_download(url_path_pairs: t.List[t.Tuple[str, str]], *args):
+    async def mock_download(
+        url_path_pairs: t.List[t.Tuple[str, str]], *args
+    ):  # pylint: disable=unused-argument
         return [x[1] for x in url_path_pairs]
 
     mock_convert = AsyncMock(return_value=None)
     mock_export.context.export.presign_items = lambda a, b, items: items
     with patch("redbrick.export.public.download_files", mock_download):
         with patch("redbrick.utils.dicom.convert_nii_to_rtstruct", mock_convert):
-            task_, series_dirs = await mock_export._download_task_items(
+            (
+                _,
+                series_dirs,
+            ) = await mock_export._download_task_items(  # pylint: disable=protected-access
                 task, storage_id, parent_dir, taxonomy, rt_struct
             )
     if check_convert_called:
         mock_convert.assert_called_once()
-    assert series_dirs == ['parent_dir/BraTS2021_00005/A', 'parent_dir/BraTS2021_00005/B', 'parent_dir/BraTS2021_00005/C', 'parent_dir/BraTS2021_00005/D']
-    assert len(task["series"]) == len(series_dirs)
+    assert series_dirs == [
+        "parent_dir/BraTS2021_00005/A",
+        "parent_dir/BraTS2021_00005/B",
+        "parent_dir/BraTS2021_00005/C",
+        "parent_dir/BraTS2021_00005/D",
+    ]
+    assert len(series_dirs) == len(task["series"])
 
 
 @pytest.mark.parametrize("get_color_map", [False, True])
 def test_preprocess_export(mock_export, get_color_map):
+    """Test `redbrick.export.public.Export.preprocess_export`"""
     taxonomy = {
         "isNew": True,
         "objectTypes": [
@@ -71,7 +84,9 @@ def test_preprocess_export(mock_export, get_color_map):
             }
         ],
     }
-    class_map, color_map = mock_export.preprocess_export(taxonomy, get_color_map=get_color_map)
+    class_map, color_map = mock_export.preprocess_export(
+        taxonomy, get_color_map=get_color_map
+    )
     if get_color_map:
         assert class_map == {"Category1": [255, 0, 0]}
         assert color_map == {"class1": [255, 0, 0]}
@@ -86,11 +101,12 @@ def test_preprocess_export(mock_export, get_color_map):
         (None, False, False),
         (None, True, True),
         ("/tmp/taskfile", True, True),
-    ]
+    ],
 )
 async def test_export_nifti_label_data(mock_export, task_file, get_task, returns_task):
+    """Test `redbrick.export.public.Export.export_nifti_label_data`"""
     # Mock methods
-    async def mock_download_task(_task, *args):
+    async def mock_download_task(_task, *args):  # pylint: disable=unused-argument
         return _task
 
     mock_export._download_task = mock_download_task  # pylint: disable=protected-access
@@ -132,6 +148,7 @@ async def test_export_nifti_label_data(mock_export, task_file, get_task, returns
 
 
 def test_export_tasks(mock_export):
+    """Test `redbrick.export.public.Export.export_tasks`"""
     # Mock the _get_raw_data_latest method
     taxonomy = {
         "isNew": True,
@@ -153,13 +170,11 @@ def test_export_tasks(mock_export):
     mock_export.preprocess_export = MagicMock(return_value=(class_map, color_map))
     # patch "self.context.export.get_datapoints_latest" and
     # by extension, "_get_raw_data_latest"
-    mock_query = Mock(
-        return_value=repo_fixtures.get_datapoints_latest_resp
-    )
+    mock_query = Mock(return_value=repo_fixtures.get_datapoints_latest_resp)
     mock_export.context.export.client.execute_query = mock_query
 
-    async def _mock_nifti(dp, *args):
-        return task_id_to_tasks[dp["taskId"]]
+    async def _mock_nifti(datapoint, *args):  # pylint: disable=unused-argument
+        return task_id_to_tasks[datapoint["taskId"]]
 
     mock_export.export_nifti_label_data = _mock_nifti
 
@@ -175,14 +190,16 @@ def test_export_tasks(mock_export):
     open_mock = MagicMock(spec=open)
     with patch.object(redbrick.export.public, "open", mock_open(mock=open_mock)):
         with patch.object(redbrick.export.public.os, "makedirs", mock_makedirs):
-            task_ = next(mock_export.export_tasks(
-                rt_struct=True,
-                with_files=True,
-                without_json=False,
-                without_masks=False,
-                png=True,
-                destination="/tmp/mock_segmentation_dir",
-            ))
+            task_ = next(
+                mock_export.export_tasks(
+                    rt_struct=True,
+                    with_files=True,
+                    without_json=False,
+                    without_masks=False,
+                    png=True,
+                    destination="/tmp/mock_segmentation_dir",
+                )
+            )
     open_mock.assert_called_once()
     assert mock_makedirs.call_count == 2
     assert task_["taskId"] in task_id_to_tasks
@@ -203,10 +220,18 @@ def test_export_tasks(mock_export):
         ({"search": "ISSUES", "user_id": "mock"}, {"status"}, "Label"),
         ({"search": "BENCHMARK", "user_id": "mock"}, {"benchmark"}, "END"),
         ({"search": "InvalidFilter"}, None, "Label"),
-    ]
+    ],
 )
-def test_list_tasks(mock_export, kwargs: t.Dict, expected_filters: t.Optional[t.Set], expected_stage_name: t.Optional[str]):
-    """Ensure the right filters gets passed to the Repo method"""
+def test_list_tasks(
+    mock_export,
+    kwargs: t.Dict,
+    expected_filters: t.Optional[t.Set],
+    expected_stage_name: t.Optional[str],
+):
+    """
+    Test `redbrick.export.public.Export.list_tasks`
+    Ensure the right filters gets passed to the Repo method
+    """
     # Simulate a call to list_tasks with some parameters
     _tasks = repo_fixtures.task_search_resp("Label")["genericTasks"]["entries"]
     # mock_task_search = MagicMock(return_value=_tasks)
@@ -217,10 +242,16 @@ def test_list_tasks(mock_export, kwargs: t.Dict, expected_filters: t.Optional[t.
 
     if expected_filters is None:
         with pytest.raises(ValueError):
-            next(mock_export.list_tasks(search=search, limit=10, stage_name="Label", **kwargs))
+            next(
+                mock_export.list_tasks(
+                    search=search, limit=10, stage_name="Label", **kwargs
+                )
+            )
         return
-    else:
-        task = next(mock_export.list_tasks(search=search, limit=10, stage_name="Label", **kwargs))
+
+    task = next(
+        mock_export.list_tasks(search=search, limit=10, stage_name="Label", **kwargs)
+    )
 
     calls = mock_export.context.export.task_search.mock_calls
     call_args = calls[0].args

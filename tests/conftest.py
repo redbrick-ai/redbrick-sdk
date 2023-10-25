@@ -1,15 +1,22 @@
 """Fixtures for all tests"""
 import pytest
 
-from redbrick import RBContext, _populate_context
+from redbrick import RBContext
 from redbrick.common.client import RBClient
 from redbrick.export import Export
-from redbrick.repo import ExportRepo, LabelingRepo, UploadRepo, SettingsRepo, ProjectRepo, WorkspaceRepo
+from redbrick.repo import (
+    ExportRepo,
+    LabelingRepo,
+    UploadRepo,
+    SettingsRepo,
+    ProjectRepo,
+    WorkspaceRepo,
+)
 
 
 @pytest.fixture(scope="function")
 def rb_context() -> RBContext:
-    """Get a new mock RBClient for each test"""
+    """Get a new mock RBContext for each test"""
     context = RBContext(
         api_key="mock_api_key_000000000000000000000000000000", url="mock_url"
     )
@@ -17,13 +24,17 @@ def rb_context() -> RBContext:
 
 
 @pytest.fixture(scope="function")
-def rb_client(rb_context) -> RBClient:
+def rb_client(
+    rb_context: RBContext,  # pylint: disable=redefined-outer-name
+) -> RBClient:
     """Get a new mock RBClient for each test"""
     return rb_context.client
 
 
 @pytest.fixture(scope="function")
-def mock_export_repo(rb_client):
+def mock_export_repo(
+    rb_client: RBClient,  # pylint: disable=redefined-outer-name
+) -> ExportRepo:
     """Get a new mock ExportRepo object for each test"""
     export_repo = ExportRepo(rb_client)
     return export_repo
@@ -37,7 +48,7 @@ def _mock_populate_context(
     settings_repo=None,
     project_repo=None,
     workspace_repo=None,
-):
+) -> RBContext:
     context.export = export_repo or ExportRepo(context.client)
     context.labeling = labeling_repo or LabelingRepo(context.client)
     context.upload = upload_repo or UploadRepo(context.client)
@@ -48,7 +59,9 @@ def _mock_populate_context(
 
 
 @pytest.fixture(scope="function")
-def mock_export(rb_client, mock_export_repo):
+def mock_export(
+    mock_export_repo: ExportRepo,  # pylint: disable=redefined-outer-name
+) -> Export:
     """Get a new mock Export object for each test"""
     context = RBContext(
         api_key="mock_api_key_000000000000000000000000000000", url="mock_url"
