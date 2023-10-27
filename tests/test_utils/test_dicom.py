@@ -364,3 +364,29 @@ async def test_process_nifti_download(nifti_instance_files_png, mock_labels, bin
 
     if png_mask:
         assert all([x.endswith(".png") for x in masks])
+
+
+@pytest.mark.asyncio
+async def test_process_nifti_upload(tmpdir, nifti_instance_files_png, mock_labels):
+    files = nifti_instance_files_png
+    instances = {1, 2, 3, 4, 5, 9}
+    semantic_mask = False  # not used
+    png_mask = False  # not supported
+    binary_mask = True
+    _mask = nifti_instance_files_png[0]
+    _mask_inst_id = _mask.split(".")[-3].split("-")[-1]
+    masks = {_mask_inst_id: _mask}
+    label_validate = True
+
+    with patch.object(dicom, "config_path", return_value=str(tmpdir)) as mock_config_path:
+        result, group_map = await dicom.process_nifti_upload(
+            files, instances, binary_mask, semantic_mask, png_mask, masks, label_validate
+        )
+
+    mock_config_path.assert_called_once()
+    assert isinstance(result, str) and result.endswith("label.nii.gz")
+    assert os.path.isfile(result)
+    assert isinstance(group_map, dict)
+    assert set(group_map) == instances
+    assert isinstance(group_map, dict)
+
