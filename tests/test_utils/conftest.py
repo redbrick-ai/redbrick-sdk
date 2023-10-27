@@ -16,9 +16,9 @@ def mock_nifti_data():
 def mock_labels():
     # Mock labels data for testing
     mock_labels = [
-        {"dicom": {"instanceid": 1, "groupids": [3, 4]}, "classid": 0},
-        {"dicom": {"instanceid": 2}, "classid": 1},
-        {"dicom": {"instanceid": 5}, "classid": 2},
+        {"dicom": {"instanceid": 1, "groupids": [3, 4]}, "classid": 0, "category": [["stub", "test1", "test7"]]},
+        {"dicom": {"instanceid": 2}, "classid": 1, "category": [["stub", "test2", "test8"]]},
+        {"dicom": {"instanceid": 5}, "classid": 2, "category": [["stub", "test2", "test9"]]},
     ]
     return mock_labels
 
