@@ -13,6 +13,11 @@ def mock_nifti_data():
 
 
 @pytest.fixture
+def mock_nifti_data2():
+    return np.random.randint(2 ** 16, size=(512, 512, 512), dtype=np.uint16)
+
+
+@pytest.fixture
 def mock_labels():
     # Mock labels data for testing
     mock_labels = [
@@ -85,3 +90,62 @@ def nifti_instance_files_png(tmpdir, mock_labels):
             files.append(f.name)
     yield files
     shutil.rmtree(dirname, ignore_errors=True)
+
+
+@pytest.fixture
+def dicom_file_and_image(tmpdir, mock_nifti_data2):
+    # patch Dataset to set missing attrs
+    import pydicom
+    ds_cls = pydicom.dataset.Dataset
+    ds_cls.StudyDate = None
+    ds_cls.StudyTime = None
+    ds_cls.StudyID = None
+    ds_cls.SOPInstanceUID = None
+    pydicom.dataset.Dataset = ds_cls
+    import pydicom._storage_sopclass_uids
+
+    # metadata
+    meta = pydicom.Dataset()
+    meta.MediaStorageSOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
+    meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
+    meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
+
+    ds = pydicom.Dataset()
+    ds.file_meta = meta
+    ds.is_little_endian = True
+    ds.is_implicit_VR = False
+    ds.SOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
+    ds.PatientName = "Test^Firstname"
+    ds.PatientID = "123456"
+    ds.Modality = "MR"
+    ds.SeriesInstanceUID = pydicom.uid.generate_uid()
+    ds.StudyInstanceUID = pydicom.uid.generate_uid()
+    ds.FrameOfReferenceUID = pydicom.uid.generate_uid()
+    ds.BitsStored = 16
+    ds.BitsAllocated = 16
+    ds.SamplesPerPixel = 1
+    ds.HighBit = 15
+    ds.ImagesInAcquisition = "1"
+
+    image = mock_nifti_data2
+    ds.Rows = image.shape[0]
+    ds.Columns = image.shape[1]
+    ds.NumberOfFrames = image.shape[2]
+
+    ds.ImagePositionPatient = r"0\0\1"
+    ds.ImageOrientationPatient = r"1\0\0\0\-1\0"
+    ds.ImageType = r"ORIGINAL\PRIMARY\AXIAL"
+    ds.RescaleIntercept = "0"
+    ds.RescaleSlope = "1"
+    ds.PixelSpacing = r"1\1"
+    ds.PhotometricInterpretation = "MONOCHROME2"
+    ds.PixelRepresentation = 1
+
+    pydicom.dataset.validate_file_meta(ds.file_meta, enforce_standard=True)
+    ds.PixelData = image.tobytes()
+
+    # save
+    fn = os.path.join(str(tmpdir), "image.dcm")
+    ds.save_as(fn, write_like_original=False)
+
+    return fn, image

@@ -5,6 +5,7 @@ import numpy as np
 import nibabel as nib
 import pytest
 from nibabel.filebasedimages import ImageFileError
+from rt_utils import RTStruct
 
 from redbrick.utils import dicom
 
@@ -390,3 +391,18 @@ async def test_process_nifti_upload(tmpdir, nifti_instance_files_png, mock_label
     assert set(group_map) == instances
     assert isinstance(group_map, dict)
 
+
+@pytest.mark.asyncio
+async def test_convert_nii_to_rtstruct(dicom_file_and_image, nifti_instance_files_png):
+    dicom_file, image_data = dicom_file_and_image
+    dicom_series_path = os.path.dirname(dicom_file)
+    categories = [
+        {"category": "Category1", "classId": 1, "color": [255, 0, 0], "parents": []},
+        {"category": "Category2", "classId": 2, "color": [180, 137, 80], "parents": []},
+    ]
+    segment_map = {"1": {"category": "Category1"}, "2": {"category": "Category2"}}
+    result = await dicom.convert_nii_to_rtstruct(nifti_instance_files_png[1:], dicom_series_path, categories, segment_map)
+    assert result is not None
+    assert isinstance(result, RTStruct)
+    _data = result.series_data[0].pixel_array
+    assert (_data.astype(np.uint16) == image_data).all()
