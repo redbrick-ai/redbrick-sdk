@@ -169,3 +169,78 @@ def test_convert_to_binary_with_high_values(tmpdir, mock_labels):
     assert len(new_files) == 3
     assert os.path.isfile(new_files[2])
     assert nib.loadsave.load(new_files[2]).dataobj.dtype == np.uint16
+
+
+def test_convert_to_semantic_with_binary_mask(nifti_instance_files, mock_labels):
+    """Successful conversion to semantic with binary_mask=True"""
+    masks = nifti_instance_files[:1]
+    taxonomy = {"isNew": True}
+    dirname = os.path.dirname(nifti_instance_files[0])
+    binary_mask = True
+
+    result, files = dicom.convert_to_semantic(masks, taxonomy, mock_labels, dirname, binary_mask)
+    assert result is True
+    assert len(files) == 3  # Should have 3 output files
+    assert files != masks
+
+
+def test_convert_to_semantic_without_binary_mask(nifti_instance_files, mock_labels):
+    """Successful conversion to semantic with binary_mask=False"""
+    masks = nifti_instance_files[:1]
+    dirname = os.path.dirname(nifti_instance_files[0])
+    binary_mask = False
+    taxonomy = {"isNew": True}
+    result, files = dicom.convert_to_semantic(masks, taxonomy, mock_labels, dirname, binary_mask)
+    assert result is True
+    assert len(files) == 1  # Should have 1 output file
+    assert files == masks  # files unchanged
+
+
+def test_convert_to_semantic_unsupported_taxonomy(nifti_instance_files, mock_labels):
+    """Failed conversion due to unsupported taxonomy"""
+    masks = nifti_instance_files[:1]
+    dirname = os.path.dirname(nifti_instance_files[0])
+    taxonomy = {"isNew": False}
+    binary_mask = True
+
+    result, files = dicom.convert_to_semantic(masks, taxonomy, mock_labels, dirname, binary_mask)
+    assert result is False
+    assert files == masks  # files remain unchanged
+
+
+def test_convert_to_semantic_invalid_files(nifti_instance_files, mock_labels):
+    masks = ["non_existent_file.nii.gz"]
+    taxonomy = {"isNew": True}
+    dirname = os.path.dirname(nifti_instance_files[0])
+    binary_mask = False
+
+    with pytest.raises(FileNotFoundError):
+        dicom.convert_to_semantic(masks, taxonomy, mock_labels, dirname, binary_mask)
+
+
+def test_convert_to_semantic_no_labels(nifti_instance_files):
+    """Failed conversion with no labels"""
+    masks = nifti_instance_files[:1]
+    dirname = os.path.dirname(nifti_instance_files[0])
+    labels = []
+    taxonomy = {"isNew": True}
+    binary_mask = True
+
+    result, files = dicom.convert_to_semantic(masks, taxonomy, labels, dirname, binary_mask)
+    assert result is True
+    assert not files  # Should not have any output files
+
+
+def test_convert_to_semantic_invalid_input_masks(nifti_instance_files, mock_labels):
+    """Failed conversion with invalid input masks"""
+    masks = nifti_instance_files[:1]
+    dirname = os.path.dirname(nifti_instance_files[0])
+    for file in masks:
+        with open(file, "ab") as f:
+            f.write(b"invalid append data")
+    taxonomy = {"isNew": True}
+    binary_mask = False
+
+    result, files = dicom.convert_to_semantic(masks, taxonomy, mock_labels, dirname, binary_mask)
+    assert result is True
+    assert not files  # Should not have any output files
