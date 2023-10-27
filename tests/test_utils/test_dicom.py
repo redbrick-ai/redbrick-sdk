@@ -8,12 +8,6 @@ from nibabel.filebasedimages import ImageFileError
 
 from redbrick.utils import dicom
 
-# Mock labels data for testing
-mock_labels = [
-    {"dicom": {"instanceid": 1, "groupids": [3, 4]}},
-    {"dicom": {"instanceid": 2}},
-]
-
 
 @pytest.mark.parametrize(
     ("equals", "pass_output", "expected"),
@@ -63,7 +57,7 @@ def test_merge_segmentations_invalid_nifti_file(input_nifti_file, output_nifti_f
         raise exception
 
 
-def test_convert_to_binary_valid_input(tmpdir, mock_nifti_data):
+def test_convert_to_binary_valid_input(tmpdir, mock_nifti_data, mock_labels):
     mock_data = mock_nifti_data
     tmpdir_path = str(tmpdir)
     nifti_file = os.path.join(tmpdir_path, "test_input.nii.gz")
@@ -89,7 +83,7 @@ def test_convert_to_binary_valid_input(tmpdir, mock_nifti_data):
         assert (new_data == expected[instance_id]).all()
 
 
-def test_convert_to_binary_invalid_nifti_file(tmpdir):
+def test_convert_to_binary_invalid_nifti_file(tmpdir, mock_labels):
     nifti_file = "non_existent_file.nii.gz"
     with pytest.raises(FileNotFoundError):
         dicom.convert_to_binary(nifti_file, mock_labels, str(tmpdir))
@@ -124,7 +118,7 @@ def test_convert_to_binary_no_matching_labels(tmpdir, mock_nifti_data):
     assert not new_files  # No new files should be created
 
 
-def test_convert_to_binary_with_existing_files(tmpdir, mock_nifti_data):
+def test_convert_to_binary_with_existing_files(tmpdir, mock_nifti_data, mock_labels):
     mock_data = mock_nifti_data
     tmpdir_path = str(tmpdir)
     nifti_file = os.path.join(tmpdir_path, "test_input.nii.gz")
@@ -148,7 +142,7 @@ def test_convert_to_binary_with_existing_files(tmpdir, mock_nifti_data):
         assert os.path.isfile(filename)
 
 
-def test_convert_to_binary_with_failed_saving(tmpdir, monkeypatch, mock_nifti_data):
+def test_convert_to_binary_with_failed_saving(tmpdir, monkeypatch, mock_nifti_data, mock_labels):
     tmpdir_path = str(tmpdir)
     nifti_file = os.path.join(tmpdir_path, "test_input.nii.gz")
 
@@ -161,7 +155,7 @@ def test_convert_to_binary_with_failed_saving(tmpdir, monkeypatch, mock_nifti_da
             _ = dicom.convert_to_binary(nifti_file, mock_labels, "/non_existent_directory")
 
 
-def test_convert_to_binary_with_high_values(tmpdir):
+def test_convert_to_binary_with_high_values(tmpdir, mock_labels):
     tmpdir_path = str(tmpdir)
     nifti_file = os.path.join(tmpdir_path, "test_input.nii.gz")
     _labels = mock_labels + [{"dicom": {"instanceid": 256}}]
