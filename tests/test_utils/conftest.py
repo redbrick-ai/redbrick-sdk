@@ -26,3 +26,13 @@ def output_nifti_file():
         nib.save(img, f.name)
         yield f.name
     os.remove(f.name)
+
+
+@pytest.fixture
+def mock_nifti_data():
+    return np.array([[1, 1, 2], [2, 2, 3], [3, 3, 4]])
+
+
+@pytest.fixture
+def mock_affine_and_header():
+    return np.eye(4), None
