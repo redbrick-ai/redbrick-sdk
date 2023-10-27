@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import numpy as np
 import nibabel as nib
@@ -324,3 +324,43 @@ def test_convert_to_png_invalid_array_shape(nifti_instance_files, mock_labels):
     with pytest.raises(IndexError, match="tuple index out of range"):
         dicom.convert_to_png(masks, color_map, mock_labels, dirname, binary_mask, semantic_mask, is_tax_v2)
 
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("binary_mask", "semantic_mask", "png_mask", "expected_file_count"),
+    [
+        (True, True, True, 2),
+        (True, True, False, 2),
+
+        (True, False, True, 2),
+        (True, False, False, 2),
+
+        (False, True, True, 1),
+        (False, True, False, 1),
+
+        (False, False, True, 1),
+        (False, False, False, 2),
+    ]
+)
+async def test_process_nifti_download(nifti_instance_files_png, mock_labels, binary_mask, semantic_mask, png_mask, expected_file_count):
+    labels_path = nifti_instance_files_png[0]
+    color_map = {"red": (255, 0, 0)}
+    taxonomy = {"isNew": True}
+    volume_index = 1
+
+    result = await dicom.process_nifti_download(
+        mock_labels[:2], labels_path, png_mask=png_mask, color_map=color_map, semantic_mask=semantic_mask, binary_mask=binary_mask, taxonomy=taxonomy, volume_index=volume_index
+    )
+    masks = result["masks"]
+
+    if any([binary_mask, semantic_mask, png_mask]):
+        assert len(masks) == expected_file_count
+    else:
+        assert masks == labels_path
+
+    assert result["binary_mask"] == binary_mask
+    assert result["semantic_mask"] == semantic_mask
+    assert result["png_mask"] == png_mask
+
+    if png_mask:
+        assert all([x.endswith(".png") for x in masks])
