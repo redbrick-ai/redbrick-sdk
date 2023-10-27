@@ -72,7 +72,7 @@ def test_convert_to_binary_valid_input(tmpdir, mock_nifti_data, mock_labels):
         1: [[1, 1, 0], [0, 0, 1], [1, 1, 1]],
         2: [[0, 0, 1], [1, 1, 0], [0, 0, 0]]
     }
-    for label in mock_labels:
+    for label in mock_labels[:2]:  # the third label won't create a new file
         instance_id = label["dicom"]["instanceid"]
         filename = os.path.join(tmpdir_path, f"instance-{instance_id}.nii.gz")
 
