@@ -633,7 +633,8 @@ def merge_rtstructs(rtstruct1: Any, rtstruct2: Any) -> Any:
         # check for ROI name duplication
         for struct_set_roi_seq2 in rtstruct2.ds.StructureSetROISequence:
             if struct_set_roi_seq.ROIName == struct_set_roi_seq2.ROIName:
-                struct_set_roi_seq += "_2"
+                # struct_set_roi_seq += "_2"
+                struct_set_roi_seq.ROIName += "_2"
 
         rtstruct2.ds.ROIContourSequence.append(roi_contour_seq)
         rtstruct2.ds.StructureSetROISequence.append(struct_set_roi_seq)
