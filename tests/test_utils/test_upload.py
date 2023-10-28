@@ -1,3 +1,4 @@
+"""Tests for `redbrick.utils.upload`."""
 from unittest.mock import Mock, patch, AsyncMock
 
 import pytest
@@ -6,10 +7,9 @@ from redbrick.utils import upload
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "valid_state", [True, False]
-)
-async def test_validate_json(rb_context, mock_rb_context, valid_state):
+@pytest.mark.parametrize("valid_state", [True, False])
+async def test_validate_json(valid_state):
+    """Check upload.validate_json handles valid and invalid payloads correctly"""
     input_data = [
         {"name": "item1"},
         {"name": "item2"},
@@ -19,17 +19,30 @@ async def test_validate_json(rb_context, mock_rb_context, valid_state):
     concurrency = 2
 
     # mock repo upload method
-    async def mock_validate_and_convert(arg1, input_, *args):
+    mock_rb_context = AsyncMock()
+
+    async def mock_validate_and_convert(
+        arg1, input_, *args
+    ):  # pylint: disable=unused-argument
         return {"isValid": valid_state, "converted": input_}
-    mock_rb_context.upload.validate_and_convert_to_import_format = mock_validate_and_convert
+
+    mock_rb_context.upload.validate_and_convert_to_import_format = (
+        mock_validate_and_convert
+    )
 
     # Execute the function
-    result = await upload.validate_json(mock_rb_context, input_data, storage_id, concurrency)
-    assert (result == input_data) is valid_state
+    result = await upload.validate_json(
+        mock_rb_context, input_data, storage_id, concurrency
+    )
+    if valid_state is True:
+        assert result == input_data
+    else:
+        assert result == []
 
 
 @pytest.mark.asyncio
-async def test_process_segmentation_upload(mock_rb_context, nifti_instance_files_png, mock_labels):
+async def test_process_segmentation_upload(nifti_instance_files_png, mock_labels):
+    """Test for `upload.process_segmentation_upload`"""
     files = nifti_instance_files_png
     org_id = "org_id"
     project_id = "project_id"
@@ -44,6 +57,7 @@ async def test_process_segmentation_upload(mock_rb_context, nifti_instance_files
     label_validate = False
 
     # Prepare RBContext mock
+    mock_rb_context = AsyncMock()
     mock_rb_context.export.presign_items = Mock()
     mock_rb_context.export.presign_items.return_value = ["presigned_path"]
     mock_rb_context.labeling.presign_labels_path = AsyncMock()
