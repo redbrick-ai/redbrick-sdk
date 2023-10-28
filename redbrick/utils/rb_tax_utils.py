@@ -37,7 +37,7 @@ def validate_attribute(attribute: Dict, message: str) -> None:
     if attribute.get("attrType") is None:
         raise ValueError(f"{message} has no `attrType`")
     if attribute.get("attrId") is None:
-        raise ValueError(f"{message} has not `attrId`")
+        raise ValueError(f"{message} has no `attrId`")
 
 
 def validate_taxonomy(
