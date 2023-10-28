@@ -8,7 +8,14 @@ from redbrick.utils import rb_tax_utils
 def test_format_taxonomy(is_new):
     common_keys = ["orgId", "name", "createdAt", "archived", "isNew"]
     v2 = ["taxId", "studyClassify", "seriesClassify", "instanceClassify", "objectTypes"]
-    v1 = ["version", "categories", "attributes", "taskCategories", "taskAttributes", "colorMap"]
+    v1 = [
+        "version",
+        "categories",
+        "attributes",
+        "taskCategories",
+        "taskAttributes",
+        "colorMap",
+    ]
     taxonomy_skeleton = {k: "mock" for k in (common_keys + v2 + v1)}
     taxonomy_skeleton["isNew"] = is_new
 
@@ -41,10 +48,17 @@ def test_validate_taxonomy():
     series_classify = [{"name": "Series1", "attrType": "TypeB", "attrId": "ID2"}]
     instance_classify = [{"name": "Instance1", "attrType": "TypeC", "attrId": "ID3"}]
     object_types = [
-        {"category": "CategoryA", "classId": "Class1", "labelType": "TypeX", "attributes": []}
+        {
+            "category": "CategoryA",
+            "classId": "Class1",
+            "labelType": "TypeX",
+            "attributes": [],
+        }
     ]
     # No exception should be raised
-    rb_tax_utils.validate_taxonomy(study_classify, series_classify, instance_classify, object_types)
+    rb_tax_utils.validate_taxonomy(
+        study_classify, series_classify, instance_classify, object_types
+    )
 
 
 def test_validate_taxonomy_empty():
@@ -53,7 +67,9 @@ def test_validate_taxonomy_empty():
     instance_classify = []
     object_types = []
     # No exception should be raised
-    rb_tax_utils.validate_taxonomy(study_classify, series_classify, instance_classify, object_types)
+    rb_tax_utils.validate_taxonomy(
+        study_classify, series_classify, instance_classify, object_types
+    )
 
 
 @pytest.mark.parametrize("missing", ["category", "classId", "labelType"])
@@ -62,8 +78,15 @@ def test_validate_taxonomy_missing_object_types_attr(missing):
     series_classify = [{"name": "Series1", "attrType": "TypeB", "attrId": "ID2"}]
     instance_classify = [{"name": "Instance1", "attrType": "TypeC", "attrId": "ID3"}]
     object_types = [
-        {"category": "CategoryA", "classId": "Class1", "labelType": "TypeX", "attributes": []}
+        {
+            "category": "CategoryA",
+            "classId": "Class1",
+            "labelType": "TypeX",
+            "attributes": [],
+        }
     ]
     object_types[0].pop(missing, None)
     with pytest.raises(ValueError):
-        rb_tax_utils.validate_taxonomy(study_classify, series_classify, instance_classify, object_types)
+        rb_tax_utils.validate_taxonomy(
+            study_classify, series_classify, instance_classify, object_types
+        )
