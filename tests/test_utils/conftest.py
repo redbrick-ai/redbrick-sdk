@@ -4,6 +4,8 @@ import shutil
 import tempfile
 
 import numpy as np
+import pydicom
+import pydicom._storage_sopclass_uids  # pylint: disable=protected-access
 import pytest
 import nibabel as nib
 
@@ -23,7 +25,7 @@ def mock_nifti_data2():
 @pytest.fixture
 def mock_labels():
     """Mock labels data for testing"""
-    mock_labels = [
+    labels = [
         {
             "dicom": {"instanceid": 1, "groupids": [3, 4]},
             "classid": 0,
@@ -40,7 +42,7 @@ def mock_labels():
             "category": [["stub", "test2", "test9"]],
         },
     ]
-    return mock_labels
+    return labels
 
 
 @pytest.fixture
@@ -48,10 +50,10 @@ def input_nifti_file():
     """Create a temporary NIfTI file for testing"""
     data = np.array([[1, 1], [0, 0]])
     img = nib.Nifti1Image(data, np.eye(4), dtype="compat")
-    with tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as f:
-        nib.save(img, f.name)
-        yield f.name
-    os.remove(f.name)
+    with tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as file:
+        nib.save(img, file.name)
+        yield file.name
+    os.remove(file.name)
 
 
 @pytest.fixture
@@ -59,14 +61,14 @@ def output_nifti_file():
     """Create a temporary NIfTI file for testing"""
     data = np.array([[2, 2], [0, 0]])
     img = nib.Nifti1Image(data, np.eye(4), dtype="compat")
-    with tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as f:
-        nib.save(img, f.name)
-        yield f.name
-    os.remove(f.name)
+    with tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as file:
+        nib.save(img, file.name)
+        yield file.name
+    os.remove(file.name)
 
 
 @pytest.fixture
-def nifti_instance_files(tmpdir, mock_labels):
+def nifti_instance_files(tmpdir, mock_labels):  # pylint: disable=redefined-outer-name
     """Create temporary NIfTI files matching labels for testing"""
     data = [
         np.array([[1, 1, 2], [2, 2, 3], [3, 3, 4]]),
@@ -79,15 +81,17 @@ def nifti_instance_files(tmpdir, mock_labels):
         _i_id = label["dicom"]["instanceid"]
         img = nib.Nifti1Image(data[idx], np.eye(4), dtype="compat")
         fname = os.path.join(dirname, f"instance-{_i_id}.nii.gz")
-        with open(fname, "w+b") as f:
-            nib.save(img, f.name)
-            files.append(f.name)
+        with open(fname, "w+b") as file:
+            nib.save(img, file.name)
+            files.append(file.name)
     yield files
     shutil.rmtree(dirname, ignore_errors=True)
 
 
 @pytest.fixture
-def nifti_instance_files_png(tmpdir, mock_labels):
+def nifti_instance_files_png(
+    tmpdir, mock_labels
+):  # pylint: disable=redefined-outer-name
     """Create temporary png-style NIfTI files matching labels for testing"""
     data = [
         np.array([[[1], [1], [2]], [[2], [2], [3]], [[3], [3], [4]]]),
@@ -100,30 +104,32 @@ def nifti_instance_files_png(tmpdir, mock_labels):
         _i_id = label["dicom"]["instanceid"]
         img = nib.Nifti1Image(data[idx], np.eye(4), dtype="compat")
         fname = os.path.join(dirname, f"instance-{_i_id}.nii.gz")
-        with open(fname, "w+b") as f:
-            nib.save(img, f.name)
-            files.append(f.name)
+        with open(fname, "w+b") as file:
+            nib.save(img, file.name)
+            files.append(file.name)
     yield files
     shutil.rmtree(dirname, ignore_errors=True)
 
 
 @pytest.fixture
-def dicom_file_and_image(tmpdir, mock_nifti_data2):
+def dicom_file_and_image(
+    tmpdir, mock_nifti_data2
+):  # pylint: disable=redefined-outer-name
     """Create temporary DICOM file for testing"""
+    # pylint: disable=invalid-name
     # patch pydicom.Dataset to set missing attrs
-    import pydicom
-
     ds_cls = pydicom.dataset.Dataset
     ds_cls.StudyDate = None
     ds_cls.StudyTime = None
     ds_cls.StudyID = None
     ds_cls.SOPInstanceUID = None
     pydicom.dataset.Dataset = ds_cls
-    import pydicom._storage_sopclass_uids
 
     # metadata
     meta = pydicom.Dataset()
-    meta.MediaStorageSOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
+    meta.MediaStorageSOPClassUID = (
+        pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
+    )
     meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
     meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
 
@@ -131,7 +137,9 @@ def dicom_file_and_image(tmpdir, mock_nifti_data2):
     ds.file_meta = meta
     ds.is_little_endian = True
     ds.is_implicit_VR = False
-    ds.SOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
+    ds.SOPClassUID = (
+        pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
+    )
     ds.PatientName = "Test^Firstname"
     ds.PatientID = "123456"
     ds.Modality = "MR"
@@ -162,31 +170,31 @@ def dicom_file_and_image(tmpdir, mock_nifti_data2):
     ds.PixelData = image.tobytes()
 
     # save
-    fn = os.path.join(str(tmpdir), "image.dcm")
-    ds.save_as(fn, write_like_original=False)
+    fname = os.path.join(str(tmpdir), "image.dcm")
+    ds.save_as(fname, write_like_original=False)
 
-    return fn, image
+    return fname, image
 
 
 @pytest.fixture
 def dicom_file_and_image_tuples(tmpdir):
     """Create a set of DICOM files for testing"""
+    # pylint: disable=invalid-name
     # patch Dataset to set missing attrs
-    import pydicom
-
     ds_cls = pydicom.dataset.Dataset
     ds_cls.StudyDate = None
     ds_cls.StudyTime = None
     ds_cls.StudyID = None
     ds_cls.SOPInstanceUID = None
     pydicom.dataset.Dataset = ds_cls
-    import pydicom._storage_sopclass_uids
 
     tuples = []
     for i in range(2):
         # metadata
         meta = pydicom.Dataset()
-        meta.MediaStorageSOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
+        meta.MediaStorageSOPClassUID = (
+            pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
+        )
         meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
         meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
 
@@ -194,7 +202,9 @@ def dicom_file_and_image_tuples(tmpdir):
         ds.file_meta = meta
         ds.is_little_endian = True
         ds.is_implicit_VR = False
-        ds.SOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
+        ds.SOPClassUID = (
+            pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
+        )
         ds.PatientName = "Test^Firstname"
         ds.PatientID = "123456"
         ds.Modality = "MR"

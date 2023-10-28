@@ -57,8 +57,8 @@ def test_merge_segmentations_invalid_nifti_file(input_nifti_file, output_nifti_f
     input_instance = 1
     equals = True
     output_instance = 2
-    with open(input_nifti_file, "w") as f:
-        f.write("This is not a NIfTI file.")
+    with open(input_nifti_file, "w", encoding="utf-8") as file:
+        file.write("This is not a NIfTI file.")
     with pytest.raises(ImageFileError), patch.object(dicom, "log_error") as mock_logger:
         dicom.merge_segmentations(
             input_nifti_file, input_instance, equals, output_nifti_file, output_instance
@@ -170,8 +170,8 @@ def test_convert_to_binary_with_failed_saving(
     img.to_filename(nifti_file)
 
     with pytest.raises(FileNotFoundError):
-        with monkeypatch.context() as m:
-            m.setattr(
+        with monkeypatch.context() as ctx:
+            ctx.setattr(
                 os.path, "join", lambda *args: "/non_existent_directory/file.nii.gz"
             )
             _ = dicom.convert_to_binary(
@@ -270,8 +270,8 @@ def test_convert_to_semantic_invalid_input_masks(nifti_instance_files, mock_labe
     masks = nifti_instance_files[:1]
     dirname = os.path.dirname(nifti_instance_files[0])
     for file in masks:
-        with open(file, "ab") as f:
-            f.write(b"invalid append data")
+        with open(file, "ab") as file_:  # pylint: disable=unspecified-encoding
+            file_.write(b"invalid append data")
     taxonomy = {"isNew": True}
     binary_mask = False
 
@@ -438,11 +438,11 @@ async def test_process_nifti_download(
     assert result["png_mask"] == png_mask
 
     if png_mask:
-        assert all([x.endswith(".png") for x in masks])
+        assert all(x.endswith(".png") for x in masks)
 
 
 @pytest.mark.asyncio
-async def test_process_nifti_upload(tmpdir, nifti_instance_files_png, mock_labels):
+async def test_process_nifti_upload(tmpdir, nifti_instance_files_png):
     """Test dicom.process_nifti_upload"""
     files = nifti_instance_files_png
     instances = {1, 2, 3, 4, 5, 9}
@@ -495,7 +495,7 @@ async def test_convert_nii_to_rtstruct(dicom_file_and_image, nifti_instance_file
 
 
 @pytest.mark.asyncio
-async def test_merge_rtstructs(dicom_file_and_image_tuples, nifti_instance_files_png):
+async def test_merge_rtstructs(dicom_file_and_image_tuples):
     """Test dicom.merge_rtstructs"""
     # Mock RTStruct objects and data for testing
     dicom_file1, _ = dicom_file_and_image_tuples[0]

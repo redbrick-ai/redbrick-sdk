@@ -63,8 +63,9 @@ def test_from_rb_sub_task():
 
 def test_from_rb_consensus_info():
     """Test rb_label_utils.from_rb_consensus_info function"""
-    dp = repo_fixtures.get_datapoints_latest_resp["tasksPaged"]["entries"][2]
-    consensus_info = dp["currentStageSubTask"]["consensusInfo"][0]
+    # pylint: disable=line-too-long
+    datapoint = repo_fixtures.get_datapoints_latest_resp["tasksPaged"]["entries"][2]
+    consensus_info = datapoint["currentStageSubTask"]["consensusInfo"][0]
     expected_result = {
         "assignee": "API Key",
         "updatedAt": "2023-10-20T14:33:27.664115+00:00",
@@ -94,11 +95,11 @@ def test_from_rb_consensus_info():
         "labelsMap": [
             {
                 "imageIndex": 0,
-                "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/80feaafb-2456-48fb-833f-2012138a63e7",
+                "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/80feaafb-2456-48fb-833f-2012138a63e7",  # noqa
             },
             {
                 "imageIndex": 3,
-                "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/73d5388a-d742-43c9-950e-29fc116527e7",
+                "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/73d5388a-d742-43c9-950e-29fc116527e7",  # noqa
             },
         ],
         "labelStorageId": "22222222-2222-2222-2222-222222222222",
@@ -110,6 +111,7 @@ def test_from_rb_consensus_info():
 
 def test_flat_rb_format():
     """Test rb_label_utils.flat_rb_format function"""
+    # pylint: disable=too-many-locals
     labels = [{"label1": "value1"}, {"label2": "value2"}]
     items = ["item1", "item2"]
     name = "Task Name"
@@ -200,9 +202,10 @@ def test_flat_rb_format():
 
 def test_parse_entry_latest():
     """Test rb_label_utils.parse_entry_latest function"""
-    dp = repo_fixtures.get_datapoints_latest_resp["tasksPaged"]["entries"][2]
+    # pylint: disable=line-too-long
+    entry = repo_fixtures.get_datapoints_latest_resp["tasksPaged"]["entries"][2]
 
-    result = rb_label_utils.parse_entry_latest(dp)
+    result = rb_label_utils.parse_entry_latest(entry)
     expected = {
         "taskId": "6a12cb11-ce37-43a1-b8b6-20b1317afffd",
         "name": "BraTS2021_00006",
@@ -244,11 +247,11 @@ def test_parse_entry_latest():
         "labelsMap": [
             {
                 "imageIndex": 0,
-                "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/80feaafb-2456-48fb-833f-2012138a63e7",
+                "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/80feaafb-2456-48fb-833f-2012138a63e7",  # noqa
             },
             {
                 "imageIndex": 3,
-                "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/73d5388a-d742-43c9-950e-29fc116527e7",
+                "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/73d5388a-d742-43c9-950e-29fc116527e7",  # noqa
             },
         ],
         "seriesInfo": [

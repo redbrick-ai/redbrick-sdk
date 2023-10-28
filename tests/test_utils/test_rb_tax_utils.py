@@ -6,9 +6,16 @@ from redbrick.utils import rb_tax_utils
 
 @pytest.mark.parametrize("is_new", [True, False])
 def test_format_taxonomy(is_new):
+    """Test for rb_tax_utils.format_taxonomy"""
     common_keys = ["orgId", "name", "createdAt", "archived", "isNew"]
-    v2 = ["taxId", "studyClassify", "seriesClassify", "instanceClassify", "objectTypes"]
-    v1 = [
+    v2_keys = [
+        "taxId",
+        "studyClassify",
+        "seriesClassify",
+        "instanceClassify",
+        "objectTypes",
+    ]
+    v1_keys = [
         "version",
         "categories",
         "attributes",
@@ -16,17 +23,18 @@ def test_format_taxonomy(is_new):
         "taskAttributes",
         "colorMap",
     ]
-    taxonomy_skeleton = {k: "mock" for k in (common_keys + v2 + v1)}
+    taxonomy_skeleton = {k: "mock" for k in (common_keys + v2_keys + v1_keys)}
     taxonomy_skeleton["isNew"] = is_new
 
     result = rb_tax_utils.format_taxonomy(taxonomy_skeleton)
     if is_new:
-        assert set(result) == set(common_keys + v2)
+        assert set(result) == set(common_keys + v2_keys)
     else:
-        assert set(result) == set(common_keys + v1)
+        assert set(result) == set(common_keys + v1_keys)
 
 
 def test_validate_attribute():
+    """Test for rb_tax_utils.validate_attribute"""
     attribute = {"name": "Attribute1", "attrType": "TypeA", "attrId": "ID1"}
     message = "Attribute1"
     # No exception should be raised
@@ -35,6 +43,7 @@ def test_validate_attribute():
 
 @pytest.mark.parametrize("missing", ["name", "attrType", "attrId"])
 def test_validate_attribute_missing_attr(missing):
+    """Test for rb_tax_utils.validate_attribute with missing attributes"""
     attribute = {"name": "Attribute1", "attrType": "TypeA", "attrId": "ID1"}
     message = "Attribute1"
     attribute.pop(missing, None)
@@ -44,6 +53,7 @@ def test_validate_attribute_missing_attr(missing):
 
 
 def test_validate_taxonomy():
+    """Test for rb_tax_utils.validate_taxonomy"""
     study_classify = [{"name": "Study1", "attrType": "TypeA", "attrId": "ID1"}]
     series_classify = [{"name": "Series1", "attrType": "TypeB", "attrId": "ID2"}]
     instance_classify = [{"name": "Instance1", "attrType": "TypeC", "attrId": "ID3"}]
@@ -62,6 +72,7 @@ def test_validate_taxonomy():
 
 
 def test_validate_taxonomy_empty():
+    """Test for rb_tax_utils.validate_taxonomy with empty args"""
     study_classify = []
     series_classify = []
     instance_classify = []
@@ -74,6 +85,7 @@ def test_validate_taxonomy_empty():
 
 @pytest.mark.parametrize("missing", ["category", "classId", "labelType"])
 def test_validate_taxonomy_missing_object_types_attr(missing):
+    """Test for rb_tax_utils.validate_taxonomy with missing object_type attributes"""
     study_classify = [{"name": "Study1", "attrType": "TypeA", "attrId": "ID1"}]
     series_classify = [{"name": "Series1", "attrType": "TypeB", "attrId": "ID2"}]
     instance_classify = [{"name": "Instance1", "attrType": "TypeC", "attrId": "ID3"}]
