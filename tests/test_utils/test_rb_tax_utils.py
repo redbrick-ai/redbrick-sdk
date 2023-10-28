@@ -4,6 +4,21 @@ import pytest
 from redbrick.utils import rb_tax_utils
 
 
+@pytest.mark.parametrize("is_new", [True, False])
+def test_format_taxonomy(is_new):
+    common_keys = ["orgId", "name", "createdAt", "archived", "isNew"]
+    v2 = ["taxId", "studyClassify", "seriesClassify", "instanceClassify", "objectTypes"]
+    v1 = ["version", "categories", "attributes", "taskCategories", "taskAttributes", "colorMap"]
+    taxonomy_skeleton = {k: "mock" for k in (common_keys + v2 + v1)}
+    taxonomy_skeleton["isNew"] = is_new
+
+    result = rb_tax_utils.format_taxonomy(taxonomy_skeleton)
+    if is_new:
+        assert set(result) == set(common_keys + v2)
+    else:
+        assert set(result) == set(common_keys + v1)
+
+
 def test_validate_attribute():
     attribute = {"name": "Attribute1", "attrType": "TypeA", "attrId": "ID1"}
     message = "Attribute1"
