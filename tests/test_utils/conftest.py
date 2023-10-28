@@ -10,6 +10,27 @@ import pytest
 import nibabel as nib
 
 
+@pytest.fixture(scope="function")
+def create_temporary_files(tmpdir):
+    """Fixture to create temporary files for testing"""
+    tmpdir_inner = tempfile.mkdtemp(dir=tmpdir)
+    file_paths = []
+    for i, base in enumerate([str(tmpdir), tmpdir_inner]):
+        file_path = os.path.join(base, f"labels_{i}.nii.gz")
+        with open(file_path, "wb") as f:
+            f.write(f"some random data: {i}".encode(encoding="utf-8"))
+        file_paths.append(file_path)
+
+    for fname in ("mask_off.png", "mask_off.txt", ".hidden.nii.gz"):
+        file_path = os.path.join(str(tmpdir), fname)
+        with open(file_path, "wb") as f:
+            f.write(b"some random data")
+        file_paths.append(file_path)
+
+    yield str(tmpdir), file_paths
+    shutil.rmtree(tmpdir_inner)
+
+
 @pytest.fixture
 def mock_nifti_data():
     """Get mock image data"""
