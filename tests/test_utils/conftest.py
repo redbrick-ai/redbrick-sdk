@@ -1,10 +1,16 @@
 import os
 import shutil
 import tempfile
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 import nibabel as nib
+
+
+@pytest.fixture
+def mock_rb_context():
+    return MagicMock()
 
 
 @pytest.fixture
