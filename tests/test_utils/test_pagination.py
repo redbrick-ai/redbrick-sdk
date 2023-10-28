@@ -6,9 +6,11 @@ import pytest
 from redbrick.utils import pagination
 
 
-def mock_data_retrieval(concurrency: int, cursor: Optional[str]):
+def mock_data_retrieval(
+    concurrency: int, cursor: Optional[str]
+):  # pylint: disable=unused-argument
     """Mock function to simulate the behavior of the actual data retrieval function"""
-    _data = [{'id': i} for i in range(5)]
+    _data = [{"id": i} for i in range(5)]
     return _data, cursor
 
 
@@ -30,7 +32,7 @@ def test_pagination_iterator_iteration():
     iterator = pagination.PaginationIterator(mock_data_retrieval)
     assert len(iterator) == 0
     item = next(iterator)
-    assert item == {'id': 0}
+    assert item == {"id": 0}
     assert len(iterator) == 5
 
 
@@ -42,13 +44,16 @@ def test_pagination_iterator_limit():
     assert len(items) == 2
     assert len(iterator) == 2
 
-    assert items[0] == {'id': 0}
-    assert items[1] == {'id': 1}
+    assert items[0] == {"id": 0}
+    assert items[1] == {"id": 1}
 
 
 def test_pagination_iterator_empty_data():
     """Check iterator with empty data"""
-    def mock_empty_data_retrieval(concurrency, cursor):
+
+    def mock_empty_data_retrieval(
+        concurrency, cursor
+    ):  # pylint: disable=unused-argument
         return [], None
 
     iterator = pagination.PaginationIterator(mock_empty_data_retrieval)
@@ -58,7 +63,10 @@ def test_pagination_iterator_empty_data():
 
 def test_pagination_iterator_custom_concurrency():
     """Check that `concurrency` gets to the passed function"""
-    def mock_empty_data_retrieval(concurrency, cursor):
+
+    def mock_empty_data_retrieval(
+        concurrency, cursor
+    ):  # pylint: disable=unused-argument
         return [concurrency for _ in range(5)], None
 
     iterator = pagination.PaginationIterator(mock_empty_data_retrieval, concurrency=4)
@@ -68,9 +76,12 @@ def test_pagination_iterator_custom_concurrency():
 
 def test_pagination_iterator_task_exception():
     """Check iterator propagates exceptions from passed function"""
-    def mock_data_retrieval_exception(concurrency, cursor):
+
+    def mock_data_retrieval_exception(
+        concurrency, cursor
+    ):  # pylint: disable=unused-argument
         if cursor is None:
-            return [{'id': 1}, {'id': 2}], 'cursor'
+            return [{"id": 1}, {"id": 2}], "cursor"
         raise Exception("An error occurred")
 
     iterator = pagination.PaginationIterator(mock_data_retrieval_exception)
@@ -88,7 +99,7 @@ def test_pagination_iterator_exception_data_exhausted():
 
 def test_pagination_iterator_multiple_iterations():
     """Check multiple iterations"""
-    iterator = pagination.PaginationIterator(mock_data_retrieval, concurrency=2)
+    iterator = pagination.PaginationIterator(mock_data_retrieval)
     assert len(iterator) == 0
 
     items = next(iterator)

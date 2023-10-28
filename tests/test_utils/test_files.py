@@ -3,9 +3,9 @@ import gzip
 import os
 from functools import reduce
 from operator import add
+from unittest.mock import patch, MagicMock
 
 import pytest
-from unittest.mock import patch, MagicMock
 
 from redbrick.utils import files
 
@@ -31,7 +31,8 @@ def test_find_files_recursive(create_temporary_files):
 
     # empty file type arg
     result = files.find_files_recursive(temp_dir, set(), multiple=True)
-    assert result == []
+    assert isinstance(result, list)
+    assert len(result) == 0
 
     # wildcard search
     result = files.find_files_recursive(temp_dir, {"*"})
@@ -42,14 +43,14 @@ def test_find_files_recursive(create_temporary_files):
 
 def test_uniquify_path(create_temporary_files):
     """Test files.uniquify_path function"""
-    temp_dir, file_paths = create_temporary_files
+    _, file_paths = create_temporary_files
     new_path = files.uniquify_path(file_paths[0])
     assert os.path.exists(new_path) is False
 
 
 def test_is_dicom_file(dicom_file_and_image):
     """Test files.is_dicom_file function"""
-    file_path, image_data = dicom_file_and_image
+    file_path, _ = dicom_file_and_image
     assert files.is_dicom_file(file_path) is True
 
 
@@ -63,15 +64,18 @@ async def test_upload_files(nifti_instance_files_png):
         mock_response.__aenter__.return_value.status = 200
         mock_response.__aenter__.return_value.headers = {}
         # Test uploading the file
-        file_path__url__ctype_tuples = [(x, "mock_url", "application/octet-stream") for x in nifti_instance_files_png]
+        file_path__url__ctype_tuples = [
+            (x, "mock_url", "application/octet-stream")
+            for x in nifti_instance_files_png
+        ]
         result = await files.upload_files(file_path__url__ctype_tuples)
 
         assert result == [True, True, True]
         assert mock_session.call_count == 3
 
         upload_dataset = set()
-        for idx, call in enumerate(mock_session.mock_calls):
-            headers = {'Content-Type': 'application/octet-stream'}
+        for call in mock_session.mock_calls:
+            headers = {"Content-Type": "application/octet-stream"}
             assert call[1][0] == "mock_url"
             assert call[2]["headers"] == headers
             upload_dataset.add(call[2]["data"])
@@ -85,7 +89,7 @@ async def test_upload_files(nifti_instance_files_png):
 
 
 @pytest.mark.asyncio
-async def test_upload_files(create_temporary_files):
+async def test_upload_files__uncompressed_file(create_temporary_files):
     """Test files.upload_files gzips uncompressed files before upload"""
     # Test downloading the file
     mock_response = MagicMock()
@@ -94,15 +98,21 @@ async def test_upload_files(create_temporary_files):
         mock_response.__aenter__.return_value.status = 200
         mock_response.__aenter__.return_value.headers = {}
         # Test uploading the file
-        file_path__url__ctype_tuples = [(x, "mock_url", "application/octet-stream") for x in create_temporary_files[1]]
+        file_path__url__ctype_tuples = [
+            (x, "mock_url", "application/octet-stream")
+            for x in create_temporary_files[1]
+        ]
         result = await files.upload_files(file_path__url__ctype_tuples)
 
         assert result == [True, True, True, True, True]
         assert mock_session.call_count == 5
 
         upload_dataset = set()
-        for idx, call in enumerate(mock_session.mock_calls):
-            headers = {'Content-Type': 'application/octet-stream', 'Content-Encoding': 'gzip'}
+        for call in mock_session.mock_calls:
+            headers = {
+                "Content-Type": "application/octet-stream",
+                "Content-Encoding": "gzip",
+            }
             assert call[1][0] == "mock_url"
             assert call[2]["headers"] == headers
             upload_dataset.add(gzip.decompress(call[2]["data"]))
@@ -133,4 +143,3 @@ async def test_download_files(tmpdir):
     assert os.path.isfile(result[0])
     with open(result[0], "rb") as file:
         assert gzip.decompress(file.read()) == mock_data
-

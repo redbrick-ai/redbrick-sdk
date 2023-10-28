@@ -17,14 +17,14 @@ def create_temporary_files(tmpdir):
     file_paths = []
     for i, base in enumerate([str(tmpdir), tmpdir_inner]):
         file_path = os.path.join(base, f"labels_{i}.nii.gz")
-        with open(file_path, "wb") as f:
-            f.write(f"some random data: {i}".encode(encoding="utf-8"))
+        with open(file_path, "wb") as file:
+            file.write(f"some random data: {i}".encode(encoding="utf-8"))
         file_paths.append(file_path)
 
     for fname in ("mask_off.png", "mask_off.txt", ".hidden.nii.gz"):
         file_path = os.path.join(str(tmpdir), fname)
-        with open(file_path, "wb") as f:
-            f.write(b"some random data")
+        with open(file_path, "wb") as file:
+            file.write(b"some random data")
         file_paths.append(file_path)
 
     yield str(tmpdir), file_paths
