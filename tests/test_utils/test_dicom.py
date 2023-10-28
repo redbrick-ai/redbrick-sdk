@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
 import numpy as np
 import nibabel as nib
@@ -406,3 +406,24 @@ async def test_convert_nii_to_rtstruct(dicom_file_and_image, nifti_instance_file
     assert isinstance(result, RTStruct)
     _data = result.series_data[0].pixel_array
     assert (_data.astype(np.uint16) == image_data).all()
+
+
+@pytest.mark.asyncio
+async def test_merge_rtstructs(dicom_file_and_image_tuples, nifti_instance_files_png):
+    # Mock RTStruct objects and data for testing
+    dicom_file1, image1 = dicom_file_and_image_tuples[0]
+    dicom_series1_path = os.path.dirname(dicom_file1)
+
+    dicom_file2, image2 = dicom_file_and_image_tuples[1]
+    dicom_series2_path = os.path.dirname(dicom_file2)
+    categories = [
+        {"category": "Category1", "classId": 1, "color": [255, 0, 0], "parents": []},
+        {"category": "Category2", "classId": 2, "color": [180, 137, 80], "parents": []},
+    ]
+    segment_map = {"1": {"category": "Category1"}, "2": {"category": "Category2"}}
+    rtstruct1 = await dicom.convert_nii_to_rtstruct([], dicom_series1_path, categories, segment_map)
+    rtstruct2 = await dicom.convert_nii_to_rtstruct([], dicom_series2_path, categories, segment_map)
+
+    merged_rtstruct = dicom.merge_rtstructs(rtstruct1, rtstruct2)
+    assert isinstance(merged_rtstruct, RTStruct)
+
