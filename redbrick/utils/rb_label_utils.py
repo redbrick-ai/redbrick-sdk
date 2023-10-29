@@ -2,6 +2,7 @@
 import os
 from typing import Any, Dict, List, Optional
 import json
+from copy import deepcopy
 
 
 def clean_rb_label(label: Dict) -> Dict:
@@ -583,12 +584,12 @@ def dicom_rb_format(
             item_index_map[item_index] = volume_index
             series["items"].append(task["items"][item_index])
 
+    output["series"] = deepcopy(volume_series)
     if no_consensus:
         if task.get("consensusTasks"):
             consensus_task = task["consensusTasks"][0]
             task["labels"] = consensus_task.get("labels")
             task["labelsMap"] = consensus_task.get("labelsMap")
-        output["series"] = volume_series
         dicom_rb_series(item_index_map, task, output, taxonomy)
     else:
         output["consensus"] = True
@@ -609,17 +610,11 @@ def dicom_rb_format(
             output["superTruth"]["series"] = [{**series} for series in volume_series]
             dicom_rb_series(item_index_map, task, output["superTruth"], taxonomy)
 
-        has_no_series = "consensusScore" not in output and "superTruth" not in output
         output["consensusTasks"] = [
-            {}
-            for _ in range(
-                len(task.get("consensusTasks", []) or []) or (1 if has_no_series else 0)
-            )
+            {} for _ in range(len(task.get("consensusTasks", []) or []))
         ]
         for consensus_idx, output_consensus_task in enumerate(output["consensusTasks"]):
-            consensus_task = (
-                task if has_no_series else task["consensusTasks"][consensus_idx]
-            )
+            consensus_task = task["consensusTasks"][consensus_idx]
             if consensus_task.get("status"):
                 output_consensus_task["status"] = consensus_task["status"]
 
@@ -645,7 +640,7 @@ def dicom_rb_format(
                     elif consensus_score.get("email"):
                         score["secondaryUserEmail"] = consensus_score["email"]
 
-                    if consensus_score.get("score"):
+                    if consensus_score.get("score") is not None:
                         score["score"] = consensus_score["score"]
                     output_consensus_task["scores"].append(score)
 
