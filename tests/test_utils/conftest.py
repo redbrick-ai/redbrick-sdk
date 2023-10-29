@@ -8,6 +8,7 @@ import pydicom
 import pydicom._storage_sopclass_uids  # pylint: disable=protected-access
 import pytest
 import nibabel as nib
+from rt_utils import RTStructBuilder  # type: ignore
 
 
 @pytest.fixture(scope="function")
@@ -254,9 +255,25 @@ def dicom_file_and_image_tuples(tmpdir):
 
         pydicom.dataset.validate_file_meta(ds.file_meta, enforce_standard=True)
         ds.PixelData = image.tobytes()
+        ds.ReferencedFrameOfReferenceSequence = [pydicom.Dataset()]
 
         # save
         fn = os.path.join(str(tmpdir), f"image{i}.dcm")
         ds.save_as(fn, write_like_original=False)
         tuples.append((fn, image))
     return tuples
+
+
+@pytest.fixture
+def create_rtstructs(
+    dicom_file_and_image_tuples,
+):  # pylint: disable=redefined-outer-name
+    """Create RTStructs for test"""
+    structs = []
+    for idx, (file, _) in enumerate(dicom_file_and_image_tuples):
+        dir_ = os.path.dirname(file)
+        fname = os.path.join(dir_, f"test-rt-struct-{idx}.dcm")
+        rtstruct = RTStructBuilder.create_new(dicom_series_path=dir_)
+        rtstruct.save(fname)
+        structs.append(rtstruct)
+    return structs

@@ -6,7 +6,7 @@ import numpy as np
 import nibabel as nib
 import pytest
 from nibabel.filebasedimages import ImageFileError
-from rt_utils import RTStruct  # type: ignore
+from rt_utils import RTStruct, RTStructBuilder  # type: ignore
 
 from redbrick.utils import dicom
 
@@ -494,26 +494,41 @@ async def test_convert_nii_to_rtstruct(dicom_file_and_image, nifti_instance_file
     assert (_data.astype(np.uint16) == image_data).all()
 
 
-@pytest.mark.asyncio
-async def test_merge_rtstructs(dicom_file_and_image_tuples):
-    """Test dicom.merge_rtstructs"""
-    # Mock RTStruct objects and data for testing
-    dicom_file1, _ = dicom_file_and_image_tuples[0]
-    dicom_series1_path = os.path.dirname(dicom_file1)
+def test_merge_rtstructs(create_rtstructs):
+    """Test for `dicom.merge_rtstructs`"""
+    rtstruct1, rtstruct2 = create_rtstructs
+    # Add ROIs to the RTStructs
+    mask1 = np.zeros((512, 512, 2), dtype=bool)
+    mask1[2:8, 3:7, 1] = True
+    rtstruct1.add_roi(mask1, name="ROI1")
 
-    dicom_file2, _ = dicom_file_and_image_tuples[1]
-    dicom_series2_path = os.path.dirname(dicom_file2)
-    categories = [
-        {"category": "Category1", "classId": 1, "color": [255, 0, 0], "parents": []},
-        {"category": "Category2", "classId": 2, "color": [180, 137, 80], "parents": []},
-    ]
-    segment_map = {"1": {"category": "Category1"}, "2": {"category": "Category2"}}
-    rtstruct1 = await dicom.convert_nii_to_rtstruct(
-        [], dicom_series1_path, categories, segment_map
-    )
-    rtstruct2 = await dicom.convert_nii_to_rtstruct(
-        [], dicom_series2_path, categories, segment_map
-    )
+    mask2 = np.zeros((512, 512, 2), dtype=bool)
+    mask2[4:10, 4:8, 1] = True
+    rtstruct1.add_roi(mask2, name="ROI2")
 
+    mask2_1 = np.zeros((512, 512, 2), dtype=bool)
+    mask2_1[4:9, 1:8, 1] = True
+    rtstruct1.add_roi(mask2_1, name="ROI2")
+
+    # Add ROIs to the second RTStruct
+    mask3 = np.zeros((512, 512, 2), dtype=bool)
+    mask3[1:7, 2:6, 1] = True
+    rtstruct2.add_roi(mask3, name="ROI3")
+
+    mask4 = np.zeros((512, 512, 2), dtype=bool)
+    mask4[6:10, 5:9, 1] = True
+    rtstruct2.add_roi(mask4, name="ROI4")
+
+    # Merge the RTStructs
     merged_rtstruct = dicom.merge_rtstructs(rtstruct1, rtstruct2)
-    assert isinstance(merged_rtstruct, RTStruct)
+
+    # Check if the merged RTStruct contains all ROIs
+    roi_names = merged_rtstruct.get_roi_names()
+    assert len(roi_names) == 5
+    assert "ROI1" in roi_names
+    assert "ROI2" in roi_names
+    assert "ROI3" in roi_names
+    assert "ROI4" in roi_names
+
+    # Check if ROI names with duplicates were renamed
+    assert "ROI2_2" in roi_names
