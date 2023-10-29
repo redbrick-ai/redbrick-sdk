@@ -317,6 +317,22 @@ def test_dicom_rb_format():
         "items": ["mock1", "mock2", "mock3"],
         "seriesInfo": [{"itemsIndices": [0, 1, 2]}],
         "consensusScore": 80,
+        "consensusTasks": [
+            {
+                "assignee": {},
+                "status": "mock",
+                "email": "mock@email.com",
+                "userId": "mock",
+                "updatedAt": "2023-10-20T14:33:27.664115+00:00",
+                "scores": [
+                    {
+                        "userId": "mock",
+                        "email": "mock@email.com",
+                        "score": 100,
+                    }
+                ],
+            }
+        ],
     }
     taxonomy = {"isNew": True}
 
