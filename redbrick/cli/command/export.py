@@ -5,7 +5,7 @@ import json
 import asyncio
 from datetime import datetime, timezone
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import Dict, Set, Optional
+from typing import Dict, Set, Optional, cast
 
 import shtab
 import tqdm  # type: ignore
@@ -14,7 +14,7 @@ from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
 from redbrick.common.constants import MAX_FILE_BATCH_SIZE
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.utils.logging import logger
+from redbrick.utils.logging import assert_validation, logger
 
 
 class CLIExportController(CLIExportInterface):
@@ -120,8 +120,8 @@ class CLIExportController(CLIExportInterface):
         """Handle export command."""
         self.args = args
         project = CLIProject.from_path()
-        assert project, "Not a valid project"
-        self.project = project
+        assert_validation(project, "Not a valid project")
+        self.project = cast(CLIProject, project)
 
         self.handle_export()
 

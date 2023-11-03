@@ -13,7 +13,7 @@ from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_exponential
 
 from redbrick import __version__ as sdk_version  # pylint: disable=cyclic-import
-from redbrick.utils.logging import log_error, logger
+from redbrick.utils.logging import assert_validation, log_error, logger
 from redbrick.common.constants import DEFAULT_URL, MAX_RETRY_ATTEMPTS, PEERLESS_ERRORS
 
 
@@ -35,9 +35,10 @@ class RBClient:
         self.session = requests.Session()
 
         self.api_key = api_key
-        assert (
-            len(self.api_key) == 43
-        ), "Invalid Api Key length, make sure you've copied it correctly"
+        assert_validation(
+            len(self.api_key) == 43,
+            "Invalid Api Key length, make sure you've copied it correctly",
+        )
 
     def __del__(self) -> None:
         """Garbage collect and close session."""

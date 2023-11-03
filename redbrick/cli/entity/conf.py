@@ -3,6 +3,8 @@ import os
 from configparser import ConfigParser
 from typing import Dict, Optional
 
+from redbrick.utils.logging import assert_validation
+
 
 class CLIConfiguration:
     """CLIConfiguration entity."""
@@ -55,6 +57,8 @@ class CLIConfiguration:
 
     def save(self) -> None:
         """Save configuration into file."""
-        assert os.path.isdir(os.path.dirname(self._conf_file)), "Not a valid project"
+        assert_validation(
+            os.path.isdir(os.path.dirname(self._conf_file)), "Not a valid project"
+        )
         with open(self._conf_file, "w", encoding="utf-8") as conf:
             self._conf.write(conf)

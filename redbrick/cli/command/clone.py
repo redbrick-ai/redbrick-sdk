@@ -2,6 +2,7 @@
 import os
 import re
 from argparse import ArgumentParser, Namespace
+from typing import cast
 
 from rich.console import Console
 
@@ -10,6 +11,7 @@ from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLICloneInterface
 from redbrick.organization import RBOrganization
 from redbrick.project import RBProject
+from redbrick.utils.logging import assert_validation
 
 
 class CLICloneController(CLICloneInterface):
@@ -34,12 +36,14 @@ class CLICloneController(CLICloneInterface):
 
         if self.args.path is not None:
             path = os.path.realpath(self.args.path)
-            assert not os.path.exists(path), f"{path} already exists"
+            assert_validation(not os.path.exists(path), f"{path} already exists")
 
         project = CLIProject.from_path(
             path="." if self.args.path is None else self.args.path, required=False
         )
-        assert project is None, f"Already in a project {project.path}"
+        assert_validation(
+            project is None, f"Already in a project {cast(CLIProject, project).path}"
+        )
 
         self.handle_clone()
 
@@ -47,7 +51,7 @@ class CLICloneController(CLICloneInterface):
         """Handle empty sub command."""
         # pylint: disable=too-many-locals
         temp = CLIProject(required=False)
-        assert temp.creds.exists, "Credentials missing"
+        assert_validation(temp.creds.exists, "Credentials missing")
 
         console = Console()
         with console.status("Fetching organization") as status:

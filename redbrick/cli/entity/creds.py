@@ -4,6 +4,7 @@ from typing import Dict, List
 from configparser import ConfigParser
 
 from redbrick.common.context import RBContext
+from redbrick.utils.logging import assert_validation
 
 
 class CLICredentials:
@@ -44,13 +45,14 @@ class CLICredentials:
     @property
     def selected_profile(self) -> str:
         """Get name of default selected profile."""
-        assert self.exists, "Credentials file does not exist"
+        assert_validation(self.exists, "Credentials file does not exist")
         profile = os.environ.get(self.ENV_VAR)
         if not profile:
-            assert (
+            assert_validation(
                 self.DEFAULT_PROFILE in self._creds
-                and "profile" in self._creds[self.DEFAULT_PROFILE]
-            ), f"{self.DEFAULT_PROFILE} profile / {self.ENV_VAR} env not present"
+                and "profile" in self._creds[self.DEFAULT_PROFILE],
+                f"{self.DEFAULT_PROFILE} profile / {self.ENV_VAR} env not present",
+            )
             profile = self._creds[self.DEFAULT_PROFILE]["profile"]
 
         return profile
@@ -70,19 +72,22 @@ class CLICredentials:
 
     def get_profile(self, profile_name: str) -> Dict[str, str]:
         """Get profile object from profile name."""
-        assert (
+        assert_validation(
             profile_name in self._creds
             and "key" in self._creds[profile_name]
             and "org" in self._creds[profile_name]
-            and "url" in self._creds[profile_name]
-        ), f"Profile not present / invalid profile in credentials : {profile_name}"
+            and "url" in self._creds[profile_name],
+            f"Profile not present / invalid profile in credentials : {profile_name}",
+        )
         return dict(self._creds[profile_name].items())
 
     def add_profile(
         self, profile_name: str, api_key: str, org_id: str, url: str
     ) -> None:
         """Add profile to credentials."""
-        assert profile_name not in self.profile_names, "Profile already exists"
+        assert_validation(
+            profile_name not in self.profile_names, "Profile already exists"
+        )
         self._creds[profile_name] = {
             "key": api_key.strip(),
             "org": org_id.strip().lower(),
@@ -91,12 +96,12 @@ class CLICredentials:
 
     def remove_profile(self, profile_name: str) -> None:
         """Remove profile from credentials."""
-        assert profile_name in self.profile_names, "Profile does not exist"
+        assert_validation(profile_name in self.profile_names, "Profile does not exist")
         self._creds.pop(profile_name)
 
     def set_default(self, profile_name: str) -> None:
         """Set default profile in credentials."""
-        assert profile_name in self.profile_names, "Profile does not exist"
+        assert_validation(profile_name in self.profile_names, "Profile does not exist")
         self._creds[self.DEFAULT_PROFILE] = {"profile": profile_name}
 
     def save(self) -> None:
@@ -123,5 +128,5 @@ class CLICredentials:
 
     def remove(self) -> None:
         """Remove credentials."""
-        assert self.exists, "Credentials file does not exist"
+        assert_validation(self.exists, "Credentials file does not exist")
         os.remove(self._creds_file)

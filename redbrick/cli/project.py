@@ -1,6 +1,6 @@
 """Main CLI project."""
 import os
-from typing import Optional
+from typing import Optional, cast
 
 from rich.console import Console
 
@@ -10,7 +10,7 @@ from redbrick.organization import RBOrganization
 from redbrick.project import RBProject
 from redbrick.cli.entity import CLICache, CLIConfiguration, CLICredentials
 from redbrick.utils.common_utils import config_path
-from redbrick.utils.logging import logger
+from redbrick.utils.logging import assert_validation, logger
 
 
 class CLIProject:
@@ -29,7 +29,9 @@ class CLIProject:
     def __init__(self, path: str = ".", required: bool = True) -> None:
         """Initialize CLIProject."""
         self.path = os.path.realpath(path)
-        assert os.path.isdir(self.path), f"Not a valid directory {self.path}"
+        assert_validation(
+            os.path.isdir(self.path), f"Not a valid directory {self.path}"
+        )
 
         self._rb_dir = os.path.join(self.path, ".redbrick")
         self._creds_file = os.path.join(config_path(), "credentials")
@@ -38,16 +40,19 @@ class CLIProject:
         self.cache = CLICache(os.path.join(self._rb_dir, "cache"), self.conf)
 
         if required:
-            assert (
-                self.creds.exists
-            ), "No credentials found, please set it up with `redbrick config`"
-            assert self.conf.exists, (
-                "No project found in {self.path}\n"
-                + "Please create one using `redbrick init` / clone existing using `redbrick clone`"
+            assert_validation(
+                self.creds.exists,
+                "No credentials found, please set it up with `redbrick config`",
             )
-            assert (
-                self.org_id == self.creds.org_id
-            ), "Project configuration does not match with current profile"
+            assert_validation(
+                self.conf.exists,
+                "No project found in {self.path}\n"
+                + "Please create one using `redbrick init` / clone existing using `redbrick clone`",
+            )
+            assert_validation(
+                self.org_id == self.creds.org_id,
+                "Project configuration does not match with current profile",
+            )
 
     @classmethod
     def from_path(
@@ -79,15 +84,15 @@ class CLIProject:
     def org_id(self) -> str:
         """Get org_id of current project."""
         value = self.conf.get_option("org", "id")
-        assert value, "Invalid project configuration"
-        return value.strip().lower()
+        assert_validation(value, "Invalid project configuration")
+        return cast(str, value).strip().lower()
 
     @property
     def project_id(self) -> str:
         """Get project_id of current project."""
         value = self.conf.get_option("project", "id")
-        assert value, "Invalid project configuration"
-        return value.strip().lower()
+        assert_validation(value, "Invalid project configuration")
+        return cast(str, value).strip().lower()
 
     @property
     def org(self) -> RBOrganization:
@@ -139,9 +144,9 @@ class CLIProject:
 
     def initialize_project(self, org: RBOrganization, project: RBProject) -> None:
         """Initialize local project."""
-        assert not os.path.isdir(
-            self._rb_dir
-        ), f"Already a RedBrick project {self.path}"
+        assert_validation(
+            not os.path.isdir(self._rb_dir), f"Already a RedBrick project {self.path}"
+        )
 
         os.makedirs(self._rb_dir)
         self.conf.save()

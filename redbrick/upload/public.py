@@ -18,7 +18,7 @@ from redbrick.common.enums import ImportTypes, StorageMethod
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.upload import process_segmentation_upload, validate_json
-from redbrick.utils.logging import log_error, logger
+from redbrick.utils.logging import assert_validation, log_error, logger
 from redbrick.utils.files import get_file_type, is_dicom_file, upload_files
 
 
@@ -112,38 +112,48 @@ class Upload:
 
         try:
             # Basic structural validations, rest handled by API
-            assert (
-                isinstance(point, dict) and point
-            ), "Task object must be a non-empty dictionary"
-            assert (
-                "response" not in point and "error" not in point
-            ), "Task object must not contain `response` or `error`"
-            assert (
-                "name" in point and isinstance(point["name"], str) and point["name"]
-            ), "Task object must contain a valid `name`"
-            assert (
+            assert_validation(
+                isinstance(point, dict) and point,
+                "Task object must be a non-empty dictionary",
+            )
+            assert_validation(
+                "response" not in point and "error" not in point,
+                "Task object must not contain `response` or `error`",
+            )
+            assert_validation(
+                "name" in point and isinstance(point["name"], str) and point["name"],
+                "Task object must contain a valid `name`",
+            )
+            assert_validation(
                 "items" in point
                 and isinstance(point["items"], list)
                 and point["items"]
                 and all(
                     map(lambda item: isinstance(item, str) and item, point["items"])
-                )
-            ), "`items` must be a list of urls (one for image and multiple for videoframes)"
-            assert "labels" not in point or (
-                isinstance(point["labels"], list)
-                and all(
-                    map(
-                        lambda label: isinstance(label, dict) and label, point["labels"]
+                ),
+                "`items` must be a list of urls (one for image and multiple for videoframes)",
+            )
+            assert_validation(
+                "labels" not in point
+                or (
+                    isinstance(point["labels"], list)
+                    and all(
+                        map(
+                            lambda label: isinstance(label, dict) and label,
+                            point["labels"],
+                        )
                     )
-                )
-            ), "`labels` must be a list of label objects"
+                ),
+                "`labels` must be a list of label objects",
+            )
 
             if update_items:
-                assert (
+                assert_validation(
                     "taskId" in point
                     and isinstance(point["taskId"], str)
-                    and point["taskId"]
-                ), "Task object must contain a valid `taskId`"
+                    and point["taskId"],
+                    "Task object must contain a valid `taskId`",
+                )
                 response = await self.context.upload.update_items_async(
                     session,
                     self.org_id,
@@ -180,8 +190,9 @@ class Upload:
                     if point.get("seriesInfo")
                     else None,
                 )
-                assert response.get("ok"), response.get(
-                    "message", "Failed to update items"
+                assert_validation(
+                    response.get("ok"),
+                    response.get("message", "Failed to update items"),
                 )
             else:
                 response = await self.context.upload.create_datapoint_async(
@@ -228,7 +239,7 @@ class Upload:
                     point.get("preAssign"),
                     point.get("priority"),
                 )
-                assert response.get("taskId"), "Failed to create task"
+                assert_validation(response.get("taskId"), "Failed to create task")
 
             point_success = deepcopy(point)
             point_success["response"] = response

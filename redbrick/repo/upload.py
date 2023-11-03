@@ -170,8 +170,8 @@ class UploadRepo(UploadControllerInterface):
             "fileType": file_type,
         }
         result = self.client.execute_query(query_string, query_variables)
-        assert isinstance(result["itemsUploadPresign"]["items"], list)
-        return result["itemsUploadPresign"]["items"]
+        presigned: List[Dict] = result["itemsUploadPresign"]["items"]
+        return presigned
 
     async def delete_tasks(
         self,
