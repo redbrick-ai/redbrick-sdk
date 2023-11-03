@@ -3,10 +3,11 @@ import os
 import json
 from datetime import datetime
 from argparse import ArgumentError, ArgumentParser, Namespace
+from typing import cast
 
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIReportInterface
-from redbrick.utils.logging import logger
+from redbrick.utils.logging import assert_validation, logger
 
 
 class CLIIReportController(CLIReportInterface):
@@ -32,8 +33,8 @@ class CLIIReportController(CLIReportInterface):
         """Handle report command."""
         self.args = args
         project = CLIProject.from_path()
-        assert project, "Not a valid project"
-        self.project = project
+        assert_validation(project, "Not a valid project")
+        self.project = cast(CLIProject, project)
 
         self.handle_report()
 

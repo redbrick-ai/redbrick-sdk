@@ -4,13 +4,13 @@ import re
 import json
 import asyncio
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional, Union, cast
 
 from redbrick.cli.input.select import CLIInputSelect
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIUploadInterface
 from redbrick.common.enums import StorageMethod, ImportTypes
-from redbrick.utils.logging import logger
+from redbrick.utils.logging import assert_validation, logger
 from redbrick.utils.files import find_files_recursive
 
 
@@ -97,8 +97,8 @@ but may increase the upload time.""",
         """Handle upload command."""
         self.args = args
         project = CLIProject.from_path()
-        assert project, "Not a valid project"
-        self.project = project
+        assert_validation(project, "Not a valid project")
+        self.project = cast(CLIProject, project)
 
         self.handle_upload()
 
@@ -184,9 +184,10 @@ but may increase the upload time.""",
         if self.args.segment_map:
             with open(self.args.segment_map, "r", encoding="utf-8") as file_:
                 segmentation_mapping = json.load(file_)
-                assert isinstance(
-                    segmentation_mapping, dict
-                ), "Segmentation mapping is invalid"
+                assert_validation(
+                    isinstance(segmentation_mapping, dict),
+                    "Segmentation mapping is invalid",
+                )
 
         points: List[Dict] = []
         uploading = set()

@@ -9,6 +9,7 @@ from redbrick.cli.input import CLIInputNumber, CLIInputSelect, CLIInputText
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIInitInterface
 from redbrick.organization import RBOrganization
+from redbrick.utils.logging import assert_validation
 
 
 class CLIInitController(CLIInitInterface):
@@ -34,7 +35,7 @@ class CLIInitController(CLIInitInterface):
         """Handle init command."""
         self.args = args
         project = CLIProject.from_path(path=self.args.path, required=False)
-        assert project is None, f"Already a RedBrick project {project.path}"
+        assert_validation(project is None, "Already inside a project")
 
         path = os.path.realpath(self.args.path)
         if os.path.exists(path):
@@ -51,7 +52,7 @@ class CLIInitController(CLIInitInterface):
 
     def handle_init(self) -> None:
         """Handle empty sub command."""
-        assert self.project.creds.exists, "Credentials missing"
+        assert_validation(self.project.creds.exists, "Credentials missing")
 
         console = Console()
         with console.status("Fetching organization") as status:

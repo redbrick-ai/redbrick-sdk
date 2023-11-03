@@ -20,6 +20,7 @@ from redbrick.cli.cli_base import CLIConfigInterface
 from redbrick.common.constants import DEFAULT_URL
 from redbrick.common.context import RBContext
 from redbrick.organization import RBOrganization
+from redbrick.utils.logging import assert_validation
 
 
 class CLIConfigController(CLIConfigInterface):
@@ -128,7 +129,7 @@ class CLIConfigController(CLIConfigInterface):
 
     def handle_list(self) -> None:
         """Handle list sub command."""
-        assert self.project.creds.exists, "Credentials file does not exist"
+        assert_validation(self.project.creds.exists, "Credentials file does not exist")
         default_profile: str = self.project.creds.selected_profile
         profiles: List[str] = self.project.creds.profile_names
         debug_mode = bool(os.environ.get("REDBRICK_SDK_DEBUG"))
@@ -171,7 +172,7 @@ class CLIConfigController(CLIConfigInterface):
 
     def handle_set(self) -> None:
         """Handle set sub command."""
-        assert self.project.creds.exists, "Credentials file does not exist"
+        assert_validation(self.project.creds.exists, "Credentials file does not exist")
         profile = CLIInputProfile(
             self.args.profile, self.project.creds.profile_names
         ).get()
@@ -195,7 +196,7 @@ class CLIConfigController(CLIConfigInterface):
 
     def handle_remove(self) -> None:
         """Handle remove sub command."""
-        assert self.project.creds.exists, "Credentials file does not exist"
+        assert_validation(self.project.creds.exists, "Credentials file does not exist")
         profile = CLIInputProfile(
             self.args.profile, self.project.creds.profile_names
         ).get()

@@ -1,6 +1,6 @@
 """CLI info command."""
 from argparse import ArgumentParser, Namespace
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 from rich.console import Console
 from rich.table import Table
@@ -11,7 +11,7 @@ from redbrick.cli.input.text import CLIInputText
 from redbrick.cli.input.uuid import CLIInputUUID
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIInfoInterface
-from redbrick.utils.logging import logger
+from redbrick.utils.logging import assert_validation, logger
 
 
 class CLIInfoController(CLIInfoInterface):
@@ -42,8 +42,8 @@ class CLIInfoController(CLIInfoInterface):
         """Handle info command."""
         self.args = args
         project = CLIProject.from_path(path=self.args.path)
-        assert project, "Not a valid project"
-        self.project = project
+        assert_validation(project, "Not a valid project")
+        self.project = cast(CLIProject, project)
 
         if self.args.get:
             self.handle_get()

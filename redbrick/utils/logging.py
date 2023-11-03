@@ -1,17 +1,12 @@
 """Logging functions."""
 import os
-from typing import Union
+from typing import Union, Any
 import logging
 
 from rich.logging import RichHandler
-from rich import pretty, traceback
 
 
 debug_mode = bool(os.environ.get("REDBRICK_SDK_DEBUG"))
-pretty.install(overflow="fold")
-traceback.install(
-    word_wrap=True, show_locals=debug_mode, max_frames=10 if debug_mode else 5
-)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,6 +18,8 @@ logging.basicConfig(
             show_path=debug_mode,
             enable_link_path=False,
             markup=True,
+            rich_tracebacks=True,
+            tracebacks_show_locals=debug_mode,
         )
     ],
 )
@@ -31,10 +28,16 @@ logger = logging.getLogger("redbrick")
 logger.setLevel(logging.DEBUG if debug_mode else logging.INFO)
 
 
-def log_error(text: Union[str, Exception]) -> None:
+def log_error(error: Union[str, Exception], raise_error: bool = False) -> None:
     """Log errors."""
-    if debug_mode:
-        if isinstance(text, str):
-            raise ValueError(text)
-        raise ValueError(str(text)) from text
-    logger.error(text)
+    if isinstance(error, str):
+        error = Exception(error)
+    logger.error(error, exc_info=error)
+    if raise_error:
+        raise error
+
+
+def assert_validation(condition: Any, message: str) -> None:
+    """Implement custom validation assertion."""
+    if not bool(condition):
+        log_error(message, True)

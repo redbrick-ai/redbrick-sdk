@@ -28,7 +28,7 @@ from redbrick.utils.common_utils import config_migration
 
 from .version_check import version_check
 
-__version__ = "2.13.17"
+__version__ = "2.13.19"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -48,7 +48,7 @@ try:
     if asyncio._get_running_loop() is None:  # pylint: disable=protected-access
         raise RuntimeError
     nest_asyncio.apply()
-    logger.info(
+    logger.warning(
         "Applying nest-asyncio to a running event loop, this likely means you're in a jupyter"
         + " notebook and you can safely ignore this."
     )
