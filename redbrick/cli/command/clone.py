@@ -2,7 +2,6 @@
 import os
 import re
 from argparse import ArgumentParser, Namespace
-from typing import cast
 
 from rich.console import Console
 
@@ -41,9 +40,7 @@ class CLICloneController(CLICloneInterface):
         project = CLIProject.from_path(
             path="." if self.args.path is None else self.args.path, required=False
         )
-        assert_validation(
-            project is None, f"Already in a project {cast(CLIProject, project).path}"
-        )
+        assert_validation(project is None, "Already inside a project")
 
         self.handle_clone()
 

@@ -1,7 +1,7 @@
 """CLI init command."""
 import os
 from argparse import ArgumentParser, Namespace
-from typing import List, cast
+from typing import List
 
 from rich.console import Console
 
@@ -35,10 +35,7 @@ class CLIInitController(CLIInitInterface):
         """Handle init command."""
         self.args = args
         project = CLIProject.from_path(path=self.args.path, required=False)
-        assert_validation(
-            project is None,
-            f"Already a RedBrick project {cast(CLIProject, project).path}",
-        )
+        assert_validation(project is None, "Already inside a project")
 
         path = os.path.realpath(self.args.path)
         if os.path.exists(path):

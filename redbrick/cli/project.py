@@ -46,7 +46,7 @@ class CLIProject:
             )
             assert_validation(
                 self.conf.exists,
-                "No project found in {self.path}\n"
+                f"No project found in `{self.path}`\n"
                 + "Please create one using `redbrick init` / clone existing using `redbrick clone`",
             )
             assert_validation(
