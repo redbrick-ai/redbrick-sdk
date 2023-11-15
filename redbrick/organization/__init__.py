@@ -42,8 +42,8 @@ class RBOrganization:
             return [tax["name"] for tax in taxonomies]
         return list(map(format_taxonomy, taxonomies))
 
-    def _all_projects_raw(self) -> List[Dict]:
-        """Get and filter entries from server."""
+    def projects_raw(self) -> List[Dict]:
+        """Get a list of active projects as raw objects in the organization."""
         projects = self.context.project.get_projects(self._org_id)
         projects = list(filter(lambda x: x["status"] == "CREATION_SUCCESS", projects))
 
@@ -51,7 +51,7 @@ class RBOrganization:
 
     def projects(self) -> List[RBProject]:
         """Get a list of active projects in the organization."""
-        projects = self._all_projects_raw()
+        projects = self.projects_raw()
         return [
             RBProject(self.context, self._org_id, proj["projectId"])
             for proj in tqdm(projects)
@@ -153,7 +153,7 @@ class RBOrganization:
 
         if exists_okay:
             logger.info("exists_okay=True... checking for project with same name")
-            all_projects = self._all_projects_raw()
+            all_projects = self.projects_raw()
             same_name = list(filter(lambda x: x["name"] == name, all_projects))
             if same_name:
                 temp = RBProject(self.context, self.org_id, same_name[0]["projectId"])
@@ -187,6 +187,25 @@ class RBOrganization:
             ) from error
 
         return RBProject(self.context, self.org_id, project_data["projectId"])
+
+    def get_project(
+        self, project_id: Optional[str] = None, name: Optional[str] = None
+    ) -> RBProject:
+        """Get project by id/name."""
+        projects = self.projects_raw()
+        if project_id:
+            projects = [
+                project for project in projects if project["projectId"] == project_id
+            ]
+        elif name:
+            projects = [project for project in projects if project["name"] == name]
+        else:
+            raise Exception("Either project_id or name is required")
+
+        if not projects:
+            raise Exception("No project found")
+
+        return RBProject(self.context, self._org_id, projects[0]["projectId"])
 
     def labeling_time(
         self, start_date: datetime, end_date: datetime, concurrency: int = 50

@@ -3,8 +3,6 @@ from typing import Optional, List, Dict, Sequence, Tuple
 from datetime import datetime
 from dateutil import parser  # type: ignore
 
-import aiohttp
-
 from redbrick.common.export import ExportControllerInterface, TaskFilterParams
 from redbrick.common.client import RBClient
 from redbrick.repo.shards import datapoint_shard, router_task_shard
@@ -125,35 +123,6 @@ class ExportRepo(ExportControllerInterface):
             tasks_paged.get("cursor"),
             parser.parse(new_cache_time) if new_cache_time else None,
         )
-
-    async def get_labels(
-        self, session: aiohttp.ClientSession, org_id: str, project_id: str, dp_id: str
-    ) -> Dict:
-        """Get input labels."""
-        query = """
-        query dataPointSDK(
-            $orgId: UUID!
-            $dpId: UUID!
-            $name: String!
-        ) {
-            dataPoint(orgId: $orgId, dpId: $dpId) {
-                labelData(customGroupName: $name) {
-                    dpId
-                    labelsData
-                }
-            }
-        }
-        """
-
-        variables = {
-            "orgId": org_id,
-            "dpId": dp_id,
-            "name": f"{project_id}-input",
-        }
-
-        response = await self.client.execute_query_async(session, query, variables)
-        label_data: Dict = response.get("dataPoint", {}).get("labelData", {})
-        return label_data
 
     def task_search(
         self,
