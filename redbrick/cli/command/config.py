@@ -17,6 +17,7 @@ from redbrick.cli.input import (
 )
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIConfigInterface
+from redbrick.common.constants import DEFAULT_URL
 from redbrick.common.context import RBContext
 from redbrick.organization import RBOrganization
 from redbrick.utils.logging import assert_validation
@@ -34,7 +35,7 @@ class CLIConfigController(CLIConfigInterface):
         parser.add_argument(
             "--url",
             "-u",
-            help="Endpoint URL, should default to https://app.redbrickai.com.",
+            help=f"Endpoint URL, should default to {DEFAULT_URL}.",
         )
         parser.add_argument("--profile", "-p", help="Profile name")
         parser.add_argument(
@@ -66,7 +67,7 @@ class CLIConfigController(CLIConfigInterface):
         add_sub_command.add_argument(
             "--url",
             "-u",
-            help="Endpoint URL, should default to https://app.redbrickai.com.",
+            help=f"Endpoint URL, should default to {DEFAULT_URL}.",
         )
         add_sub_command.add_argument(
             "--profile",
