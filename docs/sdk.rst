@@ -12,7 +12,7 @@ RedBrick
 Organization
 ----------------------
 .. automodule:: redbrick.organization.RBOrganization
-   :members: name, org_id, create_workspace, create_project, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy
+   :members: name, org_id, create_workspace, create_project, get_project, projects_raw, projects, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy
    :show-inheritance:
 
 Workspace

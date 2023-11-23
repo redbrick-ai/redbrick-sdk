@@ -9,14 +9,11 @@ import json
 import copy
 from datetime import datetime, timezone
 
-import aiohttp
 import tqdm  # type: ignore
 
-from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.context import RBContext
 from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
 from redbrick.common.export import TaskFilterParams
-from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.files import (
     DICOM_FILE_TYPES,
     IMAGE_FILE_TYPES,
@@ -28,7 +25,6 @@ from redbrick.utils.files import (
 from redbrick.utils.logging import log_error, logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import (
-    clean_rb_label,
     dicom_rb_format,
     parse_entry_latest,
     user_format,
@@ -111,80 +107,6 @@ class Export:
             task = parse_entry_latest(val)
             if task:
                 yield task
-
-    async def _get_input_labels(self, dp_ids: List[str]) -> List[Dict]:
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:  # type: ignore
-            coros = [
-                self.context.export.get_labels(
-                    session, self.org_id, self.project_id, dp_id
-                )
-                for dp_id in dp_ids
-            ]
-            input_data = await gather_with_concurrency(MAX_CONCURRENCY, coros)
-
-        await asyncio.sleep(0.250)  # give time to close ssl connections
-        labels = [
-            [clean_rb_label(label) for label in json.loads(data["labelsData"])]
-            for data in input_data
-        ]
-        return [
-            {**data, "inputLabels": label}
-            for data, label in zip(input_data, labels)  # type: ignore
-        ]
-
-    def get_latest_data(
-        self,
-        concurrency: int,
-        only_ground_truth: bool = False,
-        from_timestamp: Optional[float] = None,
-        get_input_labels: bool = False,
-    ) -> Tuple[List[Dict], float]:
-        """Export latest data."""
-        # pylint: disable=too-many-locals
-        stage_name = "END" if only_ground_truth else None
-        cache_time = (
-            datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
-            if from_timestamp is not None
-            else None
-        )
-        logger.info(
-            f"Downloading {'groundtruth' if only_ground_truth else 'all'} tasks"
-            + (
-                f" updated since {datetime.fromtimestamp(from_timestamp)}"
-                if from_timestamp is not None
-                else ""
-            )
-        )
-        tasks = []
-        cursor = None
-        new_cache_time = cache_time
-        dp_ids = []
-        while True:
-            entries, cursor, new_cache_time = self.context.export.get_datapoints_latest(
-                self.org_id,
-                self.project_id,
-                stage_name,
-                cache_time,
-                False,
-                False,
-                concurrency,
-                cursor,
-            )
-            for val in entries:
-                tasks.append(parse_entry_latest(val))
-                dp_ids.append(val["dpId"])
-
-            if cursor is None:
-                break
-
-        if get_input_labels:
-            loop = asyncio.get_event_loop()
-            input_labels = loop.run_until_complete(self._get_input_labels(dp_ids))
-            for idx, input_label in enumerate(input_labels):
-                tasks[idx] = {**tasks[idx], "inputLabels": input_label["inputLabels"]}
-
-        return tasks, (new_cache_time.timestamp() if new_cache_time else 0)
 
     @staticmethod
     def _get_color(class_id: int, color_hex: Optional[str] = None) -> Any:
@@ -1030,12 +952,14 @@ class Export:
             Use None to return all tasks matching the search query.
 
         stage_name: Optional[str] = None
-            If present, will return tasks that are available in or
-            completed in the given stage based on the search query.
+            If present, will return tasks that are:
+                a. Available in stage_name: If search == TaskFilters.QUEUED
+                b. Completed in stage_name: If search == TaskFilters.COMPLETED
 
         user_id: Optional[str] = None
-            If present, will return tasks that are assigned to or
-            completed by the given user id/email based on the search query.
+            User id/email. If present, will return tasks that are:
+                a. Assigned to user_id: If search == TaskFilters.QUEUED
+                b. Completed by user_id: If search == TaskFilters.COMPLETED
 
         task_id: Optional[str] = None
             If present, will return data for the given task id.

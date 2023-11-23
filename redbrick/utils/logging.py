@@ -8,24 +8,19 @@ from rich.logging import RichHandler
 
 debug_mode = bool(os.environ.get("REDBRICK_SDK_DEBUG"))
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(message)s",
-    datefmt="[%X]",
-    handlers=[
-        RichHandler(
-            level=logging.DEBUG if debug_mode else logging.INFO,
-            show_path=debug_mode,
-            enable_link_path=False,
-            markup=True,
-            rich_tracebacks=True,
-            tracebacks_show_locals=debug_mode,
-        )
-    ],
-)
 
 logger = logging.getLogger("redbrick")
 logger.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+logger.addHandler(
+    RichHandler(
+        level=logger.level,
+        show_path=debug_mode,
+        enable_link_path=False,
+        markup=True,
+        rich_tracebacks=True,
+        tracebacks_show_locals=debug_mode,
+    )
+)
 
 
 def log_error(error: Union[str, Exception], raise_error: bool = False) -> None:

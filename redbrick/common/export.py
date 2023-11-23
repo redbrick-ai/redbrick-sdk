@@ -4,8 +4,6 @@ from typing import Optional, List, Dict, Sequence, Tuple, TypedDict
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-import aiohttp
-
 from redbrick.common.enums import ReviewStates, TaskStates
 
 
@@ -55,12 +53,6 @@ class ExportControllerInterface(ABC):
         cursor: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str], Optional[datetime]]:
         """Get the latest datapoints."""
-
-    @abstractmethod
-    async def get_labels(
-        self, session: aiohttp.ClientSession, org_id: str, project_id: str, dp_id: str
-    ) -> Dict:
-        """Get input labels."""
 
     @abstractmethod
     def task_search(
