@@ -2,7 +2,7 @@
 import pytest
 
 from redbrick.utils import rb_label_utils
-from tests.test_repo import fixtures as repo_fixtures
+from tests.fixtures import repo as repo_fixtures
 
 
 @pytest.mark.unit

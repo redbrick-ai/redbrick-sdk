@@ -5,8 +5,7 @@ from unittest.mock import patch, Mock, AsyncMock, MagicMock, mock_open
 import pytest
 
 import redbrick.export
-from tests.fixtures import export as export_fixtures
-from tests.test_repo import fixtures as repo_fixtures
+from tests.fixtures import export as export_fixtures, repo as repo_fixtures
 
 
 @pytest.mark.unit
