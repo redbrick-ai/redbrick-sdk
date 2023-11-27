@@ -6,6 +6,7 @@ import pytest
 from redbrick.utils import pagination
 
 
+@pytest.mark.unit
 def mock_data_retrieval(
     concurrency: int, cursor: Optional[str]
 ):  # pylint: disable=unused-argument
@@ -14,6 +15,7 @@ def mock_data_retrieval(
     return _data, cursor
 
 
+@pytest.mark.unit
 def test_pagination_iterator():
     """Test cases for the pagination.PaginationIterator class"""
     iterator = pagination.PaginationIterator(mock_data_retrieval)
@@ -27,6 +29,7 @@ def test_pagination_iterator():
     assert iterator.total == 0
 
 
+@pytest.mark.unit
 def test_pagination_iterator_iteration():
     """Check iteration"""
     iterator = pagination.PaginationIterator(mock_data_retrieval)
@@ -36,6 +39,7 @@ def test_pagination_iterator_iteration():
     assert len(iterator) == 5
 
 
+@pytest.mark.unit
 def test_pagination_iterator_limit():
     """Check iterator with limit"""
     iterator = pagination.PaginationIterator(mock_data_retrieval, limit=2)
@@ -48,6 +52,7 @@ def test_pagination_iterator_limit():
     assert items[1] == {"id": 1}
 
 
+@pytest.mark.unit
 def test_pagination_iterator_empty_data():
     """Check iterator with empty data"""
 
@@ -61,6 +66,7 @@ def test_pagination_iterator_empty_data():
     assert len(items) == 0
 
 
+@pytest.mark.unit
 def test_pagination_iterator_custom_concurrency():
     """Check that `concurrency` gets to the passed function"""
 
@@ -74,6 +80,7 @@ def test_pagination_iterator_custom_concurrency():
     assert item == 4
 
 
+@pytest.mark.unit
 def test_pagination_iterator_task_exception():
     """Check iterator propagates exceptions from passed function"""
 
@@ -89,6 +96,7 @@ def test_pagination_iterator_task_exception():
         list(iterator)
 
 
+@pytest.mark.unit
 def test_pagination_iterator_exception_data_exhausted():
     """Assert a StopIteration is raised on iteration after data exhaustion"""
     iterator = pagination.PaginationIterator(mock_data_retrieval)
@@ -97,6 +105,7 @@ def test_pagination_iterator_exception_data_exhausted():
         next(iterator)
 
 
+@pytest.mark.unit
 def test_pagination_iterator_multiple_iterations():
     """Check multiple iterations"""
     iterator = pagination.PaginationIterator(mock_data_retrieval)

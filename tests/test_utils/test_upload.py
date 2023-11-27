@@ -6,6 +6,7 @@ import pytest
 from redbrick.utils import upload
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize("valid_state", [True, False])
 async def test_validate_json(valid_state):
@@ -40,6 +41,7 @@ async def test_validate_json(valid_state):
         assert result == []
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_process_segmentation_upload(nifti_instance_files_png, mock_labels):
     """Test for `upload.process_segmentation_upload`"""
