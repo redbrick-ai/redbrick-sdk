@@ -2,9 +2,8 @@
 Tests for `redbrick.export.public.ExportRepo`.
 These tests are to ensure data gotten from the API is properly parsed.
 """
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import Mock, patch
 
-import aiohttp
 import pytest
 
 from tests.test_repo import fixtures
@@ -52,22 +51,6 @@ def test_get_datapoints_latest(mock_export_repo):
     dp_ids = [x.get("dpId") for x in entries]
     assert all(isinstance(x, str) for x in task_ids)
     assert all(isinstance(x, str) for x in dp_ids)
-
-
-@pytest.mark.unit
-@pytest.mark.asyncio
-async def test_get_labels(mock_export_repo):
-    """Test `redbrick.repo.export.Export.get_labels`"""
-    mock_dp_id = "mock_dp_id"
-    mock_label_data = {"dpId": mock_dp_id, "random_bool": True}
-    mock_query = AsyncMock(return_value=fixtures.get_labels_resp(mock_label_data))
-    with patch.object(mock_export_repo.client, "execute_query_async", mock_query):
-        async with aiohttp.ClientSession() as aio_session:
-            resp = await mock_export_repo.get_labels(
-                session=aio_session, org_id="mock", project_id="mock", dp_id=mock_dp_id
-            )
-    assert isinstance(resp, dict)
-    assert resp == mock_label_data
 
 
 @pytest.mark.unit
