@@ -164,7 +164,7 @@ async def test_export_nifti_label_data(mock_export, task_file, get_task, returns
 
 
 @pytest.mark.unit
-def test_export_tasks(mock_export):
+def test_export_tasks(mock_export, tmpdir):
     """Test `redbrick.export.public.Export.export_tasks`"""
     # Mock the _get_raw_data_latest method
     taxonomy = {
@@ -181,6 +181,7 @@ def test_export_tasks(mock_export):
     class_map = {"Category1": [255, 0, 0]}
     color_map = {"class1": [255, 0, 0]}
     task_id_to_tasks = {x["taskId"]: x for x in export_fixtures.get_tasks_resp}
+    destination_dir = str(tmpdir)
 
     # patch methods
     mock_export.context.project.get_taxonomy = MagicMock(return_value=taxonomy)
@@ -197,7 +198,7 @@ def test_export_tasks(mock_export):
 
     # Mock with_files=True and test
     task_ids = set()
-    for task_ in mock_export.export_tasks():
+    for task_ in mock_export.export_tasks(destination=destination_dir):
         assert isinstance(task_, dict)
         task_ids.add(task_["taskId"])
     assert task_ids == set(task_id_to_tasks)
@@ -214,7 +215,7 @@ def test_export_tasks(mock_export):
                     without_json=False,
                     without_masks=False,
                     png=True,
-                    destination="/tmp/mock_segmentation_dir",
+                    destination=destination_dir,
                 )
             )
     open_mock.assert_called_once()
