@@ -39,12 +39,12 @@ def test_get_raw_data_latest(mock_export):
     ],
 )
 async def test_download_task_items(
-    mock_export, rt_struct, taxonomy, check_convert_called
+    mock_export, rt_struct, taxonomy, check_convert_called, tmpdir
 ):
     """Test `redbrick.export.public.Export._download_task_items`"""
     task = export_fixtures.get_tasks_resp[2]
     storage_id = "storage_id"
-    parent_dir = "parent_dir"
+    parent_dir = str(tmpdir)
 
     async def mock_download(
         url_path_pairs: t.List[t.Tuple[str, str]], *args
@@ -64,10 +64,10 @@ async def test_download_task_items(
     if check_convert_called:
         mock_convert.assert_called_once()
     assert series_dirs == [
-        "parent_dir/BraTS2021_00005/A",
-        "parent_dir/BraTS2021_00005/B",
-        "parent_dir/BraTS2021_00005/C",
-        "parent_dir/BraTS2021_00005/D",
+        f"{parent_dir}/BraTS2021_00005/A",
+        f"{parent_dir}/BraTS2021_00005/B",
+        f"{parent_dir}/BraTS2021_00005/C",
+        f"{parent_dir}/BraTS2021_00005/D",
     ]
     assert len(series_dirs) == len(task["series"])
 
