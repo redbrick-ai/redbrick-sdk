@@ -6,7 +6,7 @@ import numpy as np
 import nibabel as nib
 import pytest
 from nibabel.filebasedimages import ImageFileError
-from rt_utils import RTStruct, RTStructBuilder  # type: ignore
+from rt_utils import RTStruct  # type: ignore
 
 from redbrick.utils import dicom
 
