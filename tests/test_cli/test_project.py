@@ -134,10 +134,12 @@ def test_init_from_path(project_and_conf_dirs):
     project_path, config_path_ = project_and_conf_dirs
     org_id = str(uuid.uuid4())
 
-    with pytest.raises(Exception, match="No redbrick project found. Searched upto /"), \
-         tempfile.TemporaryDirectory(dir=project_path) as inner_dir:
-        with patch("redbrick.cli.project.config_path", return_value=config_path_):
-            CLIProject.from_path(path=inner_dir)
+    with patch("redbrick.cli.project.config_path", return_value=config_path_):
+        with tempfile.TemporaryDirectory(dir=project_path) as inner_dir:
+            with pytest.raises(
+                Exception, match="No redbrick project found. Searched upto /"
+            ):
+                CLIProject.from_path(path=inner_dir)
 
     # prepare project config and creds
     _write_config(project_path, org_id)
