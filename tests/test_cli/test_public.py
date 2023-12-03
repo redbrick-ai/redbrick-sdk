@@ -98,3 +98,35 @@ def test_main_parser():
     _ctr_diff = controller_cmds - parser_cmds
     assert len(_prs_diff) == 0, f"CLI Parser has unimplemented commands: {_prs_diff}"
     assert len(_ctr_diff) == 0, f"CLI Controller has unexposed commands: {_ctr_diff}"
+
+
+@pytest.mark.unit
+def test_cli_main(capsys):
+    """Test main cli entrypoint with different inputs"""
+    argv = ["--help"]
+    expected_help_text = (
+        "The RedBrick CLI offers a simple interface to quickly import and export your\n"
+        "images & annotations, and perform other high-level actions."
+    )
+    with pytest.raises(SystemExit, match="0"):
+        public.cli_main(argv)
+    output = capsys.readouterr()
+    assert expected_help_text in output.out
+
+    argv = ["help"]
+    expected_error_text = "invalid choice: 'help'"
+    with pytest.raises(SystemExit, match="2"):
+        public.cli_main(argv)
+    output = capsys.readouterr()
+    assert expected_error_text in output.err
+
+    argv = []
+    public.cli_main(argv)
+    output = capsys.readouterr()
+    assert "ArgumentError" in output.out
+
+    argv = ["config", "list"]
+    expected_text = "RedBrick AI Profiles"
+    public.cli_main(argv)
+    output = capsys.readouterr()
+    assert expected_text in output.out
