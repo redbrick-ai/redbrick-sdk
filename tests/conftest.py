@@ -4,14 +4,7 @@ import pytest
 from redbrick import RBContext, _populate_context
 from redbrick.common.client import RBClient
 from redbrick.export import Export
-from redbrick.repo import (
-    ExportRepo,
-    LabelingRepo,
-    UploadRepo,
-    SettingsRepo,
-    ProjectRepo,
-    WorkspaceRepo,
-)
+from redbrick.repo import ExportRepo
 
 
 @pytest.fixture(scope="function")
@@ -20,6 +13,16 @@ def rb_context() -> RBContext:
     context = RBContext(
         api_key="mock_api_key_000000000000000000000000000000", url="mock_url"
     )
+    return context
+
+
+@pytest.fixture(scope="function")
+def rb_context_full() -> RBContext:
+    """Get a new mock RBContext for each test"""
+    context = RBContext(
+        api_key="mock_api_key_000000000000000000000000000000", url="mock_url"
+    )
+    context = _populate_context(context)
     return context
 
 
