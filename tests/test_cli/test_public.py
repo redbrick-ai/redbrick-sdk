@@ -1,6 +1,7 @@
 """Tests for `redbrick.cli.public`."""
 import argparse
 import typing as t
+from unittest.mock import Mock
 
 import pytest
 
@@ -28,7 +29,7 @@ cli_controller_lookup: t.Dict[str, t.Tuple[str, t.Type]] = {
 
 
 @pytest.mark.unit
-def test_cli_controller():
+def test_cli_controller_init():
     """Test CLIController initialization"""
     _, cli = public.cli_parser(only_parser=False)
     assert isinstance(cli, public.CLIController)
@@ -43,6 +44,22 @@ def test_cli_controller():
 
         sub_controller = getattr(cli, _ctrl_key, None)
         assert isinstance(sub_controller, _expected_controller)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("method_name", sorted(cli_controller_lookup))
+def test_cli_controller_command_handler(method_name):
+    """Ensure `handle_command` calls the right sub-controller"""
+    _, cli = public.cli_parser(only_parser=False)
+    # mock method
+    mock_method = Mock()
+    setattr(cli, method_name, mock_method)
+    # create argument
+    args = argparse.Namespace(command=method_name)
+    # call method
+    cli.handle_command(args)
+    # assertion
+    mock_method.handler.assert_called_once_with(args)
 
 
 @pytest.mark.unit
