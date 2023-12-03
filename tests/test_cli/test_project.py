@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
+from redbrick import RBContext
 from redbrick.cli.entity import CLICache, CLIConfiguration, CLICredentials
 from redbrick.cli.project import CLIProject
 from redbrick.organization import RBOrganization
@@ -32,15 +33,21 @@ def _write_config(project_path: str, org_id: str, project_id: str = str(uuid.uui
         )
 
 
-def _write_creds(config_path, org_id, profile="mock_profile"):
+def _write_creds(
+    config_path,
+    org_id,
+    profile="mock_profile",
+    api_key="mock_key",
+    url="https://api.redbrickai.com",
+):
     """Prepare project credentials"""
     credentials_file = os.path.join(config_path, "credentials")
     with open(credentials_file, "w", encoding="utf-8") as _creds_file:
         _creds_file.write(
             f"""[{profile}]
-                key = mock_key
+                key = {api_key}
                 org = {org_id}
-                url = https://api.redbrickai.com
+                url = {url}
             """
         )
     os.environ[CLICredentials.ENV_VAR] = profile
@@ -127,6 +134,11 @@ def test_init_from_path(project_and_conf_dirs):
     project_path, config_path_ = project_and_conf_dirs
     org_id = str(uuid.uuid4())
 
+    with pytest.raises(Exception, match="No redbrick project found. Searched upto /"), \
+         tempfile.TemporaryDirectory(dir=project_path) as inner_dir:
+        with patch("redbrick.cli.project.config_path", return_value=config_path_):
+            CLIProject.from_path(path=inner_dir)
+
     # prepare project config and creds
     _write_config(project_path, org_id)
     _write_creds(config_path_, org_id)
@@ -200,6 +212,71 @@ def test_initialize_project(project_and_conf_dirs, rb_context_full):
         assert proj.conf.exists
         assert proj.conf.get_section("org")["id"] == org_id
         assert proj.conf.get_section("project")["id"] == project_id
+        assert proj.cache.exists
+
+
+@pytest.mark.unit
+def test_project_properties(project_and_conf_dirs, rb_context_full):
+    """Test CLIProject property attributes"""
+    project_path, config_path_ = project_and_conf_dirs
+    org_id = str(uuid.uuid4())
+    project_id = str(uuid.uuid4())
+
+    # prepare project config and creds
+    _write_config(project_path, org_id, project_id=project_id)
+    _write_creds(config_path_, org_id, api_key=rb_context_full.client.api_key)
+
+    mock_org_resp = {"name": "Mock Org", "orgId": org_id}
+    mock_project_resp = {
+        "status": "CREATION_SUCCESS",
+        "name": "mock_project",
+        "tdType": "mock_tdType",
+        "taxonomy": {"name": "mock_taxonomy"},
+        "workspace": {"workspaceId": uuid.uuid4()},
+        "projectUrl": "mock_project_url",
+        "createdAt": datetime.now().isoformat(),
+        "consensusSettings": {"enabled": True},
+    }
+
+    with patch("redbrick.cli.project.config_path", return_value=config_path_):
+        # initialize project
+        proj = CLIProject(path=project_path, required=False)
+
+        # check "context" property
+        assert isinstance(proj.context, RBContext), "Could not fetch context"
+
+        # mock repo methods
+        # pylint: disable=protected-access
+        proj._context.project.get_org = functools.partial(
+            mock_method, response=mock_org_resp
+        )
+        proj._context.project.get_project = functools.partial(
+            mock_method, response=mock_project_resp
+        )
+        proj._context.project.get_stages = functools.partial(mock_method, response=[])
+
+        # Ensure the project details can be fetched
+        assert isinstance(proj.project, RBProject), "Could not fetch project details"
+        del proj._project
+        assert isinstance(proj.project, RBProject), "Could not fetch project from cache"
+
+        # Ensure the organization details can be fetched
+        assert isinstance(
+            proj.org, RBOrganization
+        ), "Could not fetch organization details"
+        del proj._org
+        assert isinstance(
+            proj.org, RBOrganization
+        ), "Could not fetch organization from cache"
+        # pylint: enable=protected-access
+
+        # assertions
+        assert isinstance(proj.creds, CLICredentials)
+        assert isinstance(proj.conf, CLIConfiguration)
+        assert isinstance(proj.cache, CLICache)
+
+        assert proj.creds.exists
+        assert proj.conf.exists
         assert proj.cache.exists
 
 
