@@ -484,12 +484,6 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
 }
 
 
-def get_labels_resp(mock_data: t.Optional[t.Dict]):  # noqa: D103
-    """Mock response for `ExportRepo.get_labels`"""
-    resp = {"dataPoint": {"labelData": mock_data}}
-    return resp
-
-
 def task_search_resp(mock_stage_name):  # noqa: D103
     """Mock response for `ExportRepo.task_search`"""
     resp = {

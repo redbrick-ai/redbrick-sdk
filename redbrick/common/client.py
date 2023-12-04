@@ -14,7 +14,12 @@ from tenacity.wait import wait_exponential
 
 from redbrick import __version__ as sdk_version  # pylint: disable=cyclic-import
 from redbrick.utils.logging import assert_validation, log_error, logger
-from redbrick.common.constants import DEFAULT_URL, MAX_RETRY_ATTEMPTS, PEERLESS_ERRORS
+from redbrick.common.constants import (
+    DEFAULT_URL,
+    MAX_RETRY_ATTEMPTS,
+    REQUEST_TIMEOUT,
+    PEERLESS_ERRORS,
+)
 
 
 class RBClient:
@@ -80,6 +85,7 @@ class RBClient:
         logger.debug("Executing: " + query.strip().split("\n")[0])
         response = self.session.post(
             self.url,
+            timeout=REQUEST_TIMEOUT,
             headers=self.headers,
             data=self.prepare_query(query, variables),
         )
@@ -104,6 +110,7 @@ class RBClient:
         logger.debug("Executing async: " + query.strip().split("\n")[0])
         async with aio_session.post(
             self.url,
+            timeout=REQUEST_TIMEOUT,
             headers=self.headers,
             data=self.prepare_query(query, variables),
         ) as response:
