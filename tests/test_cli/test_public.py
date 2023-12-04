@@ -1,7 +1,7 @@
 """Tests for `redbrick.cli.public`."""
 import argparse
 import typing as t
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -101,8 +101,10 @@ def test_main_parser():
 
 
 @pytest.mark.unit
-def test_cli_main(capsys):
+def test_cli_main(capsys, prepare_project):
     """Test main cli entrypoint with different inputs"""
+    project_path, config_path_, org_id, project_id = prepare_project
+
     argv = ["--help"]
     expected_help_text = (
         "The RedBrick CLI offers a simple interface to quickly import and export your\n"
@@ -125,8 +127,9 @@ def test_cli_main(capsys):
     output = capsys.readouterr()
     assert "ArgumentError" in output.out
 
-    argv = ["config", "list"]
-    expected_text = "RedBrick AI Profiles"
-    public.cli_main(argv)
-    output = capsys.readouterr()
-    assert expected_text in output.out
+    with patch("redbrick.cli.project.config_path", return_value=config_path_):
+        argv = ["config", "list"]
+        expected_text = "RedBrick AI Profiles"
+        public.cli_main(argv)
+        output = capsys.readouterr()
+        assert expected_text in output.out
