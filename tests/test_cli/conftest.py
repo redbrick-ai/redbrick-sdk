@@ -26,7 +26,10 @@ def project_and_conf_dirs(
 
 
 @pytest.fixture
-def prepare_project(project_and_conf_dirs, rb_context_full):
+def prepare_project(
+    project_and_conf_dirs, rb_context_full  # pylint:disable=redefined-outer-name
+) -> t.Tuple[str, str, str, str]:
+    """Fixture to prepare all dirs and config for a project"""
     project_path, config_path_ = project_and_conf_dirs
     org_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
