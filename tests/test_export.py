@@ -1,4 +1,5 @@
 """Tests for redbrick.mock_export.public"""
+import os
 import typing as t
 from unittest.mock import patch, Mock, AsyncMock, MagicMock, mock_open
 
@@ -63,10 +64,10 @@ async def test_download_task_items(
     if check_convert_called:
         mock_convert.assert_called_once()
     assert series_dirs == [
-        f"{parent_dir}/BraTS2021_00005/A",
-        f"{parent_dir}/BraTS2021_00005/B",
-        f"{parent_dir}/BraTS2021_00005/C",
-        f"{parent_dir}/BraTS2021_00005/D",
+        os.path.join(parent_dir, "BraTS2021_00005", "A"),
+        os.path.join(parent_dir, "BraTS2021_00005", "B"),
+        os.path.join(parent_dir, "BraTS2021_00005", "C"),
+        os.path.join(parent_dir, "BraTS2021_00005", "D"),
     ]
     assert len(series_dirs) == len(task["series"])
 
