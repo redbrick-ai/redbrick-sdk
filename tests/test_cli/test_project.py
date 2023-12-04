@@ -1,6 +1,7 @@
 """Tests for `redbrick.cli.project`."""
 import functools
 import os
+import re
 import tempfile
 import uuid
 from datetime import datetime
@@ -74,8 +75,10 @@ def test_init_no_config(project_and_conf_dirs):
     with patch("redbrick.cli.project.config_path", return_value=config_path_):
         with pytest.raises(
             expected_exception=Exception,
-            match=f"No project found in `{project_path}`\n"
-            f"Please create one using `redbrick init` / clone existing using `redbrick clone`",
+            match=re.escape(
+                f"No project found in `{project_path}`\n"
+                f"Please create one using `redbrick init` / clone existing using `redbrick clone`",
+            ),
         ):
             CLIProject(path=project_path)
 
@@ -84,7 +87,9 @@ def test_init_no_config(project_and_conf_dirs):
 def test_init_no_dir():
     """Test initialization procedure with bad directory"""
     project_path = f"{os.getcwd()}{os.path.sep}non-existent-dir"
-    with pytest.raises(Exception, match=f"Not a valid directory {project_path}"):
+    with pytest.raises(
+        Exception, match=re.escape(f"Not a valid directory {project_path}")
+    ):
         CLIProject(path=project_path)
 
 

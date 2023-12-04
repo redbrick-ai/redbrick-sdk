@@ -2,6 +2,7 @@
 import argparse
 import functools
 import os
+import re
 import uuid
 from datetime import datetime
 from unittest.mock import patch
@@ -20,7 +21,7 @@ def test_clone_handler__existing_project(project_and_conf_dirs, monkeypatch):
 
     _, cli = public.cli_parser(only_parser=False)
 
-    with pytest.raises(Exception, match=rf"{project_path} already exists"):
+    with pytest.raises(Exception, match=re.escape(f"{project_path} already exists")):
         args = argparse.Namespace(command=cli.CLONE, path=project_path)
         cli.clone.handler(args)
 
