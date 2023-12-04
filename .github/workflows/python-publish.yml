@@ -39,7 +39,7 @@ jobs:
           pip install -e .[dev]
       - name: Lint + Unit Tests
         run: |
-          pytest -vv
+          pytest -vv --mypy --black --eradicate --pycodestyle --pydocstyle --flake8 --pylint --pylint-rcfile=setup.cfg
 
   deploy:
     runs-on: ubuntu-latest
