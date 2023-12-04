@@ -43,7 +43,9 @@ async def test_validate_json(valid_state):
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_process_segmentation_upload(nifti_instance_files_png, mock_labels):
+async def test_process_segmentation_upload(
+    nifti_instance_files_png, mock_labels, tmpdir
+):
     """Test for `upload.process_segmentation_upload`"""
     files = nifti_instance_files_png
     org_id = "org_id"
@@ -69,7 +71,9 @@ async def test_process_segmentation_upload(nifti_instance_files_png, mock_labels
     }
 
     with patch.object(upload, "download_files", return_value=["downloaded_path"]):
-        with patch.object(upload, "upload_files", return_value=[True]):
+        with patch.object(upload, "upload_files", return_value=[True]), patch(
+            "redbrick.utils.common_utils.config_path", return_value=str(tmpdir)
+        ):
             mock_aiohttp_session = AsyncMock()
 
             # Execute the function
