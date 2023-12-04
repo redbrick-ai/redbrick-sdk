@@ -28,7 +28,7 @@ def test_merge_segmentations_success(
     input_instance = 1
     output_instance = 2
     if pass_output is False:
-        os.remove(output_nifti_file)
+        output_nifti_file = output_nifti_file.replace(".nii.gz", ".new.nii.gz")
     resp = dicom.merge_segmentations(
         input_nifti_file, input_instance, equals, output_nifti_file, output_instance
     )
