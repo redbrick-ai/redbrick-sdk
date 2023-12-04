@@ -103,7 +103,7 @@ def test_main_parser():
 @pytest.mark.unit
 def test_cli_main(capsys, prepare_project):
     """Test main cli entrypoint with different inputs"""
-    project_path, config_path_, org_id, project_id = prepare_project
+    _, config_path_, _, _ = prepare_project
 
     argv = ["--help"]
     expected_help_text = (

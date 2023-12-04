@@ -10,7 +10,7 @@ from redbrick.cli import public, CLIProject
 @pytest.mark.unit
 def test_handler(prepare_project, monkeypatch):
     """Test `CLIUploadController.handler` correctly gets project details"""
-    project_path, config_path_, org_id, project_id = prepare_project
+    project_path, config_path_, _, _ = prepare_project
     monkeypatch.chdir(project_path)
     _, cli = public.cli_parser(only_parser=False)
 
