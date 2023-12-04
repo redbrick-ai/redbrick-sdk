@@ -83,7 +83,7 @@ def test_init_no_config(project_and_conf_dirs):
 @pytest.mark.unit
 def test_init_no_dir():
     """Test initialization procedure with bad directory"""
-    project_path = f"{os.getcwd()}/non-existent-dir"
+    project_path = f"{os.getcwd()}{os.path.sep}non-existent-dir"
     with pytest.raises(Exception, match=f"Not a valid directory {project_path}"):
         CLIProject(path=project_path)
 
