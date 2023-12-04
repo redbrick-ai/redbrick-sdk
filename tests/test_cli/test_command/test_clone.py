@@ -9,7 +9,6 @@ from unittest.mock import patch
 import pytest
 
 from redbrick.cli import public
-from redbrick.cli.command import CLICloneController
 from tests.test_cli import _write_config, _write_creds, mock_method
 
 
@@ -20,7 +19,6 @@ def test_clone_handler__existing_project(project_and_conf_dirs, monkeypatch):
     org_id = str(uuid.uuid4())
 
     _, cli = public.cli_parser(only_parser=False)
-    cli.clone = CLICloneController(argparse.ArgumentParser())
 
     with pytest.raises(Exception, match=f"{project_path} already exists"):
         args = argparse.Namespace(command=cli.CLONE, path=project_path)
@@ -41,7 +39,6 @@ def test_handler(tmpdir):
     """Test `CLICloneController.handler`"""
     project_dir = os.path.join(str(tmpdir), "project")
     _, cli = public.cli_parser(only_parser=False)
-    cli.clone = CLICloneController(argparse.ArgumentParser())
 
     with patch.object(cli.clone, "handle_clone") as handle_clone:
         args = argparse.Namespace(command=cli.CLONE, path=project_dir)
@@ -66,7 +63,6 @@ def test_handle_clone(
     _write_creds(config_path_, org_id, api_key=rb_context_full.client.api_key)
 
     _, cli = public.cli_parser(only_parser=False)
-    cli.clone = CLICloneController(argparse.ArgumentParser())
 
     # mock repo methods
     # pylint: disable=protected-access
