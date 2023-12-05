@@ -126,6 +126,7 @@ studyClassify {
     archived
     parents
     hint
+    defaultValue
 }
 seriesClassify {
     name
@@ -140,6 +141,7 @@ seriesClassify {
     archived
     parents
     hint
+    defaultValue
 }
 instanceClassify {
     name
@@ -154,6 +156,7 @@ instanceClassify {
     archived
     parents
     hint
+    defaultValue
 }
 objectTypes {
     category
@@ -172,6 +175,7 @@ objectTypes {
         archived
         parents
         hint
+        defaultValue
     }
     color
     archived

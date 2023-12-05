@@ -33,6 +33,7 @@ DICOM_FILE_TYPES = {
     "": "application/dicom",
     "dcm": "application/dicom",
     "ima": "application/dicom",
+    "dicom": "application/dicom",
 }
 
 JSON_FILE_TYPES = {"json": "application/json"}
