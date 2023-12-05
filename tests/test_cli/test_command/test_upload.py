@@ -82,14 +82,12 @@ def test_handle_upload_json(
 
     # pylint: enable=unused-argument
 
-    with (
-        patch("redbrick.upload.public.validate_json", mock_validate_json),
-        patch.object(
-            controller.project.project.upload, "_create_tasks", mock_create_tasks
-        ),
-        patch.object(
-            controller.project.project.upload, "generate_items_list", mock_gen_item_list
-        ),
+    with patch(
+        "redbrick.upload.public.validate_json", mock_validate_json
+    ), patch.object(
+        controller.project.project.upload, "_create_tasks", mock_create_tasks
+    ), patch.object(
+        controller.project.project.upload, "generate_items_list", mock_gen_item_list
     ):
         _dir = project_path if use_dir else json_filepath
         controller.args = argparse.Namespace(

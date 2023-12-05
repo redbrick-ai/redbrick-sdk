@@ -87,11 +87,9 @@ def mock_upload_controller(
     # pylint: enable=protected-access
 
     handle_upload = cli.upload.handle_upload
-    with (
-        patch("redbrick.cli.project.config_path", return_value=config_path_),
-        patch("redbrick.cli.command.clone.CLIProject._context", rb_context_full),
-        patch.object(cli.upload, "handle_upload"),
-    ):
+    with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
+        "redbrick.cli.command.clone.CLIProject._context", rb_context_full
+    ), patch.object(cli.upload, "handle_upload"):
         args = argparse.Namespace(command=cli.CLONE)
         cli.upload.handler(args)
         _ = cli.upload.project.project
