@@ -35,7 +35,7 @@ def test_handler(prepare_project, monkeypatch):
         (False, True, "Could not find files in directory"),
     ],
 )
-def test_handle_upload_json(
+def test_handle_upload(
     mock_upload_controller, monkeypatch, is_json, use_dir, error_msg
 ):  # pylint: disable=too-many-locals
     """Test the `CLIUploadController.handle_upload` when on different
@@ -45,8 +45,8 @@ def test_handle_upload_json(
     monkeypatch.chdir(project_path)
 
     json_filepath = os.path.join(project_path, "test.json")
-    label_filepath = os.path.join(project_path, "test_label.json")
-    dicom_filepath = os.path.join(project_path, "test_file.dcm")
+    label_filepath = os.path.join(project_path, "test_task.json")
+    dicom_filepath = os.path.join(project_path, "test_task.dcm")
 
     mock_json_data = [
         {
@@ -55,15 +55,20 @@ def test_handle_upload_json(
             "items": [dicom_filepath],
         },
     ]
+    mock_label_data = {
+        "name": "",
+        "segmentations": {"0": label_filepath},
+        "segmentMap": {},
+    }
+    if is_json:
+        with open(json_filepath, "w", encoding="utf-8") as file:
+            json.dump(mock_json_data, file)
+
+    with open(label_filepath, "w", encoding="utf-8") as file:
+        json.dump(mock_label_data, file)
 
     with open(dicom_filepath, "wb") as file:
         file.write(b"stuff")
-
-    with open(json_filepath, "w", encoding="utf-8") as file:
-        json.dump(mock_json_data, file)
-
-    with open(json_filepath, "w", encoding="utf-8") as file:
-        json.dump(mock_json_data, file)
 
     # pylint: disable=unused-argument
     async def mock_validate_json(ctx, file_data, *args):
@@ -77,8 +82,8 @@ def test_handle_upload_json(
                 items.append({"response": None, "name": _item})
         return items
 
-    async def mock_gen_item_list(self, item_list, *args):
-        return item_list
+    async def mock_gen_item_list(items_list, *args):
+        return [[os.path.basename(pth) for pth in _list] for _list in items_list]
 
     # pylint: enable=unused-argument
 
