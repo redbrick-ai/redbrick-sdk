@@ -1,5 +1,6 @@
 """Utilities for working with label objects."""
 import os
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 import json
 from copy import deepcopy
@@ -22,6 +23,30 @@ def user_format(user: Optional[str], users: Dict[str, str]) -> Optional[str]:
     if user.startswith("API:"):
         return "API Key"
     return users.get(user, user)
+
+
+def assignee_format(
+    task: Optional[Dict[str, Any]], users: Dict[str, str]
+) -> Optional[Dict]:
+    """Assignee format."""
+    if not task:
+        return
+
+    user_val = user_format((task.get("assignedTo", {}) or {}).get("userId"), users)
+    if not user_val:
+        return
+
+    assignee = {"user": user_val, "status": task["state"]}
+    if task.get("assignedAt"):
+        assignee["assignedAt"] = task["assignedAt"]
+    if task.get("progressSavedAt"):
+        assignee["lastSavedAt"] = task["progressSavedAt"]
+    if task.get("completedAt"):
+        assignee["completedAt"] = task["completedAt"]
+    if task.get("completionTimeMs") is not None:
+        assignee["timeSpentMs"] = task["completionTimeMs"]
+
+    return assignee
 
 
 def from_rb_task_data(task_data: Dict) -> Dict:

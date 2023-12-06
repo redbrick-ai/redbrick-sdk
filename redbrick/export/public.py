@@ -28,6 +28,7 @@ from redbrick.utils.rb_label_utils import (
     dicom_rb_format,
     parse_entry_latest,
     user_format,
+    assignee_format,
 )
 from redbrick.utils.rb_event_utils import task_event_format
 
@@ -985,7 +986,14 @@ class Export:
                 "priority"?: float([0, 1]),
                 "metaData"?: dict,
                 "series"?: [{"name"?: str, "metaData"?: dict}],
-                "assignees"?: [{"userId": str, "email": str}]
+                "assignees"?: [{
+                    "user": str,
+                    "status": str,
+                    "assignedAt": datetime,
+                    "lastSavedAt"?: datetime,
+                    "completedAt"?: datetime,
+                    "timeSpentMs"?: float,
+                }]
             }]
         """
         # pylint: disable=too-many-branches, too-many-locals, too-many-statements
@@ -1106,12 +1114,10 @@ class Export:
                 if any(series for series in series_list):
                     task_obj["series"] = series_list
 
-            assignees = [
-                user_format(assignee.get("userId"), users)
-                for assignee in (
-                    (task["currentStageSubTask"] or {}).get("consensusAssignees", [])
-                    or []
-                )
+            stage_task = task.get("currentStageSubTask", {}) or {}
+            assignees = [assignee_format(stage_task, users)] + [
+                assignee_format(sub_task, users)
+                for sub_task in (stage_task.get("subTasks", []) or [])
             ]
             assignees = [assignee for assignee in assignees if assignee]
 
