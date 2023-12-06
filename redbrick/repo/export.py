@@ -166,14 +166,23 @@ class ExportRepo(ExportControllerInterface):
                     }}
                     currentStageSubTask {{
                         ... on LabelingTask {{
-                            state
                             assignedTo {{
                                 userId
-                                email
                             }}
-                            consensusAssignees {{
-                                userId
-                                email
+                            state
+                            assignedAt
+                            progressSavedAt
+                            completedAt
+                            completionTimeMs
+                            subTasks {{
+                                assignedTo {{
+                                    userId
+                                }}
+                                state
+                                assignedAt
+                                progressSavedAt
+                                completedAt
+                                completionTimeMs
                             }}
                         }}
                     }}

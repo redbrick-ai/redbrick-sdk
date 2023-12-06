@@ -536,7 +536,11 @@ def task_search_resp(mock_stage_name):  # noqa: D103
                     "currentStageSubTask": {
                         "state": "UNASSIGNED",
                         "assignedTo": None,
-                        "consensusAssignees": [],
+                        "assignedAt": None,
+                        "completedAt": None,
+                        "completionTimeMs": None,
+                        "progressSavedAt": None,
+                        "subTasks": [],
                     },
                 }
             ],
