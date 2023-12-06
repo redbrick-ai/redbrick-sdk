@@ -173,7 +173,7 @@ async def upload_files(
         status: int = 0
 
         headers = {"Content-Type": file_type}
-        if not is_gzipped_data(data):
+        if not is_gzipped_data(data) and file_type != DICOM_FILE_TYPES[""]:
             headers["Content-Encoding"] = "gzip"
             data = gzip.compress(data)
 
