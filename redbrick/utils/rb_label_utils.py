@@ -1,6 +1,5 @@
 """Utilities for working with label objects."""
 import os
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 import json
 from copy import deepcopy
@@ -30,11 +29,11 @@ def assignee_format(
 ) -> Optional[Dict]:
     """Assignee format."""
     if not task:
-        return
+        return None
 
     user_val = user_format((task.get("assignedTo", {}) or {}).get("userId"), users)
     if not user_val:
-        return
+        return None
 
     assignee = {"user": user_val, "status": task["state"]}
     if task.get("assignedAt"):
