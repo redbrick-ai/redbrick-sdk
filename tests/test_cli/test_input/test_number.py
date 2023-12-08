@@ -47,11 +47,10 @@ def test_get_from_args(mock_input_executor):
 
 
 @pytest.mark.unit
-def test_get_from_input_prompt():
+def test_get_from_input_prompt(mock_input_executor):
     """Test `CLIInputNumber.get` from input"""
-    mock_input_prompt = Mock(return_value="42")
-    with patch.object(number.InputPrompt, "execute", mock_input_prompt):
-        input_handler = number.CLIInputNumber(None, "Test")
-        result = input_handler.get()
-        assert result == "42"
-        mock_input_prompt.assert_called_once()
+    mock_input_executor.return_value="42"
+    input_handler = number.CLIInputNumber(None, "Test")
+    result = input_handler.get()
+    assert result == "42"
+    mock_input_executor.assert_called_once()
