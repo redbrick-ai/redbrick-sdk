@@ -10,7 +10,9 @@ from unittest.mock import patch
 
 import pytest
 
+from redbrick import RBContext
 from redbrick.cli import public
+from redbrick.cli.command import CLIExportController, CLIUploadController
 from tests.test_cli import _write_config, _write_creds, mock_method
 
 
@@ -46,16 +48,12 @@ def prepare_project(
 
 
 @pytest.fixture
-def mock_upload_controller(
+def mock_cli_rb_context(
     prepare_project,  # pylint: disable=redefined-outer-name
-    monkeypatch,
     rb_context_full,
-):
-    """Prepare a test CLIUploadController object"""
-    project_path, config_path_, org_id, project_id = prepare_project
-    monkeypatch.chdir(project_path)
-    _, cli = public.cli_parser(only_parser=False)
-
+) -> t.Tuple[RBContext, t.Tuple[str, str, str, str]]:
+    """Prepare a test RBContext object with patched query methods"""
+    _, _, org_id, project_id = prepare_project
     project_name = "real_project"
 
     # mock repo methods
@@ -85,6 +83,22 @@ def mock_upload_controller(
     )
     rb_context_full.project.get_stages = functools.partial(mock_method, response=[])
     # pylint: enable=protected-access
+    return rb_context_full, prepare_project
+
+
+@pytest.fixture
+def mock_upload_controller(
+    mock_cli_rb_context,  # pylint: disable=redefined-outer-name
+    monkeypatch,
+) -> t.Tuple[CLIUploadController, str]:
+    """Prepare a test CLIUploadController object"""
+    # attache project to cli controller
+    # pylint: disable=redefined-outer-name
+    rb_context_full, prepare_project = mock_cli_rb_context
+    project_path, config_path_, _, _ = prepare_project
+    # pylint: enable=redefined-outer-name
+    monkeypatch.chdir(project_path)
+    _, cli = public.cli_parser(only_parser=False)
 
     handle_upload = cli.upload.handle_upload
     with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
