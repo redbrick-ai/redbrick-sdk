@@ -16,11 +16,12 @@ def test_handler(prepare_project, monkeypatch):
     monkeypatch.chdir(project_path)
     _, cli = public.cli_parser(only_parser=False)
 
-    with (
-        patch("redbrick.cli.project.config_path", return_value=config_path_),
-        patch.object(cli.info, "handle_get"),
-        patch.object(cli.info, "handle_set"),
-        patch.object(cli.info, "handle_info"),
+    with patch(
+        "redbrick.cli.project.config_path", return_value=config_path_
+    ), patch.object(cli.info, "handle_get"), patch.object(
+        cli.info, "handle_set"
+    ), patch.object(
+        cli.info, "handle_info"
     ):
         args = argparse.Namespace(
             command=cli.INFO, path=project_path, get=None, set=None
@@ -75,17 +76,14 @@ def test_handle_set(
     monkeypatch.chdir(project_path)
 
     mock_repo_setter = Mock(return_value=False)
-    with (
-        patch.object(
-            controller.project.project.context.project,
-            "set_label_storage",
-            mock_repo_setter,
-        ),
-        patch(
-            "redbrick.cli.input.uuid.CLIInputUUID.get",
-            return_value=StorageMethod.PUBLIC,
-        ),
-        patch("redbrick.cli.input.text.CLIInputText.get", return_value="mock_path"),
+    with patch.object(
+        controller.project.project.context.project,
+        "set_label_storage",
+        mock_repo_setter,
+    ), patch(
+        "redbrick.cli.input.uuid.CLIInputUUID.get", return_value=StorageMethod.PUBLIC
+    ), patch(
+        "redbrick.cli.input.text.CLIInputText.get", return_value="mock_path"
     ):
 
         controller.args = argparse.Namespace(get=None, set="labelstorage", path=".")

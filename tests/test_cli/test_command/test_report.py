@@ -16,16 +16,15 @@ def test_handler(prepare_project, monkeypatch):
     monkeypatch.chdir(project_path)
     _, cli = public.cli_parser(only_parser=False)
 
-    with (
-        patch("redbrick.cli.project.config_path", return_value=config_path_),
-        patch.object(cli.report, "handle_report") as _handle_report,
-    ):
+    with patch(
+        "redbrick.cli.project.config_path", return_value=config_path_
+    ), patch.object(cli.report, "handle_report"):
         args = argparse.Namespace(
             type=cli.report.TYPE_ALL,
             concurrency=10,
         )
         cli.report.handler(args)
-        _handle_report.assert_called_once()
+        cli.report.handle_report.assert_called_once()
         assert isinstance(cli.report.project, CLIProject)
 
 
