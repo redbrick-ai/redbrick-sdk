@@ -12,7 +12,11 @@ import pytest
 
 from redbrick import RBContext
 from redbrick.cli import public
-from redbrick.cli.command import CLIExportController, CLIUploadController
+from redbrick.cli.command import (
+    CLIExportController,
+    CLIUploadController,
+    CLIIReportController,
+)
 from tests.test_cli import _write_config, _write_creds, mock_method
 
 
@@ -129,7 +133,7 @@ def mock_export_controller(
 
     handle_export = cli.export.handle_export
     with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
-        "redbrick.cli.command.clone.CLIProject._context", rb_context_full
+        "redbrick.cli.command.export.CLIProject._context", rb_context_full
     ), patch.object(cli.export, "handle_export"):
         args = argparse.Namespace(command=cli.CLONE)
         cli.export.handler(args)
@@ -138,3 +142,58 @@ def mock_export_controller(
 
     controller.handle_export = handle_export
     return controller, project_path
+
+
+@pytest.fixture
+def mock_info_controller(
+    mock_cli_rb_context,  # pylint: disable=redefined-outer-name
+    monkeypatch,
+) -> t.Tuple[CLIExportController, str, str]:
+    """Prepare a test CLIInfoController object"""
+    # attach project to cli controller
+    # pylint: disable=redefined-outer-name
+    rb_context_full, prepare_project = mock_cli_rb_context
+    project_path, config_path_, _, _ = prepare_project
+    # pylint: enable=redefined-outer-name
+    monkeypatch.chdir(project_path)
+    _, cli = public.cli_parser(only_parser=False)
+
+    handle_info = cli.info.handle_info
+    with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
+        "redbrick.cli.command.info.CLIProject._context", rb_context_full
+    ), patch.object(cli.info, "handle_info"):
+        args = argparse.Namespace(command=cli.INFO, path=".", get=None, set=None)
+        cli.info.handler(args)
+        _ = cli.info.project.project
+        _ = cli.info.project.org
+        controller = cli.info
+
+    controller.handle_info = handle_info
+    return controller, project_path, config_path_
+
+
+@pytest.fixture
+def mock_report_controller(
+    mock_cli_rb_context,  # pylint: disable=redefined-outer-name
+    monkeypatch,
+) -> t.Tuple[CLIIReportController, str, str]:
+    """Prepare a test CLIIReportController object"""
+    # attach project to cli controller
+    # pylint: disable=redefined-outer-name
+    rb_context_full, prepare_project = mock_cli_rb_context
+    project_path, config_path_, _, _ = prepare_project
+    # pylint: enable=redefined-outer-name
+    monkeypatch.chdir(project_path)
+    _, cli = public.cli_parser(only_parser=False)
+
+    handle_report = cli.report.handle_report
+    with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
+        "redbrick.cli.command.report.CLIProject._context", rb_context_full
+    ), patch.object(cli.report, "handle_report"):
+        args = argparse.Namespace(command=cli.INFO, path=".", get=None, set=None)
+        cli.report.handler(args)
+        _ = cli.report.project.project
+        controller = cli.report
+
+    controller.handle_report = handle_report
+    return controller, project_path, config_path_
