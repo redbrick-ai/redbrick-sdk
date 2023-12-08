@@ -1,6 +1,4 @@
 """Tests for redbrick.cli.input.select"""
-from unittest.mock import patch
-
 import pytest
 
 from redbrick.cli.input.select import CLIInputSelect

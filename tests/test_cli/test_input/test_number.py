@@ -1,6 +1,4 @@
 """Tests for redbrick.cli.input.number."""
-from unittest.mock import patch, Mock
-
 import pytest
 from redbrick.cli.input import number
 

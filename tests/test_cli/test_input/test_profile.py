@@ -1,6 +1,4 @@
 """Tests for redbrick.cli.input.profile."""
-from unittest.mock import patch
-
 import pytest
 
 from redbrick.cli.input import profile
