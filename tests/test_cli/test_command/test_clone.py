@@ -41,10 +41,10 @@ def test_handler(tmpdir):
     project_dir = os.path.join(str(tmpdir), "project")
     _, cli = public.cli_parser(only_parser=False)
 
-    with patch.object(cli.clone, "handle_clone") as handle_clone:
+    with patch.object(cli.clone, "handle_clone"):
         args = argparse.Namespace(command=cli.CLONE, path=project_dir)
         cli.clone.handler(args)
-        handle_clone.assert_called_once()
+        cli.clone.handle_clone.assert_called_once()
 
 
 @pytest.mark.unit

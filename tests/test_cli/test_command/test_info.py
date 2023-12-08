@@ -18,27 +18,27 @@ def test_handler(prepare_project, monkeypatch):
 
     with (
         patch("redbrick.cli.project.config_path", return_value=config_path_),
-        patch.object(cli.info, "handle_get") as _handle_get,
-        patch.object(cli.info, "handle_set") as _handle_set,
-        patch.object(cli.info, "handle_info") as _handle_info,
+        patch.object(cli.info, "handle_get"),
+        patch.object(cli.info, "handle_set"),
+        patch.object(cli.info, "handle_info"),
     ):
         args = argparse.Namespace(
             command=cli.INFO, path=project_path, get=None, set=None
         )
         cli.info.handler(args)
-        _handle_info.assert_called_once()
+        cli.info.handle_info.assert_called_once()
 
         args = argparse.Namespace(
             command=cli.INFO, path=project_path, get="mock", set=None
         )
         cli.info.handler(args)
-        _handle_get.assert_called_once()
+        cli.info.handle_get.assert_called_once()
 
         args = argparse.Namespace(
             command=cli.INFO, path=project_path, get=None, set="mock"
         )
         cli.info.handler(args)
-        _handle_set.assert_called_once()
+        cli.info.handle_set.assert_called_once()
 
         assert isinstance(cli.info.project, CLIProject)
 
