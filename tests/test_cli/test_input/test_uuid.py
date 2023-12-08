@@ -29,7 +29,7 @@ def test_invalid_uuid_input():
 
 
 @pytest.mark.unit
-def test_empty_uuid_input(mock_input_executor):
+def test_empty_uuid_input():
     """Test `CLIInputUUID.get` with empty input"""
     uuid_input = CLIInputUUID(None, "UUID")
     assert uuid_input.validator("") is False
