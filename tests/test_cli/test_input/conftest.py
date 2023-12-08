@@ -12,7 +12,8 @@ def mock_input_executor():
 
     with patch("InquirerPy.prompts.input.InputPrompt.execute") as mock_execute:
         if is_windows:
-            with patch("windll.kernel32.GetConsoleScreenBufferInfo", return_value=True):
+            # with patch("prompt_toolkit.output.win32.Win32Output.get_win32_screen_buffer_info", return_value=True):
+            with patch("prompt_toolkit.output.defaults.create_output"):
                 yield mock_execute
         else:
             yield mock_execute
