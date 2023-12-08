@@ -55,12 +55,12 @@ def test_get_from_args():
 
 
 @pytest.mark.unit
-def test_get_from_prompt():
+def test_get_from_prompt(mock_fuzzy_executor):
     """Test `CLIInputSelect.get` from prompt"""
+    mock_fuzzy_executor.return_value = "2"
     cli_input_select = CLIInputSelect(None, "test", ["1", "2", "3"])
-    with patch("InquirerPy.prompts.fuzzy.FuzzyPrompt.execute", return_value="2"):
-        result = cli_input_select.get()
-        assert result == "2"
+    result = cli_input_select.get()
+    assert result == "2"
 
 
 @pytest.mark.unit
