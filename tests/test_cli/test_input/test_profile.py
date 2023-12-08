@@ -1,15 +1,21 @@
-import pytest
+"""Tests for redbrick.cli.input.profile."""
 from unittest.mock import patch
+
+import pytest
 
 from redbrick.cli.input import profile
 
 
+@pytest.mark.unit
 def test_cli_input_params_filtrator():
+    """Test `CLIInputProfile.filtrator`"""
     handler = profile.CLIInputProfile(entity=None, profiles=[], add=False, default=None)
     assert handler.filtrator(" test ") == "test"
 
 
+@pytest.mark.unit
 def test_cli_input_params_validator_add_is_false():
+    """Test `CLIInputProfile.validator`"""
     handler = profile.CLIInputProfile(
         entity=None, profiles=["profile1", "invalid@profile"], add=False, default=None
     )
@@ -19,7 +25,9 @@ def test_cli_input_params_validator_add_is_false():
     assert handler.validator("default") is False
 
 
+@pytest.mark.unit
 def test_cli_input_params_validator_add_is_true():
+    """Test `CLIInputProfile.validator`"""
     handler = profile.CLIInputProfile(
         entity=None, profiles=["profile1"], add=True, default=None
     )
@@ -27,15 +35,19 @@ def test_cli_input_params_validator_add_is_true():
     assert handler.validator("profile2") is True
 
 
+@pytest.mark.unit
 def test_cli_input_profile_get_from_args():
+    """Test `CLIInputProfile.validator`"""
     handler = profile.CLIInputProfile(
         entity="profile1", profiles=["profile1"], add=False, default=None
     )
     assert handler.get() == "profile1"
 
 
+@pytest.mark.unit
 @patch("InquirerPy.prompts.fuzzy.FuzzyPrompt.execute")
 def test_cli_input_profile_get_fuzzy_prompt(mock_fuzzy_prompt):
+    """Test `CLIInputProfile.get` with add=False"""
     mock_fuzzy_prompt.return_value = "selected_profile"
     handler = profile.CLIInputProfile(
         entity=None, profiles=["profile1"], add=False, default=None
@@ -43,8 +55,10 @@ def test_cli_input_profile_get_fuzzy_prompt(mock_fuzzy_prompt):
     assert handler.get() == "selected_profile"
 
 
+@pytest.mark.unit
 @patch("InquirerPy.prompts.input.InputPrompt.execute")
 def test_cli_input_profile_get_input_prompt(mock_input_prompt):
+    """Test `CLIInputProfile.get` with add=True"""
     mock_input_prompt.return_value = "new_profile"
     handler = profile.CLIInputProfile(
         entity=None, profiles=["profile1"], add=True, default=None
@@ -52,7 +66,9 @@ def test_cli_input_profile_get_input_prompt(mock_input_prompt):
     assert handler.get() == "new_profile"
 
 
+@pytest.mark.unit
 def test_cli_input_profile_get_no_profiles():
+    """Test `CLIInputProfile.get` with no profiles"""
     handler = profile.CLIInputProfile(entity=None, profiles=[], add=False, default=None)
     with pytest.raises(ValueError, match="No profiles available"):
         handler.get()
