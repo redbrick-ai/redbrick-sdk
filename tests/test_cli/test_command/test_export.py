@@ -1,4 +1,4 @@
-"""Tests for `redbrick.cli.command.upload`."""
+"""Tests for `redbrick.cli.command.export`."""
 import argparse
 import json
 import os
@@ -32,8 +32,8 @@ def test_handler(prepare_project, monkeypatch):
 def test_handle_export(
     mock_export_controller, monkeypatch, new_tax
 ):  # pylint: disable=too-many-locals
-    """Test the `CLIUploadController.handle_upload` when on different
-    values of the "json" argument
+    """Test the `CLIUploadController.handle_upload` with different
+    values of the "new_tax" argument
     """
     controller: CLIExportController
     controller, project_path = mock_export_controller
