@@ -56,10 +56,9 @@ def test_cli_input_profile_get_fuzzy_prompt(mock_fuzzy_prompt):
 
 
 @pytest.mark.unit
-@patch("InquirerPy.prompts.input.InputPrompt.execute")
-def test_cli_input_profile_get_input_prompt(mock_input_prompt):
+def test_cli_input_profile_get_input_prompt(mock_input_executor):
     """Test `CLIInputProfile.get` with add=True"""
-    mock_input_prompt.return_value = "new_profile"
+    mock_input_executor.return_value = "new_profile"
     handler = profile.CLIInputProfile(
         entity=None, profiles=["profile1"], add=True, default=None
     )

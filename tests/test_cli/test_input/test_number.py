@@ -37,16 +37,13 @@ def test_validator_invalid_float():
 
 
 @pytest.mark.unit
-def test_get_from_args():
+def test_get_from_args(mock_input_executor):
     """Test `CLIInputNumber.get` from args"""
-    mock_input_prompt = Mock(return_value="42")
-    with patch.object(
-        number.InputPrompt, "execute", mock_input_prompt
-    ) as mock_input_prompt:
-        input_handler = number.CLIInputNumber("42", "Test")
-        result = input_handler.get()
-        assert result == "42"
-        mock_input_prompt.assert_not_called()
+    mock_input_executor.return_value = "42"
+    input_handler = number.CLIInputNumber("42", "Test")
+    result = input_handler.get()
+    assert result == "42"
+    mock_input_executor.assert_not_called()
 
 
 @pytest.mark.unit
