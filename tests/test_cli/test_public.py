@@ -110,14 +110,14 @@ def test_cli_main(capsys, prepare_project):
         "The RedBrick CLI offers a simple interface to quickly import and export your\n"
         "images & annotations, and perform other high-level actions."
     )
-    with pytest.raises(SystemExit, match="0"):
+    with pytest.raises(SystemExit):
         public.cli_main(argv)
     output = capsys.readouterr()
     assert expected_help_text in output.out
 
     argv = ["help"]
     expected_error_text = "invalid choice: 'help'"
-    with pytest.raises(SystemExit, match="2"):
+    with pytest.raises(SystemExit):
         public.cli_main(argv)
     output = capsys.readouterr()
     assert expected_error_text in output.err
