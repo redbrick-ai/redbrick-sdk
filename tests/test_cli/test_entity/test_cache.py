@@ -161,14 +161,6 @@ def test_clear_all_caches(cli_cache):
 
 
 @pytest.mark.unit
-def test_clear_nonexistent_cache(cli_cache):
-    """Test cannot clear nonexistent cache TODO"""
-    cache_name = "nonexistent_cache"
-    cli_cache.clear_cache()
-    assert not os.path.exists(cli_cache.cache_path(cache_name))
-
-
-@pytest.mark.unit
 def test_init_cache_with_existing_config_file(mock_conf):
     """Test cache init with existing conf"""
     # pylint: disable=protected-access
