@@ -39,9 +39,10 @@ def _write_creds(
                 key = {api_key}
                 org = {org_id}
                 url = {url}
+                [default]
+                profile = {profile}
             """
         )
-    os.environ[CLICredentials.ENV_VAR] = profile
 
 
 def mock_method(*args, response=None):  # pylint: disable=unused-argument
