@@ -1,8 +1,11 @@
 """Tests for `redbrick.utils.rb_label_utils`."""
+import pytest
+
 from redbrick.utils import rb_label_utils
-from tests.test_repo import fixtures as repo_fixtures
+from tests.fixtures import repo as repo_fixtures
 
 
+@pytest.mark.unit
 def test_clean_rb_label():
     """Test clean_rb_label function"""
     input_label = {"key1": "value1", "key2": None, "key3": "value3"}
@@ -10,6 +13,7 @@ def test_clean_rb_label():
     assert rb_label_utils.clean_rb_label(input_label) == expected_result
 
 
+@pytest.mark.unit
 def test_user_format():
     """Test  rb_label_utils.user_format function"""
     users = {"RB:123": "System", "API:456": "API Key", "user123": "User123"}
@@ -19,6 +23,7 @@ def test_user_format():
     assert rb_label_utils.user_format("unknown_user", users) == "unknown_user"
 
 
+@pytest.mark.unit
 def test_from_rb_task_data():
     """Test rb_label_utils.from_rb_task_data function"""
     task_data = {
@@ -37,6 +42,7 @@ def test_from_rb_task_data():
     assert result == expected_result
 
 
+@pytest.mark.unit
 def test_from_rb_sub_task():
     """Test rb_label_utils.from_rb_sub_task function"""
     sub_task = {
@@ -61,6 +67,7 @@ def test_from_rb_sub_task():
     assert result == expected_result
 
 
+@pytest.mark.unit
 def test_from_rb_consensus_info():
     """Test rb_label_utils.from_rb_consensus_info function"""
     # pylint: disable=line-too-long
@@ -109,6 +116,7 @@ def test_from_rb_consensus_info():
     assert result == expected_result
 
 
+@pytest.mark.unit
 def test_flat_rb_format():
     """Test rb_label_utils.flat_rb_format function"""
     # pylint: disable=too-many-locals
@@ -200,6 +208,7 @@ def test_flat_rb_format():
     assert result == expected_result
 
 
+@pytest.mark.unit
 def test_parse_entry_latest():
     """Test rb_label_utils.parse_entry_latest function"""
     # pylint: disable=line-too-long
@@ -268,6 +277,7 @@ def test_parse_entry_latest():
     assert result == expected
 
 
+@pytest.mark.unit
 def test_dicom_rb_series(mock_labels):
     """Test dicom_rb_series function"""
     item_index_map = {}
@@ -302,6 +312,7 @@ def test_dicom_rb_series(mock_labels):
     assert all([series[k]] for k in ["binaryMask", "semanticMask", "pngMask"])
 
 
+@pytest.mark.unit
 def test_dicom_rb_format():
     """Test dicom_rb_format function"""
     # Create a sample task and taxonomy

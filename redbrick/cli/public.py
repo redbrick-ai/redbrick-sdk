@@ -1,7 +1,7 @@
 """Main file for CLI."""
 import sys
 import argparse
-from typing import Any, List, Optional
+from typing import List, Optional, Any
 
 import shtab
 
@@ -113,7 +113,9 @@ associated with every task, including:
             raise argparse.ArgumentError(None, "")
 
 
-def cli_parser(only_parser: bool = True) -> Any:
+def cli_parser(
+    only_parser: bool = True,
+) -> Any:
     """Initialize argument parser."""
     parser = argparse.ArgumentParser(
         description="The RedBrick CLI offers a simple interface to quickly import and "

@@ -1,10 +1,13 @@
 """Tests for `redbrick.utils.rb_event_utils`."""
 from typing import Dict
 
+import pytest
+
 from redbrick import TaskEventTypes
 from redbrick.utils import rb_event_utils
 
 
+@pytest.mark.unit
 def test_comment_format():
     """Test a basic comment"""
     comment = {
@@ -27,6 +30,7 @@ def test_comment_format():
     }
 
 
+@pytest.mark.unit
 def test_task_event_format():
     """Test a task creation event"""
     task: Dict = {
@@ -85,6 +89,7 @@ def test_task_event_format():
     assert formatted_task_event["events"][1]["issueResolved"] is True
 
 
+@pytest.mark.unit
 def test_task_event_format_additional_paths():
     """Test a task event with a task acceptance"""
     task = {

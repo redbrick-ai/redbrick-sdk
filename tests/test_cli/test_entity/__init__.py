@@ -1,0 +1,1 @@
+"""CLI Entity Tests"""

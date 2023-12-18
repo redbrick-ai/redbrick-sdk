@@ -4,6 +4,7 @@ import pytest
 from redbrick.utils import rb_tax_utils
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize("is_new", [True, False])
 def test_format_taxonomy(is_new):
     """Test for rb_tax_utils.format_taxonomy"""
@@ -33,6 +34,7 @@ def test_format_taxonomy(is_new):
         assert set(result) == set(common_keys + v1_keys)
 
 
+@pytest.mark.unit
 def test_validate_attribute():
     """Test for rb_tax_utils.validate_attribute"""
     attribute = {"name": "Attribute1", "attrType": "TypeA", "attrId": "ID1"}
@@ -41,6 +43,7 @@ def test_validate_attribute():
     rb_tax_utils.validate_attribute(attribute, message)
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize("missing", ["name", "attrType", "attrId"])
 def test_validate_attribute_missing_attr(missing):
     """Test for rb_tax_utils.validate_attribute with missing attributes"""
@@ -52,6 +55,7 @@ def test_validate_attribute_missing_attr(missing):
         rb_tax_utils.validate_attribute(attribute, message)
 
 
+@pytest.mark.unit
 def test_validate_taxonomy():
     """Test for rb_tax_utils.validate_taxonomy"""
     study_classify = [{"name": "Study1", "attrType": "TypeA", "attrId": "ID1"}]
@@ -71,6 +75,7 @@ def test_validate_taxonomy():
     )
 
 
+@pytest.mark.unit
 def test_validate_taxonomy_empty():
     """Test for rb_tax_utils.validate_taxonomy with empty args"""
     study_classify = []
@@ -83,6 +88,7 @@ def test_validate_taxonomy_empty():
     )
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize("missing", ["category", "classId", "labelType"])
 def test_validate_taxonomy_missing_object_types_attr(missing):
     """Test for rb_tax_utils.validate_taxonomy with missing object_type attributes"""

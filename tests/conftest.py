@@ -1,17 +1,10 @@
 """Fixtures for all tests"""
 import pytest
 
-from redbrick import RBContext
+from redbrick import RBContext, _populate_context
 from redbrick.common.client import RBClient
 from redbrick.export import Export
-from redbrick.repo import (
-    ExportRepo,
-    LabelingRepo,
-    UploadRepo,
-    SettingsRepo,
-    ProjectRepo,
-    WorkspaceRepo,
-)
+from redbrick.repo import ExportRepo
 
 
 @pytest.fixture(scope="function")
@@ -20,6 +13,16 @@ def rb_context() -> RBContext:
     context = RBContext(
         api_key="mock_api_key_000000000000000000000000000000", url="mock_url"
     )
+    return context
+
+
+@pytest.fixture(scope="function")
+def rb_context_full() -> RBContext:
+    """Get a new mock RBContext for each test"""
+    context = RBContext(
+        api_key="mock_api_key_000000000000000000000000000000", url="mock_url"
+    )
+    context = _populate_context(context)
     return context
 
 
@@ -40,24 +43,6 @@ def mock_export_repo(
     return export_repo
 
 
-def _mock_populate_context(
-    context: RBContext,
-    export_repo=None,
-    labeling_repo=None,
-    upload_repo=None,
-    settings_repo=None,
-    project_repo=None,
-    workspace_repo=None,
-) -> RBContext:
-    context.export = export_repo or ExportRepo(context.client)
-    context.labeling = labeling_repo or LabelingRepo(context.client)
-    context.upload = upload_repo or UploadRepo(context.client)
-    context.settings = settings_repo or SettingsRepo(context.client)
-    context.project = project_repo or ProjectRepo(context.client)
-    context.workspace = workspace_repo or WorkspaceRepo(context.client)
-    return context
-
-
 @pytest.fixture(scope="function")
 def mock_export(
     mock_export_repo: ExportRepo,  # pylint: disable=redefined-outer-name
@@ -66,7 +51,8 @@ def mock_export(
     context = RBContext(
         api_key="mock_api_key_000000000000000000000000000000", url="mock_url"
     )
-    context = _mock_populate_context(context, export_repo=mock_export_repo)
+    context = _populate_context(context)
+    context.export = mock_export_repo
     export = Export(
         context=context,
         org_id="mock_org_id",

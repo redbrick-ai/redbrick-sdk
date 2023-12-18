@@ -10,6 +10,7 @@ import pytest
 from redbrick.utils import files
 
 
+@pytest.mark.unit
 def test_get_file_type():
     """Test files.get_file_type function"""
     assert files.get_file_type("image.png") == ("png", "image/png")
@@ -19,6 +20,7 @@ def test_get_file_type():
         files.get_file_type("document.pdf")
 
 
+@pytest.mark.unit
 def test_find_files_recursive(create_temporary_files):
     """Test files.find_files_recursive function"""
     temp_dir, file_paths = create_temporary_files
@@ -41,6 +43,7 @@ def test_find_files_recursive(create_temporary_files):
     assert set(reduce(add, result)) == set(file_paths[:4])
 
 
+@pytest.mark.unit
 def test_uniquify_path(create_temporary_files):
     """Test files.uniquify_path function"""
     _, file_paths = create_temporary_files
@@ -48,12 +51,14 @@ def test_uniquify_path(create_temporary_files):
     assert os.path.exists(new_path) is False
 
 
+@pytest.mark.unit
 def test_is_dicom_file(dicom_file_and_image):
     """Test files.is_dicom_file function"""
     file_path, _ = dicom_file_and_image
     assert files.is_dicom_file(file_path) is True
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_upload_files(nifti_instance_files_png):
     """Test files.upload_files function"""
@@ -88,6 +93,7 @@ async def test_upload_files(nifti_instance_files_png):
     assert upload_dataset == file_dataset
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_upload_files__uncompressed_file(create_temporary_files):
     """Test files.upload_files gzips uncompressed files before upload"""
@@ -125,6 +131,7 @@ async def test_upload_files__uncompressed_file(create_temporary_files):
     assert upload_dataset == file_dataset
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_download_files(tmpdir):
     """Test files.download_files function"""

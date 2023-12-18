@@ -1,12 +1,12 @@
 """Tests for redbrick.mock_export.public"""
+import os
 import typing as t
 from unittest.mock import patch, Mock, AsyncMock, MagicMock, mock_open
 
 import pytest
 
 import redbrick.export
-from tests.fixtures import export as export_fixtures
-from tests.test_repo import fixtures as repo_fixtures
+from tests.fixtures import export as export_fixtures, repo as repo_fixtures
 
 
 @pytest.mark.unit
@@ -39,12 +39,12 @@ def test_get_raw_data_latest(mock_export):
     ],
 )
 async def test_download_task_items(
-    mock_export, rt_struct, taxonomy, check_convert_called
+    mock_export, rt_struct, taxonomy, check_convert_called, tmpdir
 ):
     """Test `redbrick.export.public.Export._download_task_items`"""
     task = export_fixtures.get_tasks_resp[2]
     storage_id = "storage_id"
-    parent_dir = "parent_dir"
+    parent_dir = str(tmpdir)
 
     async def mock_download(
         url_path_pairs: t.List[t.Tuple[str, str]], *args
@@ -64,10 +64,10 @@ async def test_download_task_items(
     if check_convert_called:
         mock_convert.assert_called_once()
     assert series_dirs == [
-        "parent_dir/BraTS2021_00005/A",
-        "parent_dir/BraTS2021_00005/B",
-        "parent_dir/BraTS2021_00005/C",
-        "parent_dir/BraTS2021_00005/D",
+        os.path.join(parent_dir, "BraTS2021_00005", "A"),
+        os.path.join(parent_dir, "BraTS2021_00005", "B"),
+        os.path.join(parent_dir, "BraTS2021_00005", "C"),
+        os.path.join(parent_dir, "BraTS2021_00005", "D"),
     ]
     assert len(series_dirs) == len(task["series"])
 
@@ -164,7 +164,7 @@ async def test_export_nifti_label_data(mock_export, task_file, get_task, returns
 
 
 @pytest.mark.unit
-def test_export_tasks(mock_export):
+def test_export_tasks(mock_export, tmpdir):
     """Test `redbrick.export.public.Export.export_tasks`"""
     # Mock the _get_raw_data_latest method
     taxonomy = {
@@ -181,6 +181,7 @@ def test_export_tasks(mock_export):
     class_map = {"Category1": [255, 0, 0]}
     color_map = {"class1": [255, 0, 0]}
     task_id_to_tasks = {x["taskId"]: x for x in export_fixtures.get_tasks_resp}
+    destination_dir = str(tmpdir)
 
     # patch methods
     mock_export.context.project.get_taxonomy = MagicMock(return_value=taxonomy)
@@ -197,7 +198,7 @@ def test_export_tasks(mock_export):
 
     # Mock with_files=True and test
     task_ids = set()
-    for task_ in mock_export.export_tasks():
+    for task_ in mock_export.export_tasks(destination=destination_dir):
         assert isinstance(task_, dict)
         task_ids.add(task_["taskId"])
     assert task_ids == set(task_id_to_tasks)
@@ -214,7 +215,7 @@ def test_export_tasks(mock_export):
                     without_json=False,
                     without_masks=False,
                     png=True,
-                    destination="/tmp/mock_segmentation_dir",
+                    destination=destination_dir,
                 )
             )
     open_mock.assert_called_once()
