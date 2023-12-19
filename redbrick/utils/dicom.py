@@ -420,19 +420,19 @@ async def process_nifti_upload(
                         delete_files.append(new_filename)
                         files[file_idx] = new_filename
 
-            imgs = list(map(nib_load, files))
+            base_img = nib_load(files[0])
             instance_map: Dict[int, List[int]] = {}
             reverse_instance_map: Dict[Tuple[int, ...], int] = {}
 
-            if not isinstance(imgs[0], Nifti1Image) and not isinstance(
-                imgs[0], Nifti2Image
+            if not isinstance(base_img, Nifti1Image) and not isinstance(
+                base_img, Nifti2Image
             ):
                 return None, {}
 
-            base_data = imgs[0].get_fdata(caching="unchanged")
+            base_data = base_img.get_fdata(caching="unchanged")
 
-            if imgs[0].get_data_dtype() != numpy.uint16:
-                imgs[0].set_data_dtype(numpy.uint16)
+            if base_img.get_data_dtype() != numpy.uint16:
+                base_img.set_data_dtype(numpy.uint16)
                 base_data = numpy.round(base_data).astype(numpy.uint16)  # type: ignore
 
             if base_data.ndim != 3:
@@ -447,11 +447,12 @@ async def process_nifti_upload(
                     instance_map[inst] = [inst]
                     reverse_instance_map[(inst,)] = inst
 
-            for img_idx, img in enumerate(imgs):
+            for img_idx, file_ in enumerate(files):
                 if not img_idx:
                     continue
 
-                data = img.get_fdata()  # type: ignore
+                img = nib_load(file_)
+                data = img.get_fdata(caching="unchanged")  # type: ignore
                 if base_data.shape != data.shape:
                     return None, {}
 
@@ -478,13 +479,14 @@ async def process_nifti_upload(
                 set(range(1, 65536)) - instances - used_instances, reverse=True
             )
 
-            for img in imgs[1:]:
+            for file_ in files[1:]:
+                img = nib_load(file_)
                 if not isinstance(img, Nifti1Image) and not isinstance(
                     img, Nifti2Image
                 ):
                     return None, {}
 
-                data = img.get_fdata()
+                data = img.get_fdata(caching="unchanged")
                 if img.get_data_dtype() != numpy.uint16:
                     data = numpy.round(data).astype(numpy.uint16)  # type: ignore
 
@@ -509,15 +511,15 @@ async def process_nifti_upload(
                 base_data = numpy.where(data, data, base_data)
 
             if group_instances and group_instances[0] <= 255:
-                imgs[0].set_data_dtype(numpy.uint8)
+                base_img.set_data_dtype(numpy.uint8)
                 base_data = numpy.asarray(base_data, dtype=numpy.uint8)
             else:
                 base_data = numpy.asarray(base_data, dtype=numpy.uint16)
 
-            if isinstance(imgs[0], Nifti1Image):
-                new_img = Nifti1Image(base_data, imgs[0].affine, imgs[0].header)
+            if isinstance(base_img, Nifti1Image):
+                new_img = Nifti1Image(base_data, base_img.affine, base_img.header)
             else:
-                new_img = Nifti2Image(base_data, imgs[0].affine, imgs[0].header)
+                new_img = Nifti2Image(base_data, base_img.affine, base_img.header)
 
             dirname = os.path.join(config_path(), "temp")
             if not os.path.exists(dirname):
