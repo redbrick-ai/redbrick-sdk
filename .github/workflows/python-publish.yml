@@ -35,8 +35,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
+          python -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -e .[dev]
       - name: Lint + Unit Tests
         run: make test
 
@@ -51,12 +52,13 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
+          python -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -e .[dev]
       - name: Build and publish
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          python -m build
-          twine upload dist/*
+          .venv/bin/python -m build
+          .venv/bin/twine upload dist/*
