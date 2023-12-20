@@ -47,7 +47,9 @@ async def gather_with_concurrency(
 
     coros = [sem_task(task) for task in tasks]
     if not progress_bar_name:
-        return await asyncio.gather(*coros, return_exceptions=return_exceptions)
+        return await asyncio.gather(  # type: ignore
+            *coros, return_exceptions=return_exceptions
+        )
 
     async def ordered_coroutine(
         idx: int, task: Coroutine[Any, Any, ReturnType]

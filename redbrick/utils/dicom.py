@@ -201,7 +201,7 @@ def convert_to_png(
     for label in labels:
         instance_class_map[label["dicom"]["instanceid"]] = label["classid"] + 1
         category = "::".join(label["category"][0][1:])
-        cat_class_map[f"category-{label['classid']+1}"] = category
+        cat_class_map[f"category-{label['classid'] + 1}"] = category
         cat_class_map[f"instance-{label['dicom']['instanceid']}"] = category
         for group_id in label["dicom"].get("groupids", []) or []:
             if f"instance-{group_id}" in cat_class_map:

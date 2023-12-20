@@ -36,7 +36,7 @@ def _get_middle_stages(reviews: int, passed_name: str) -> Tuple[List[Dict], str]
                 "stageName": f"Review_{i}",
                 "stageConfig": {},
                 "routing": {
-                    "passed": passed_name if i == reviews else f"Review_{i+1}",
+                    "passed": passed_name if i == reviews else f"Review_{i + 1}",
                     "failed": feedback_stage["stageName"],
                 },
             }

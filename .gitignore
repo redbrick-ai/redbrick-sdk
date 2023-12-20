@@ -201,3 +201,4 @@ LOCAL
 LOCAL*
 .vscode
 .graphqlrc
+.venv/

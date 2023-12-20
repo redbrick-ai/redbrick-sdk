@@ -97,7 +97,7 @@ def version_check(current_version: str) -> None:
                     ),
                 ).strip()
                 logger.info(
-                    f"{version_name}\n{'-'*len(version_name)}\n{version_log}\n\n"
+                    f"{version_name}\n{'-' * len(version_name)}\n{version_log}\n\n"
                 )
 
         cache_config["version"]["latest_version"] = latest_version
