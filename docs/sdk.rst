@@ -6,13 +6,13 @@ functions for programmatically manipulating data, importing annotations, assigni
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters
+   :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, Stage, LabelStage, ReviewStage
    :show-inheritance:
 
 Organization
 ----------------------
 .. automodule:: redbrick.organization.RBOrganization
-   :members: name, org_id, create_workspace, create_project, get_project, taxonomies, projects_raw, projects, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy
+   :members: name, org_id, create_workspace, create_project, create_project_advanced, get_project, taxonomies, projects_raw, projects, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy
    :show-inheritance:
 
 Workspace

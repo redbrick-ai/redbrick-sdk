@@ -22,13 +22,14 @@ from redbrick.common.constants import DEFAULT_URL
 from redbrick.organization import RBOrganization
 from redbrick.workspace import RBWorkspace
 from redbrick.project import RBProject
+from redbrick.stage import Stage, LabelStage, ReviewStage
 
 from redbrick.utils.logging import logger
 from redbrick.utils.common_utils import config_migration
 
 from .version_check import version_check
 
-__version__ = "2.14.2"
+__version__ = "2.14.3"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -177,6 +178,9 @@ __all__ = [
     "ImportTypes",
     "TaskEventTypes",
     "TaskFilters",
+    "Stage",
+    "LabelStage",
+    "ReviewStage",
     "RBOrganization",
     "RBWorkspace",
     "RBProject",

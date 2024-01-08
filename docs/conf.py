@@ -69,3 +69,4 @@ html_static_path = []  # type: ignore
 # https://github.com/readthedocs/sphinx_rtd_theme/issues/455).
 html_static_path = ["_static"]
 html_logo = "_static/logo.png"
+autodoc_member_order = "bysource"

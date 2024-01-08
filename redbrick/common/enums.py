@@ -6,6 +6,7 @@ class StorageMethod:
     """Built-in Storage Method ID's that can be used to import data.
 
     - ``PUBLIC`` - Access files from a public cloud storage service using their absolute URLs.
+                        (i.e. files available publicly)
     - ``REDBRICK`` - Access files stored on RedBrick AI's servers
                         (i.e. files uploaded directly to RBAI from a local machine)
     """

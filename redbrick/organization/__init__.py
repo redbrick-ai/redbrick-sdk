@@ -7,10 +7,11 @@ from tqdm import tqdm  # type: ignore
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
 from redbrick.workspace import RBWorkspace
+from redbrick.stage import Stage, get_project_stages, get_middle_stages
+
 from redbrick.utils.logging import logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_tax_utils import format_taxonomy, validate_taxonomy
-from .basic_project import get_basic_project
 
 
 class RBOrganization:
@@ -109,6 +110,82 @@ class RBOrganization:
 
         return RBWorkspace(self.context, self._org_id, workspace_data["workspaceId"])
 
+    def create_project_advanced(
+        self,
+        name: str,
+        taxonomy_name: str,
+        stages: List[Stage],
+        exists_okay: bool = False,
+        workspace_id: Optional[str] = None,
+    ) -> RBProject:
+        """
+        Create a project within the organization.
+
+        This method creates an organization in a similar fashion to the
+        quickstart on the RedBrick Ai create project page.
+
+        Parameters
+        --------------
+        name: str
+            A unique name for your project
+
+        taxonomy_name: str
+            The name of the taxonomy you want to use for this project.
+            Taxonomies can be found on the left side bar of the platform.
+
+        stages: List[Stage]
+            List of stage configs.
+
+        exists_okay: bool = False
+            Allow projects with the same name to be returned instead of trying to create
+            a new project. Useful for when running the same script repeatedly when you
+            do not want to keep creating new projects.
+
+        workspace_id: Optional[str] = None
+            The workspace id that you want to add this project to.
+
+        Returns
+        --------------
+        redbrick.project.RBProject
+            A RedBrick Project object.
+        """
+        if exists_okay:
+            logger.info("exists_okay=True... checking for project with same name")
+            all_projects = self.projects_raw()
+            same_name = list(filter(lambda x: x["name"] == name, all_projects))
+            if same_name:
+                temp = RBProject(self.context, self.org_id, same_name[0]["projectId"])
+                if temp.td_type != "DICOM_SEGMENTATION":
+                    raise ValueError(
+                        "Project with matching name exists, but it has a different type"
+                    )
+                if temp.taxonomy_name != taxonomy_name:
+                    raise ValueError(
+                        "Project with matching name exists, but it has a different taxonomy"
+                    )
+
+                logger.warning(
+                    "exists_okay=True... returning project that already existed"
+                )
+                return temp
+
+        try:
+            project_data = self.context.project.create_project(
+                self.org_id,
+                name,
+                get_project_stages(stages),
+                "DICOM_SEGMENTATION",
+                taxonomy_name,
+                workspace_id,
+            )
+        except ValueError as error:
+            raise Exception(
+                "Project with same name exists, try setting exists_okay=True to"
+                + " return this project instead of creating a new one"
+            ) from error
+
+        return RBProject(self.context, self.org_id, project_data["projectId"])
+
     def create_project(
         self,
         name: str,
@@ -149,44 +226,9 @@ class RBOrganization:
         redbrick.project.RBProject
             A RedBrick Project object.
         """
-        stages = get_basic_project(reviews)
-
-        if exists_okay:
-            logger.info("exists_okay=True... checking for project with same name")
-            all_projects = self.projects_raw()
-            same_name = list(filter(lambda x: x["name"] == name, all_projects))
-            if same_name:
-                temp = RBProject(self.context, self.org_id, same_name[0]["projectId"])
-                if temp.td_type != "DICOM_SEGMENTATION":
-                    raise ValueError(
-                        "Project with matching name exists, but it has a different type"
-                    )
-                if temp.taxonomy_name != taxonomy_name:
-                    raise ValueError(
-                        "Project with matching name exists, but it has a different taxonomy"
-                    )
-
-                logger.warning(
-                    "exists_okay=True... returning project that already existed"
-                )
-                return temp
-
-        try:
-            project_data = self.context.project.create_project(
-                self.org_id,
-                name,
-                stages,
-                "DICOM_SEGMENTATION",
-                taxonomy_name,
-                workspace_id,
-            )
-        except ValueError as error:
-            raise Exception(
-                "Project with same name exists, try setting exists_okay=True to"
-                + " return this project instead of creating a new one"
-            ) from error
-
-        return RBProject(self.context, self.org_id, project_data["projectId"])
+        return self.create_project_advanced(
+            name, taxonomy_name, get_middle_stages(reviews), exists_okay, workspace_id
+        )
 
     def get_project(
         self, project_id: Optional[str] = None, name: Optional[str] = None
