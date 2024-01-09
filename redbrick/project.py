@@ -11,6 +11,7 @@ from redbrick.common.constants import PEERLESS_ERRORS
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
+from redbrick.stage import LabelStage, ReviewStage
 from redbrick.utils.logging import logger
 
 
@@ -139,17 +140,21 @@ class RBProject:
         return self._label_storage
 
     @property
-    def label_stages(self) -> List[Dict]:
+    def label_stages(self) -> List[LabelStage]:
         """Get list of label stages."""
         return [
-            stage for stage in self._stages if stage["brickName"] == "manual-labeling"
+            LabelStage.from_entity(stage)
+            for stage in self._stages
+            if stage["brickName"] == "manual-labeling"
         ]
 
     @property
-    def review_stages(self) -> List[Dict]:
+    def review_stages(self) -> List[ReviewStage]:
         """Get list of review stages."""
         return [
-            stage for stage in self._stages if stage["brickName"] == "expert-review"
+            ReviewStage.from_entity(stage)
+            for stage in self._stages
+            if stage["brickName"] == "expert-review"
         ]
 
     @property

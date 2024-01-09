@@ -14,6 +14,7 @@ import tqdm  # type: ignore
 from redbrick.common.context import RBContext
 from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
 from redbrick.common.export import TaskFilterParams
+from redbrick.stage import LabelStage, ReviewStage
 from redbrick.utils.files import (
     DICOM_FILE_TYPES,
     IMAGE_FILE_TYPES,
@@ -46,8 +47,8 @@ class Export:
         project_id: str,
         output_stage_name: str,
         consensus_enabled: bool,
-        label_stages: List[Dict],
-        review_stages: List[Dict],
+        label_stages: List[LabelStage],
+        review_stages: List[ReviewStage],
         taxonomy_name: str,
     ) -> None:
         """Construct Export object."""
@@ -997,8 +998,8 @@ class Export:
             }]
         """
         # pylint: disable=too-many-branches, too-many-locals, too-many-statements
-        label_stages: List[str] = [stage["stageName"] for stage in self.label_stages]
-        review_stages: List[str] = [stage["stageName"] for stage in self.review_stages]
+        label_stages: List[str] = [stage.stage_name for stage in self.label_stages]
+        review_stages: List[str] = [stage.stage_name for stage in self.review_stages]
         all_stages: List[str] = label_stages + review_stages + [self.output_stage_name]
 
         if stage_name and stage_name not in all_stages:
