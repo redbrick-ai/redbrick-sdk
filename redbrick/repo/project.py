@@ -5,7 +5,7 @@ from datetime import datetime
 
 from redbrick.common.client import RBClient
 from redbrick.common.project import ProjectRepoInterface
-from redbrick.repo.shards import PROJECT_SHARD, TAXONOMY_SHARD
+from redbrick.repo.shards import PROJECT_SHARD, STAGE_SHARD, TAXONOMY_SHARD
 
 
 class ProjectRepo(ProjectRepoInterface):
@@ -37,14 +37,12 @@ class ProjectRepo(ProjectRepoInterface):
 
     def get_stages(self, org_id: str, project_id: str) -> List[Dict]:
         """Get stages."""
-        query = """
-            query sdkGetStagesSDK($orgId: UUID!, $projectId: UUID!){
-                stages(orgId: $orgId, projectId: $projectId){
-                    stageName
-                    brickName
-                    stageConfig
-                }
-            }
+        query = f"""
+            query sdkGetStagesSDK($orgId: UUID!, $projectId: UUID!) {{
+                stages(orgId: $orgId, projectId: $projectId) {{
+                    {STAGE_SHARD}
+                }}
+            }}
         """
         variables = {"orgId": org_id, "projectId": project_id}
         response: Dict[str, List[Dict]] = self.client.execute_query(query, variables)
@@ -357,6 +355,42 @@ class ProjectRepo(ProjectRepoInterface):
         }
         result = self.client.execute_query(query_string, query_variables)
         return bool(result and result.get("updateLabelStorage", {}).get("ok"))
+
+    def update_stage(
+        self, org_id: str, project_id: str, stage_name: str, stage_config: Dict
+    ) -> Tuple[bool, List[Dict]]:
+        """Update project stage."""
+        query_string = f"""
+        mutation updateStageSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $stageName: String!
+            $config: JSONString
+        ) {{
+            updateStage(
+                orgId: $orgId
+                projectId: $projectId
+                stageName: $stageName
+                config: $config
+            ) {{
+                ok
+                pipeline {{
+                    {STAGE_SHARD}
+                }}
+            }}
+        }}
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "stageName": stage_name,
+            "config": json.dumps(stage_config),
+        }
+
+        response = self.client.execute_query(query_string, query_variables)
+        result = (response.get("updateStage", {}) or {}) if response else {}
+        return bool(result.get("ok")), (result.get("pipeline", []) or [])
 
     def get_current_user(self) -> Dict:
         """Get current user."""

@@ -11,7 +11,7 @@ from redbrick.common.constants import PEERLESS_ERRORS
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
-from redbrick.stage import LabelStage, ReviewStage
+from redbrick.stage import Stage, LabelStage, ReviewStage
 from redbrick.utils.logging import logger
 
 
@@ -271,3 +271,14 @@ class RBProject:
         )
         self._label_storage = (storage_id, path)
         return self.label_storage
+
+    def update_stage(self, stage: Stage) -> None:
+        """Update stage."""
+        success, pipeline = self.context.project.update_stage(
+            self.org_id, self.project_id, stage.stage_name, stage.config.to_entity()
+        )
+        if success:
+            if pipeline:
+                self._stages = pipeline
+        else:
+            logger.warning("Error updating stage.")

@@ -2,6 +2,7 @@
 
 
 from dataclasses import dataclass, field
+import json
 from typing import Any, Dict, Optional
 
 from redbrick.common.stage import Stage
@@ -24,6 +25,7 @@ class ModelStage(Stage):
         Stage config.
     """
 
+    @dataclass
     class Config(Stage.Config):
         """Model Stage Config.
 
@@ -39,22 +41,19 @@ class ModelStage(Stage):
             Mapping of model classes to project's taxonomy objects.
         """
 
-        name: Optional[str] = None
+        name: str
         url: Optional[str] = None
         taxonomy_objects: Optional[Dict[str, int]] = None
 
         @classmethod
-        def config_factory(cls) -> "ModelStage.Config":
-            """Get an instance of class."""
-            return cls()
-
-        @classmethod
-        def from_entity(cls, entity: Dict) -> "ModelStage.Config":
+        def from_entity(cls, entity: Optional[Dict] = None) -> "ModelStage.Config":
             """Get object from entity."""
+            if not entity:
+                raise ValueError("Model name is required")
             return cls(
                 name=entity["name"],
                 url=entity.get("url"),
-                taxonomyObjects=entity.get("taxonomy_objects"),
+                taxonomy_objects=entity.get("taxonomyObjects"),
             )
 
         def to_entity(self) -> Dict:
@@ -68,15 +67,18 @@ class ModelStage(Stage):
 
     stage_name: str
     on_submit: Optional[str] = None
-    config: Config = field(default_factory=Config.config_factory)
+    config: Config = field(default_factory=Config.from_entity)
 
     @classmethod
     def from_entity(cls, entity: Dict) -> "ModelStage":
         """Get object from entity"""
+        config = entity.get("stageConfig")
+        if config and isinstance(config, str):
+            config = json.loads(config)
         return cls(
             stage_name=entity["stageName"],
             on_submit=entity["routing"]["nextStageName"],
-            config=cls.Config.from_entity(entity.get("stageConfig") or {}),
+            config=cls.Config.from_entity(config or {}),
         )
 
     def to_entity(self) -> Dict:

@@ -99,6 +99,12 @@ class ProjectRepoInterface(ABC):
         """Set label storage method for a project."""
 
     @abstractmethod
+    def update_stage(
+        self, org_id: str, project_id: str, stage_name: str, stage_config: Dict
+    ) -> Tuple[bool, List[Dict]]:
+        """Update project stage."""
+
+    @abstractmethod
     def get_current_user(self) -> Dict:
         """Get current user."""
 

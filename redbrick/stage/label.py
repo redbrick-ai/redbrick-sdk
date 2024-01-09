@@ -2,6 +2,7 @@
 
 
 from dataclasses import dataclass, field
+import json
 from typing import Dict, Optional
 
 from redbrick.common.stage import Stage
@@ -24,6 +25,7 @@ class LabelStage(Stage):
         Stage config.
     """
 
+    @dataclass
     class Config(Stage.Config):
         """Label Stage Config.
 
@@ -44,18 +46,15 @@ class LabelStage(Stage):
         show_uploaded_annotations: Optional[bool] = None
 
         @classmethod
-        def config_factory(cls) -> "LabelStage.Config":
-            """Get an instance of class."""
-            return cls()
-
-        @classmethod
-        def from_entity(cls, entity: Dict) -> "LabelStage.Config":
+        def from_entity(cls, entity: Optional[Dict] = None) -> "LabelStage.Config":
             """Get object from entity."""
+            if not entity:
+                return cls()
             return cls(
                 auto_assignment=entity.get("autoAssign"),
                 auto_assignment_queue_size=entity.get("queueSize"),
                 show_uploaded_annotations=None
-                if entity.get("blinedAnnotation") is None
+                if entity.get("blindedAnnotation") is None
                 else not entity["blindedAnnotation"],
             )
 
@@ -72,15 +71,18 @@ class LabelStage(Stage):
 
     stage_name: str
     on_submit: Optional[str] = None
-    config: Config = field(default_factory=Config.config_factory)
+    config: Config = field(default_factory=Config.from_entity)
 
     @classmethod
     def from_entity(cls, entity: Dict) -> "LabelStage":
         """Get object from entity"""
+        config = entity.get("stageConfig")
+        if config and isinstance(config, str):
+            config = json.loads(config)
         return cls(
             stage_name=entity["stageName"],
             on_submit=entity["routing"]["nextStageName"],
-            config=cls.Config.from_entity(entity.get("stageConfig") or {}),
+            config=cls.Config.from_entity(config or {}),
         )
 
     def to_entity(self) -> Dict:

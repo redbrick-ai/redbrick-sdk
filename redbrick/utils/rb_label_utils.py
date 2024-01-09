@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional
 import json
 from copy import deepcopy
 
+from redbrick.stage import ReviewStage
+
 
 def clean_rb_label(label: Dict) -> Dict:
     """Clean any None fields."""
@@ -540,7 +542,7 @@ def dicom_rb_format(
     taxonomy: Dict,
     old_format: bool,
     no_consensus: bool,
-    review_stages: List[Dict],
+    review_stages: List[ReviewStage],
 ) -> Dict:
     """Get new dicom rb task format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals, unused-argument
@@ -621,7 +623,7 @@ def dicom_rb_format(
             output["consensusScore"] = task["consensusScore"]
 
         if (
-            task["currentStageName"] in [stage["stageName"] for stage in review_stages]
+            task["currentStageName"] in [stage.stage_name for stage in review_stages]
             and "consensusScore" not in task
         ) or task[
             "currentStageName"

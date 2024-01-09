@@ -2,6 +2,7 @@
 
 
 from dataclasses import dataclass, field
+import json
 from typing import Dict, Optional
 
 from redbrick.common.stage import Stage
@@ -28,6 +29,7 @@ class ReviewStage(Stage):
         Stage config.
     """
 
+    @dataclass
     class Config(Stage.Config):
         """Review Stage Config.
 
@@ -48,13 +50,10 @@ class ReviewStage(Stage):
         auto_assignment_queue_size: Optional[int] = None
 
         @classmethod
-        def config_factory(cls) -> "ReviewStage.Config":
-            """Get an instance of class."""
-            return cls()
-
-        @classmethod
-        def from_entity(cls, entity: Dict) -> "ReviewStage.Config":
+        def from_entity(cls, entity: Optional[Dict] = None) -> "ReviewStage.Config":
             """Get object from entity."""
+            if not entity:
+                return cls()
             return cls(
                 review_percentage=entity.get("reviewPercent"),
                 auto_assignment=entity.get("autoAssign"),
@@ -75,16 +74,19 @@ class ReviewStage(Stage):
     stage_name: str
     on_accept: Optional[str] = None
     on_reject: Optional[str] = None
-    config: Config = field(default_factory=Config.config_factory)
+    config: Config = field(default_factory=Config.from_entity)
 
     @classmethod
     def from_entity(cls, entity: Dict) -> "ReviewStage":
         """Get object from entity"""
+        config = entity.get("stageConfig")
+        if config and isinstance(config, str):
+            config = json.loads(config)
         return cls(
             stage_name=entity["stageName"],
             on_accept=entity["routing"]["passed"],
             on_reject=entity["routing"]["failed"],
-            config=cls.Config.from_entity(entity.get("stageConfig") or {}),
+            config=cls.Config.from_entity(config or {}),
         )
 
     def to_entity(self) -> Dict:

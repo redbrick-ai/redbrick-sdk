@@ -20,6 +20,30 @@ workspace {
 }
 """
 
+STAGE_SHARD = """
+stageName
+brickName
+stageConfig
+routing {
+    ...on NoRouting {
+        placeholder
+    }
+    ...on NextRouting {
+        nextStageName
+    }
+    ...on MultiRouting {
+        stageNames
+    }
+    ...on BooleanRouting {
+        passed
+        failed
+    }
+    ...on FeedbackRouting {
+        feedbackStageName
+    }
+}
+"""
+
 TAXONOMY_SHARD = """
 orgId
 name
