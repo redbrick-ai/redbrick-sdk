@@ -1129,6 +1129,8 @@ class Export:
 
     def get_task_events(
         self,
+        *,
+        task_id: Optional[str] = None,
         only_ground_truth: bool = True,
         concurrency: int = 10,
         from_timestamp: Optional[float] = None,
@@ -1148,6 +1150,9 @@ class Export:
 
         Parameters
         -----------
+        task_id: Optional[str] = None
+            If set, returns events only for the given task.
+
         only_ground_truth: bool = True
             If set to True, will return events for tasks
             that have been completed in your workflow.
@@ -1181,10 +1186,12 @@ class Export:
                 self.context.export.task_events,
                 self.org_id,
                 self.project_id,
+                task_id,
                 "END" if only_ground_truth else None,
                 datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
                 if from_timestamp is not None
                 else None,
+                False,
             ),
             concurrency,
         )

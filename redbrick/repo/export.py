@@ -1,11 +1,11 @@
 """Repo for accessing export apis."""
-from typing import Optional, List, Dict, Sequence, Tuple
+from typing import Any, Optional, List, Dict, Sequence, Tuple
 from datetime import datetime
 from dateutil import parser  # type: ignore
 
 from redbrick.common.export import ExportControllerInterface, TaskFilterParams
 from redbrick.common.client import RBClient
-from redbrick.repo.shards import datapoint_shard, router_task_shard
+from redbrick.repo.shards import datapoint_shard, task_shard, router_task_shard
 
 
 class ExportRepo(ExportControllerInterface):
@@ -55,7 +55,7 @@ class ExportRepo(ExportControllerInterface):
         query_string = f"""
         query taskSDK($orgId: UUID!, $projectId: UUID!, $taskId: UUID!) {{
             task(orgId: $orgId, projectId: $projectId, taskId: $taskId) {{
-                {router_task_shard(presign_items, with_consensus)}
+                {task_shard(presign_items, with_consensus)}
             }}
         }}
         """
@@ -97,7 +97,7 @@ class ExportRepo(ExportControllerInterface):
                 after: $after
             ) {{
                 entries {{
-                    {router_task_shard(presign_items, with_consensus)}
+                    {task_shard(presign_items, with_consensus)}
                 }}
                 cursor
                 cacheTime
@@ -232,13 +232,34 @@ class ExportRepo(ExportControllerInterface):
         self,
         org_id: str,
         project_id: str,
+        task_id: Optional[str] = None,
         stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
+        with_labels: bool = False,
         first: int = 10,
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get task events."""
-        query_string = """
+        query_variables: Dict[str, Any]
+        if task_id:
+            query_string = f"""
+            query taskSDK($orgId: UUID!, $projectId: UUID!, $taskId: UUID!) {{
+                task(orgId: $orgId, projectId: $projectId, taskId: $taskId) {{
+                    {router_task_shard(with_labels)}
+                }}
+            }}
+            """
+            query_variables = {
+                "orgId": org_id,
+                "projectId": project_id,
+                "taskId": task_id,
+            }
+
+            result = self.client.execute_query(query_string, query_variables, True)
+            task = result.get("task") or {}
+            return [task] if task else [], None
+
+        query_string = f"""
         query taskEventsSDK(
             $orgId: UUID!
             $projectId: UUID!
@@ -246,7 +267,7 @@ class ExportRepo(ExportControllerInterface):
             $cacheTime: DateTime
             $first: Int
             $after: String
-        ) {
+        ) {{
             tasksPaged(
                 orgId: $orgId
                 projectId: $projectId
@@ -254,75 +275,13 @@ class ExportRepo(ExportControllerInterface):
                 cacheTime: $cacheTime
                 first: $first
                 after: $after
-            ) {
-                entries {
-                    taskId
-                    currentStageName
-                    datapoint {
-                        name
-                    }
-                    genericEvents {
-                        __typename
-                        ... on TaskEvent {
-                            eventId
-                            createdAt
-                            inputEvent {
-                                currentStageName
-                                overallConsensusScore
-                            }
-                            outputEvent {
-                                currentStageName
-                                outputBool
-                            }
-                            createEvent {
-                                currentStageName
-                                isGroundTruth
-                            }
-                            taskData {
-                                stageName
-                                createdBy
-                            }
-                        }
-                        ... on Comment {
-                            commentId
-                            createdBy {
-                                userId
-                            }
-                            textVal
-                            createdAt
-                            stageName
-                            issueComment
-                            issueResolved
-                            replies {
-                                commentId
-                                createdBy {
-                                    userId
-                                }
-                                textVal
-                                createdAt
-                                stageName
-                                issueComment
-                                issueResolved
-                            }
-                        }
-                        ... on TaskStateChanges {
-                            stageNameAfter: stageName
-                            assignedAtAfter
-                            createdAt
-                            statusBefore
-                            statusAfter
-                            assignedToBefore
-                            assignedToAfter
-                            consensusAssigneesBefore
-                            consensusAssigneesAfter
-                            consensusStatusesBefore
-                            consensusStatusesAfter
-                        }
-                    }
-                }
+            ) {{
+                entries {{
+                    {router_task_shard(with_labels)}
+                }}
                 cursor
-            }
-        }
+            }}
+        }}
         """
 
         query_variables = {
@@ -335,8 +294,8 @@ class ExportRepo(ExportControllerInterface):
         }
 
         result = self.client.execute_query(query_string, query_variables, False)
-        task_events = result.get("tasksPaged", {}) or {}
-        entries: List[Dict] = task_events.get("entries", []) or []
+        task_events = result.get("tasksPaged") or {}
+        entries: List[Dict] = task_events.get("entries") or []
         return entries, task_events.get("cursor")
 
     def active_time(

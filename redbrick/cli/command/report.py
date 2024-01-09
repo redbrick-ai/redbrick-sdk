@@ -44,7 +44,8 @@ class CLIIReportController(CLIReportInterface):
             raise ArgumentError(None, f"Invalid report type: {self.args.type}")
 
         reports = self.project.project.export.get_task_events(
-            self.args.type == self.TYPE_GROUNDTRUTH, self.args.concurrency
+            only_ground_truth=self.args.type == self.TYPE_GROUNDTRUTH,
+            concurrency=self.args.concurrency,
         )
 
         report_file = os.path.abspath(f"report-{int(datetime.now().timestamp())}.json")

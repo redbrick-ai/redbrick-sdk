@@ -33,18 +33,24 @@ def task_event_format(task: Dict, users: Dict[str, str]) -> Dict:
             if task_event.get("createEvent"):
                 event_type = TaskEventTypes.TASK_CREATED
                 event["isGroundTruth"] = task_event["createEvent"]["isGroundTruth"]
+                if task_event["createEvent"].get("priority") is not None:
+                    event["priority"] = task_event["createEvent"]["priority"]
                 if task_event["taskData"]:
                     event["createdBy"] = user_format(
                         task_event["taskData"]["createdBy"], users
                     )
                 prev_stage = task_event["createEvent"]["currentStageName"]
             elif task_event.get("inputEvent"):
+                if task_event["inputEvent"].get("priority") is not None:
+                    event["priority"] = task_event["inputEvent"]["priority"]
                 if task_event["inputEvent"].get("overallConsensusScore") is not None:
                     event_type = TaskEventTypes.CONSENSUS_COMPUTED
                     event["stage"] = prev_stage
                     event["score"] = task_event["inputEvent"]["overallConsensusScore"]
                 prev_stage = task_event["inputEvent"]["currentStageName"]
             elif task_event.get("outputEvent"):
+                if task_event["outputEvent"].get("timeSpentMs") is not None:
+                    event["timeSpentMs"] = task_event["outputEvent"]["timeSpentMs"]
                 if task_event["outputEvent"]["currentStageName"] not in (
                     "Failed_Review",
                     "Output",

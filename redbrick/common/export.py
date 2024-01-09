@@ -79,8 +79,10 @@ class ExportControllerInterface(ABC):
         self,
         org_id: str,
         project_id: str,
+        task_id: Optional[str] = None,
         stage_name: Optional[str] = None,
         cache_time: Optional[datetime] = None,
+        with_labels: bool = False,
         first: int = 10,
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:

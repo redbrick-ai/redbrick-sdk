@@ -286,7 +286,7 @@ def datapoint_shard(raw_items: bool, presigned_items: bool) -> str:
     """
 
 
-def router_task_shard(presigned_items: bool, with_consensus: bool) -> str:
+def task_shard(presigned_items: bool, with_consensus: bool) -> str:
     """Return the task shard for the router query."""
     return f"""
         taskId
@@ -301,5 +301,79 @@ def router_task_shard(presigned_items: bool, with_consensus: bool) -> str:
                 {datapoint_shard(True, presigned_items)}
             }}
             {TASK_DATA_SHARD}
+        }}
+    """
+
+
+def router_task_shard(with_labels: bool) -> str:
+    """Return router task shard for events query."""
+    return f"""
+        taskId
+        currentStageName
+        datapoint {{
+            {datapoint_shard(False, False)}
+        }}
+        priority
+        genericEvents {{
+            __typename
+            ... on TaskEvent {{
+                eventId
+                createdAt
+                createEvent {{
+                    currentStageName
+                    isGroundTruth
+                    priority
+                }}
+                inputEvent {{
+                    currentStageName
+                    overallConsensusScore
+                    priority
+                }}
+                outputEvent {{
+                    currentStageName
+                    outputBool
+                    timeSpentMs
+                }}
+                taskData {{
+                    stageName
+                    createdBy
+                    {TASK_DATA_SHARD if with_labels else ''}
+                }}
+            }}
+            ... on Comment {{
+                commentId
+                createdBy {{
+                    userId
+                }}
+                textVal
+                createdAt
+                stageName
+                issueComment
+                issueResolved
+                replies {{
+                    commentId
+                    createdBy {{
+                        userId
+                    }}
+                    textVal
+                    createdAt
+                    stageName
+                    issueComment
+                    issueResolved
+                }}
+            }}
+            ... on TaskStateChanges {{
+                stageNameAfter: stageName
+                assignedAtAfter
+                createdAt
+                statusBefore
+                statusAfter
+                assignedToBefore
+                assignedToAfter
+                consensusAssigneesBefore
+                consensusAssigneesAfter
+                consensusStatusesBefore
+                consensusStatusesAfter
+            }}
         }}
     """
