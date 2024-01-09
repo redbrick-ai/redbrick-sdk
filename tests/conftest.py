@@ -5,6 +5,7 @@ from redbrick import RBContext, _populate_context
 from redbrick.common.client import RBClient
 from redbrick.export import Export
 from redbrick.repo import ExportRepo
+from redbrick.stage import LabelStage, ReviewStage
 
 
 @pytest.fixture(scope="function")
@@ -59,8 +60,8 @@ def mock_export(
         project_id="mock_project_id",
         output_stage_name="END",
         consensus_enabled=True,
-        label_stages=[{"stageName": "Label"}],
-        review_stages=[{"stageName": "Review_1"}, {"stageName": "Review_2"}],
+        label_stages=[LabelStage(stage_name="Label")],
+        review_stages=[ReviewStage("Review_1"), ReviewStage("Review_2")],
         taxonomy_name="mock_taxonomy_name",
     )
     return export

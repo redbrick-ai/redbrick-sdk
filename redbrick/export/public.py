@@ -1134,6 +1134,7 @@ class Export:
         only_ground_truth: bool = True,
         concurrency: int = 10,
         from_timestamp: Optional[float] = None,
+        with_labels: bool = False,
     ) -> Iterator[Dict]:
         """Generate an audit log of all actions performed on tasks.
 
@@ -1165,6 +1166,9 @@ class Export:
             that were labeled/updated since the given timestamp.
             Format - output from datetime.timestamp()
 
+        with_labels: bool = False
+            Get metadata of labels submitted in each stage.
+
         Returns
         -----------
         Iterator[Dict]
@@ -1174,6 +1178,12 @@ class Export:
                 "events": List[Dict]
             }]
         """
+        # pylint: disable=too-many-locals
+        taxonomy: Dict = {}
+        if with_labels:
+            taxonomy = self.context.project.get_taxonomy(
+                self.org_id, tax_id=None, name=self.taxonomy_name
+            )
         members = self.context.project.get_members(self.org_id, self.project_id)
         users = {}
         for member in members:
@@ -1191,14 +1201,24 @@ class Export:
                 datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
                 if from_timestamp is not None
                 else None,
-                False,
+                with_labels,
             ),
             concurrency,
         )
 
         with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
             for task in progress:
-                yield task_event_format(task, users)
+                task = task_event_format(task, users, with_labels)
+                for event in task["events"]:
+                    if "labels" not in event:
+                        continue
+                    labels = dicom_rb_format(
+                        event["labels"], taxonomy, False, True, self.review_stages
+                    )
+                    event["labels"] = {"series": labels.get("series") or []}
+                    if labels.get("classification") is not None:
+                        event["labels"]["classification"] = labels["classification"]
+                yield task
 
     def get_active_time(
         self,

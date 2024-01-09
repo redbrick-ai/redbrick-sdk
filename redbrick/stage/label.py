@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass, field
 import json
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from redbrick.common.stage import Stage
 
@@ -60,7 +60,7 @@ class LabelStage(Stage):
 
         def to_entity(self) -> Dict:
             """Get entity from object."""
-            entity = {}
+            entity: Dict[str, Any] = {}
             if self.auto_assignment is not None:
                 entity["autoAssign"] = self.auto_assignment
             if self.auto_assignment_queue_size is not None:

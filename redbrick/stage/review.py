@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass, field
 import json
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from redbrick.common.stage import Stage
 
@@ -62,7 +62,7 @@ class ReviewStage(Stage):
 
         def to_entity(self) -> Dict:
             """Get entity from object."""
-            entity = {}
+            entity: Dict[str, Any] = {}
             if self.review_percentage is not None:
                 entity["reviewPercent"] = self.review_percentage
             if self.auto_assignment is not None:

@@ -1,8 +1,9 @@
 """Utilities for working with event objects."""
+import json
 from typing import List, Dict
 
 from redbrick.common.enums import TaskEventTypes
-from redbrick.utils.rb_label_utils import user_format
+from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format, user_format
 
 
 def comment_format(comment: Dict, users: Dict[str, str]) -> Dict:
@@ -17,9 +18,11 @@ def comment_format(comment: Dict, users: Dict[str, str]) -> Dict:
     }
 
 
-def task_event_format(task: Dict, users: Dict[str, str]) -> Dict:
+def task_event_format(
+    task: Dict, users: Dict[str, str], with_labels: bool = False
+) -> Dict:
     """Convert task to event format."""
-    # pylint: disable=too-many-branches, too-many-statements
+    # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     events: List[Dict] = []
     prev_stage = None
     prev_assignee = None
@@ -73,6 +76,35 @@ def task_event_format(task: Dict, users: Dict[str, str]) -> Dict:
                             prev_assignee or task_event["taskData"]["createdBy"], users
                         )
                 prev_stage = task_event["outputEvent"]["currentStageName"]
+
+            if with_labels and task_event.get("taskData"):
+                updated_by = task_event["taskData"]["createdByEmail"]
+                updated_at = task_event["taskData"]["createdAt"]
+                labels = [
+                    clean_rb_label(label)
+                    for label in json.loads(task_event["taskData"]["labelsData"])
+                ]
+                label_storage_id = task_event["taskData"]["labelsStorage"]["storageId"]
+                labels_map = task_event["taskData"].get("labelsMap", []) or []
+                event["labels"] = flat_rb_format(
+                    labels,
+                    task["datapoint"]["items"],
+                    [],
+                    task["datapoint"]["name"],
+                    updated_by,
+                    updated_at,
+                    updated_by,
+                    updated_at,
+                    task["taskId"],
+                    task["currentStageName"],
+                    task["priority"],
+                    labels_map,
+                    task["datapoint"].get("seriesInfo"),
+                    task["datapoint"].get("metaData"),
+                    task["datapoint"]["storageMethod"]["storageId"],
+                    label_storage_id,
+                    {},
+                )
 
         elif task_event["__typename"] == "Comment":
             event_type = TaskEventTypes.COMMENT_ADDED

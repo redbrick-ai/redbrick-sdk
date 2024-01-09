@@ -311,7 +311,7 @@ def router_task_shard(with_labels: bool) -> str:
         taskId
         currentStageName
         datapoint {{
-            {datapoint_shard(False, False)}
+            {datapoint_shard(True, False)}
         }}
         priority
         genericEvents {{
