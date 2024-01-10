@@ -415,7 +415,7 @@ class Export:
                         if isinstance(segmentations, str):
                             segmentations = [segmentations]
 
-                        rtstruct = await convert_nii_to_rtstruct(
+                        rtstruct, new_segment_map = await convert_nii_to_rtstruct(
                             segmentations,
                             series_dir,
                             taxonomy.get("objectTypes", []) or [],
@@ -434,6 +434,10 @@ class Export:
                             name, ext = os.path.splitext(name)
 
                         series["segmentations"] = name + ".dcm"
+                        series["segmentMap"] = new_segment_map
+                        for roi_name in series["segmentMap"].keys():
+                            if "mask" in series["segmentMap"][roi_name]:
+                                del series["segmentMap"][roi_name]["mask"]
                         rtstruct.save(series["segmentations"])
 
             else:

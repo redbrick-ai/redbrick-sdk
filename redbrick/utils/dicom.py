@@ -97,7 +97,7 @@ def convert_to_binary(
     files: List[str] = []
 
     for label in labels:
-        instances = set(
+        instances: Set[int] = set(
             [label["dicom"]["instanceid"]] + (label["dicom"].get("groupids", []) or [])
         )
         new_data = numpy.zeros(
@@ -550,7 +550,7 @@ async def convert_nii_to_rtstruct(
     dicom_series_path: str,
     categories: List[Dict],
     segment_map: Dict,
-) -> Optional[Any]:
+) -> Tuple[Optional[Any], Dict]:
     """Convert nifti mask to dicom rt-struct."""
     # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
     # pylint: disable=too-many-statements, too-many-return-statements
@@ -574,19 +574,21 @@ async def convert_nii_to_rtstruct(
             rtstruct.ds.InstitutionName = "RedBrick AI"
             rtstruct.ds.Manufacturer = "RedBrick AI"
             rtstruct.ds.ManufacturerModelName = "redbrick-sdk"
+
+            new_segment_map = {}
             for nifti_file in nifti_files:
                 img: Nifti1Image = nib_load(nifti_file)  # type: ignore
 
                 if not isinstance(img, Nifti1Image) and not isinstance(
                     img, Nifti2Image
                 ):
-                    return None
+                    return None, {}
 
                 # Load NIfTI file
                 data = img.get_fdata(caching="unchanged")
 
                 if data.ndim != 3:
-                    return None
+                    return None, {}
 
                 data = data.swapaxes(0, 1)
 
@@ -597,6 +599,7 @@ async def convert_nii_to_rtstruct(
                 for label in numpy.unique(data)[1:]:
                     kwargs = {}
                     cat = segment_map.get(str(label))
+                    roi_name = f"Segment_{label}"
                     if (
                         cat
                         and cat.get("category")
@@ -609,15 +612,14 @@ async def convert_nii_to_rtstruct(
                             + "".join((parent + "/") for parent in selected_cat[2])
                             + cat["category"]
                         )
+                        new_segment_map[roi_name] = cat
 
-                    rtstruct.add_roi(
-                        mask=data == label, name=f"Segment_{label}", **kwargs
-                    )
+                    rtstruct.add_roi(mask=data == label, name=roi_name, **kwargs)
 
-            return rtstruct
+            return rtstruct, new_segment_map
         except Exception as error:  # pylint: disable=broad-except
             log_error(error)
-            return None
+            return None, {}
 
 
 def merge_rtstructs(rtstruct1: Any, rtstruct2: Any) -> Any:
