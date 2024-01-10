@@ -693,13 +693,11 @@ async def convert_rtstruct_to_nii(
         from nibabel.nifti1 import Nifti1Image  # type: ignore
         from rt_utils import RTStructBuilder  # type: ignore
 
-        rt_struct = RTStructBuilder.create_from(
-            dicom_series_path, rt_struct_files[0], True
-        )
+        rt_struct = RTStructBuilder.create_from(dicom_series_path, rt_struct_files[0])
         for rt_struct_file in rt_struct_files[1:]:
             rt_struct = merge_rtstructs(
                 rt_struct,
-                RTStructBuilder.create_from(dicom_series_path, rt_struct_file, True),
+                RTStructBuilder.create_from(dicom_series_path, rt_struct_file),
             )
 
         roi_names = set(rt_struct.get_roi_names())
