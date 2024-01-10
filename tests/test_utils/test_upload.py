@@ -2,6 +2,7 @@
 from unittest.mock import Mock, patch, AsyncMock
 
 import pytest
+from redbrick.common.enums import StorageMethod
 
 from redbrick.utils import upload
 
@@ -83,9 +84,11 @@ async def test_process_segmentation_upload(
                 org_id,
                 project_id,
                 task,
-                project_label_storage_id,
+                StorageMethod.REDBRICK,
                 label_storage_id,
+                project_label_storage_id,
                 label_validate,
+                False,
             )
 
     assert result == [{"labelName": "file_path", "imageIndex": 0}]

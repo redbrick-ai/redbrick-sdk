@@ -83,6 +83,11 @@ Using this argument validates the files before upload,
 but may increase the upload time.""",
         )
         parser.add_argument(
+            "--rt-struct",
+            action="store_true",
+            help="Upload segmentations from DICOM RT-Struct files.",
+        )
+        parser.add_argument(
             "--clear-cache", action="store_true", help="Clear local cache"
         )
         parser.add_argument(
@@ -202,9 +207,12 @@ but may increase the upload time.""",
             points = self.project.project.upload.prepare_json_files(
                 files_data,
                 storage_id,
+                label_storage_id,
                 segmentation_mapping,
                 task_dirs,
                 upload_cache,
+                self.args.rt_struct,
+                self.args.label_validate,
                 self.args.concurrency,
             )
             segmentation_mapping = {}
@@ -332,14 +340,15 @@ but may increase the upload time.""",
 
             uploads = loop.run_until_complete(
                 project.upload._create_tasks(
-                    storage_id,
                     points,
                     segmentation_mapping,
                     self.args.ground_truth,
+                    storage_id,
                     label_storage_id,
                     self.args.label_validate,
                     self.args.concurrency,
                     False,
+                    self.args.rt_struct,
                 )
             )
 

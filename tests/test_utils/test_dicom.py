@@ -509,13 +509,13 @@ async def test_convert_nii_to_rtstruct(dicom_file_and_image, nifti_instance_file
         {"category": "Category2", "classId": 2, "color": [180, 137, 80], "parents": []},
     ]
     segment_map = {"1": {"category": "Category1"}, "2": {"category": "Category2"}}
-    result = await dicom.convert_nii_to_rtstruct(
+    result, new_segment_map = await dicom.convert_nii_to_rtstruct(
         nifti_instance_files_png[1:], dicom_series_path, categories, segment_map
     )
     assert result is not None
     assert isinstance(result, RTStruct)
-    _data = result.series_data[0].pixel_array
-    assert (_data.astype(np.uint16) == image_data).all()
+    assert (result.series_data[0].pixel_array.astype(np.uint16) == image_data).all()
+    assert new_segment_map == {"Segment_2": {"category": "Category2"}}
 
 
 @pytest.mark.unit
@@ -549,11 +549,8 @@ def test_merge_rtstructs(create_rtstructs):
 
     # Check if the merged RTStruct contains all ROIs
     roi_names = merged_rtstruct.get_roi_names()
-    assert len(roi_names) == 5
+    assert len(roi_names) == 4
     assert "ROI1" in roi_names
     assert "ROI2" in roi_names
     assert "ROI3" in roi_names
     assert "ROI4" in roi_names
-
-    # Check if ROI names with duplicates were renamed
-    assert "ROI2_2" in roi_names

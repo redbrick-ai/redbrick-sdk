@@ -63,9 +63,11 @@ async def process_segmentation_upload(
     org_id: str,
     project_id: str,
     task: Dict,
-    project_label_storage_id: str,
+    storage_id: str,  # pylint: disable=unused-argument
     label_storage_id: str,
+    project_label_storage_id: str,
     label_validate: bool,
+    rt_struct: bool,  # pylint: disable=unused-argument
 ):
     """Process segmentation upload."""
     # pylint: disable=too-many-branches, too-many-locals, too-many-statements
@@ -91,10 +93,8 @@ async def process_segmentation_upload(
         del task["labelsPath"]
 
     labels_map = task.get("labelsMap", []) or []  # type: ignore
-    download_dir = os.path.join(config_path(), "temp")
-    if not os.path.exists(download_dir):
-        logger.debug(f"Creating temp directory: {download_dir}")
-        os.makedirs(download_dir)
+    download_dir = os.path.join(config_path(), "temp", str(uuid4()))
+    os.makedirs(download_dir, exist_ok=True)
     for volume_index, label_map in enumerate(labels_map):
         logger.debug(f"Processing label map: {label_map} for volume {volume_index}")
         if not isinstance(label_map, dict) or not label_map.get("labelName"):

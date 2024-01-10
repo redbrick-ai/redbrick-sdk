@@ -84,11 +84,13 @@ class Labeling:
         task: Dict,
         finalize: bool,
         review_result: Optional[bool],
-        project_label_storage_id: str,
         label_storage_id: str,
+        project_label_storage_id: str,
         label_validate: bool,
         existing_labels: bool,
+        rt_struct: bool,
     ) -> Optional[Dict]:
+        # pylint: disable=too-many-locals
         task_id = task["taskId"]
         try:
             if self.review and review_result is not None:
@@ -116,9 +118,11 @@ class Labeling:
                         self.org_id,
                         self.project_id,
                         task,
-                        project_label_storage_id,
+                        StorageMethod.REDBRICK,
                         label_storage_id,
+                        project_label_storage_id,
                         label_validate,
+                        rt_struct,
                     )
                 except ValueError as err:
                     logger.warning(
@@ -150,10 +154,11 @@ class Labeling:
         tasks: List[Dict],
         finalize: bool,
         review_result: Optional[bool],
-        project_label_storage_id: str,
         label_storage_id: str,
+        project_label_storage_id: str,
         label_validate: bool,
         existing_labels: bool,
+        rt_struct: bool,
     ) -> List[Dict]:
         conn = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=conn) as session:
@@ -164,10 +169,11 @@ class Labeling:
                     task,
                     finalize,
                     review_result,
-                    project_label_storage_id,
                     label_storage_id,
+                    project_label_storage_id,
                     label_validate,
                     existing_labels,
+                    rt_struct,
                 )
                 for task in tasks
             ]
@@ -183,6 +189,7 @@ class Labeling:
         *,
         finalize: bool = True,
         existing_labels: bool = False,
+        rt_struct: bool = False,
         review_result: Optional[bool] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = True,
@@ -249,6 +256,9 @@ class Labeling:
         existing_labels: bool = False
             If True, the tasks will be submitted with their existing labels.
             Applies only to Label stage.
+
+        rt_struct: bool = False
+            Upload segmentations from DICOM RT-Struct files.
 
         review_result: Optional[bool] = None
             Accepts or rejects the task based on the boolean value.
@@ -346,10 +356,11 @@ class Labeling:
                         with_labels,
                         finalize,
                         None,
-                        project_label_storage_id,
                         label_storage_id or project_label_storage_id,
+                        project_label_storage_id,
                         label_validate,
                         False,
+                        rt_struct,
                     )
                 )
             )
@@ -362,10 +373,11 @@ class Labeling:
                         without_labels,
                         True,
                         review_result,
-                        project_label_storage_id,
                         label_storage_id or project_label_storage_id,
+                        project_label_storage_id,
                         label_validate,
                         existing_labels,
+                        rt_struct,
                     )
                 )
             )

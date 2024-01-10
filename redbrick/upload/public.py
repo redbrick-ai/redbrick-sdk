@@ -4,8 +4,9 @@ import asyncio
 import os
 import sys
 from copy import deepcopy
-from typing import List, Dict, Optional, Set
+from typing import Any, List, Dict, Optional, Set
 import json
+from uuid import uuid4
 
 import aiohttp
 import tenacity
@@ -19,7 +20,15 @@ from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.upload import process_segmentation_upload, validate_json
 from redbrick.utils.logging import assert_validation, log_error, logger
-from redbrick.utils.files import get_file_type, is_dicom_file, upload_files
+from redbrick.utils.files import (
+    download_files,
+    get_file_type,
+    is_dicom_file,
+    upload_files,
+)
+
+
+# pylint: disable=too-many-lines
 
 
 class Upload:
@@ -45,6 +54,7 @@ class Upload:
         project_label_storage_id: str,
         label_validate: bool,
         update_items: bool,
+        rt_struct: bool,
     ) -> Dict:
         # pylint:disable=too-many-locals
         logger.debug(
@@ -100,9 +110,11 @@ class Upload:
                 self.org_id,
                 self.project_id,
                 point,
-                project_label_storage_id,
+                storage_id,
                 label_storage_id,
+                project_label_storage_id,
                 label_validate,
+                rt_struct,
             )
         except ValueError as err:
             logger.warning(
@@ -311,14 +323,15 @@ class Upload:
 
     async def _create_tasks(
         self,
-        storage_id: str,
         points: List[Dict],
         segmentation_mapping: Dict,
         is_ground_truth: bool,
+        storage_id: str,
         label_storage_id: str,
         label_validate: bool,
-        concurrency: int = 10,
-        update_items: bool = False,
+        concurrency: int,
+        update_items: bool,
+        rt_struct: bool,
     ) -> List[Dict]:
         # pylint: disable=too-many-locals
         try:
@@ -365,6 +378,7 @@ class Upload:
                     project_label_storage_id,
                     label_validate,
                     update_items,
+                    rt_struct,
                 )
                 for point in points
             ]
@@ -430,8 +444,10 @@ class Upload:
         self,
         storage_id: str,
         points: List[Dict],
+        *,
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
+        rt_struct: bool = False,
         label_storage_id: Optional[str] = None,
         label_validate: bool = False,
         concurrency: int = 50,
@@ -482,6 +498,9 @@ class Upload:
         segmentation_mapping: Optional[Dict] = None
             Optional mapping of semantic_mask segmentation class ids and RedBrick categories.
 
+        rt_struct: bool = False
+            Upload segmentations from DICOM RT-Struct files.
+
         label_storage_id: Optional[str] = None
             Optional label storage id to reference nifti segmentations.
             Defaults to items storage_id if not specified.
@@ -506,19 +525,28 @@ class Upload:
             we will assign the "items" path to it.
         """
         points = self.prepare_json_files(
-            [points], storage_id, segmentation_mapping, None, None, concurrency
+            [points],
+            storage_id,
+            label_storage_id or storage_id,
+            segmentation_mapping,
+            None,
+            None,
+            rt_struct,
+            label_validate,
+            concurrency,
         )
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
             self._create_tasks(
-                storage_id,
                 points,
                 {},
                 is_ground_truth,
+                storage_id,
                 label_storage_id or storage_id,
                 label_validate,
                 concurrency,
                 False,
+                rt_struct,
             )
         )
 
@@ -683,13 +711,17 @@ class Upload:
         self,
         files_data: List[List[Dict]],
         storage_id: str,
-        segment_map: Optional[Dict],
+        label_storage_id: str,
+        task_segment_map: Optional[Dict],
         task_dirs: Optional[List[str]] = None,
         uploaded: Optional[Set[str]] = None,
+        rt_struct: bool = False,
+        label_validate: bool = False,
         concurrency: int = 50,
     ) -> List[Dict]:
         """Prepare items from json files for upload."""
-        # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+        # pylint: disable=too-many-locals, too-many-branches
+        # pylint: disable=too-many-statements, import-outside-toplevel
         logger.debug(f"Preparing {len(files_data)} files for upload")
         points: List[Dict] = []
         uploading = set()
@@ -721,11 +753,123 @@ class Upload:
                     )
                     continue
 
-            if segment_map:
+            if task_segment_map:
                 for item in file_data:
-                    item["segmentMap"] = item.get("segmentMap", segment_map)
+                    item["segmentMap"] = item.get("segmentMap", task_segment_map)
 
             loop = asyncio.get_event_loop()
+            if rt_struct:
+                from nibabel.loadsave import save as nib_save  # type: ignore
+                from redbrick.utils.dicom import convert_rtstruct_to_nii
+
+                for task in file_data:
+                    for series in task.get("series", []) or []:
+                        if (
+                            not series.get("items")
+                            or not series.get("segmentations")
+                            or not series.get("segmentMap")
+                        ):
+                            continue
+
+                        items: List[str] = (
+                            series["items"]
+                            if isinstance(series["items"], list)
+                            else [series["items"]]
+                        )
+                        segmentations: List[str] = (
+                            series["segmentations"]
+                            if isinstance(series["segmentations"], list)
+                            else [series["segmentations"]]
+                        )
+                        segment_map: Dict[str, Any] = series["segmentMap"]
+
+                        temp_dir = os.path.join(config_path(), "temp", str(uuid4()))
+                        temp_img_dir = os.path.join(temp_dir, "images")
+                        temp_seg_dir = os.path.join(temp_dir, "segmentations")
+                        os.makedirs(temp_dir, exist_ok=True)
+                        os.makedirs(temp_img_dir, exist_ok=True)
+                        os.makedirs(temp_seg_dir, exist_ok=True)
+
+                        if storage_id == StorageMethod.REDBRICK:
+                            for item in items:
+                                shutil.copy(
+                                    item
+                                    if os.path.isabs(item)
+                                    or not os.path.exists(os.path.join(task_dir, item))
+                                    else os.path.abspath(os.path.join(task_dir, item)),
+                                    os.path.join(temp_img_dir, os.path.basename(item)),
+                                )
+                        else:
+                            presigned_items = self.context.export.presign_items(
+                                self.org_id, storage_id, items
+                            )
+                            loop.run_until_complete(
+                                download_files(
+                                    list(
+                                        zip(
+                                            presigned_items,
+                                            [
+                                                os.path.join(
+                                                    temp_img_dir, f"{idx + 1}.dcm"
+                                                )
+                                                for idx in range(len(items))
+                                            ],
+                                        )
+                                    )
+                                )
+                            )
+
+                        if label_storage_id == StorageMethod.REDBRICK:
+                            for seg in segmentations:
+                                shutil.copy(
+                                    seg
+                                    if os.path.isabs(seg)
+                                    or not os.path.exists(os.path.join(task_dir, seg))
+                                    else os.path.abspath(os.path.join(task_dir, seg)),
+                                    os.path.join(temp_seg_dir, os.path.basename(seg)),
+                                )
+                        else:
+                            presigned_items = self.context.export.presign_items(
+                                self.org_id, label_storage_id, segmentations
+                            )
+                            loop.run_until_complete(
+                                download_files(
+                                    list(
+                                        zip(
+                                            presigned_items,
+                                            [
+                                                os.path.join(
+                                                    temp_seg_dir, f"{idx + 1}.dcm"
+                                                )
+                                                for idx in range(len(items))
+                                            ],
+                                        )
+                                    )
+                                )
+                            )
+
+                        mask, segment_map = loop.run_until_complete(
+                            convert_rtstruct_to_nii(
+                                [
+                                    os.path.join(temp_seg_dir, seg)
+                                    for seg in os.listdir(temp_seg_dir)
+                                ],
+                                temp_img_dir,
+                                segment_map,
+                                label_validate,
+                            )
+                        )
+                        shutil.rmtree(temp_img_dir)
+                        if not mask:
+                            shutil.rmtree(temp_dir)
+                            continue
+
+                        series["segmentations"] = os.path.join(
+                            temp_seg_dir, "segmentations.nii.gz"
+                        )
+                        series["segmentMap"] = segment_map
+                        nib_save(mask, series["segmentations"])
+
             file_data = loop.run_until_complete(
                 validate_json(self.context, file_data, storage_id, concurrency)
             )
@@ -874,12 +1018,28 @@ class Upload:
             as the storage id. Your items path must be a valid path to a locally stored image.
         """
         points = self.prepare_json_files(
-            [points], storage_id, None, None, None, concurrency
+            [points],
+            storage_id,
+            StorageMethod.REDBRICK,
+            None,
+            None,
+            None,
+            False,
+            False,
+            concurrency,
         )
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
             self._create_tasks(
-                storage_id, points, {}, False, storage_id, False, concurrency, True
+                points,
+                {},
+                False,
+                storage_id,
+                storage_id,
+                False,
+                concurrency,
+                True,
+                False,
             )
         )
 

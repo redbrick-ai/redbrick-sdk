@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, TypedDict
 from asyncio import BoundedSemaphore
 import shutil
+from uuid import uuid4
 
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import uniquify_path
@@ -521,9 +522,8 @@ async def process_nifti_upload(
             else:
                 new_img = Nifti2Image(base_data, base_img.affine, base_img.header)
 
-            dirname = os.path.join(config_path(), "temp")
-            if not os.path.exists(dirname):
-                os.makedirs(dirname)
+            dirname = os.path.join(config_path(), "temp", str(uuid4()))
+            os.makedirs(dirname, exist_ok=True)
             filename = uniquify_path(os.path.join(dirname, "label.nii.gz"))
             nib_save(new_img, filename)
 
@@ -596,10 +596,14 @@ async def convert_nii_to_rtstruct(
                     img.set_data_dtype(numpy.uint16)
                     data = numpy.round(data).astype(numpy.uint16)  # type: ignore
 
-                for label in numpy.unique(data)[1:]:
+                for label in numpy.unique(data):
+                    if not label:
+                        continue
                     kwargs = {}
                     cat = segment_map.get(str(label))
                     roi_name = f"Segment_{label}"
+                    if cat:
+                        new_segment_map[roi_name] = cat
                     if (
                         cat
                         and cat.get("category")
@@ -612,7 +616,6 @@ async def convert_nii_to_rtstruct(
                             + "".join((parent + "/") for parent in selected_cat[2])
                             + cat["category"]
                         )
-                        new_segment_map[roi_name] = cat
 
                     rtstruct.add_roi(mask=data == label, name=roi_name, **kwargs)
 
@@ -629,18 +632,104 @@ def merge_rtstructs(rtstruct1: Any, rtstruct2: Any) -> Any:
         rtstruct1.ds.StructureSetROISequence,
         rtstruct1.ds.RTROIObservationsSequence,
     ):
-        roi_number = len(rtstruct2.ds.StructureSetROISequence) + 1
-        roi_contour_seq.ReferencedROINumber = roi_number
-        struct_set_roi_seq.ROINumber = roi_number
-        rt_roi_observation_seq.ReferencedROINumber = roi_number
+        roi_name = struct_set_roi_seq.ROIName
 
-        # check for ROI name duplication
-        for struct_set_roi_seq2 in rtstruct2.ds.StructureSetROISequence:
-            if struct_set_roi_seq.ROIName == struct_set_roi_seq2.ROIName:
-                struct_set_roi_seq.ROIName += "_2"
+        # Check for ROI name duplication in rtstruct2
+        duplicate_roi = next(
+            (
+                roi_seq2
+                for roi_seq2 in rtstruct2.ds.StructureSetROISequence
+                if roi_seq2.ROIName == roi_name
+            ),
+            None,
+        )
 
-        rtstruct2.ds.ROIContourSequence.append(roi_contour_seq)
-        rtstruct2.ds.StructureSetROISequence.append(struct_set_roi_seq)
-        rtstruct2.ds.RTROIObservationsSequence.append(rt_roi_observation_seq)
+        if duplicate_roi:
+            # If ROI name already exists in rtstruct2, append contours to the existing ROI
+            duplicate_roi_contour_seq = next(
+                (
+                    contour_seq
+                    for contour_seq in rtstruct2.ds.ROIContourSequence
+                    if contour_seq.ReferencedROINumber == duplicate_roi.ROINumber
+                ),
+                None,
+            )
+            if duplicate_roi_contour_seq:
+                duplicate_roi_contour_seq.ContourSequence.extend(
+                    roi_contour_seq.ContourSequence
+                )
+            else:
+                # If no contour sequence found for the duplicate ROI, create a new one
+                rtstruct2.ds.ROIContourSequence.append(roi_contour_seq)
+                duplicate_roi.ROINumber = len(rtstruct2.ds.StructureSetROISequence)
+        else:
+            # If ROI name is unique, proceed with existing logic
+            roi_number = len(rtstruct2.ds.StructureSetROISequence) + 1
+            roi_contour_seq.ReferencedROINumber = roi_number
+            struct_set_roi_seq.ROINumber = roi_number
+            rt_roi_observation_seq.ReferencedROINumber = roi_number
+
+            rtstruct2.ds.ROIContourSequence.append(roi_contour_seq)
+            rtstruct2.ds.StructureSetROISequence.append(struct_set_roi_seq)
+            rtstruct2.ds.RTROIObservationsSequence.append(rt_roi_observation_seq)
 
     return rtstruct2
+
+
+async def convert_rtstruct_to_nii(
+    rt_struct_files: List[str],
+    dicom_series_path: str,
+    segment_map: Dict,
+    label_validate: bool,
+) -> Tuple[Optional[Any], Dict]:
+    """Convert dicom rt-struct to nifti mask."""
+    # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
+    # pylint: disable=too-many-statements, too-many-return-statements
+    if not rt_struct_files:
+        return None, {}
+
+    async with semaphore:
+        import numpy  # type: ignore
+        from nibabel.nifti1 import Nifti1Image  # type: ignore
+        from rt_utils import RTStructBuilder  # type: ignore
+
+        rt_struct = RTStructBuilder.create_from(
+            dicom_series_path, rt_struct_files[0], True
+        )
+        for rt_struct_file in rt_struct_files[1:]:
+            rt_struct = merge_rtstructs(
+                rt_struct,
+                RTStructBuilder.create_from(dicom_series_path, rt_struct_file, True),
+            )
+
+        roi_names = set(rt_struct.get_roi_names())
+
+        if label_validate:
+            for roi_name in segment_map.keys():
+                if roi_name not in roi_names:
+                    log_error(f"ROI '{roi_name}' not found in DICOM RT-Struct")
+                    return None, {}
+
+        new_segment_map = {}
+        dtype = numpy.uint16 if len(roi_names) >= 250 else numpy.uint8
+
+        nii_mask = numpy.zeros(
+            (
+                rt_struct.series_data[0].Columns,
+                rt_struct.series_data[0].Rows,
+                len(rt_struct.series_data),
+            ),
+            dtype,
+        )
+
+        for idx, roi_name in enumerate(segment_map.keys()):
+            if roi_name not in roi_names:
+                continue
+            new_segment_map[str(idx + 1)] = segment_map[roi_name]
+            roi_mask = rt_struct.get_roi_mask_by_name(roi_name)
+            nii_mask[roi_mask] = idx + 1
+
+        return (
+            Nifti1Image(nii_mask.swapaxes(0, 1), numpy.diag([1, 2, 3, 1])),
+            new_segment_map,
+        )

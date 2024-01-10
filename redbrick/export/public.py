@@ -294,7 +294,7 @@ class Export:
         series_dirs: List[str] = []
         items_lists: List[List[str]] = []
 
-        try:
+        try:  # pylint: disable=too-many-nested-blocks
             task_series = Export._get_task_series(task)
             if task_series:
                 for series_idx, series in enumerate(task_series):
