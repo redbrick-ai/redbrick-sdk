@@ -374,6 +374,8 @@ def router_task_shard(with_labels: bool) -> str:
                 consensusAssigneesAfter
                 consensusStatusesBefore
                 consensusStatusesAfter
+                reviewResultBefore
+                reviewResultAfter
             }}
         }}
     """

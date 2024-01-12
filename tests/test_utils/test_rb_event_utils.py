@@ -137,6 +137,8 @@ def test_task_event_format_additional_paths():
                 "stageNameAfter": "Review",
                 "assignedToAfter": "user3",
                 "createdAt": "2023-10-20T14:31:44.252197+00:00",
+                "reviewResultBefore": None,
+                "reviewResultAfter": None,
             }
         ],
         "taskId": 1,

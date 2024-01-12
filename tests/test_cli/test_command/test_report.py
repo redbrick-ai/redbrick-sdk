@@ -73,6 +73,8 @@ def test_handle_report(
                     "consensusAssigneesAfter": [],
                     "consensusStatusesBefore": [],
                     "consensusStatusesAfter": [],
+                    "reviewResultBefore": None,
+                    "reviewResultAfter": None,
                 },
             ],
             "taskId": "mock_task_id",

@@ -28,6 +28,7 @@ def task_event_format(
     prev_assignee = None
     last_pos = -1
     type_pos: Dict[TaskEventTypes, int] = {}
+    review_result = True
 
     for task_event in task["genericEvents"]:
         event_type = None
@@ -67,7 +68,11 @@ def task_event_format(
                         event_type = (
                             TaskEventTypes.TASK_SUBMITTED
                             if task_event["outputEvent"]["outputBool"] is None
-                            else TaskEventTypes.TASK_ACCEPTED
+                            else (
+                                TaskEventTypes.TASK_ACCEPTED
+                                if review_result
+                                else TaskEventTypes.TASK_CORRECTED
+                            )
                             if task_event["outputEvent"]["outputBool"]
                             else TaskEventTypes.TASK_REJECTED
                         )
@@ -114,6 +119,8 @@ def task_event_format(
             ]
             prev_stage = event["stage"]
         elif task_event["__typename"] == "TaskStateChanges":
+            if task_event["reviewResultBefore"] != task_event["reviewResultAfter"]:
+                review_result = task_event["reviewResultAfter"]
             if (
                 task_event["consensusAssigneesBefore"]
                 != task_event["consensusAssigneesAfter"]

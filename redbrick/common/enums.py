@@ -74,6 +74,7 @@ class TaskEventTypes(str, Enum):
     - ``TASK_SUBMITTED`` - A task has been submitted for review.
     - ``TASK_ACCEPTED`` - A submitted task has been accepted in review.
     - ``TASK_REJECTED`` - A submitted task has been rejected in review.
+    - ``TASK_CORRECTED`` - A submitted task has been corrected in review.
     - ``TASK_ASSIGNED`` - A task has been assigned to a worker.
     - ``TASK_REASSIGNED`` - A task has been reassigned to another worker.
     - ``TASK_UNASSIGNED`` - A task has been unassigned from a worker.
@@ -89,6 +90,7 @@ class TaskEventTypes(str, Enum):
     TASK_SUBMITTED = "TASK_SUBMITTED"
     TASK_ACCEPTED = "TASK_ACCEPTED"
     TASK_REJECTED = "TASK_REJECTED"
+    TASK_CORRECTED = "TASK_CORRECTED"
     TASK_ASSIGNED = "TASK_ASSIGNED"
     TASK_REASSIGNED = "TASK_REASSIGNED"
     TASK_UNASSIGNED = "TASK_UNASSIGNED"
