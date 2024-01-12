@@ -3,9 +3,16 @@
 
 from dataclasses import dataclass, field
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, TypedDict
 
 from redbrick.common.stage import Stage
+
+
+class ModelTaxonomyMap(TypedDict):
+    """Model taxonomy map."""
+
+    category: str
+    classid: int
 
 
 @dataclass
@@ -43,7 +50,7 @@ class ModelStage(Stage):
 
         name: str
         url: Optional[str] = None
-        taxonomy_objects: Optional[Dict[str, int]] = None
+        taxonomy_objects: Optional[List[ModelTaxonomyMap]] = None
 
         @classmethod
         def from_entity(cls, entity: Optional[Dict] = None) -> "ModelStage.Config":
