@@ -1,4 +1,5 @@
 """Container for low-level methods to communicate with API."""
+import os
 from typing import Optional
 
 
@@ -8,6 +9,7 @@ class RBContext:
     def __init__(self, api_key: str, url: str) -> None:
         """Construct RedBrick client singleton."""
         # pylint: disable=import-outside-toplevel
+        from .config import RBConfig
         from .client import RBClient
         from .export import ExportControllerInterface
         from .upload import UploadControllerInterface
@@ -16,6 +18,9 @@ class RBContext:
         from .project import ProjectRepoInterface
         from .workspace import WorkspaceRepoInterface
 
+        self.config = RBConfig(
+            verify_ssl=not bool(os.environ.get("RB_DISABLE_SSL_VERIFICATION"))
+        )
         self.client = RBClient(api_key=api_key, url=url)
 
         self.export: ExportControllerInterface

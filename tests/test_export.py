@@ -47,7 +47,7 @@ async def test_download_task_items(
     parent_dir = str(tmpdir)
 
     async def mock_download(
-        url_path_pairs: t.List[t.Tuple[str, str]], *args
+        url_path_pairs: t.List[t.Tuple[str, str]], *args, **kwargs
     ):  # pylint: disable=unused-argument
         return [x[1] for x in url_path_pairs]
 
@@ -109,6 +109,7 @@ def test_preprocess_export(mock_export, get_color_map):
 )
 async def test_export_nifti_label_data(mock_export, task_file, get_task, returns_task):
     """Test `redbrick.export.public.Export.export_nifti_label_data`"""
+
     # Mock methods
     async def mock_download_task(_task, *args):  # pylint: disable=unused-argument
         return _task

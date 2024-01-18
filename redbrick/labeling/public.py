@@ -123,6 +123,7 @@ class Labeling:
                         project_label_storage_id,
                         label_validate,
                         rt_struct,
+                        self.context.config.verify_ssl,
                     )
                 except ValueError as err:
                     logger.warning(

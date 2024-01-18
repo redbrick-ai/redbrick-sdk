@@ -158,6 +158,7 @@ async def upload_files(
     files: List[Tuple[str, str, str]],
     progress_bar_name: Optional[str] = "Uploading files",
     keep_progress_bar: bool = True,
+    verify_ssl: bool = True,
 ) -> List[bool]:
     """Upload files from local path to url (file path, presigned url, file type)."""
 
@@ -185,7 +186,9 @@ async def upload_files(
                 retry=retry_if_not_exception_type(KeyboardInterrupt),
             ):
                 with attempt:
-                    async with session.put(url, headers=headers, data=data) as response:
+                    async with session.put(
+                        url, headers=headers, data=data, ssl=verify_ssl
+                    ) as response:
                         status = response.status
         except RetryError as error:
             raise Exception("Unknown problem occurred") from error
@@ -214,6 +217,7 @@ async def download_files(
     keep_progress_bar: bool = True,
     overwrite: bool = False,
     zipped: bool = False,
+    verify_ssl: bool = True,
 ) -> List[Optional[str]]:
     """Download files from url to local path (presigned url, file path)."""
 
@@ -238,7 +242,9 @@ async def download_files(
                 retry=retry_if_not_exception_type(KeyboardInterrupt),
             ):
                 with attempt:
-                    async with session.get(URL(url, encoded=True)) as response:
+                    async with session.get(
+                        URL(url, encoded=True), ssl=verify_ssl
+                    ) as response:
                         if response.status == 200:
                             headers = dict(response.headers)
                             data = await response.read()

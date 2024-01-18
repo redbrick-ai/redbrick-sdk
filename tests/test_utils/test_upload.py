@@ -89,6 +89,7 @@ async def test_process_segmentation_upload(
                 project_label_storage_id,
                 label_validate,
                 False,
+                True,
             )
 
     assert result == [{"labelName": "file_path", "imageIndex": 0}]

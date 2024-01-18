@@ -68,6 +68,7 @@ async def process_segmentation_upload(
     project_label_storage_id: str,
     label_validate: bool,
     rt_struct: bool,  # pylint: disable=unused-argument
+    verify_ssl: bool,
 ):
     """Process segmentation upload."""
     # pylint: disable=too-many-branches, too-many-locals, too-many-statements
@@ -148,6 +149,7 @@ async def process_segmentation_upload(
                         list(zip(presigned_paths, download_paths)),
                         f"Downloading labels for {task.get('name') or task['items'][0]}",
                         False,
+                        verify_ssl=verify_ssl,
                     )
                     for ext_path, down_path in zip(external_paths, downloaded_paths):
                         if down_path:
@@ -227,6 +229,7 @@ async def process_segmentation_upload(
                         ],
                         f"Downloading labels for {task.get('name') or task['items'][0]}",
                         False,
+                        verify_ssl=verify_ssl,
                     )
                 )[0]
 
@@ -251,6 +254,7 @@ async def process_segmentation_upload(
                         "Uploading labels for "
                         + f"{task['name'][:57]}{task['name'][57:] and '...'}",
                         False,
+                        verify_ssl,
                     )
                 )[0]:
                     label_map["labelName"] = presigned["filePath"]

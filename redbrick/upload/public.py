@@ -90,6 +90,7 @@ class Upload:
                 files,
                 f"Uploading items for {point['name'][:57]}{point['name'][57:] and '...'}",
                 False,
+                self.context.config.verify_ssl,
             )
 
             if not all(uploaded):
@@ -115,6 +116,7 @@ class Upload:
                 project_label_storage_id,
                 label_validate,
                 rt_struct,
+                self.context.config.verify_ssl,
             )
         except ValueError as err:
             logger.warning(
@@ -829,6 +831,7 @@ class Upload:
                                         )
                                     ),
                                     f"Downloading items into: {temp_img_dir}",
+                                    verify_ssl=self.context.config.verify_ssl,
                                 ),
                             )
 
@@ -862,6 +865,7 @@ class Upload:
                                         )
                                     ),
                                     f"Downloading segmentations into: {temp_seg_dir}",
+                                    verify_ssl=self.context.config.verify_ssl,
                                 )
                             )
 
