@@ -187,7 +187,10 @@ async def upload_files(
             ):
                 with attempt:
                     async with session.put(
-                        url, headers=headers, data=data, ssl=verify_ssl
+                        url,
+                        headers=headers,
+                        data=data,
+                        ssl=None if verify_ssl else False,
                     ) as response:
                         status = response.status
         except RetryError as error:
@@ -243,7 +246,8 @@ async def download_files(
             ):
                 with attempt:
                     async with session.get(
-                        URL(url, encoded=True), ssl=verify_ssl
+                        URL(url, encoded=True),
+                        ssl=None if verify_ssl else False,
                     ) as response:
                         if response.status == 200:
                             headers = dict(response.headers)

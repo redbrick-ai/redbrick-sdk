@@ -29,7 +29,7 @@ from redbrick.utils.common_utils import config_migration
 
 from .version_check import version_check
 
-__version__ = "2.15.3"
+__version__ = "2.15.4"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
