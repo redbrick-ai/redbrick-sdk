@@ -762,13 +762,22 @@ class Upload:
                 from nibabel.loadsave import save as nib_save  # type: ignore
                 from redbrick.utils.dicom import convert_rtstruct_to_nii
 
-                for task in file_data:
-                    for series in task.get("series", []) or []:
+                for task_idx, task in enumerate(file_data):
+                    for series_idx, series in enumerate(task.get("series", []) or []):
+                        if "segmentations" not in series and "segmentations" in task:
+                            series["segmentations"] = task["segmentations"]
+                        if "segmentMap" not in series and "segmentMap" in task:
+                            series["segmentMap"] = task["segmentMap"]
+
                         if (
                             not series.get("items")
                             or not series.get("segmentations")
                             or not series.get("segmentMap")
                         ):
+                            logger.info(
+                                "Skipping rt-struct processing for "
+                                + f"task->{task_idx}->series->{series_idx}"
+                            )
                             continue
 
                         items: List[str] = (
@@ -791,6 +800,9 @@ class Upload:
                         os.makedirs(temp_seg_dir, exist_ok=True)
 
                         if storage_id == StorageMethod.REDBRICK:
+                            logger.info(
+                                f"Copying items into: {temp_img_dir}",
+                            )
                             for item in items:
                                 shutil.copy(
                                     item
@@ -815,11 +827,15 @@ class Upload:
                                                 for idx in range(len(items))
                                             ],
                                         )
-                                    )
-                                )
+                                    ),
+                                    f"Downloading items into: {temp_img_dir}",
+                                ),
                             )
 
                         if label_storage_id == StorageMethod.REDBRICK:
+                            logger.info(
+                                f"Copying segmentations into: {temp_seg_dir}",
+                            )
                             for seg in segmentations:
                                 shutil.copy(
                                     seg
@@ -829,22 +845,23 @@ class Upload:
                                     os.path.join(temp_seg_dir, os.path.basename(seg)),
                                 )
                         else:
-                            presigned_items = self.context.export.presign_items(
+                            presigned_segs = self.context.export.presign_items(
                                 self.org_id, label_storage_id, segmentations
                             )
                             loop.run_until_complete(
                                 download_files(
                                     list(
                                         zip(
-                                            presigned_items,
+                                            presigned_segs,
                                             [
                                                 os.path.join(
                                                     temp_seg_dir, f"{idx + 1}.dcm"
                                                 )
-                                                for idx in range(len(items))
+                                                for idx in range(len(presigned_segs))
                                             ],
                                         )
-                                    )
+                                    ),
+                                    f"Downloading segmentations into: {temp_seg_dir}",
                                 )
                             )
 
@@ -862,13 +879,29 @@ class Upload:
                         shutil.rmtree(temp_img_dir)
                         if not mask:
                             shutil.rmtree(temp_dir)
-                            continue
+                            log_error(
+                                "Failed rt-struct processing for "
+                                + f"task->{task_idx}->series->{series_idx}",
+                                True,
+                            )
 
+                        assert mask
                         series["segmentations"] = os.path.join(
                             temp_seg_dir, "segmentations.nii.gz"
                         )
                         series["segmentMap"] = segment_map
                         nib_save(mask, series["segmentations"])
+
+                    if "segmentations" in task and all(
+                        "segmentations" in series
+                        for series in task.get("series", []) or []
+                    ):
+                        del task["segmentations"]
+                    if "segmentMap" in task and all(
+                        "segmentMap" in series
+                        for series in task.get("series", []) or []
+                    ):
+                        del task["segmentMap"]
 
             file_data = loop.run_until_complete(
                 validate_json(self.context, file_data, storage_id, concurrency)

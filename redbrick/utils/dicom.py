@@ -686,6 +686,7 @@ async def convert_rtstruct_to_nii(
     # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
     # pylint: disable=too-many-statements, too-many-return-statements
     if not rt_struct_files:
+        log_error("No segmentations found")
         return None, {}
 
     async with semaphore:
