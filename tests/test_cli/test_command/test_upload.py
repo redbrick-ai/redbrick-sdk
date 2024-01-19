@@ -2,6 +2,7 @@
 import argparse
 import json
 import os.path
+from typing import Dict, Optional
 from unittest.mock import patch
 
 import pytest
@@ -85,6 +86,11 @@ def test_handle_upload(
     async def mock_gen_item_list(items_list, *args):
         return [[os.path.basename(pth) for pth in _list] for _list in items_list]
 
+    def mock_get_taxonomy(
+        org_id: str, tax_id: Optional[str], name: Optional[str]
+    ) -> Dict:
+        return {}
+
     # pylint: enable=unused-argument
 
     with patch(
@@ -93,6 +99,8 @@ def test_handle_upload(
         controller.project.project.upload, "_create_tasks", mock_create_tasks
     ), patch.object(
         controller.project.project.upload, "generate_items_list", mock_gen_item_list
+    ), patch.object(
+        controller.project.project.context.project, "get_taxonomy", mock_get_taxonomy
     ):
         _dir = project_path if use_dir else json_filepath
         controller.args = argparse.Namespace(

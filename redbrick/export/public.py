@@ -177,10 +177,11 @@ class Export:
         image_dir: str,
         dcm_to_nii: bool,
         rt_struct: bool,
+        semantic_mask: bool,
     ) -> Dict:
         # pylint: disable=too-many-locals, import-outside-toplevel, too-many-nested-blocks
         task, series_dirs = await self._download_task_items(
-            original_task, storage_id, image_dir, taxonomy, rt_struct
+            original_task, storage_id, image_dir, taxonomy, rt_struct, semantic_mask
         )
 
         if not dcm_to_nii:
@@ -280,6 +281,7 @@ class Export:
         parent_dir: str,
         taxonomy: Dict,
         rt_struct: bool,
+        semantic_mask: bool,
     ) -> Tuple[Dict, List[str]]:
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         path_pattern = re.compile(r"[^\w.]+")
@@ -423,6 +425,7 @@ class Export:
                             series_dir,
                             taxonomy.get("objectTypes", []) or [],
                             series.get("segmentMap", {}) or {},
+                            semantic_mask,
                         )
 
                         if not rtstruct:
@@ -735,6 +738,7 @@ class Export:
                     image_dir,
                     dicom_to_nifti,
                     rt_struct,
+                    semantic_mask,
                 )
             except Exception as err:  # pylint: disable=broad-except
                 log_error(f"Failed to download files: {err}")

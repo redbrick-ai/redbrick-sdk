@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import uniquify_path
-from redbrick.utils.logging import log_error
+from redbrick.utils.logging import log_error, logger
 
 
 # pylint: disable=too-many-locals, import-outside-toplevel, too-many-branches, too-many-statements
@@ -550,6 +550,7 @@ async def convert_nii_to_rtstruct(
     dicom_series_path: str,
     categories: List[Dict],
     segment_map: Dict,
+    semantic_mask: bool,
 ) -> Tuple[Optional[Any], Dict]:
     """Convert nifti mask to dicom rt-struct."""
     # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
@@ -564,7 +565,7 @@ async def convert_nii_to_rtstruct(
         try:
             category_map = {
                 category.get("category", ""): (
-                    category.get("classId"),
+                    int(category.get("classId", -1)),
                     category.get("color", ""),
                     category.get("parents", []) or [],
                 )
@@ -586,38 +587,66 @@ async def convert_nii_to_rtstruct(
 
                 # Load NIfTI file
                 data = img.get_fdata(caching="unchanged")
+                data = numpy.round(data).astype(numpy.uint16)  # type: ignore
 
                 if data.ndim != 3:
                     return None, {}
 
                 data = data.swapaxes(0, 1)
+                unique_instances: Set[int] = set(numpy.unique(data))
+                if 0 in unique_instances:
+                    unique_instances.remove(0)
 
-                if img.get_data_dtype() != numpy.uint16:
-                    img.set_data_dtype(numpy.uint16)
-                    data = numpy.round(data).astype(numpy.uint16)  # type: ignore
+                cat: Optional[Union[str, Dict]] = None
+                category: Optional[str] = None
+                if semantic_mask:
+                    new_data = numpy.zeros_like(data)
+                    segment_remap: Dict[str, Union[str, Dict]] = {}
+                    for instance in unique_instances:
+                        cat = segment_map.get(str(instance))
+                        category = cat.get("category") if isinstance(cat, dict) else cat
+                        if not (
+                            category
+                            and category_map.get(category)
+                            and category_map[category][0] >= 0
+                        ):
+                            continue
 
-                for label in numpy.unique(data):
-                    if not label:
-                        continue
+                        new_instance = category_map[category][0] + 1
+                        new_data[data == instance] = new_instance
+                        if str(new_instance) not in segment_remap:
+                            segment_remap[str(new_instance)] = cat  # type: ignore
+
+                    data = new_data
+                    segment_map.clear()
+                    segment_map.update(segment_remap)
+                    unique_instances.clear()
+                    unique_instances.update(
+                        {int(new_key) for new_key in segment_map.keys()}
+                    )
+
+                for instance in unique_instances:
                     kwargs = {}
-                    cat = segment_map.get(str(label))
-                    roi_name = f"Segment_{label}"
+                    cat = segment_map.get(str(instance))
+                    category = cat.get("category") if isinstance(cat, dict) else cat
+                    roi_name = (
+                        category
+                        if category and semantic_mask
+                        else f"Segment_{instance}"
+                    )
                     if cat:
                         new_segment_map[roi_name] = cat
-                    if (
-                        cat
-                        and cat.get("category")
-                        and category_map.get(cat["category"])
-                    ):
-                        selected_cat = category_map[cat["category"]]
+
+                    if category and category_map.get(category):
+                        selected_cat = category_map[category]
                         kwargs["color"] = selected_cat[1]
                         kwargs["description"] = (
                             f"{selected_cat[0]} - "
                             + "".join((parent + "/") for parent in selected_cat[2])
-                            + cat["category"]
+                            + category
                         )
 
-                    rtstruct.add_roi(mask=data == label, name=roi_name, **kwargs)
+                    rtstruct.add_roi(mask=data == instance, name=roi_name, **kwargs)
 
             return rtstruct, new_segment_map
         except Exception as error:  # pylint: disable=broad-except
@@ -681,6 +710,7 @@ async def convert_rtstruct_to_nii(
     dicom_series_path: str,
     segment_map: Dict,
     label_validate: bool,
+    categories: List[Dict],
 ) -> Tuple[Optional[Any], Dict]:
     """Convert dicom rt-struct to nifti mask."""
     # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
@@ -703,10 +733,25 @@ async def convert_rtstruct_to_nii(
 
         roi_names = set(rt_struct.get_roi_names())
 
+        for name in set(segment_map.keys()):
+            if name not in roi_names:
+                del segment_map[name]
+
+        misses = roi_names - set(segment_map.keys())
+        if misses:
+            logger.warning(
+                f"Following ROI names are present in the file, but not in segmentMap: {misses}"
+            )
+
         if label_validate:
-            for roi_name in segment_map.keys():
-                if roi_name not in roi_names:
-                    log_error(f"ROI '{roi_name}' not found in DICOM RT-Struct")
+            category_names = {cat["category"] for cat in categories}
+            for cat in segment_map.values():
+                if isinstance(cat, dict):
+                    cat = cat.get("category")
+                if cat not in category_names:
+                    log_error(
+                        f"ROI '{cat}' of labelType SEGMENTATION is not present in the taxonomy"
+                    )
                     return None, {}
 
         new_segment_map = {}
@@ -721,11 +766,11 @@ async def convert_rtstruct_to_nii(
             dtype,
         )
 
-        for idx, roi_name in enumerate(segment_map.keys()):
-            if roi_name not in roi_names:
+        for idx, name in enumerate(segment_map.keys()):
+            if name not in roi_names:
                 continue
-            new_segment_map[str(idx + 1)] = segment_map[roi_name]
-            roi_mask = rt_struct.get_roi_mask_by_name(roi_name)
+            new_segment_map[str(idx + 1)] = segment_map[name]
+            roi_mask = rt_struct.get_roi_mask_by_name(name)
             nii_mask[roi_mask] = idx + 1
 
         return (

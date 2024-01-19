@@ -34,11 +34,14 @@ from redbrick.utils.files import (
 class Upload:
     """Primary interface to uploading new data to a project."""
 
-    def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
+    def __init__(
+        self, context: RBContext, org_id: str, project_id: str, taxonomy_name: str
+    ) -> None:
         """Construct Upload object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
+        self.taxonomy_name = taxonomy_name
 
     @tenacity.retry(
         stop=stop_after_attempt(1),
@@ -724,6 +727,9 @@ class Upload:
         """Prepare items from json files for upload."""
         # pylint: disable=too-many-locals, too-many-branches
         # pylint: disable=too-many-statements, import-outside-toplevel
+        taxonomy = self.context.project.get_taxonomy(
+            self.org_id, tax_id=None, name=self.taxonomy_name
+        )
         logger.debug(f"Preparing {len(files_data)} files for upload")
         points: List[Dict] = []
         uploading = set()
@@ -793,6 +799,12 @@ class Upload:
                             else [series["segmentations"]]
                         )
                         segment_map: Dict[str, Any] = series["segmentMap"]
+                        if segment_map.get("binaryMask"):
+                            del segment_map["binaryMask"]
+                        if segment_map.get("semanticMask"):
+                            del segment_map["semanticMask"]
+                        if segment_map.get("pngMask"):
+                            del segment_map["pngMask"]
 
                         temp_dir = os.path.join(config_path(), "temp", str(uuid4()))
                         temp_img_dir = os.path.join(temp_dir, "images")
@@ -878,6 +890,12 @@ class Upload:
                                 temp_img_dir,
                                 segment_map,
                                 label_validate,
+                                [
+                                    cat
+                                    for cat in (taxonomy.get("objectTypes", []) or [])
+                                    if cat["labelType"] == "SEGMENTATION"
+                                    and not cat["archived"]
+                                ],
                             )
                         )
                         shutil.rmtree(temp_img_dir)

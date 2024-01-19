@@ -500,7 +500,22 @@ async def test_process_nifti_upload(tmpdir, nifti_instance_files_png):
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_convert_nii_to_rtstruct(dicom_file_and_image, nifti_instance_files_png):
+@pytest.mark.parametrize(
+    ("semantic_mask", "expected_segment_map"),
+    [
+        (
+            False,
+            {
+                "Segment_2": {"category": "Category2"},
+                "Segment_3": {"category": "Category2"},
+            },
+        ),
+        (True, {"Category2": {"category": "Category2"}}),
+    ],
+)
+async def test_convert_nii_to_rtstruct(
+    dicom_file_and_image, nifti_instance_files_png, semantic_mask, expected_segment_map
+):
     """Test dicom.convert_nii_to_rtstruct"""
     dicom_file, image_data = dicom_file_and_image
     dicom_series_path = os.path.dirname(dicom_file)
@@ -508,14 +523,22 @@ async def test_convert_nii_to_rtstruct(dicom_file_and_image, nifti_instance_file
         {"category": "Category1", "classId": 1, "color": [255, 0, 0], "parents": []},
         {"category": "Category2", "classId": 2, "color": [180, 137, 80], "parents": []},
     ]
-    segment_map = {"1": {"category": "Category1"}, "2": {"category": "Category2"}}
+    segment_map = {
+        "1": {"category": "Category1"},
+        "2": {"category": "Category2"},
+        "3": {"category": "Category2"},
+    }
     result, new_segment_map = await dicom.convert_nii_to_rtstruct(
-        nifti_instance_files_png[1:], dicom_series_path, categories, segment_map
+        nifti_instance_files_png[1:],
+        dicom_series_path,
+        categories,
+        segment_map,
+        semantic_mask,
     )
     assert result is not None
     assert isinstance(result, RTStruct)
     assert (result.series_data[0].pixel_array.astype(np.uint16) == image_data).all()
-    assert new_segment_map == {"Segment_2": {"category": "Category2"}}
+    assert new_segment_map == expected_segment_map
 
 
 @pytest.mark.unit

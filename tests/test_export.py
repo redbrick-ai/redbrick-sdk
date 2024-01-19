@@ -59,7 +59,7 @@ async def test_download_task_items(
                 _,
                 series_dirs,
             ) = await mock_export._download_task_items(  # pylint: disable=protected-access
-                task, storage_id, parent_dir, taxonomy, rt_struct
+                task, storage_id, parent_dir, taxonomy, rt_struct, False
             )
     if check_convert_called:
         mock_convert.assert_called_once()

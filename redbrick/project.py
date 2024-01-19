@@ -44,7 +44,12 @@ class RBProject:
         # check if project exists on backend to validate
         self._get_project()
 
-        self.upload = Upload(context, org_id, project_id)
+        self.upload = Upload(
+            context,
+            org_id,
+            project_id,
+            self.taxonomy_name,
+        )
 
         self.output_stage_name: str = "Output"
         for stage in self._stages:
