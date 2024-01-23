@@ -15,7 +15,7 @@ dependencies = [
     "nibabel<=5.2.0,>=3.2.2",
     "numpy<=1.26.2,>=1.15",
     "packaging<=23.2",
-    "Pillow<=10.1.0,>=9.0.1",
+    "Pillow<=10.2.0,>=9.0.1",
     "python-dateutil<=2.8.2",
     "requests<=2.31.0,>=2.23.0",
     "Rich<=13.7.0",
