@@ -296,10 +296,10 @@ def task_shard(presigned_items: bool, with_consensus: bool) -> str:
         currentStageSubTask{"(consensus: true)" if with_consensus else ""} {{
             {TASK_SHARD}
         }}
+        datapoint {{
+            {datapoint_shard(True, presigned_items)}
+        }}
         latestTaskData {{
-            dataPoint {{
-                {datapoint_shard(True, presigned_items)}
-            }}
             {TASK_DATA_SHARD}
         }}
     """

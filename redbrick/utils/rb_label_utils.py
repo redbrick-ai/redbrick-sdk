@@ -120,8 +120,8 @@ def flat_rb_format(
     name: str,
     created_by: Optional[str],
     created_at: str,
-    updated_by: str,
-    updated_at: str,
+    updated_by: Optional[str],
+    updated_at: Optional[str],
     task_id: str,
     current_stage_name: str,
     priority: Optional[float],
@@ -129,7 +129,7 @@ def flat_rb_format(
     series_info: Optional[List[Dict]],
     meta_data: Optional[Dict],
     storage_id: str,
-    label_storage_id: str,
+    label_storage_id: Optional[str],
     current_stage_sub_task: Optional[Dict],
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
@@ -175,20 +175,21 @@ def parse_entry_latest(item: Dict) -> Dict:
     """Parse entry latest."""
     try:
         task_id = item["taskId"]
-        task_data = item["latestTaskData"]
-        datapoint = task_data["dataPoint"]
+        task_data = item["latestTaskData"] or {}
+        datapoint = item["datapoint"]
         items = datapoint["items"]
         items_presigned = datapoint.get("itemsPresigned", []) or []
         name = datapoint["name"]
         created_by = (datapoint.get("createdByEntity", {}) or {}).get("email")
         created_at = datapoint["createdAt"]
-        updated_by = task_data["createdByEmail"]
-        updated_at = task_data["createdAt"]
+        updated_by = task_data.get("createdByEmail")
+        updated_at = task_data.get("createdAt")
         labels = [
-            clean_rb_label(label) for label in json.loads(task_data["labelsData"])
+            clean_rb_label(label)
+            for label in json.loads(task_data.get("labelsData") or "[]")
         ]
         storage_id = datapoint["storageMethod"]["storageId"]
-        label_storage_id = task_data["labelsStorage"]["storageId"]
+        label_storage_id = (task_data.get("labelsStorage") or {}).get("storageId")
 
         return flat_rb_format(
             labels,

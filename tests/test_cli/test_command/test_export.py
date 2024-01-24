@@ -68,24 +68,24 @@ def test_handle_export(
     }
     mock_datapoint = {
         "taskId": "mock_task_id",
+        "datapoint": {
+            "items": ["https://some-random-url.com/some/randon/file.nii.gz"],
+            "itemsPresigned": [],
+            "name": "mock_dp",
+            "createdAt": "2023-10-20T14:31:38.610700+00:00",
+            "createdByEntity": {"email": "mock@email.com"},
+            "storageMethod": {"storageId": "11111111-1111-1111-1111-111111111111"},
+            "seriesInfo": [
+                {
+                    "dataType": "nifti",
+                    "itemsIndices": [0],
+                    "metaData": None,
+                    "name": None,
+                },
+            ],
+            "metaData": json.dumps({}),
+        },
         "latestTaskData": {
-            "dataPoint": {
-                "items": ["https://some-random-url.com/some/randon/file.nii.gz"],
-                "itemsPresigned": [],
-                "name": "mock_dp",
-                "createdAt": "2023-10-20T14:31:38.610700+00:00",
-                "createdByEntity": {"email": "mock@email.com"},
-                "storageMethod": {"storageId": "11111111-1111-1111-1111-111111111111"},
-                "seriesInfo": [
-                    {
-                        "dataType": "nifti",
-                        "itemsIndices": [0],
-                        "metaData": None,
-                        "name": None,
-                    },
-                ],
-                "metaData": json.dumps({}),
-            },
             "createdAt": "2023-10-20T14:31:38.610700+00:00",
             "createdByEmail": "mock@email.com",
             "labelsData": json.dumps([]),

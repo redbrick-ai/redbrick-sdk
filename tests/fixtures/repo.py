@@ -59,53 +59,51 @@ def get_datapoint_latest_resp(task_id):  # noqa: D103
                 },
             },
             "dpId": "b76d5137-3cb2-4496-91e3-bc1defaab99d",
+            "datapoint": {
+                "createdAt": "2023-10-20T14:31:38.610645+00:00",
+                "createdByEntity": {
+                    "email": "mock@email.com",
+                    "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                },
+                "items": [
+                    "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t2.nii.gz",
+                    "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t1ce.nii.gz",
+                    "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t1.nii.gz",
+                    "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_flair.nii.gz",
+                ],
+                "metaData": None,
+                "name": "BraTS2021_00003",
+                "seriesInfo": [
+                    {
+                        "dataType": "nifti",
+                        "itemsIndices": [0],
+                        "metaData": None,
+                        "name": None,
+                    },
+                    {
+                        "dataType": "nifti",
+                        "itemsIndices": [1],
+                        "metaData": None,
+                        "name": None,
+                    },
+                    {
+                        "dataType": "nifti",
+                        "itemsIndices": [2],
+                        "metaData": None,
+                        "name": None,
+                    },
+                    {
+                        "dataType": "nifti",
+                        "itemsIndices": [3],
+                        "metaData": None,
+                        "name": None,
+                    },
+                ],
+                "storageMethod": {"storageId": "11111111-1111-1111-1111-111111111111"},
+            },
             "latestTaskData": {
                 "createdAt": "2023-10-20T14:31:38.610700+00:00",
                 "createdByEmail": "mock@email.com",
-                "dataPoint": {
-                    "createdAt": "2023-10-20T14:31:38.610645+00:00",
-                    "createdByEntity": {
-                        "email": "mock@email.com",
-                        "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
-                    },
-                    "items": [
-                        "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t2.nii.gz",
-                        "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t1ce.nii.gz",
-                        "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t1.nii.gz",
-                        "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_flair.nii.gz",
-                    ],
-                    "metaData": None,
-                    "name": "BraTS2021_00003",
-                    "seriesInfo": [
-                        {
-                            "dataType": "nifti",
-                            "itemsIndices": [0],
-                            "metaData": None,
-                            "name": None,
-                        },
-                        {
-                            "dataType": "nifti",
-                            "itemsIndices": [1],
-                            "metaData": None,
-                            "name": None,
-                        },
-                        {
-                            "dataType": "nifti",
-                            "itemsIndices": [2],
-                            "metaData": None,
-                            "name": None,
-                        },
-                        {
-                            "dataType": "nifti",
-                            "itemsIndices": [3],
-                            "metaData": None,
-                            "name": None,
-                        },
-                    ],
-                    "storageMethod": {
-                        "storageId": "11111111-1111-1111-1111-111111111111"
-                    },
-                },
                 "labelsData": "[]",
                 "labelsMap": None,
                 "labelsStorage": {"storageId": "22222222-2222-2222-2222-222222222222"},
@@ -163,26 +161,26 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                         }
                     ],
                 },
-                "latestTaskData": {
-                    "dataPoint": {
-                        "name": "BraTS2021_00009",
-                        "items": [
-                            "https://mock.com/some_randon_image/BraTS2021_00009/BraTS2021_00009_t2.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00009/BraTS2021_00009_t1ce.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00009/BraTS2021_00009_flair.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00009/BraTS2021_00009_t1.nii.gz",
-                        ],
-                        "createdAt": "2023-10-20T14:31:38.610819+00:00",
-                        "createdByEntity": {
-                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
-                            "email": "mock@email.com",
-                        },
-                        "metaData": None,
-                        "seriesInfo": None,
-                        "storageMethod": {
-                            "storageId": "11111111-1111-1111-1111-111111111111"
-                        },
+                "datapoint": {
+                    "name": "BraTS2021_00009",
+                    "items": [
+                        "https://mock.com/some_randon_image/BraTS2021_00009/BraTS2021_00009_t2.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00009/BraTS2021_00009_t1ce.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00009/BraTS2021_00009_flair.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00009/BraTS2021_00009_t1.nii.gz",
+                    ],
+                    "createdAt": "2023-10-20T14:31:38.610819+00:00",
+                    "createdByEntity": {
+                        "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                        "email": "mock@email.com",
                     },
+                    "metaData": None,
+                    "seriesInfo": None,
+                    "storageMethod": {
+                        "storageId": "11111111-1111-1111-1111-111111111111"
+                    },
+                },
+                "latestTaskData": {
                     "createdAt": "2023-10-20T14:31:38.610835+00:00",
                     "createdByEmail": "mock@email.com",
                     "labelsData": "[]",
@@ -233,51 +231,51 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                         }
                     ],
                 },
-                "latestTaskData": {
-                    "dataPoint": {
-                        "name": "BraTS2021_00003",
-                        "items": [
-                            "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t2.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t1ce.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t1.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_flair.nii.gz",
-                        ],
-                        "createdAt": "2023-10-20T14:31:38.610645+00:00",
-                        "createdByEntity": {
-                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
-                            "email": "mock@email.com",
-                        },
-                        "metaData": None,
-                        "seriesInfo": [
-                            {
-                                "name": None,
-                                "itemsIndices": [0],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                            {
-                                "name": None,
-                                "itemsIndices": [1],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                            {
-                                "name": None,
-                                "itemsIndices": [2],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                            {
-                                "name": None,
-                                "itemsIndices": [3],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                        ],
-                        "storageMethod": {
-                            "storageId": "11111111-1111-1111-1111-111111111111"
-                        },
+                "datapoint": {
+                    "name": "BraTS2021_00003",
+                    "items": [
+                        "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t2.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t1ce.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_t1.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00003/BraTS2021_00003_flair.nii.gz",
+                    ],
+                    "createdAt": "2023-10-20T14:31:38.610645+00:00",
+                    "createdByEntity": {
+                        "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                        "email": "mock@email.com",
                     },
+                    "metaData": None,
+                    "seriesInfo": [
+                        {
+                            "name": None,
+                            "itemsIndices": [0],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                        {
+                            "name": None,
+                            "itemsIndices": [1],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                        {
+                            "name": None,
+                            "itemsIndices": [2],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                        {
+                            "name": None,
+                            "itemsIndices": [3],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                    ],
+                    "storageMethod": {
+                        "storageId": "11111111-1111-1111-1111-111111111111"
+                    },
+                },
+                "latestTaskData": {
                     "createdAt": "2023-10-20T14:31:38.610700+00:00",
                     "createdByEmail": "mock@email.com",
                     "labelsData": "[]",
@@ -343,51 +341,51 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                         }
                     ],
                 },
-                "latestTaskData": {
-                    "dataPoint": {
-                        "name": "BraTS2021_00006",
-                        "items": [
-                            "https://mock.com/some_randon_image/BraTS2021_00006/BraTS2021_00006_t1.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00006/BraTS2021_00006_flair.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00006/BraTS2021_00006_t1ce.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00006/BraTS2021_00006_t2.nii.gz",
-                        ],
-                        "createdAt": "2023-10-20T14:31:38.610885+00:00",
-                        "createdByEntity": {
-                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
-                            "email": "mock@email.com",
-                        },
-                        "metaData": None,
-                        "seriesInfo": [
-                            {
-                                "name": None,
-                                "itemsIndices": [0],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                            {
-                                "name": None,
-                                "itemsIndices": [1],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                            {
-                                "name": None,
-                                "itemsIndices": [2],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                            {
-                                "name": None,
-                                "itemsIndices": [3],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                        ],
-                        "storageMethod": {
-                            "storageId": "11111111-1111-1111-1111-111111111111"
-                        },
+                "datapoint": {
+                    "name": "BraTS2021_00006",
+                    "items": [
+                        "https://mock.com/some_randon_image/BraTS2021_00006/BraTS2021_00006_t1.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00006/BraTS2021_00006_flair.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00006/BraTS2021_00006_t1ce.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00006/BraTS2021_00006_t2.nii.gz",
+                    ],
+                    "createdAt": "2023-10-20T14:31:38.610885+00:00",
+                    "createdByEntity": {
+                        "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                        "email": "mock@email.com",
                     },
+                    "metaData": None,
+                    "seriesInfo": [
+                        {
+                            "name": None,
+                            "itemsIndices": [0],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                        {
+                            "name": None,
+                            "itemsIndices": [1],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                        {
+                            "name": None,
+                            "itemsIndices": [2],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                        {
+                            "name": None,
+                            "itemsIndices": [3],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                    ],
+                    "storageMethod": {
+                        "storageId": "11111111-1111-1111-1111-111111111111"
+                    },
+                },
+                "latestTaskData": {
                     "createdAt": "2023-10-20T14:33:27.664115+00:00",
                     "createdByEmail": "mock@email.com",
                     "labelsData": '[{"category":"liver","attributes":[],"classid":0,"labelid":"7f138361-dad9-4a90-853a-cf030a605221","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":0,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":"lung","attributes":[],"classid":1,"labelid":"302a87fc-eabd-402e-a95e-9c32529d2901","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":3,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":null,"attributes":[],"classid":null,"labelid":"d775111e-7a47-445e-9f46-dd84cd64b8ba","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":null,"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":null,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":true,"seriesclassify":null,"instanceclassify":null,"stats":null}]',  # noqa: E501
@@ -412,51 +410,51 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                 "currentStageName": "END",
                 "priority": None,
                 "currentStageSubTask": None,
-                "latestTaskData": {
-                    "dataPoint": {
-                        "name": "BraTS2021_00005",
-                        "items": [
-                            "https://mock.com/some_randon_image/BraTS2021_00005/BraTS2021_00005_t1ce.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00005/BraTS2021_00005_t2.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00005/BraTS2021_00005_flair.nii.gz",
-                            "https://mock.com/some_randon_image/BraTS2021_00005/BraTS2021_00005_t1.nii.gz",
-                        ],
-                        "createdAt": "2023-10-20T14:31:38.610727+00:00",
-                        "createdByEntity": {
-                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
-                            "email": "mock@email.com",
-                        },
-                        "metaData": None,
-                        "seriesInfo": [
-                            {
-                                "name": None,
-                                "itemsIndices": [0],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                            {
-                                "name": None,
-                                "itemsIndices": [1],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                            {
-                                "name": None,
-                                "itemsIndices": [2],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                            {
-                                "name": None,
-                                "itemsIndices": [3],
-                                "dataType": "nifti",
-                                "metaData": None,
-                            },
-                        ],
-                        "storageMethod": {
-                            "storageId": "11111111-1111-1111-1111-111111111111"
-                        },
+                "datapoint": {
+                    "name": "BraTS2021_00005",
+                    "items": [
+                        "https://mock.com/some_randon_image/BraTS2021_00005/BraTS2021_00005_t1ce.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00005/BraTS2021_00005_t2.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00005/BraTS2021_00005_flair.nii.gz",
+                        "https://mock.com/some_randon_image/BraTS2021_00005/BraTS2021_00005_t1.nii.gz",
+                    ],
+                    "createdAt": "2023-10-20T14:31:38.610727+00:00",
+                    "createdByEntity": {
+                        "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                        "email": "mock@email.com",
                     },
+                    "metaData": None,
+                    "seriesInfo": [
+                        {
+                            "name": None,
+                            "itemsIndices": [0],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                        {
+                            "name": None,
+                            "itemsIndices": [1],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                        {
+                            "name": None,
+                            "itemsIndices": [2],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                        {
+                            "name": None,
+                            "itemsIndices": [3],
+                            "dataType": "nifti",
+                            "metaData": None,
+                        },
+                    ],
+                    "storageMethod": {
+                        "storageId": "11111111-1111-1111-1111-111111111111"
+                    },
+                },
+                "latestTaskData": {
                     "createdAt": "2023-10-20T14:32:32.204050+00:00",
                     "createdByEmail": "mock@email.com",
                     "labelsData": '[{"category":"liver","attributes":[],"classid":0,"labelid":"5542d87c-c0d2-49ca-a7d8-c04f825c7a32","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":0,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":"lung","attributes":[],"classid":1,"labelid":"89f52268-c5fb-40a3-ad88-0a3720854028","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":1,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":"kidney","attributes":[],"classid":2,"labelid":"ebaf2efc-3460-4115-b0a2-b4b5c237e19f","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":2,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":null,"attributes":[],"classid":null,"labelid":"22d4cfc6-fe75-482c-8448-c377163bd66d","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":null,"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":null,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":true,"seriesclassify":null,"instanceclassify":null,"stats":null}]',  # noqa: E501
