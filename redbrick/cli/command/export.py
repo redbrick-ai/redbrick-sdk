@@ -177,7 +177,7 @@ class CLIExportController(CLIExportInterface):
         )
         datapoints = self.project.project.export._get_raw_data_latest(
             self.args.concurrency,
-            False,
+            None,
             cache_timestamp,
             False,
             not no_consensus,

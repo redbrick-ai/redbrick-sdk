@@ -64,7 +64,7 @@ class Export:
     def _get_raw_data_latest(
         self,
         concurrency: int,
-        only_ground_truth: bool = False,
+        stage_name: Optional[str] = None,
         from_timestamp: Optional[float] = None,
         presign_items: bool = False,
         with_consensus: bool = False,
@@ -80,7 +80,6 @@ class Export:
             yield task
             return
 
-        stage_name = "END" if only_ground_truth else None
         my_iter = PaginationIterator(
             partial(  # type: ignore
                 self.context.export.get_datapoints_latest,
@@ -97,7 +96,7 @@ class Export:
         )
 
         logger.info(
-            f"Downloading {'groundtruth' if only_ground_truth else 'all'} tasks"
+            "Downloading tasks"
             + (
                 f" updated since {datetime.fromtimestamp(from_timestamp)}"
                 if from_timestamp is not None
@@ -762,9 +761,10 @@ class Export:
 
     def export_tasks(
         self,
-        only_ground_truth: bool = True,
-        concurrency: int = 10,
         *,
+        concurrency: int = 10,
+        only_ground_truth: bool = True,
+        stage_name: Optional[str] = None,
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
         old_format: bool = False,
@@ -791,12 +791,16 @@ class Export:
 
         Parameters
         -----------
+        concurrency: int = 10
+
         only_ground_truth: bool = True
             If set to True, will only return data that has
             been completed in your workflow. If False, will
-            export latest state
+            export latest state.
 
-        concurrency: int = 10
+        stage_name: Optional[str] = None
+            If set, will only export tasks that are currently
+            in the given stage.
 
         task_id: Optional[str] = None
             If the unique task_id is mentioned, only a single
@@ -900,7 +904,7 @@ class Export:
 
         datapoints = self._get_raw_data_latest(
             concurrency,
-            False if task_id else only_ground_truth,
+            "END" if only_ground_truth else stage_name,
             None if task_id else from_timestamp,
             True,
             bool(self.label_stages)
