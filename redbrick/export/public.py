@@ -763,7 +763,7 @@ class Export:
         self,
         *,
         concurrency: int = 10,
-        only_ground_truth: bool = True,
+        only_ground_truth: bool = False,
         stage_name: Optional[str] = None,
         task_id: Optional[str] = None,
         from_timestamp: Optional[float] = None,
@@ -793,7 +793,7 @@ class Export:
         -----------
         concurrency: int = 10
 
-        only_ground_truth: bool = True
+        only_ground_truth: bool = False
             If set to True, will only return data that has
             been completed in your workflow. If False, will
             export latest state.
