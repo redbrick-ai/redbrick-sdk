@@ -15,6 +15,8 @@ from natsort import natsorted, ns
 
 from redbrick.common.constants import MAX_FILE_BATCH_SIZE, MAX_RETRY_ATTEMPTS
 from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.logging import log_error, logger
+
 
 IMAGE_FILE_TYPES = {
     "png": "image/png",
@@ -230,6 +232,7 @@ async def download_files(
     ) -> Optional[str]:
         # pylint: disable=no-member
         if not url or not path:
+            logger.debug(f"Downloading empty '{url}' to '{path}'")
             return None
 
         if not overwrite and os.path.isfile(path):
@@ -254,9 +257,11 @@ async def download_files(
                             headers = dict(response.headers)
                             data = await response.read()
         except RetryError as error:
+            log_error(error)
             raise Exception("Unknown problem occurred") from error
 
         if not data:
+            logger.debug(f"Received empty data from '{url}'")
             return None
 
         if not zipped and headers.get("Content-Encoding") == "gzip":
@@ -273,6 +278,18 @@ async def download_files(
         with open(path, "wb") as file_:
             file_.write(data)
         return path
+
+    dirs: Set[str] = set()
+    for _, path in files:
+        if not path:
+            continue
+        parent = os.path.dirname(path)
+        if parent in dirs:
+            continue
+        if not os.path.isdir(parent):
+            logger.debug(f"Creating parent dir for {path}")
+            os.makedirs(parent, exist_ok=True)
+        dirs.add(parent)
 
     conn = aiohttp.TCPConnector()
     async with aiohttp.ClientSession(connector=conn) as session:
