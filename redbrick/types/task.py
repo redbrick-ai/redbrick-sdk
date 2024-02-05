@@ -1,11 +1,10 @@
 """Task types."""
 
-import sys
 from typing import List, Dict, Literal, Union, TypedDict
 
-if sys.version_info[0] == 3 and sys.version_info[1] >= 11:
-    from typing import Required, NotRequired
-else:
+try:
+    from typing import Required, NotRequired  # pylint: disable=no-name-in-module
+except ImportError:  # for python versions below 3.11
     from typing_extensions import Required, NotRequired
 
 
