@@ -14,15 +14,19 @@ from redbrick.utils.files import NIFTI_FILE_TYPES, download_files, upload_files
 from redbrick.utils.logging import logger
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.types.task import InputTask
 
 
 async def validate_json(
-    context: RBContext, input_data: List[Dict], storage_id: str, concurrency: int
+    context: RBContext,
+    input_data: List[InputTask],
+    storage_id: str,
+    concurrency: int,
 ) -> List[Dict]:
     """Validate and convert to import format."""
     total_input_data = len(input_data)
     logger.debug(f"Concurrency: {concurrency} for {total_input_data} items")
-    inputs: List[List[Dict]] = []
+    inputs: List[List[InputTask]] = []
     for batch in range(0, total_input_data, concurrency):
         inputs.append(input_data[batch : batch + concurrency])
 
@@ -52,7 +56,7 @@ async def validate_json(
             return []
 
         output_data.extend(
-            json.loads(out["converted"]) if out.get("converted") else inp
+            json.loads(out["converted"]) if out.get("converted") else inp  # type: ignore
         )
 
     return output_data

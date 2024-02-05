@@ -1,11 +1,12 @@
 """Utilities for working with label objects."""
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 import json
 from copy import deepcopy
 
 from redbrick.stage import ReviewStage
+from redbrick.types import task as TaskType
 
 
 def clean_rb_label(label: Dict) -> Dict:
@@ -216,7 +217,10 @@ def parse_entry_latest(item: Dict) -> Dict:
 
 
 def dicom_rb_series(
-    item_index_map: Dict[int, int], input_task: Dict, output_task: Dict, taxonomy: Dict
+    item_index_map: Dict[int, int],
+    input_task: Dict,
+    output_task: TaskType.OutputTask,
+    taxonomy: Dict,
 ) -> None:
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
@@ -224,7 +228,7 @@ def dicom_rb_series(
     labels_map = input_task.get("labelsMap", []) or []
     series = output_task["series"]
 
-    segmentation_mapping: Dict[int, Dict[Optional[str], str]] = {}
+    segmentation_mapping: Dict[int, Dict[Optional[str], Union[str, List[str]]]] = {}
     for idx, label_map in enumerate(labels_map):
         volume_index = (
             item_index_map[label_map["imageIndex"]]
@@ -246,14 +250,13 @@ def dicom_rb_series(
             )
             series[volume_index]["pngMask"] = label_map.get("pngMask", False) or False
 
-            if isinstance(series[volume_index]["segmentations"], str):
-                segmentation_mapping[volume_index][None] = series[volume_index][
-                    "segmentations"
-                ]
-            elif series[volume_index]["binaryMask"] and isinstance(
-                series[volume_index]["segmentations"], list
+            segmentations = series[volume_index].get("segmentations")
+            if isinstance(segmentations, str):
+                segmentation_mapping[volume_index][None] = segmentations
+            elif series[volume_index].get("binaryMask") and isinstance(
+                segmentations, list
             ):
-                for segmentation in series[volume_index]["segmentations"]:
+                for segmentation in segmentations:
                     segmentation_mapping[volume_index][
                         os.path.basename(segmentation)
                     ] = segmentation
@@ -264,8 +267,8 @@ def dicom_rb_series(
             series.extend([{} for _ in range(volume_index - len(series) + 1)])
 
     for label in labels:
-        volume = series[label.get("volumeindex", 0)]
-        label_obj = {}
+        volume: TaskType.Series = series[label.get("volumeindex", 0)]
+        label_obj: TaskType.CommonLabelProps = {}
         if "category" in label and label["category"] is not None:
             label_obj["category"] = (
                 label["category"]
@@ -301,7 +304,7 @@ def dicom_rb_series(
         if attributes:
             label_obj["attributes"] = attributes
 
-        video_metadata = {}
+        video_metadata: Dict[str, TaskType.VideoMetaData] = {}
         if isinstance(label.get("frameindex"), int) and label["frameindex"] >= 0:
             video_metadata = {
                 "video": {
@@ -312,7 +315,7 @@ def dicom_rb_series(
                 }
             }
 
-        items: List[str] = volume.get("items", []) or []
+        items: List[str] = volume.get("items", []) or []  # type: ignore
 
         measurement_stats = {}
         if isinstance(label.get("stats"), dict):
@@ -323,13 +326,13 @@ def dicom_rb_series(
             }
 
         if label.get("tasklevelclassify") or label.get("studyclassify"):
-            output_task["classification"] = {**label_obj}
+            output_task["classification"] = {**label_obj}  # type: ignore
         elif label.get("multiclassify") or label.get("seriesclassify"):
             volume["classifications"] = volume.get("classifications", []) or []
             volume["classifications"].append(
                 {
-                    **label_obj,
-                    **video_metadata,
+                    **label_obj,  # type: ignore
+                    **video_metadata,  # type: ignore
                 }
             )
         elif label.get("instanceclassify"):
@@ -344,7 +347,7 @@ def dicom_rb_series(
                         if label["frameindex"] < len(items)
                         else ""
                     ),
-                    "values": label_obj["attributes"] or {},
+                    "values": label_obj.get("attributes", {}),
                 }
             )
         elif label.get("dicom", {}).get("instanceid"):
@@ -368,11 +371,13 @@ def dicom_rb_series(
                     series[volume_index].get("pngMask", False) or False
                 )
                 instance: Optional[str] = None
-                if bool(taxonomy.get("isNew")) and series[volume_index]["semanticMask"]:
+                if bool(taxonomy.get("isNew")) and series[volume_index].get(
+                    "semanticMask"
+                ):
                     instance = (
                         str(label["classid"] + 1)
                         if label["classid"] + 1
-                        not in series[volume_index]["segmentMap"]
+                        not in series[volume_index].get("segmentMap", {})
                         else None
                     )
                 else:
@@ -380,24 +385,26 @@ def dicom_rb_series(
                 if instance is not None:
                     mask = (segmentation_mapping.get(volume_index, {}) or {}).get(
                         f"mask-{instance}.png"
-                        if series[volume_index]["pngMask"]
+                        if series[volume_index].get("pngMask")
                         else (
                             f"category-{instance}.nii.gz"
-                            if series[volume_index]["semanticMask"]
+                            if series[volume_index].get("semanticMask")
                             else (
                                 f"instance-{instance}.nii.gz"
-                                if series[volume_index]["binaryMask"]
+                                if series[volume_index].get("binaryMask")
                                 else None
                             )
                         )
                     )
+                    segment_map_instance: TaskType.CommonLabelProps = {**label_obj}
                     if mask:
-                        series[volume_index]["segmentMap"][instance] = {
-                            **label_obj,
-                            "mask": mask,
-                        }
-                    else:
-                        series[volume_index]["segmentMap"][instance] = {**label_obj}
+                        segment_map_instance["mask"] = mask
+
+                    cur_series = series[volume_index]
+                    if "segmentMap" not in cur_series:
+                        cur_series["segmentMap"] = {}
+                    cur_series["segmentMap"][instance] = segment_map_instance
+
         elif label.get("length3d"):
             volume["measurements"] = volume.get("measurements", [])
             volume["measurements"].append(
@@ -413,7 +420,7 @@ def dicom_rb_series(
                     ),
                     "normal": label["length3d"]["normal"],
                     "length": label["length3d"]["computedlength"],
-                    **label_obj,
+                    **label_obj,  # type: ignore
                 }
             )
         elif label.get("angle3d"):
@@ -435,7 +442,7 @@ def dicom_rb_series(
                     ),
                     "normal": label["angle3d"]["normal"],
                     "angle": label["angle3d"]["computedangledeg"],
-                    **label_obj,
+                    **label_obj,  # type: ignore
                 }
             )
         elif label.get("point"):
@@ -446,8 +453,8 @@ def dicom_rb_series(
                         "xNorm": label["point"]["xnorm"],
                         "yNorm": label["point"]["ynorm"],
                     },
-                    **label_obj,
-                    **video_metadata,
+                    **label_obj,  # type: ignore
+                    **video_metadata,  # type: ignore
                 }
             )
         elif label.get("point3d"):
@@ -459,7 +466,7 @@ def dicom_rb_series(
                         "j": label["point3d"]["pointy"],
                         "k": label["point3d"]["pointz"],
                     },
-                    **label_obj,
+                    **label_obj,  # type: ignore
                 }
             )
         elif label.get("polyline"):
@@ -485,8 +492,8 @@ def dicom_rb_series(
                     "xRadiusNorm": label["ellipse"]["xnorm"],
                     "yRadiusNorm": label["ellipse"]["ynorm"],
                     "rotationRad": label["ellipse"]["rot"],
-                    **label_obj,
-                    **video_metadata,
+                    **label_obj,  # type: ignore
+                    **video_metadata,  # type: ignore
                     **measurement_stats,
                 }
             )
@@ -500,8 +507,8 @@ def dicom_rb_series(
                     },
                     "wNorm": label["bbox2d"]["wnorm"],
                     "hNorm": label["bbox2d"]["hnorm"],
-                    **label_obj,
-                    **video_metadata,
+                    **label_obj,  # type: ignore
+                    **video_metadata,  # type: ignore
                     **measurement_stats,
                 }
             )
@@ -517,25 +524,8 @@ def dicom_rb_series(
                     "absolutePoint2": dict(
                         zip("xyz", label["cuboid"]["computedpoint2world"])
                     ),
-                    **label_obj,
-                    **measurement_stats,
-                }
-            )
-        elif label.get("bbox3d"):
-            volume["boundingBoxes3d"] = volume.get("boundingBoxes3d", [])
-            volume["boundingBoxes3d"].append(
-                {
-                    "pointTopLeft": {
-                        "i": label["bbox3d"]["pointx"],
-                        "j": label["bbox3d"]["pointy"],
-                        "k": label["bbox3d"]["pointz"],
-                    },
-                    "width": label["bbox3d"]["deltax"],
-                    "height": label["bbox3d"]["deltay"],
-                    "depth": label["bbox3d"]["deltaz"],
-                    **label_obj,
-                    **video_metadata,
-                    **measurement_stats,
+                    **label_obj,  # type: ignore
+                    **measurement_stats,  # type: ignore
                 }
             )
         elif label.get("polygon"):
@@ -559,7 +549,7 @@ def dicom_rb_format(
     old_format: bool,
     no_consensus: bool,
     review_stages: List[ReviewStage],
-) -> Dict:
+) -> TaskType.OutputTask:
     """Get new dicom rb task format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals, unused-argument
     if old_format:
@@ -577,12 +567,12 @@ def dicom_rb_format(
         ]:
             if not task.get(key):
                 keys.append(key)
-        return {key: value for key, value in task.items() if key not in keys}
+        return {key: value for key, value in task.items() if key not in keys}  # type: ignore
 
     if not task.get("seriesInfo"):
         task["seriesInfo"] = [{"itemsIndices": list(range(len(task["items"])))}]
 
-    output = {"taskId": task["taskId"]}
+    output: TaskType.OutputTask = {"taskId": task["taskId"], "name": "", "series": []}
 
     if task.get("name"):
         output["name"] = task["name"]
@@ -610,12 +600,12 @@ def dicom_rb_format(
     if task.get("metaData"):
         output["metaData"] = task["metaData"]
 
-    volume_series: List[Dict] = [{} for _ in range(len(task["seriesInfo"]))]
+    volume_series: List[TaskType.Series] = [{} for _ in range(len(task["seriesInfo"]))]
     item_index_map: Dict[int, int] = {}
     for volume_index, series_info in enumerate(task["seriesInfo"]):
         series = volume_series[volume_index]
         if series_info.get("name"):
-            series["name"] = series_info["name"]
+            series["name"] = series_info["name"]  # type: ignore
 
         series_meta_data = series_info.get("metaData")
         if isinstance(series_meta_data, str):
@@ -624,7 +614,7 @@ def dicom_rb_format(
         series["items"] = []
         for item_index in series_info["itemsIndices"]:
             item_index_map[item_index] = volume_index
-            series["items"].append(task["items"][item_index])
+            series["items"].append(task["items"][item_index])  # type: ignore
 
     output["series"] = deepcopy(volume_series)
     if no_consensus:
@@ -644,17 +634,21 @@ def dicom_rb_format(
         ) or task[
             "currentStageName"
         ] == "END":  # Review_2...n, END
-            output["superTruth"] = {}
+            super_truth: TaskType.OutputTask = {  # type: ignore
+                "series": [{**series} for series in volume_series]
+            }
+            output["superTruth"] = super_truth
             if task.get("updatedBy"):
                 output["superTruth"]["updatedBy"] = task["updatedBy"]
             if task.get("updatedAt"):
                 output["superTruth"]["updatedAt"] = task["updatedAt"]
-            output["superTruth"]["series"] = [{**series} for series in volume_series]
             dicom_rb_series(item_index_map, task, output["superTruth"], taxonomy)
 
-        output["consensusTasks"] = [
-            {} for _ in range(len(task.get("consensusTasks", []) or []))
+        consensus_tasks: List[TaskType.OutputTask] = [
+            {"series": [{**series} for series in volume_series]}  # type: ignore
+            for _ in range(len(task.get("consensusTasks", []) or []))
         ]
+        output["consensusTasks"] = consensus_tasks
         for consensus_idx, output_consensus_task in enumerate(output["consensusTasks"]):
             consensus_task = task["consensusTasks"][consensus_idx]
             if consensus_task.get("status"):
@@ -673,7 +667,7 @@ def dicom_rb_format(
             if consensus_task.get("scores"):
                 output_consensus_task["scores"] = []
                 for consensus_score in consensus_task["scores"] or []:
-                    score = {}
+                    score: TaskType.ConsensusScore = {}
                     if consensus_score.get("userId"):
                         score["secondaryUserId"] = consensus_score["userId"]
 
@@ -685,8 +679,6 @@ def dicom_rb_format(
                     if consensus_score.get("score") is not None:
                         score["score"] = consensus_score["score"]
                     output_consensus_task["scores"].append(score)
-
-            output_consensus_task["series"] = [{**series} for series in volume_series]
 
             dicom_rb_series(
                 item_index_map, consensus_task, output_consensus_task, taxonomy

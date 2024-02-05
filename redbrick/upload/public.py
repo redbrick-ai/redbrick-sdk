@@ -5,7 +5,7 @@ import asyncio
 import os
 import sys
 from copy import deepcopy
-from typing import Any, List, Dict, Optional, Set
+from typing import List, Dict, Optional, Set
 import json
 from uuid import uuid4
 
@@ -27,6 +27,7 @@ from redbrick.utils.files import (
     is_dicom_file,
     upload_files,
 )
+from redbrick.types.task import InputTask
 
 
 # pylint: disable=too-many-lines
@@ -465,7 +466,7 @@ class Upload:
     def create_datapoints(
         self,
         storage_id: str,
-        points: List[Dict],
+        points: List[InputTask],
         *,
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
@@ -508,7 +509,7 @@ class Upload:
             on the RedBrick AI platform. To directly upload images to rbai,
             use redbrick.StorageMethod.REDBRICK.
 
-        points: List[Dict]
+        points: List[:obj:`~redbrick.types.task.InputTask`]
             Please see the RedBrick AI reference documentation for overview of the format.
             https://docs.redbrickai.com/python-sdk/format-reference.
             All the fields with `annotation` information are optional.
@@ -546,7 +547,7 @@ class Upload:
             if you didn't specify a "name" field in your datapoints object,
             we will assign the "items" path to it.
         """
-        points = self.prepare_json_files(
+        converted_points = self.prepare_json_files(
             [points],
             storage_id,
             label_storage_id or storage_id,
@@ -560,7 +561,7 @@ class Upload:
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
             self._create_tasks(
-                points,
+                converted_points,
                 {},
                 is_ground_truth,
                 storage_id,
@@ -731,7 +732,7 @@ class Upload:
 
     def prepare_json_files(
         self,
-        files_data: List[List[Dict]],
+        files_data: List[List[InputTask]],
         storage_id: str,
         label_storage_id: str,
         task_segment_map: Optional[Dict],
@@ -769,7 +770,7 @@ class Upload:
                 if (
                     item.get("items")
                     and isinstance(item.get("segmentations"), list)
-                    and len(item["segmentations"]) > 1
+                    and len(item.get("segmentations", [])) > 1
                 ):
                     logger.warning(
                         "Items list contains multiple segmentations."
@@ -780,7 +781,7 @@ class Upload:
 
             if task_segment_map:
                 for item in file_data:
-                    item["segmentMap"] = item.get("segmentMap", task_segment_map)
+                    item["segmentMap"] = item.get("segmentMap", task_segment_map)  # type: ignore
 
             loop = asyncio.get_event_loop()
             if rt_struct:
@@ -805,17 +806,19 @@ class Upload:
                             )
                             continue
 
+                        series_items = series.get("items", [])
                         items: List[str] = (
-                            series["items"]
-                            if isinstance(series["items"], list)
-                            else [series["items"]]
+                            [series_items]
+                            if isinstance(series_items, str)
+                            else series_items
                         )
+                        series_segmentations = series.get("segmentations", [])
                         segmentations: List[str] = (
-                            series["segmentations"]
-                            if isinstance(series["segmentations"], list)
-                            else [series["segmentations"]]
+                            [series_segmentations]
+                            if isinstance(series_segmentations, str)
+                            else series_segmentations
                         )
-                        segment_map: Dict[str, Any] = series["segmentMap"]
+                        segment_map = series.get("segmentMap", {})
                         if segment_map.get("binaryMask"):
                             del segment_map["binaryMask"]
                         if segment_map.get("semanticMask"):
@@ -945,12 +948,12 @@ class Upload:
 
                     if "segmentations" in task and all(
                         "segmentations" in series
-                        for series in task.get("series", []) or []
+                        for series in task.get("series", []) or []  # type: ignore
                     ):
                         del task["segmentations"]
                     if "segmentMap" in task and all(
                         "segmentMap" in series
-                        for series in task.get("series", []) or []
+                        for series in task.get("series", []) or []  # type: ignore
                     ):
                         del task["segmentMap"]
 
@@ -1060,7 +1063,7 @@ class Upload:
     def update_task_items(
         self,
         storage_id: str,
-        points: List[Dict],
+        points: List[InputTask],
         concurrency: int = 50,
     ) -> List[Dict]:
         """
@@ -1089,7 +1092,7 @@ class Upload:
             on the RedBrick AI platform. To directly upload images to rbai,
             use redbrick.StorageMethod.REDBRICK.
 
-        points: List[Dict]
+        points: List[:obj:`~redbrick.types.task.InputTask`]
             List of objects with `taskId` and `series`, where `series` contains
             a list of `items` paths to be updated for the task.
 
@@ -1105,7 +1108,7 @@ class Upload:
             1. If doing direct upload, please use ``redbrick.StorageMethod.REDBRICK``
             as the storage id. Your items path must be a valid path to a locally stored image.
         """
-        points = self.prepare_json_files(
+        converted_points = self.prepare_json_files(
             [points],
             storage_id,
             StorageMethod.REDBRICK,
@@ -1119,7 +1122,7 @@ class Upload:
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
             self._create_tasks(
-                points,
+                converted_points,
                 {},
                 False,
                 storage_id,

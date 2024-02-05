@@ -1,6 +1,6 @@
 """Task types."""
 
-from typing import List, Dict, Union, TypedDict, Required, NotRequired
+from typing import List, Dict, Literal, Union, TypedDict, Required, NotRequired
 
 
 class Point2D(TypedDict):
@@ -45,7 +45,19 @@ class VideoMetaData(TypedDict):
     endTrack: bool
 
 
+Category = Union[int, str, List[str]]
 Attributes = Dict[str, Union[str, bool, List[str]]]
+
+
+class CommonLabelProps(TypedDict, total=False):
+    """Extended version of segmentation mapping."""
+
+    category: Category
+    attributes: Attributes
+    mask: Union[str, List[str]]
+
+
+SegmentMap = Dict[Union[str, int], Union[str, int, List[str], CommonLabelProps]]
 
 
 class InstanceClassification(TypedDict):
@@ -53,13 +65,13 @@ class InstanceClassification(TypedDict):
 
     fileIndex: int
     fileName: NotRequired[str]
-    values: Dict[str, bool]
+    values: Attributes
 
 
 class Classification(TypedDict):
     """Study or series classification."""
 
-    category: NotRequired[Union[int, str, List[str]]]
+    category: NotRequired[Category]
     attributes: NotRequired[Attributes]
     video: NotRequired[VideoMetaData]
 
@@ -68,7 +80,7 @@ class Polyline(TypedDict):
     """Polyline label."""
 
     points: List[Point2D]
-    category: Union[int, str, List[str]]
+    category: Category
     attributes: NotRequired[Attributes]
     video: NotRequired[VideoMetaData]
 
@@ -77,7 +89,7 @@ class Polygon(TypedDict):
     """Polygon label."""
 
     points: List[Point2D]
-    category: Union[int, str, List[str]]
+    category: Category
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
     video: NotRequired[VideoMetaData]
@@ -90,7 +102,7 @@ class Cuboid(TypedDict):
     point2: VoxelPoint
     absolutePoint1: WorldPoint
     absolutePoint2: WorldPoint
-    category: Union[int, str, List[str]]
+    category: Category
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
 
@@ -101,7 +113,7 @@ class BoundingBox(TypedDict):
     pointTopLeft: Point2D
     wNorm: float
     hNorm: float
-    category: Union[int, str, List[str]]
+    category: Category
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
     video: NotRequired[VideoMetaData]
@@ -114,7 +126,7 @@ class Ellipse(TypedDict):
     xRadiusNorm: float
     yRadiusNorm: float
     rotationRad: float
-    category: Union[int, str, List[str]]
+    category: Category
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
     video: NotRequired[VideoMetaData]
@@ -123,7 +135,7 @@ class Ellipse(TypedDict):
 class MeasureAngle(TypedDict):
     """Angle measurement label."""
 
-    type: str
+    type: Literal["angle"]
     point1: VoxelPoint
     vertex: VoxelPoint
     point2: VoxelPoint
@@ -132,21 +144,21 @@ class MeasureAngle(TypedDict):
     absolutePoint2: WorldPoint
     normal: List[float]
     angle: float
-    category: Union[int, str, List[str]]
+    category: Category
     attributes: NotRequired[Attributes]
 
 
 class MeasureLength(TypedDict):
     """Length measurement label."""
 
-    type: str
+    type: Literal["length"]
     point1: VoxelPoint
     point2: VoxelPoint
     absolutePoint1: WorldPoint
     absolutePoint2: WorldPoint
     normal: List[float]
     length: float
-    category: Union[int, str, List[str]]
+    category: Category
     attributes: NotRequired[Attributes]
 
 
@@ -154,7 +166,7 @@ class Landmarks3D(TypedDict):
     """3D point label."""
 
     point: VoxelPoint
-    category: Union[int, str, List[str]]
+    category: Category
     attributes: NotRequired[Attributes]
 
 
@@ -162,7 +174,7 @@ class Landmarks(TypedDict):
     """2D point label."""
 
     point: Point2D
-    category: Union[int, str, List[str]]
+    category: Category
     attributes: NotRequired[Attributes]
     video: NotRequired[VideoMetaData]
 
@@ -183,10 +195,7 @@ class Series(TypedDict, total=False):
     name: str
     metaData: Dict[str, str]
     segmentations: Union[str, List[str]]
-    segmentMap: Dict[
-        Union[str, int],
-        Union[str, int, List[str], Dict[str, Union[int, str, List[str]]]],
-    ]
+    segmentMap: SegmentMap
     binaryMask: bool
     semanticMask: bool
     pngMask: bool
@@ -202,22 +211,33 @@ class Series(TypedDict, total=False):
     instanceClassifications: List[InstanceClassification]
 
 
-class Task(TypedDict, total=False):
+class InputTask(TypedDict, total=False):
     """Task object."""
 
-    name: str
+    name: Required[str]
     series: Required[List[Series]]
     classification: Classification
-    taskId: str
-    currentStageName: str
+
     priority: int
+    metaData: Dict[str, str]
+    preAssign: Dict[str, Union[str, List[str]]]
+
+
+class OutputTask(InputTask, total=False):
+    """Exported task object."""
+
+    taskId: Required[str]
+    currentStageName: str
+    status: str
+
     createdBy: str
     createdAt: str
     updatedBy: str
+    updatedByUserId: str
     updatedAt: str
-    metaData: Dict[str, str]
-    preAssign: Dict[str, Union[str, List[str]]]
+
+    consensus: bool
     consensusScore: float
-    consensusTasks: List["Task"]
+    consensusTasks: List["OutputTask"]
     scores: List[ConsensusScore]
-    superTruth: "Task"
+    superTruth: "OutputTask"

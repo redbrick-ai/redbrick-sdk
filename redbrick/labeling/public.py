@@ -15,6 +15,7 @@ from redbrick.stage import Stage
 from redbrick.utils.upload import process_segmentation_upload, validate_json
 from redbrick.utils.logging import log_error, logger
 from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.types.task import OutputTask
 
 
 TFun = TypeVar("TFun", bound=Callable[..., Any])  # pylint: disable=invalid-name
@@ -187,7 +188,7 @@ class Labeling:
     def put_tasks(
         self,
         stage_name: str,
-        tasks: List[Dict],
+        tasks: List[OutputTask],
         *,
         finalize: bool = True,
         existing_labels: bool = False,
@@ -196,7 +197,7 @@ class Labeling:
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = True,
         concurrency: int = 50,
-    ) -> List[Dict]:
+    ) -> List[OutputTask]:
         """
         Put tasks with new labels or a review result.
 
@@ -249,7 +250,7 @@ class Labeling:
             The stage to which you want to submit the tasks. This must be the
             same stage as which you called get_tasks on.
 
-        tasks: List[Dict]
+        tasks: List[:obj:`~redbrick.types.task.OutputTask`]
             Tasks with new labels or review result.
 
         finalize: bool = True
@@ -277,7 +278,7 @@ class Labeling:
 
         Returns
         ---------------
-        List[Dict]
+        List[:obj:`~redbrick.types.task.OutputTask`]
             A list of tasks that failed.
         """
         # pylint: disable=too-many-locals, too-many-branches
@@ -287,8 +288,8 @@ class Labeling:
 
         loop = asyncio.get_event_loop()
         failed_tasks: List[Dict] = []
-        with_labels: List[Dict] = []
-        without_labels: List[Dict] = []
+        with_labels: List[OutputTask] = []
+        without_labels: List[OutputTask] = []
         for task in tasks:
             point = deepcopy(task)
             # Invalid task
@@ -298,7 +299,7 @@ class Labeling:
                 and point["taskId"]
             ):
                 logger.warning(f"Task {point} does not have `taskId`")
-                failed_tasks.append(point)
+                failed_tasks.append(point)  # type: ignore
             # Submitted with existing labels
             elif not self.review and existing_labels:
                 without_labels.append(point)
@@ -318,7 +319,7 @@ class Labeling:
             # Submitted/Corrected (Old label format)
             elif isinstance(point.get("labels"), list):
                 point["name"] = "test"
-                point["items"] = ["test"]
+                point["items"] = ["test"]  # type: ignore
                 with_labels.append(point)
             # Accepted
             elif self.review and review_result:
@@ -326,11 +327,11 @@ class Labeling:
             # Invalid review state
             elif self.review:
                 logger.warning(f"Task {point} does not have `review_result`")
-                failed_tasks.append(point)
+                failed_tasks.append(point)  # type: ignore
             # Invalid label state
             else:
                 logger.warning(f"Invalid task format {point}")
-                failed_tasks.append(point)
+                failed_tasks.append(point)  # type: ignore
 
         project_label_storage_id, _ = self.context.project.get_label_storage(
             self.org_id, self.project_id
@@ -339,23 +340,24 @@ class Labeling:
             validated = loop.run_until_complete(
                 validate_json(
                     self.context,
-                    with_labels,
+                    with_labels,  # type: ignore
                     StorageMethod.REDBRICK,
                     concurrency,
                 )
             )
 
+            with_labels_converted: List[Dict]
             if validated:
-                with_labels = validated
+                with_labels_converted = validated
             else:
-                failed_tasks.extend(with_labels)
-                with_labels = []
+                failed_tasks.extend(with_labels)  # type: ignore
+                with_labels_converted = []
 
             failed_tasks.extend(
                 loop.run_until_complete(
                     self._put_tasks(
                         stage_name,
-                        with_labels,
+                        with_labels_converted,
                         finalize,
                         None,
                         label_storage_id or project_label_storage_id,
@@ -372,7 +374,7 @@ class Labeling:
                 loop.run_until_complete(
                     self._put_tasks(
                         stage_name,
-                        without_labels,
+                        without_labels,  # type: ignore
                         True,
                         review_result,
                         label_storage_id or project_label_storage_id,

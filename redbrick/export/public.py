@@ -33,6 +33,7 @@ from redbrick.utils.rb_label_utils import (
     assignee_format,
 )
 from redbrick.utils.rb_event_utils import task_event_format
+from redbrick.types.task import OutputTask as TypeTask, Series as TypeTaskSeries
 
 
 # pylint: disable=too-many-lines
@@ -158,9 +159,9 @@ class Export:
             )
 
     @staticmethod
-    def _get_task_series(task: Dict) -> List[Dict]:
+    def _get_task_series(task: TypeTask) -> List[TypeTaskSeries]:
         return (
-            (
+            (  # type: ignore
                 task.get("series")
                 or (task.get("superTruth", {}) or {}).get("series")
                 or (task.get("consensusTasks", []) or [])[0].get("series")
@@ -175,14 +176,14 @@ class Export:
 
     async def _download_task(
         self,
-        original_task: Dict,
+        original_task: TypeTask,
         storage_id: str,
         taxonomy: Dict,
         image_dir: str,
         dcm_to_nii: bool,
         rt_struct: bool,
         semantic_mask: bool,
-    ) -> Dict:
+    ) -> TypeTask:
         # pylint: disable=too-many-locals, import-outside-toplevel, too-many-nested-blocks
         task, series_dirs = await self._download_task_items(
             original_task, storage_id, image_dir, taxonomy, rt_struct, semantic_mask
@@ -217,11 +218,8 @@ class Export:
             return task
 
         for series, series_dir in zip(task_series, series_dirs):
-            items = (
-                [series["items"]]
-                if isinstance(series["items"], str)
-                else series["items"]
-            )
+            series_items = series.get("items") or []
+            items = [series_items] if isinstance(series_items, str) else series_items
             if (
                 dcm_to_nii
                 and len(items) > 1
@@ -280,16 +278,18 @@ class Export:
 
     async def _download_task_items(
         self,
-        task: Dict,
+        task: TypeTask,
         storage_id: str,
         parent_dir: str,
         taxonomy: Dict,
         rt_struct: bool,
         semantic_mask: bool,
-    ) -> Tuple[Dict, List[str]]:
+    ) -> Tuple[TypeTask, List[str]]:
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         path_pattern = re.compile(r"[^\w.]+")
-        task_name = re.sub(path_pattern, "-", task.get("name", "")) or task["taskId"]
+        task_name = re.sub(path_pattern, "-", task.get("name", "")) or task.get(
+            "taskId", ""
+        )
         task_dir = os.path.join(parent_dir, task_name)
 
         if os.path.exists(task_dir) and not os.path.isdir(task_dir):
@@ -328,7 +328,7 @@ class Export:
                 series_dir = os.path.join(task_dir, task_name)
                 os.makedirs(series_dir, exist_ok=True)
                 series_dirs.append(series_dir)
-                items_lists.append(task["items"])
+                items_lists.append(task.get("items", []) or [])  # type: ignore
 
             to_presign = []
             local_files = []
@@ -390,14 +390,14 @@ class Export:
                     prev_count += count
 
                 for idx, series in enumerate(task.get("series", []) or []):
-                    series["items"] = series_items[idx]
+                    series["items"] = series_items[idx]  # type: ignore
                 for idx, series in enumerate(
                     (task.get("superTruth", {}) or {}).get("series", []) or []
                 ):
-                    series["items"] = series_items[idx]
+                    series["items"] = series_items[idx]  # type: ignore
                 for sub_task in task.get("consensusTasks", []) or []:
                     for idx, series in enumerate(sub_task.get("series", []) or []):
-                        series["items"] = series_items[idx]
+                        series["items"] = series_items[idx]  # type: ignore
 
                 if taxonomy.get("isNew") and rt_struct:
                     # pylint: disable=import-outside-toplevel
@@ -446,16 +446,17 @@ class Export:
                         series["segmentations"] = name + ".dcm"
                         series["segmentMap"] = new_segment_map
                         for roi_name in series["segmentMap"].keys():
-                            if "mask" in series["segmentMap"][roi_name]:
-                                del series["segmentMap"][roi_name]["mask"]
+                            if "mask" in series["segmentMap"][roi_name]:  # type: ignore
+                                del series["segmentMap"][roi_name]["mask"]  # type: ignore
                         rtstruct.save(series["segmentations"])
 
             else:
-                task["items"] = downloaded
+                task["items"] = downloaded  # type: ignore
 
         except Exception as err:  # pylint: disable=broad-except
             log_error(
-                f"Error for task {task['taskId']}: {err}\n Please try using a lower --concurrency"
+                f"Error for task {task.get('taskId', '')}: {err}"
+                + "\n Please try using a lower --concurrency"
             )
             shutil.rmtree(task_dir, ignore_errors=True)
 
@@ -472,7 +473,7 @@ class Export:
         no_consensus: bool,
         png_mask: bool,
         taxonomy: Dict,
-    ) -> Dict:
+    ) -> TypeTask:
         """Process labels."""
         # pylint: disable=too-many-locals
         task = copy.deepcopy(datapoint)
@@ -724,7 +725,7 @@ class Export:
         png_mask: bool,
         rt_struct: bool,
         get_task: bool,
-    ) -> Optional[Dict]:
+    ) -> Optional[TypeTask]:
         """Export nifti label maps."""
         # pylint: disable=too-many-locals
         task = await self.process_labels(
@@ -788,7 +789,7 @@ class Export:
         png: bool = False,
         rt_struct: bool = False,
         destination: Optional[str] = None,
-    ) -> Iterator[Dict]:
+    ) -> Iterator[TypeTask]:
         """Export annotation data.
 
         Meta-data and category information returned as an Object. Segmentations are written to
@@ -866,7 +867,7 @@ class Export:
 
         Returns
         -----------
-        Iterator[Dict]
+        Iterator[:obj:`~redbrick.types.task.OutputTask`]
             Datapoint and labels in RedBrick AI format. See
             https://docs.redbrickai.com/python-sdk/format-reference
 
@@ -928,7 +929,7 @@ class Export:
 
         loop = asyncio.get_event_loop()
         for datapoint in datapoints:
-            task: Dict = loop.run_until_complete(
+            task: TypeTask = loop.run_until_complete(
                 self.export_nifti_label_data(  # type: ignore
                     datapoint,
                     taxonomy,

@@ -28,6 +28,8 @@ from redbrick.stage import Stage, LabelStage, ReviewStage
 from redbrick.utils.logging import logger
 from redbrick.utils.common_utils import config_migration
 
+from redbrick.types import task as TaskTypes
+
 from .version_check import version_check
 
 __version__ = "2.16.1"
@@ -177,6 +179,7 @@ __all__ = [
     "RBContext",
     "StorageMethod",
     "ImportTypes",
+    "TaskTypes",
     "TaskEventTypes",
     "TaskFilters",
     "Stage",

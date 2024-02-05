@@ -13,6 +13,7 @@ from redbrick.cli.cli_base import CLIUploadInterface
 from redbrick.common.enums import StorageMethod, ImportTypes
 from redbrick.utils.logging import assert_validation, logger
 from redbrick.utils.files import find_files_recursive
+from redbrick.types.task import InputTask
 
 
 class CLIUploadController(CLIUploadInterface):
@@ -198,7 +199,7 @@ but may increase the upload time.""",
         points: List[Dict] = []
         uploading = set()
         if self.args.json:
-            files_data: List[List[Dict]] = []
+            files_data: List[List[InputTask]] = []
             task_dirs: List[str] = []
             for item_group in items_list:
                 task_dirs.append(os.path.dirname(item_group[0]))

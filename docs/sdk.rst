@@ -50,3 +50,9 @@ Settings
 .. autoclass:: redbrick.settings.Settings
    :members: label_validation, hanging_protocol, toggle_reference_standard_task
    :show-inheritance:
+
+TaskTypes
+----------------------
+.. automodule:: redbrick.types.task
+   :members:
+   :undoc-members:
