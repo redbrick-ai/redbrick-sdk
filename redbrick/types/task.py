@@ -1,11 +1,7 @@
 """Task types."""
 
 from typing import List, Dict, Literal, Union, TypedDict
-
-try:
-    from typing import Required, NotRequired  # pylint: disable=no-name-in-module
-except ImportError:  # for python versions below 3.11
-    from typing_extensions import Required, NotRequired
+from typing_extensions import Required, NotRequired  # type: ignore
 
 
 class Point2D(TypedDict):
