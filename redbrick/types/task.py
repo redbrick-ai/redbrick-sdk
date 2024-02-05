@@ -1,6 +1,12 @@
 """Task types."""
 
-from typing import List, Dict, Literal, Union, TypedDict, Required, NotRequired
+import sys
+from typing import List, Dict, Literal, Union, TypedDict
+
+if sys.version_info[0] == 3 and sys.version_info[1] >= 11:
+    from typing import Required, NotRequired
+else:
+    from typing_extensions import Required, NotRequired
 
 
 class Point2D(TypedDict):
