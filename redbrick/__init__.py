@@ -6,6 +6,7 @@
     your RedBrick application by following along with
     `this documentation <https://docs.redbrickai.com/python-sdk/sdk-overview#generate-an-api-key>`_.
 """
+
 import sys
 import asyncio
 

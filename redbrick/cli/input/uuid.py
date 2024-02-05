@@ -1,4 +1,5 @@
 """Input uuid handler."""
+
 import re
 from typing import Optional
 

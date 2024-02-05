@@ -1,4 +1,5 @@
 """RedBrick project stages."""
+
 from typing import Dict, List
 
 from redbrick.common.stage import Stage

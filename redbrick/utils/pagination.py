@@ -52,9 +52,11 @@ class PaginationIterator:
             # but there is still more data, go for the next iteration
             while True:
                 self.datapoints_batch, self.cursor, *_ = self.func(
-                    max(0, min(self.concurrency, self.limit - self.total))
-                    if self.limit is not None
-                    else self.concurrency,
+                    (
+                        max(0, min(self.concurrency, self.limit - self.total))
+                        if self.limit is not None
+                        else self.concurrency
+                    ),
                     self.cursor,
                 )
                 if (

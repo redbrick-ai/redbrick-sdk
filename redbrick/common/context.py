@@ -1,4 +1,5 @@
 """Container for low-level methods to communicate with API."""
+
 import os
 from typing import Optional
 

@@ -1,4 +1,5 @@
 """CLI configuration handler."""
+
 import os
 from configparser import ConfigParser
 from typing import Dict, Optional

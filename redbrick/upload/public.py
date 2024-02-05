@@ -1,4 +1,5 @@
 """Public interface to upload module."""
+
 import shutil
 import asyncio
 import os
@@ -178,34 +179,41 @@ class Upload:
                     storage_id,
                     point["taskId"],
                     point["items"],
-                    [
-                        {
-                            **{
-                                series_key: series_val
-                                for series_key, series_val in series_info.items()
-                                if series_key
-                                not in (
-                                    "binaryMask",
-                                    "semanticMask",
-                                    "pngMask",
-                                    "masks",
-                                )
-                            },
-                            "metaData": json.dumps(
-                                series_info["metaData"], separators=(",", ":")
-                            )
-                            if series_info.get("metaData")
-                            else None,
-                            "imageHeaders": json.dumps(
-                                series_info["imageHeaders"], separators=(",", ":")
-                            )
-                            if series_info.get("imageHeaders")
-                            else None,
-                        }
-                        for series_info in point["seriesInfo"]
-                    ]
-                    if point.get("seriesInfo")
-                    else None,
+                    (
+                        [
+                            {
+                                **{
+                                    series_key: series_val
+                                    for series_key, series_val in series_info.items()
+                                    if series_key
+                                    not in (
+                                        "binaryMask",
+                                        "semanticMask",
+                                        "pngMask",
+                                        "masks",
+                                    )
+                                },
+                                "metaData": (
+                                    json.dumps(
+                                        series_info["metaData"], separators=(",", ":")
+                                    )
+                                    if series_info.get("metaData")
+                                    else None
+                                ),
+                                "imageHeaders": (
+                                    json.dumps(
+                                        series_info["imageHeaders"],
+                                        separators=(",", ":"),
+                                    )
+                                    if series_info.get("imageHeaders")
+                                    else None
+                                ),
+                            }
+                            for series_info in point["seriesInfo"]
+                        ]
+                        if point.get("seriesInfo")
+                        else None
+                    ),
                 )
                 assert_validation(
                     response.get("ok"),
@@ -221,37 +229,46 @@ class Upload:
                     point["items"],
                     json.dumps(point.get("labels", []), separators=(",", ":")),
                     labels_map,
-                    [
-                        {
-                            **{
-                                series_key: series_val
-                                for series_key, series_val in series_info.items()
-                                if series_key
-                                not in (
-                                    "binaryMask",
-                                    "semanticMask",
-                                    "pngMask",
-                                    "masks",
-                                )
-                            },
-                            "metaData": json.dumps(
-                                series_info["metaData"], separators=(",", ":")
-                            )
-                            if series_info.get("metaData")
-                            else None,
-                            "imageHeaders": json.dumps(
-                                series_info["imageHeaders"], separators=(",", ":")
-                            )
-                            if series_info.get("imageHeaders")
-                            else None,
-                        }
-                        for series_info in point["seriesInfo"]
-                    ]
-                    if point.get("seriesInfo")
-                    else None,
-                    json.dumps(point["metaData"], separators=(",", ":"))
-                    if point.get("metaData")
-                    else None,
+                    (
+                        [
+                            {
+                                **{
+                                    series_key: series_val
+                                    for series_key, series_val in series_info.items()
+                                    if series_key
+                                    not in (
+                                        "binaryMask",
+                                        "semanticMask",
+                                        "pngMask",
+                                        "masks",
+                                    )
+                                },
+                                "metaData": (
+                                    json.dumps(
+                                        series_info["metaData"], separators=(",", ":")
+                                    )
+                                    if series_info.get("metaData")
+                                    else None
+                                ),
+                                "imageHeaders": (
+                                    json.dumps(
+                                        series_info["imageHeaders"],
+                                        separators=(",", ":"),
+                                    )
+                                    if series_info.get("imageHeaders")
+                                    else None
+                                ),
+                            }
+                            for series_info in point["seriesInfo"]
+                        ]
+                        if point.get("seriesInfo")
+                        else None
+                    ),
+                    (
+                        json.dumps(point["metaData"], separators=(",", ":"))
+                        if point.get("metaData")
+                        else None
+                    ),
                     is_ground_truth,
                     point.get("preAssign"),
                     point.get("priority"),
@@ -819,10 +836,16 @@ class Upload:
                             )
                             for item in items:
                                 shutil.copy(
-                                    item
-                                    if os.path.isabs(item)
-                                    or not os.path.exists(os.path.join(task_dir, item))
-                                    else os.path.abspath(os.path.join(task_dir, item)),
+                                    (
+                                        item
+                                        if os.path.isabs(item)
+                                        or not os.path.exists(
+                                            os.path.join(task_dir, item)
+                                        )
+                                        else os.path.abspath(
+                                            os.path.join(task_dir, item)
+                                        )
+                                    ),
                                     os.path.join(temp_img_dir, os.path.basename(item)),
                                 )
                         else:
@@ -853,10 +876,16 @@ class Upload:
                             )
                             for seg in segmentations:
                                 shutil.copy(
-                                    seg
-                                    if os.path.isabs(seg)
-                                    or not os.path.exists(os.path.join(task_dir, seg))
-                                    else os.path.abspath(os.path.join(task_dir, seg)),
+                                    (
+                                        seg
+                                        if os.path.isabs(seg)
+                                        or not os.path.exists(
+                                            os.path.join(task_dir, seg)
+                                        )
+                                        else os.path.abspath(
+                                            os.path.join(task_dir, seg)
+                                        )
+                                    ),
                                     os.path.join(temp_seg_dir, os.path.basename(seg)),
                                 )
                         else:
@@ -958,9 +987,11 @@ class Upload:
                         item["segmentations"], dict
                     ):
                         item["labelsMap"] = [
-                            {"labelName": segmentation, "imageIndex": int(idx)}
-                            if segmentation
-                            else None
+                            (
+                                {"labelName": segmentation, "imageIndex": int(idx)}
+                                if segmentation
+                                else None
+                            )
                             for idx, segmentation in item["segmentations"].items()
                         ]
                     del item["segmentations"]
@@ -980,10 +1011,12 @@ class Upload:
                     if not isinstance(label_map["labelName"], list):
                         label_map["labelName"] = [label_map["labelName"]]
                     label_map["labelName"] = [
-                        label_name
-                        if os.path.isabs(label_name)
-                        or not os.path.exists(os.path.join(task_dir, label_name))
-                        else os.path.abspath(os.path.join(task_dir, label_name))
+                        (
+                            label_name
+                            if os.path.isabs(label_name)
+                            or not os.path.exists(os.path.join(task_dir, label_name))
+                            else os.path.abspath(os.path.join(task_dir, label_name))
+                        )
                         for label_name in label_map["labelName"]
                     ]
                     if len(label_map["labelName"]) == 1:

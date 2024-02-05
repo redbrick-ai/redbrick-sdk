@@ -1,4 +1,5 @@
 """CLI report command."""
+
 import os
 import json
 from datetime import datetime

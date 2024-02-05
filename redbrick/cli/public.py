@@ -1,4 +1,5 @@
 """Main file for CLI."""
+
 import sys
 import argparse
 from typing import List, Optional, Any

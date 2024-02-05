@@ -1,4 +1,5 @@
 """Input select handler."""
+
 from typing import Any, List, Optional
 
 from InquirerPy.prompts.fuzzy import FuzzyPrompt

@@ -1,4 +1,5 @@
 """Interface for getting basic information about a project."""
+
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 from abc import ABC, abstractmethod

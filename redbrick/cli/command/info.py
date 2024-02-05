@@ -1,4 +1,5 @@
 """CLI info command."""
+
 from argparse import ArgumentParser, Namespace
 from typing import List, Tuple, cast
 

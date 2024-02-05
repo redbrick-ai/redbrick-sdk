@@ -1,4 +1,5 @@
 """Main CLI project."""
+
 import os
 from typing import Optional, cast
 

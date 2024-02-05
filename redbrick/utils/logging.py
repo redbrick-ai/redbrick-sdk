@@ -1,4 +1,5 @@
 """Logging functions."""
+
 import os
 from typing import Union, Any
 import logging

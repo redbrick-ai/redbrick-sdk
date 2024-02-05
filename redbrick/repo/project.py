@@ -1,4 +1,5 @@
 """Handlers to access APIs for getting projects."""
+
 import json
 from typing import List, Dict, Tuple, Optional
 from datetime import datetime

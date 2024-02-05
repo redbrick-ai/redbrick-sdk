@@ -1,4 +1,5 @@
 """CLI init command."""
+
 import os
 from argparse import ArgumentParser, Namespace
 from typing import List

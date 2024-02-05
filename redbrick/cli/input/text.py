@@ -1,4 +1,5 @@
 """Input text handler."""
+
 from typing import Optional
 
 from InquirerPy.prompts.input import InputPrompt

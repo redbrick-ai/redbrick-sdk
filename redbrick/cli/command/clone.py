@@ -1,4 +1,5 @@
 """CLI clone command."""
+
 import os
 import re
 from argparse import ArgumentParser, Namespace

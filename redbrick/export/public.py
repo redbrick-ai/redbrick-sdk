@@ -1,4 +1,5 @@
 """Public API to exporting."""
+
 import asyncio
 import re
 import shutil
@@ -86,9 +87,11 @@ class Export:
                 self.org_id,
                 self.project_id,
                 stage_name,
-                datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
-                if from_timestamp is not None
-                else None,
+                (
+                    datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
+                    if from_timestamp is not None
+                    else None
+                ),
                 presign_items,
                 with_consensus,
             ),
@@ -136,17 +139,19 @@ class Export:
             class_id[key] = category["classId"] + 1
             color_map[key] = Export._get_color(
                 category["classId"],
-                next(
-                    (
-                        color.get("color")
-                        for color in (taxonomy_color or [])
-                        if not color.get("taskcategory")
-                        and color.get("trail", []) == trail
-                    ),
-                    None,
-                )
-                if taxonomy_color
-                else None,
+                (
+                    next(
+                        (
+                            color.get("color")
+                            for color in (taxonomy_color or [])
+                            if not color.get("taskcategory")
+                            and color.get("trail", []) == trail
+                        ),
+                        None,
+                    )
+                    if taxonomy_color
+                    else None
+                ),
             )
             Export.tax_class_id_mapping(
                 trail, category["children"], class_id, color_map, taxonomy_color
@@ -478,9 +483,12 @@ class Export:
         has_series_info = sum(
             list(
                 map(
-                    lambda val: len(val["itemsIndices"])
-                    if isinstance(val, dict) and len(val.get("itemsIndices", []) or [])
-                    else -1000000,
+                    lambda val: (
+                        len(val["itemsIndices"])
+                        if isinstance(val, dict)
+                        and len(val.get("itemsIndices", []) or [])
+                        else -1000000
+                    ),
                     series_info,
                 )
             )
@@ -514,11 +522,13 @@ class Export:
             for consensus_task in task["consensusTasks"]:
                 presign_paths.extend(
                     [
-                        consensus_label_map.get("labelName")
-                        if consensus_label_map
-                        and consensus_task.get("labelStorageId")
-                        == task["labelStorageId"]
-                        else None
+                        (
+                            consensus_label_map.get("labelName")
+                            if consensus_label_map
+                            and consensus_task.get("labelStorageId")
+                            == task["labelStorageId"]
+                            else None
+                        )
                         for consensus_label_map in (
                             consensus_task.get("labelsMap", []) or []
                         )
@@ -1218,9 +1228,11 @@ class Export:
                 self.project_id,
                 task_id,
                 "END" if only_ground_truth else None,
-                datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
-                if from_timestamp is not None
-                else None,
+                (
+                    datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
+                    if from_timestamp is not None
+                    else None
+                ),
                 with_labels,
             ),
             concurrency,

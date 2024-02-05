@@ -85,7 +85,6 @@ def test_handle_set(
     ), patch(
         "redbrick.cli.input.text.CLIInputText.get", return_value="mock_path"
     ):
-
         controller.args = argparse.Namespace(get=None, set="labelstorage", path=".")
         # call method
         controller.handle_set()

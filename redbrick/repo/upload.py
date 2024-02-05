@@ -1,4 +1,5 @@
 """Abstract interface to upload."""
+
 import json
 from typing import List, Dict, Optional, Any
 

@@ -1,4 +1,5 @@
 """CLI credentials handler."""
+
 import os
 from typing import Dict, List
 from configparser import ConfigParser

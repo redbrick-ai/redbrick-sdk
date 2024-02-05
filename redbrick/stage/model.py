@@ -1,6 +1,5 @@
 """Model stage."""
 
-
 from dataclasses import dataclass, field
 import json
 from typing import Any, Dict, List, Optional, TypedDict

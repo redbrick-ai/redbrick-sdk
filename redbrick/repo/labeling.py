@@ -1,4 +1,5 @@
 """Abstract interface to Labeling APIs."""
+
 from typing import Optional, List, Dict
 import aiohttp
 

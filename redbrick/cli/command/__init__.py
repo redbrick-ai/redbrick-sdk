@@ -1,4 +1,5 @@
 """CLI commands controllers."""
+
 from redbrick.cli.command.config import CLIConfigController
 from redbrick.cli.command.init import CLIInitController
 from redbrick.cli.command.clone import CLICloneController

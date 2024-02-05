@@ -1,4 +1,5 @@
 """Graphql Client responsible for make API requests."""
+
 import time
 import json
 import base64

@@ -1,4 +1,5 @@
 """CLI upload command."""
+
 import os
 import re
 import json
@@ -248,20 +249,22 @@ but may increase the upload time.""",
                 item_name = (
                     label_data["name"]
                     if label_data and label_data.get("name")
-                    else item_name
-                    if item_name
                     else (
-                        re.sub(
-                            r"^" + re.escape(directory + os.path.sep) + r"?",
-                            "",
-                            (
-                                os.path.dirname(item_group[0])
-                                if len(item_group) > 1
-                                else item_group[0]
-                            ),
-                        )
-                        or directory
-                    ).replace(os.path.sep, "/")
+                        item_name
+                        if item_name
+                        else (
+                            re.sub(
+                                r"^" + re.escape(directory + os.path.sep) + r"?",
+                                "",
+                                (
+                                    os.path.dirname(item_group[0])
+                                    if len(item_group) > 1
+                                    else item_group[0]
+                                ),
+                            )
+                            or directory
+                        ).replace(os.path.sep, "/")
+                    )
                 )
                 if item_name in upload_cache or item_name in uploading:
                     logger.info(f"Skipping duplicate item name: {item_name}")
@@ -292,9 +295,11 @@ but may increase the upload time.""",
                             }
                         if isinstance(label_data["segmentations"], dict):
                             label_data["labelsMap"] = [
-                                {"labelName": segmentation, "imageIndex": int(idx)}
-                                if segmentation
-                                else None
+                                (
+                                    {"labelName": segmentation, "imageIndex": int(idx)}
+                                    if segmentation
+                                    else None
+                                )
                                 for idx, segmentation in label_data[
                                     "segmentations"
                                 ].items()
@@ -314,12 +319,16 @@ but may increase the upload time.""",
                             if not isinstance(label_map["labelName"], list):
                                 label_map["labelName"] = [label_map["labelName"]]
                             label_map["labelName"] = [
-                                label_name
-                                if os.path.isabs(label_name)
-                                or not os.path.exists(
-                                    os.path.join(task_dir, label_name)
+                                (
+                                    label_name
+                                    if os.path.isabs(label_name)
+                                    or not os.path.exists(
+                                        os.path.join(task_dir, label_name)
+                                    )
+                                    else os.path.abspath(
+                                        os.path.join(task_dir, label_name)
+                                    )
                                 )
-                                else os.path.abspath(os.path.join(task_dir, label_name))
                                 for label_name in label_map["labelName"]
                             ]
                             if len(label_map["labelName"]) == 1:

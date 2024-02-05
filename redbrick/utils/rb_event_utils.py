@@ -1,4 +1,5 @@
 """Utilities for working with event objects."""
+
 import json
 from typing import List, Dict
 
@@ -69,12 +70,14 @@ def task_event_format(
                             TaskEventTypes.TASK_SUBMITTED
                             if task_event["outputEvent"]["outputBool"] is None
                             else (
-                                TaskEventTypes.TASK_ACCEPTED
-                                if review_result
-                                else TaskEventTypes.TASK_CORRECTED
+                                (
+                                    TaskEventTypes.TASK_ACCEPTED
+                                    if review_result
+                                    else TaskEventTypes.TASK_CORRECTED
+                                )
+                                if task_event["outputEvent"]["outputBool"]
+                                else TaskEventTypes.TASK_REJECTED
                             )
-                            if task_event["outputEvent"]["outputBool"]
-                            else TaskEventTypes.TASK_REJECTED
                         )
                         event["stage"] = task_event["outputEvent"]["currentStageName"]
                         event["updatedBy"] = user_format(

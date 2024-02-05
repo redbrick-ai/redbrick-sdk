@@ -1,4 +1,5 @@
 """CLI export command."""
+
 import os
 import re
 import json
@@ -219,9 +220,7 @@ class CLIExportController(CLIExportInterface):
         binary_mask = (
             True
             if bool(self.args.binary_mask)
-            else False
-            if bool(self.args.single_mask)
-            else None
+            else False if bool(self.args.single_mask) else None
         )
         old_format = bool(self.args.old_format)
         with_files = bool(self.args.with_files)

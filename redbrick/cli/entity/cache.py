@@ -1,4 +1,5 @@
 """CLI cache handler."""
+
 import os
 import shutil
 import pickle

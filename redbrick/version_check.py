@@ -1,4 +1,5 @@
 """Management of versions to help users update."""
+
 from typing import List, Dict
 import os
 import re

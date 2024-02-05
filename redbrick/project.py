@@ -1,4 +1,5 @@
 """Interface for interacting with your RedBrick AI Projects."""
+
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from dateutil import parser  # type: ignore

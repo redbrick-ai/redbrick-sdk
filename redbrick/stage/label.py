@@ -1,6 +1,5 @@
 """Label stage."""
 
-
 from dataclasses import dataclass, field
 import json
 from typing import Any, Dict, Optional
@@ -53,9 +52,11 @@ class LabelStage(Stage):
             return cls(
                 auto_assignment=entity.get("autoAssign"),
                 auto_assignment_queue_size=entity.get("queueSize"),
-                show_uploaded_annotations=None
-                if entity.get("blindedAnnotation") is None
-                else not entity["blindedAnnotation"],
+                show_uploaded_annotations=(
+                    None
+                    if entity.get("blindedAnnotation") is None
+                    else not entity["blindedAnnotation"]
+                ),
             )
 
         def to_entity(self) -> Dict:

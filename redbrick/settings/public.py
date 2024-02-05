@@ -1,4 +1,5 @@
 """Public interface to settings module."""
+
 from redbrick.common.context import RBContext
 from redbrick.common.settings import LabelValidation, HangingProtocol
 

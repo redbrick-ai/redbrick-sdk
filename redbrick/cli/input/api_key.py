@@ -1,4 +1,5 @@
 """Input api_key handler."""
+
 from typing import Optional
 
 from InquirerPy.prompts.input import InputPrompt

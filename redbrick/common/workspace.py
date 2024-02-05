@@ -1,4 +1,5 @@
 """Interface for getting basic information about a workspace."""
+
 from typing import Dict
 from abc import ABC, abstractmethod
 

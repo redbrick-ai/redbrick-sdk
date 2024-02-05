@@ -1,4 +1,5 @@
 """Abstract interface to settings."""
+
 from typing import TypedDict, Optional
 from abc import ABC, abstractmethod
 

@@ -1,4 +1,5 @@
 """Enumerations for use across SDK."""
+
 from enum import Enum
 
 

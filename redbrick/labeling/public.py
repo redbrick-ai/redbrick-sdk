@@ -1,4 +1,5 @@
 """Public interface to labeling module."""
+
 import functools
 from inspect import signature
 import json

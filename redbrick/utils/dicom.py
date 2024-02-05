@@ -1,4 +1,5 @@
 """Dicom/nifti related functions."""
+
 import os
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, TypedDict
 from asyncio import BoundedSemaphore
@@ -325,9 +326,11 @@ async def process_nifti_download(
                     label_map_data["semantic_mask"],
                     label_map_data["masks"],
                 ) = convert_to_semantic(
-                    [label_map_data["masks"]]
-                    if isinstance(label_map_data["masks"], str)
-                    else label_map_data["masks"],
+                    (
+                        [label_map_data["masks"]]
+                        if isinstance(label_map_data["masks"], str)
+                        else label_map_data["masks"]
+                    ),
                     taxonomy,
                     filtered_labels,
                     dirname,
@@ -341,9 +344,11 @@ async def process_nifti_download(
 
             if png_mask and label_map_data["masks"]:
                 label_map_data["png_mask"], label_map_data["masks"] = convert_to_png(
-                    [label_map_data["masks"]]
-                    if isinstance(label_map_data["masks"], str)
-                    else label_map_data["masks"],
+                    (
+                        [label_map_data["masks"]]
+                        if isinstance(label_map_data["masks"], str)
+                        else label_map_data["masks"]
+                    ),
                     color_map,
                     filtered_labels,
                     dirname,

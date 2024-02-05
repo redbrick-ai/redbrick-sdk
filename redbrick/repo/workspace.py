@@ -1,4 +1,5 @@
 """Handlers to access APIs for getting workspaces."""
+
 from typing import Dict
 
 from redbrick.common.client import RBClient

@@ -1,4 +1,5 @@
 """Taxonomy utilities."""
+
 from typing import Dict, List, Optional
 
 

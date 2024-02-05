@@ -1,4 +1,5 @@
 """Container for context config."""
+
 from dataclasses import dataclass
 
 

@@ -1,4 +1,5 @@
 """Utilities for working with label objects."""
+
 import os
 from typing import Any, Dict, List, Optional
 import json
@@ -269,13 +270,17 @@ def dicom_rb_series(
             label_obj["category"] = (
                 label["category"]
                 if not isinstance(label["category"], list)
-                else label["category"][0][1]
-                if isinstance(label["category"][0], list)
-                and len(label["category"][0]) == 2
-                else label["category"][0][1:]
-                if isinstance(label["category"][0], list)
-                and len(label["category"][0]) > 2
-                else label["category"]
+                else (
+                    label["category"][0][1]
+                    if isinstance(label["category"][0], list)
+                    and len(label["category"][0]) == 2
+                    else (
+                        label["category"][0][1:]
+                        if isinstance(label["category"][0], list)
+                        and len(label["category"][0]) > 2
+                        else label["category"]
+                    )
+                )
             )
 
         attributes = {}
@@ -283,11 +288,15 @@ def dicom_rb_series(
             attributes[attribute["name"]] = (
                 attribute["value"]
                 if not isinstance(attribute["value"], str)
-                else True
-                if attribute["value"].lower() == "true"
-                else False
-                if attribute["value"].lower() == "false"
-                else attribute["value"]
+                else (
+                    True
+                    if attribute["value"].lower() == "true"
+                    else (
+                        False
+                        if attribute["value"].lower() == "false"
+                        else attribute["value"]
+                    )
+                )
             )
         if attributes:
             label_obj["attributes"] = attributes
@@ -330,9 +339,11 @@ def dicom_rb_series(
             volume["instanceClassifications"].append(
                 {
                     "fileIndex": label["frameindex"],
-                    "fileName": items[label["frameindex"]]
-                    if label["frameindex"] < len(items)
-                    else "",
+                    "fileName": (
+                        items[label["frameindex"]]
+                        if label["frameindex"] < len(items)
+                        else ""
+                    ),
                     "values": label_obj["attributes"] or {},
                 }
             )
@@ -370,11 +381,15 @@ def dicom_rb_series(
                     mask = (segmentation_mapping.get(volume_index, {}) or {}).get(
                         f"mask-{instance}.png"
                         if series[volume_index]["pngMask"]
-                        else f"category-{instance}.nii.gz"
-                        if series[volume_index]["semanticMask"]
-                        else f"instance-{instance}.nii.gz"
-                        if series[volume_index]["binaryMask"]
-                        else None
+                        else (
+                            f"category-{instance}.nii.gz"
+                            if series[volume_index]["semanticMask"]
+                            else (
+                                f"instance-{instance}.nii.gz"
+                                if series[volume_index]["binaryMask"]
+                                else None
+                            )
+                        )
                     )
                     if mask:
                         series[volume_index]["segmentMap"][instance] = {

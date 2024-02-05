@@ -1,4 +1,5 @@
 """Interfaces for RedBrick CLI."""
+
 from abc import ABC, abstractmethod
 from typing import Optional
 from argparse import Namespace

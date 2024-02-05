@@ -1,4 +1,5 @@
 """CLI config command."""
+
 import os
 from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import List, Optional
@@ -146,11 +147,11 @@ class CLIConfigController(CLIConfigInterface):
                 if not columns_set:
                     table.add_column(
                         key.capitalize(),
-                        width=(43 if debug_mode else 6)
-                        if key == "key"
-                        else 36
-                        if key == "org"
-                        else None,
+                        width=(
+                            (43 if debug_mode else 6)
+                            if key == "key"
+                            else 36 if key == "org" else None
+                        ),
                     )
                 row.append(
                     ("***" + value[-3:]) if key == "key" and not debug_mode else value
