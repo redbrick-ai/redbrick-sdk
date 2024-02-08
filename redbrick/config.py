@@ -37,7 +37,7 @@ class Config:
     def __repr__(self) -> str:
         """Class repr."""
         props = {"version": self.version}
-        for option in self._options.keys():
+        for option in self._options:
             props[option] = self.__getattribute__(option)
         return str(props)
 

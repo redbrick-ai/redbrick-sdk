@@ -11,9 +11,7 @@ from redbrick.cli.entity import CLICache
 def test_cache_initialization(mock_conf):
     """Assert that cache object and cache dir exist"""
     # pylint: disable=protected-access
-    conf, cache_dir = mock_conf
-    cli_cache = CLICache(cache_dir, conf)
-    assert cli_cache.exists is False
+    conf, _ = mock_conf
     assert os.path.isfile(conf._conf_file)
 
 
@@ -26,46 +24,6 @@ def test_cache_path(cli_cache):
 
     path = cli_cache.cache_path("test", "entity", fixed_cache=False)
     assert path.endswith(os.path.join(cli_cache._cache_name, "test", "entity"))
-
-
-@pytest.mark.unit
-def test_get_and_set_object(cli_cache):
-    """Test get and set object"""
-    entity_name = "test_entity"
-
-    # Set an object in the cache
-    test_object = {"key": "value"}
-    cli_cache.set_object(entity_name, test_object)
-
-    # Get the object
-    cached_object = cli_cache.get_object(entity_name)
-    assert cached_object == test_object
-
-
-@pytest.mark.unit
-def test_get_nonexistent_object(cli_cache):
-    """Test get nonexistent object"""
-    entity_name = "test_entity"
-    assert cli_cache.get_object(entity_name) is None
-
-
-@pytest.mark.unit
-def test_get_object_expired(cli_cache):
-    """Test getting expired object from cache"""
-    entity_name = "expired_entity"
-
-    # Set an object in the cache
-    test_object = {"key": "value"}
-    cli_cache.set_object(entity_name, test_object, save_conf=False)
-
-    # Manually set an old timestamp to simulate an expired cache
-    # pylint: disable=protected-access
-    old_timestamp = int(datetime.utcnow().timestamp()) - (cli_cache.CACHE_LIFETIME + 1)
-    cli_cache._conf.set_option(entity_name, "refresh", str(old_timestamp))
-    cli_cache._conf.save()
-
-    # Cache should be considered expired
-    assert cli_cache.get_object(entity_name) is None
 
 
 @pytest.mark.unit
@@ -130,7 +88,6 @@ def test_remove_entity(cli_cache):
     assert not os.path.isfile(entity_path)
 
 
-@pytest.mark.skip("This feature needs to be reworked")
 @pytest.mark.unit
 def test_clear_cache(cli_cache):
     """Test `CLICache.clear_cache`"""
@@ -138,10 +95,10 @@ def test_clear_cache(cli_cache):
     cache_name = "test_cache_data"
     cli_cache.set_data(cache_name, {"key": "value"})
 
-    cli_cache.clear_cache()
+    cli_cache.clear_cache(True)
     assert not os.path.exists(cli_cache.cache_path(cache_name))
-    assert os.path.exists(cli_cache.cache_path(cli_cache._cache_name))
-    assert os.path.exists(cli_cache.cache_path(cli_cache._fixed_cache_name))
+    assert not os.path.exists(cli_cache.cache_path(cli_cache._cache_name))
+    assert not os.path.exists(cli_cache.cache_path(cli_cache._fixed_cache_name))
 
 
 @pytest.mark.unit

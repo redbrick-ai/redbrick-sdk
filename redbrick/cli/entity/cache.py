@@ -36,15 +36,6 @@ class CLICache:
             self._conf.set_option("cache", "name", self._cache_name)
             self._conf.save()
 
-    @property
-    def exists(self) -> bool:
-        """Boolean flag to indicate if cache directory exists."""
-        if os.path.exists(self._cache_dir):
-            if os.path.isdir(self._cache_dir):
-                return True
-            raise Exception(f"Not a directory {self._cache_dir}")
-        return False
-
     def cache_path(self, *path: str, fixed_cache: bool = False) -> str:
         """Get cache file path."""
         path_dir = os.path.join(
@@ -133,7 +124,7 @@ class CLICache:
 
     def clear_cache(self, all_caches: bool = False) -> None:
         """Clear project cache."""
-        if not self.exists:
+        if not os.path.isdir(self._cache_dir):
             return
 
         caches = os.listdir(self._cache_dir)

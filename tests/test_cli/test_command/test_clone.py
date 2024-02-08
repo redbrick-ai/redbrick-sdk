@@ -106,5 +106,4 @@ def test_handle_clone(
     assert os.path.isdir(os.path.join(project_path, ".redbrick"))
     real_project_path = os.path.join(project_path, project_name)
     assert os.path.exists(real_project_path)
-    assert os.path.isdir(os.path.join(real_project_path, ".redbrick", "cache"))
     assert os.path.isfile(os.path.join(real_project_path, ".redbrick", "config"))

@@ -183,7 +183,6 @@ def test_initialize_project(project_and_conf_dirs, rb_context_full):
         assert proj.conf.exists
         assert proj.conf.get_section("org")["id"] == org_id
         assert proj.conf.get_section("project")["id"] == project_id
-        assert proj.cache.exists
 
 
 @pytest.mark.unit
@@ -248,4 +247,3 @@ def test_project_properties(project_and_conf_dirs, rb_context_full):
 
         assert proj.creds.exists
         assert proj.conf.exists
-        assert proj.cache.exists
