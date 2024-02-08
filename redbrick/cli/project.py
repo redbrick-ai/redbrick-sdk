@@ -99,48 +99,30 @@ class CLIProject:
     def org(self) -> RBOrganization:
         """Get org object."""
         if not self._org:
-            org = self.cache.get_object("org")
-            if (
-                isinstance(org, RBOrganization)
-                and org.context.client.url == self.context.client.url
-                and org.context.client.api_key == self.context.client.api_key
-            ):
-                self._org = org
-            else:
-                console = Console()
-                with console.status("Fetching organization") as status:
-                    try:
-                        self._org = RBOrganization(self.context, self.org_id)
-                        self.cache.set_object("org", self._org, True)
-                    except Exception as error:
-                        status.stop()
-                        raise error
-                console.print("[bold green]" + str(self._org))
+            console = Console()
+            with console.status("Fetching organization") as status:
+                try:
+                    self._org = RBOrganization(self.context, self.org_id)
+                except Exception as error:
+                    status.stop()
+                    raise error
+            console.print("[bold green]" + str(self._org))
         return self._org
 
     @property
     def project(self) -> RBProject:
         """Get project object."""
         if not self._project:
-            project = self.cache.get_object("project")
-            if (
-                isinstance(project, RBProject)
-                and project.context.client.url == self.context.client.url
-                and project.context.client.api_key == self.context.client.api_key
-            ):
-                self._project = project
-            else:
-                console = Console()
-                with console.status("Fetching project") as status:
-                    try:
-                        self._project = RBProject(
-                            self.context, self.org_id, self.project_id
-                        )
-                        self.cache.set_object("project", self._project, True)
-                    except Exception as error:
-                        status.stop()
-                        raise error
-                console.print("[bold green]" + str(self._project))
+            console = Console()
+            with console.status("Fetching project") as status:
+                try:
+                    self._project = RBProject(
+                        self.context, self.org_id, self.project_id
+                    )
+                except Exception as error:
+                    status.stop()
+                    raise error
+            console.print("[bold green]" + str(self._project))
         return self._project
 
     def initialize_project(self, org: RBOrganization, project: RBProject) -> None:
@@ -154,9 +136,6 @@ class CLIProject:
 
         self.conf.set_section("org", {"id": project.org_id})
         self.conf.set_section("project", {"id": project.project_id})
-
-        self.cache.set_object("org", org)
-        self.cache.set_object("project", project)
 
         self.conf.save()
 
