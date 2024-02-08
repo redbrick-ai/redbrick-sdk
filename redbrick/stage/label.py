@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from redbrick.common.stage import Stage
 
@@ -16,11 +16,12 @@ class LabelStage(Stage):
     stage_name: str
         Stage name.
 
-    on_submit: Optional[str] = None
+    on_submit: Union[bool, str] = True
         The next stage for the task when submitted in current stage.
-        If None, will go to Output stage.
+        If True, the task will go to ground truth.
+        If False, the task will be archived.
 
-    config: Config
+    config: Config = Config()
         Stage config.
     """
 
@@ -71,7 +72,7 @@ class LabelStage(Stage):
             return entity
 
     stage_name: str
-    on_submit: Optional[str] = None
+    on_submit: Union[bool, str] = True
     config: Config = field(default_factory=Config.from_entity)
 
     @classmethod
@@ -92,7 +93,7 @@ class LabelStage(Stage):
             "brickName": "manual-labeling",
             "stageName": self.stage_name,
             "routing": {
-                "nextStageName": self.on_submit or "Output",
+                "nextStageName": self.get_next_stage(self.on_submit),
             },
             "stageConfig": self.config.to_entity(),
         }

@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 
 @dataclass
@@ -33,3 +33,7 @@ class Stage:
     @abstractmethod
     def to_entity(self) -> Dict:
         """Get entity from object."""
+
+    def get_next_stage(self, done: Union[bool, str]) -> str:
+        """Get next stage."""
+        return done if isinstance(done, str) else ("Output" if done else "ARCHIVED")

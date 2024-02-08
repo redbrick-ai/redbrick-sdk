@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from redbrick.common.stage import Stage
 
@@ -16,15 +16,17 @@ class ReviewStage(Stage):
     stage_name: str
         Stage name.
 
-    on_accept: Optional[str] = None
+    on_accept: Union[bool, str] = True
         The next stage for the task when accepted in current stage.
-        If None, will go to Output stage.
+        If True, the task will go to ground truth.
+        If False, the task will be archived.
 
-    on_reject: Optional[str] = None
+    on_reject: Union[bool, str] = False
         The next stage for the task when rejected in current stage.
-        If None, will go to Output Stage.
+        If True, the task will go to ground truth.
+        If False, the task will be archived.
 
-    config: Config
+    config: Config = Config()
         Stage config.
     """
 
@@ -71,8 +73,8 @@ class ReviewStage(Stage):
             return entity
 
     stage_name: str
-    on_accept: Optional[str] = None
-    on_reject: Optional[str] = None
+    on_accept: Union[bool, str] = True
+    on_reject: Union[bool, str] = False
     config: Config = field(default_factory=Config.from_entity)
 
     @classmethod
@@ -94,8 +96,8 @@ class ReviewStage(Stage):
             "brickName": "expert-review",
             "stageName": self.stage_name,
             "routing": {
-                "passed": self.on_accept or "Output",
-                "failed": self.on_reject or "Output",
+                "passed": self.get_next_stage(self.on_accept),
+                "failed": self.get_next_stage(self.on_reject),
             },
             "stageConfig": self.config.to_entity(),
         }
