@@ -33,7 +33,7 @@ from redbrick.types import task as TaskTypes
 from .config import config
 from .version_check import version_check
 
-__version__ = "2.16.2"
+__version__ = "2.16.3"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:

@@ -46,7 +46,7 @@ class UploadRepo(UploadControllerInterface):
                 $name: String!
                 $storageId: UUID!
                 $labelsData: String
-                $labelsMap: [LabelMapInput!]
+                $labelsMap: [LabelMapInput]
                 $seriesInfo: [SeriesInfoInput!]
                 $metaData: String
                 $isGroundTruth: Boolean!

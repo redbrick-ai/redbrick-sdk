@@ -135,7 +135,7 @@ class LabelingRepo(LabelingControllerInterface):
             $elapsedTimeMs: Int!
             $finished: Boolean!
             $labelsData: String
-            $labelsMap: [LabelMapInput!]
+            $labelsMap: [LabelMapInput]
         ) {
             putManualLabelingTaskAndLabels(
                 orgId: $orgId

@@ -232,7 +232,7 @@ def dicom_rb_series(
     for idx, label_map in enumerate(labels_map):
         volume_index: int = (
             label_map["seriesIndex"]
-            if label_map and "seriesIndex" in label_map
+            if label_map and label_map.get("seriesIndex") is not None
             else (
                 item_index_map[label_map["imageIndex"]]
                 if label_map
