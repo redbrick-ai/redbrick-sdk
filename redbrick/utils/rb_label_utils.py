@@ -224,16 +224,22 @@ def dicom_rb_series(
 ) -> None:
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
-    labels = input_task.get("labels", []) or []
-    labels_map = input_task.get("labelsMap", []) or []
+    labels: List[Dict] = input_task.get("labels", []) or []
+    labels_map: List[Optional[Dict]] = input_task.get("labelsMap", []) or []
     series = output_task["series"]
 
     segmentation_mapping: Dict[int, Dict[Optional[str], Union[str, List[str]]]] = {}
     for idx, label_map in enumerate(labels_map):
-        volume_index = (
-            item_index_map[label_map["imageIndex"]]
-            if "imageIndex" in label_map and label_map["imageIndex"] in item_index_map
-            else idx
+        volume_index: int = (
+            label_map["seriesIndex"]
+            if label_map and "seriesIndex" in label_map
+            else (
+                item_index_map[label_map["imageIndex"]]
+                if label_map
+                and "imageIndex" in label_map
+                and label_map["imageIndex"] in item_index_map
+                else idx
+            )
         )
         segmentation_mapping[volume_index] = {}
 

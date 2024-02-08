@@ -1,4 +1,5 @@
 """Tests for `redbrick.utils.upload`."""
+
 from unittest.mock import Mock, patch, AsyncMock
 
 import pytest
@@ -53,7 +54,7 @@ async def test_process_segmentation_upload(
     project_id = "project_id"
     task = {
         "name": "test_task",
-        "labelsMap": [{"labelName": files, "imageIndex": 0}],
+        "labelsMap": [{"labelName": files, "seriesIndex": 0}],
         "labels": mock_labels,
         "seriesInfo": [{"binaryMask": True, "semanticMask": False, "pngMask": False}],
     }
@@ -92,4 +93,4 @@ async def test_process_segmentation_upload(
                 True,
             )
 
-    assert result == [{"labelName": "file_path", "imageIndex": 0}]
+    assert result == [{"labelName": "file_path", "seriesIndex": 0}]

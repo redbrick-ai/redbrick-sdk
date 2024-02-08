@@ -506,10 +506,13 @@ class Export:
                 )
             labels_map = [None] * len(series_info)
             for idx, label_map in enumerate(task.get("labelsMap", []) or []):
-                if label_map and "imageIndex" in label_map:
-                    labels_map[image_index_map[label_map["imageIndex"]]] = label_map
+                if label_map and "seriesIndex" in label_map:
+                    index = label_map["seriesIndex"]
+                elif label_map and "imageIndex" in label_map:
+                    index = image_index_map[label_map["imageIndex"]]
                 else:
-                    labels_map[idx] = label_map
+                    index = idx
+                labels_map[index] = label_map
 
         else:
             labels_map = task.get("labelsMap", []) or []
@@ -648,7 +651,9 @@ class Export:
                     semantic_mask,
                     binary_mask,
                     taxonomy,
-                    image_index_map.get(label.get("imageIndex", -1)),
+                    label.get(
+                        "seriesIndex", image_index_map.get(label.get("imageIndex", -1))
+                    ),
                 )
                 label["labelName"] = label_map_data["masks"]
                 label["binaryMask"] = label_map_data["binary_mask"]
@@ -669,7 +674,10 @@ class Export:
                         semantic_mask,
                         binary_mask,
                         taxonomy,
-                        image_index_map.get(consensus_label_map.get("imageIndex")),
+                        consensus_label_map.get(
+                            "seriesIndex",
+                            image_index_map.get(consensus_label_map.get("imageIndex")),
+                        ),
                     )
                     consensus_label_map["labelName"] = label_map_data["masks"]
                     consensus_label_map["binaryMask"] = label_map_data["binary_mask"]

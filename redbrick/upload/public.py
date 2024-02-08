@@ -991,7 +991,7 @@ class Upload:
                     ):
                         item["labelsMap"] = [
                             (
-                                {"labelName": segmentation, "imageIndex": int(idx)}
+                                {"labelName": segmentation, "seriesIndex": int(idx)}
                                 if segmentation
                                 else None
                             )
@@ -1003,14 +1003,16 @@ class Upload:
                         item["labelsMap"] = [
                             {
                                 "labelName": item["labelsPath"],
-                                "imageIndex": 0,
+                                "seriesIndex": 0,
                             }
                         ]
                     del item["labelsPath"]
 
                 for label_map in item.get("labelsMap", []) or []:
-                    if not isinstance(label_map, dict):
-                        label_map = {}
+                    if not isinstance(label_map, dict) or not label_map.get(
+                        "labelName"
+                    ):
+                        continue
                     if not isinstance(label_map["labelName"], list):
                         label_map["labelName"] = [label_map["labelName"]]
                     label_map["labelName"] = [

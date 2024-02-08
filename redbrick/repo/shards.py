@@ -216,6 +216,7 @@ TASK_DATA_SHARD = """
         storageId
     }
     labelsMap(presigned: false) {
+        seriesIndex
         imageIndex
         labelName
     }

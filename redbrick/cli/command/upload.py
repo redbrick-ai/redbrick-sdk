@@ -297,7 +297,7 @@ but may increase the upload time.""",
                         if isinstance(label_data["segmentations"], dict):
                             label_data["labelsMap"] = [
                                 (
-                                    {"labelName": segmentation, "imageIndex": int(idx)}
+                                    {"labelName": segmentation, "seriesIndex": int(idx)}
                                     if segmentation
                                     else None
                                 )
@@ -309,7 +309,7 @@ but may increase the upload time.""",
                         label_data["labelsMap"] = [
                             {
                                 "labelName": label_data["labelsPath"],
-                                "imageIndex": 0,
+                                "seriesIndex": 0,
                             }
                         ]
                     if label_data.get("labelsMap"):
@@ -337,7 +337,16 @@ but may increase the upload time.""",
                             item["labelsMap"].append(
                                 {
                                     "labelName": label_map["labelName"],
-                                    "imageIndex": int(label_map["imageIndex"]),
+                                    "seriesIndex": (
+                                        None
+                                        if label_map.get("seriesIndex") is None
+                                        else int(label_map["seriesIndex"])
+                                    ),
+                                    "imageIndex": (
+                                        None
+                                        if label_map.get("imageIndex") is None
+                                        else int(label_map["imageIndex"])
+                                    ),
                                     "imageName": label_map.get("imageName"),
                                     "seriesId": label_map.get("seriesId"),
                                 }

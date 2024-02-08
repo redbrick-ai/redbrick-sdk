@@ -1,4 +1,5 @@
 """Fixtures for tests in `tests.test_repo.*`"""
+
 import typing as t
 
 # pylint: disable=line-too-long
@@ -302,10 +303,12 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                         },
                         "labelsMap": [
                             {
+                                "seriesIndex": 0,
                                 "imageIndex": 0,
                                 "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/80feaafb-2456-48fb-833f-2012138a63e7",  # noqa: E501
                             },
                             {
+                                "seriesIndex": 1,
                                 "imageIndex": 3,
                                 "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/73d5388a-d742-43c9-950e-29fc116527e7",  # noqa: E501
                             },
@@ -328,10 +331,12 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                                 },
                                 "labelsMap": [
                                     {
+                                        "seriesIndex": 0,
                                         "imageIndex": 0,
                                         "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/80feaafb-2456-48fb-833f-2012138a63e7",  # noqa: E501
                                     },
                                     {
+                                        "seriesIndex": 1,
                                         "imageIndex": 3,
                                         "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/73d5388a-d742-43c9-950e-29fc116527e7",  # noqa: E501
                                     },
@@ -394,10 +399,12 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                     },
                     "labelsMap": [
                         {
+                            "seriesIndex": 0,
                             "imageIndex": 0,
                             "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/80feaafb-2456-48fb-833f-2012138a63e7",  # noqa: E501
                         },
                         {
+                            "seriesIndex": 1,
                             "imageIndex": 3,
                             "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/73d5388a-d742-43c9-950e-29fc116527e7",  # noqa: E501
                         },
@@ -463,14 +470,17 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                     },
                     "labelsMap": [
                         {
+                            "seriesIndex": 0,
                             "imageIndex": 0,
                             "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/2067f35a-90e6-4243-965d-8d64868021bd/nifti/b59f0317-47d3-43bc-bdd2-a2eb965c6a9c",  # noqa: E501
                         },
                         {
+                            "seriesIndex": 1,
                             "imageIndex": 1,
                             "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/2067f35a-90e6-4243-965d-8d64868021bd/nifti/671ca60f-179e-42c9-9dca-9d3fdfc13ec7",  # noqa: E501
                         },
                         {
+                            "seriesIndex": 2,
                             "imageIndex": 2,
                             "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/2067f35a-90e6-4243-965d-8d64868021bd/nifti/d4cdaa0b-faa9-4665-adf0-88c77785ba1b",  # noqa: E501
                         },

@@ -1,4 +1,5 @@
 """Tests for `redbrick.utils.rb_label_utils`."""
+
 import pytest
 
 from redbrick.utils import rb_label_utils
@@ -101,10 +102,12 @@ def test_from_rb_consensus_info():
         ],
         "labelsMap": [
             {
+                "seriesIndex": 0,
                 "imageIndex": 0,
                 "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/80feaafb-2456-48fb-833f-2012138a63e7",  # noqa
             },
             {
+                "seriesIndex": 1,
                 "imageIndex": 3,
                 "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/73d5388a-d742-43c9-950e-29fc116527e7",  # noqa
             },
@@ -255,10 +258,12 @@ def test_parse_entry_latest():
         ],
         "labelsMap": [
             {
+                "seriesIndex": 0,
                 "imageIndex": 0,
                 "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/80feaafb-2456-48fb-833f-2012138a63e7",  # noqa
             },
             {
+                "seriesIndex": 1,
                 "imageIndex": 3,
                 "labelName": "c78d312f-5b41-4b66-9c06-44c375abe057/75a0af6f-4f48-46dd-a4d2-1b43ea238559/labels/6a12cb11-ce37-43a1-b8b6-20b1317afffd/nifti/73d5388a-d742-43c9-950e-29fc116527e7",  # noqa
             },

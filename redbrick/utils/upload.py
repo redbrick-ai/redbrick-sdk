@@ -89,13 +89,13 @@ async def process_segmentation_upload(
     ):
         logger.debug("Converting segmentations to labelsMap")
         task["labelsMap"] = [
-            {"labelName": segmentation, "imageIndex": idx}
+            {"labelName": segmentation, "seriesIndex": idx}
             for idx, segmentation in enumerate(task["segmentations"])
         ]
         del task["segmentations"]
     elif "labelsMap" not in task and task.get("labelsPath"):
         logger.debug("Converting labelsPath to labelsMap")
-        task["labelsMap"] = [{"labelName": task["labelsPath"], "imageIndex": 0}]
+        task["labelsMap"] = [{"labelName": task["labelsPath"], "seriesIndex": 0}]
         del task["labelsPath"]
 
     labels_map = task.get("labelsMap", []) or []  # type: ignore
