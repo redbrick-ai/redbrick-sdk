@@ -1,4 +1,5 @@
 """Tests for redbrick.cli.input.select"""
+
 import pytest
 
 from redbrick.cli.input.select import CLIInputSelect

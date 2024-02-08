@@ -1,4 +1,5 @@
 """Tests for redbrick.cli.input.url."""
+
 import pytest
 
 from redbrick.cli.input.url import CLIInputURL

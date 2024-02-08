@@ -1,4 +1,5 @@
 """Tests for `redbrick.utils.dicom`."""
+
 import os
 from unittest.mock import patch
 

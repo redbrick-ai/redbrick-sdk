@@ -1,4 +1,5 @@
 """Tests for `redbrick.cli.project`."""
+
 import functools
 import os
 import re

@@ -1,4 +1,5 @@
 """Tests for `redbrick.cli.command.upload`."""
+
 import argparse
 import json
 import os.path

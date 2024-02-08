@@ -1,4 +1,5 @@
 """Tests for redbrick.cli.input.number."""
+
 import pytest
 from redbrick.cli.input import number
 

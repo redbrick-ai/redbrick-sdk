@@ -1,4 +1,5 @@
 """Tests for `redbrick.utils.rb_event_utils`."""
+
 from typing import Dict
 
 import pytest

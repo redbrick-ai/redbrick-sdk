@@ -1,4 +1,5 @@
 """Tests for redbrick.mock_export.public"""
+
 import os
 import typing as t
 from unittest.mock import patch, Mock, AsyncMock, MagicMock, mock_open

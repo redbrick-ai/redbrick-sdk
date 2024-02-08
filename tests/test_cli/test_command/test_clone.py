@@ -1,4 +1,5 @@
 """Tests for `redbrick.cli.command.clone`."""
+
 import argparse
 import functools
 import os

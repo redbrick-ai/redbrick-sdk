@@ -1,4 +1,5 @@
 """Tests for `redbrick.utils.pagination`."""
+
 from typing import Optional
 
 import pytest

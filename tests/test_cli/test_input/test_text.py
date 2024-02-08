@@ -1,4 +1,5 @@
 """Tests for redbrick.cli.input.text"""
+
 import pytest
 
 from redbrick.cli.input import text

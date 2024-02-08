@@ -1,4 +1,5 @@
 """Tests for `redbrick.cli.public`."""
+
 import argparse
 import typing as t
 from unittest.mock import Mock, patch

@@ -1,4 +1,5 @@
 """Pytest fixtures for tests.test_cli.test_input"""
+
 import sys
 from unittest.mock import patch
 

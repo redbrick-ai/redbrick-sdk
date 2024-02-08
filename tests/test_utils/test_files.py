@@ -1,4 +1,5 @@
 """Tests for `redbrick.utils.files`."""
+
 import gzip
 import os
 from functools import reduce

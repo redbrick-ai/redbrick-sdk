@@ -1,4 +1,5 @@
 """tests.test_cli module"""
+
 import os
 import uuid
 from datetime import datetime

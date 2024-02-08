@@ -1,4 +1,5 @@
 """Tests for `redbrick.cli.command.info`."""
+
 import argparse
 from unittest.mock import patch, Mock
 

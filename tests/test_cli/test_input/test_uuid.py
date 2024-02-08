@@ -1,4 +1,5 @@
 """Tests for redbrick.cli.input.uuid."""
+
 import pytest
 
 from redbrick.cli.input import CLIInputUUID

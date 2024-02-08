@@ -1,4 +1,5 @@
 """Tests for redbrick.cli.input.api_key."""
+
 import pytest
 from redbrick.cli.input.api_key import CLIInputAPIKey
 

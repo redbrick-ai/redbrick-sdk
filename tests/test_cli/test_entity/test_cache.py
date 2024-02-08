@@ -1,6 +1,6 @@
 """Tests for redbrick.cli.entity.cache"""
+
 import os
-from datetime import datetime
 
 import pytest
 

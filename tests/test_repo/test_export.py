@@ -2,6 +2,7 @@
 Tests for `redbrick.export.public.ExportRepo`.
 These tests are to ensure data from the API is properly parsed.
 """
+
 from unittest.mock import Mock, patch
 
 import pytest

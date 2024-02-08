@@ -1,4 +1,5 @@
 """Tests for `redbrick.utils.async_utils`."""
+
 import asyncio
 import pytest
 

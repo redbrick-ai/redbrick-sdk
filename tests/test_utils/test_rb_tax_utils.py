@@ -1,4 +1,5 @@
 """Tests for `redbrick.utils.rb_tax_utils`."""
+
 import pytest
 
 from redbrick.utils import rb_tax_utils

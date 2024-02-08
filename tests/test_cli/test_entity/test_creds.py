@@ -1,4 +1,5 @@
 """Tests for redbrick.cli.entity.creds"""
+
 import os
 from configparser import MissingSectionHeaderError, ConfigParser
 

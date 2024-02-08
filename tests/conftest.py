@@ -1,4 +1,5 @@
 """Fixtures for all tests"""
+
 import pytest
 
 from redbrick import RBContext, _populate_context

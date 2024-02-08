@@ -1,4 +1,5 @@
 """Tests for redbrick.cli.entity.conf"""
+
 import os.path
 from configparser import ConfigParser, MissingSectionHeaderError
 

@@ -1,4 +1,5 @@
 """Tests for `redbrick.cli.command.export`."""
+
 import argparse
 import json
 import os

@@ -1,4 +1,5 @@
 """Pytest fixtures for tests in tests.test_cli.test_entity"""
+
 import pytest
 
 from redbrick.cli.entity import CLICredentials, CLIConfiguration, CLICache
