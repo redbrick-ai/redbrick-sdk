@@ -13,14 +13,14 @@ from tenacity.retry import retry_if_not_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_exponential
 
-from redbrick import __version__ as sdk_version  # pylint: disable=cyclic-import
-from redbrick.utils.logging import assert_validation, log_error, logger
+from redbrick.config import config
 from redbrick.common.constants import (
     DEFAULT_URL,
     MAX_RETRY_ATTEMPTS,
     REQUEST_TIMEOUT,
     PEERLESS_ERRORS,
 )
+from redbrick.utils.logging import assert_validation, log_error, logger
 
 
 class RBClient:
@@ -28,6 +28,7 @@ class RBClient:
 
     def __init__(self, api_key: str, url: str) -> None:
         """Construct RBClient."""
+        self.config = config
         self.url = (url or DEFAULT_URL).lower().rstrip("/")
         if DEFAULT_URL in self.url:
             self.url = DEFAULT_URL
@@ -54,7 +55,7 @@ class RBClient:
     def headers(self) -> Dict:
         """Get request headers."""
         return {
-            "RB-SDK-Version": sdk_version,
+            "RB-SDK-Version": self.config.version,
             "ApiKey": self.api_key,
             "Content-Type": "application/json",
             "Accept": "application/json",

@@ -1,6 +1,5 @@
 """CLI config command."""
 
-import os
 from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import List, Optional
 
@@ -10,6 +9,7 @@ from rich.table import Table
 from rich.box import ROUNDED
 
 from redbrick import _populate_context
+from redbrick.config import config
 from redbrick.cli.input import (
     CLIInputAPIKey,
     CLIInputUUID,
@@ -133,7 +133,6 @@ class CLIConfigController(CLIConfigInterface):
         assert_validation(self.project.creds.exists, "Credentials file does not exist")
         default_profile: str = self.project.creds.selected_profile
         profiles: List[str] = self.project.creds.profile_names
-        debug_mode = bool(os.environ.get("REDBRICK_SDK_DEBUG"))
         rows: List[List[str]] = []
         table = Table(
             title="[bold green]RedBrick AI Profiles", expand=True, box=ROUNDED
@@ -148,13 +147,13 @@ class CLIConfigController(CLIConfigInterface):
                     table.add_column(
                         key.capitalize(),
                         width=(
-                            (43 if debug_mode else 6)
+                            (43 if config.debug else 6)
                             if key == "key"
                             else 36 if key == "org" else None
                         ),
                     )
                 row.append(
-                    ("***" + value[-3:]) if key == "key" and not debug_mode else value
+                    ("***" + value[-3:]) if key == "key" and not config.debug else value
                 )
             columns_set = True
             rows.append(row)

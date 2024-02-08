@@ -1,25 +1,24 @@
 """Logging functions."""
 
-import os
 from typing import Union, Any
 import logging
 
 from rich.logging import RichHandler
 
+from redbrick.config import config
 
-debug_mode = bool(os.environ.get("REDBRICK_SDK_DEBUG"))
 
-
-logger = logging.getLogger("redbrick")
-logger.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+__LOG_NAME__ = "redbrick"
+logger = logging.getLogger(__LOG_NAME__)
+logger.setLevel(logging.DEBUG if config.debug else logging.INFO)
 logger.addHandler(
     RichHandler(
         level=logger.level,
-        show_path=debug_mode,
+        show_path=config.debug,
         enable_link_path=False,
         markup=True,
         rich_tracebacks=True,
-        tracebacks_show_locals=debug_mode,
+        tracebacks_show_locals=config.debug,
     )
 )
 

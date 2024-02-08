@@ -2,13 +2,11 @@
 
 import os
 import shutil
-import pickle
 import zlib
 import json
-from typing import Any, Dict, List, Optional, Union
-from datetime import datetime
+from typing import Dict, List, Optional, Union
 
-from redbrick import __version__ as sdk_version
+from redbrick.config import config
 from redbrick.utils.common_utils import hash_sha256
 from .conf import CLIConfiguration
 
@@ -29,7 +27,7 @@ class CLICache:
         self._cache_dir = cache_dir
         self._conf = conf
 
-        self._cache_name = "cache-" + ".".join(sdk_version.split(".", 2)[:2])
+        self._cache_name = "cache-" + ".".join(config.version.split(".", 2)[:2])
 
         if self._conf.exists and self._cache_name != self._conf.get_option(
             "cache", "name"
@@ -56,41 +54,6 @@ class CLICache:
         )
         os.makedirs(path_dir, exist_ok=True)
         return os.path.join(path_dir, path[-1])
-
-    def get_object(self, entity: str) -> Any:
-        """Get entity object from cache."""
-        try:
-            prev_timestamp = self._conf.get_option(entity, "refresh", "0")
-            timestamp = int(datetime.utcnow().timestamp())
-            prev_version = self._conf.get_option(entity, "version")
-            if (
-                prev_timestamp
-                and prev_version
-                and prev_version == sdk_version
-                and timestamp - int(prev_timestamp) <= self.CACHE_LIFETIME
-            ):
-                cache_file = self.cache_path(f"{entity}.pickle")
-
-                with open(cache_file, "rb") as cache:
-                    return pickle.load(cache)
-            return None
-        except Exception:  # pylint: disable=broad-except
-            return None
-
-    def set_object(self, entity: str, obj: Any, save_conf: bool = True) -> None:
-        """Set entity object into cache."""
-        self._conf.set_option(
-            entity, "refresh", str(int(datetime.utcnow().timestamp()))
-        )
-        self._conf.set_option(entity, "version", sdk_version)
-
-        cache_file = self.cache_path(f"{entity}.pickle")
-
-        with open(cache_file, "wb") as cache:
-            pickle.dump(obj, cache)
-
-        if save_conf:
-            self._conf.save()
 
     def get_data(
         self,
