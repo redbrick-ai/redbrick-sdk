@@ -23,6 +23,7 @@ dependencies = [
     "shtab<=1.6.5",
     "tenacity<=8.2.3",
     "tqdm<=4.66.1,>=4.50.0",
+    "typing-extensions<=4.9.0",
 ]
 classifiers = [
   "Programming Language :: Python"
