@@ -36,15 +36,7 @@ class Config:
 
     def __repr__(self) -> str:
         """Class repr."""
-        props = {"version": self.version}
-        for option in self._options:
-            props[option] = self.__getattribute__(option)
-        return str(props)
-
-    @property
-    def version(self) -> str:
-        """RedBrick SDK version."""
-        return "2.16.2"
+        return str({option: self.__getattribute__(option) for option in self._options})
 
     @property
     def check_version(self) -> bool:

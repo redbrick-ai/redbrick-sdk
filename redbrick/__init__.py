@@ -33,7 +33,7 @@ from redbrick.types import task as TaskTypes
 from .config import config
 from .version_check import version_check
 
-__version__ = config.version
+__version__ = "2.16.2"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -68,8 +68,8 @@ except Exception:  # pylint: disable=broad-except
 
 def version() -> str:
     """Check for latest version and return the current one."""
-    version_check(config.version, config.check_version)
-    return f"v{config.version}"
+    version_check(__version__, config.check_version)
+    return f"v{__version__}"
 
 
 def _populate_context(context: RBContext) -> RBContext:
@@ -84,7 +84,7 @@ def _populate_context(context: RBContext) -> RBContext:
     )
 
     if context.config.debug:
-        logger.debug(f"Using: redbrick-sdk=={context.config.version}")
+        logger.debug(f"Using: redbrick-sdk=={__version__}")
 
     context.export = ExportRepo(context.client)
     context.labeling = LabelingRepo(context.client)
