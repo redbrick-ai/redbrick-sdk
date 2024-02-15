@@ -4,6 +4,8 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 from abc import ABC, abstractmethod
 
+from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
+
 
 class ProjectRepoInterface(ABC):
     """Abstract interface to Project APIs."""
@@ -41,7 +43,7 @@ class ProjectRepoInterface(ABC):
         """Get all projects in organization."""
 
     @abstractmethod
-    def get_taxonomies(self, org_id: str) -> List[Dict]:
+    def get_taxonomies(self, org_id: str) -> List[Taxonomy]:
         """Get a list of taxonomies."""
 
     @abstractmethod
@@ -64,17 +66,17 @@ class ProjectRepoInterface(ABC):
         self,
         org_id: str,
         name: str,
-        study_classify: Optional[List[Dict]],
-        series_classify: Optional[List[Dict]],
-        instance_classify: Optional[List[Dict]],
-        object_types: Optional[List[Dict]],
+        study_classify: Optional[List[Attribute]],
+        series_classify: Optional[List[Attribute]],
+        instance_classify: Optional[List[Attribute]],
+        object_types: Optional[List[ObjectType]],
     ) -> bool:
         """Create new taxonomy."""
 
     @abstractmethod
     def get_taxonomy(
         self, org_id: str, tax_id: Optional[str], name: Optional[str]
-    ) -> Dict:
+    ) -> Taxonomy:
         """Get a taxonomy."""
 
     @abstractmethod
@@ -82,10 +84,10 @@ class ProjectRepoInterface(ABC):
         self,
         org_id: str,
         tax_id: str,
-        study_classify: Optional[List[Dict]],
-        series_classify: Optional[List[Dict]],
-        instance_classify: Optional[List[Dict]],
-        object_types: Optional[List[Dict]],
+        study_classify: Optional[List[Attribute]],
+        series_classify: Optional[List[Attribute]],
+        instance_classify: Optional[List[Attribute]],
+        object_types: Optional[List[ObjectType]],
     ) -> bool:
         """Update taxonomy."""
 

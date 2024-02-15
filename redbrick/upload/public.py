@@ -926,7 +926,7 @@ class Upload:
                                     cat
                                     for cat in (taxonomy.get("objectTypes", []) or [])
                                     if cat["labelType"] == "SEGMENTATION"
-                                    and not cat["archived"]
+                                    and not cat.get("archived")
                                 ],
                             )
                         )

@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union, TypedDict
 from asyncio import BoundedSemaphore
 import shutil
 from uuid import uuid4
+from redbrick.types.taxonomy import ObjectType, Taxonomy
 
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import uniquify_path
@@ -128,7 +129,7 @@ def convert_to_binary(
 
 def convert_to_semantic(
     masks: List[str],
-    taxonomy: Dict,
+    taxonomy: Taxonomy,
     labels: List[Dict],
     dirname: str,
     binary_mask: bool,
@@ -272,7 +273,7 @@ async def process_nifti_download(
     color_map: Dict,
     semantic_mask: bool,
     binary_mask: Optional[bool],
-    taxonomy: Dict,
+    taxonomy: Taxonomy,
     volume_index: Optional[int],
 ) -> LabelMapData:
     """Process nifti download file."""
@@ -553,7 +554,7 @@ async def process_nifti_upload(
 async def convert_nii_to_rtstruct(
     nifti_files: List[str],
     dicom_series_path: str,
-    categories: List[Dict],
+    categories: List[ObjectType],
     segment_map: TypeSegmentMap,
     semantic_mask: bool,
 ) -> Tuple[Optional[Any], TypeSegmentMap]:
@@ -715,7 +716,7 @@ async def convert_rtstruct_to_nii(
     dicom_series_path: str,
     segment_map: TypeSegmentMap,
     label_validate: bool,
-    categories: List[Dict],
+    categories: List[ObjectType],
 ) -> Tuple[Optional[Any], TypeSegmentMap]:
     """Convert dicom rt-struct to nifti mask."""
     # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel

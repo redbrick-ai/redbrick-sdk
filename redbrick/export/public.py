@@ -16,6 +16,7 @@ from redbrick.common.context import RBContext
 from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
 from redbrick.common.export import TaskFilterParams
 from redbrick.stage import LabelStage, ReviewStage
+from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.files import (
     DICOM_FILE_TYPES,
     IMAGE_FILE_TYPES,
@@ -178,7 +179,7 @@ class Export:
         self,
         original_task: TypeTask,
         storage_id: str,
-        taxonomy: Dict,
+        taxonomy: Taxonomy,
         image_dir: str,
         dcm_to_nii: bool,
         rt_struct: bool,
@@ -281,7 +282,7 @@ class Export:
         task: TypeTask,
         storage_id: str,
         parent_dir: str,
-        taxonomy: Dict,
+        taxonomy: Taxonomy,
         rt_struct: bool,
         semantic_mask: bool,
     ) -> Tuple[TypeTask, List[str]]:
@@ -472,7 +473,7 @@ class Export:
         old_format: bool,
         no_consensus: bool,
         png_mask: bool,
-        taxonomy: Dict,
+        taxonomy: Taxonomy,
     ) -> TypeTask:
         """Process labels."""
         # pylint: disable=too-many-locals
@@ -574,7 +575,7 @@ class Export:
         semantic_mask: bool,
         binary_mask: Optional[bool],
         png_mask: bool,
-        taxonomy: Dict,
+        taxonomy: Taxonomy,
     ) -> None:
         """Download and process segmentations."""
         # pylint: disable=import-outside-toplevel, too-many-locals
@@ -691,7 +692,7 @@ class Export:
                     index += 1
 
     def preprocess_export(
-        self, taxonomy: Dict, get_color_map: bool
+        self, taxonomy: Taxonomy, get_color_map: bool
     ) -> Tuple[Dict, Dict]:
         """Get classMap and colorMap."""
         class_map: Dict = {}
@@ -701,7 +702,7 @@ class Export:
                 object_types = taxonomy.get("objectTypes", []) or []
                 for object_type in object_types:
                     if object_type["labelType"] == "SEGMENTATION":
-                        color = Export._get_color(0, object_type["color"])
+                        color = Export._get_color(0, object_type["color"])  # type: ignore
                         color_map[object_type["classId"]] = color
 
                         category: str = object_type["category"]
@@ -710,11 +711,11 @@ class Export:
                         class_map[category] = color
             else:
                 Export.tax_class_id_mapping(
-                    [taxonomy["categories"][0]["name"]],  # object
-                    taxonomy["categories"][0]["children"],  # categories
+                    [taxonomy["categories"][0]["name"]],  # type: ignore
+                    taxonomy["categories"][0]["children"],  # type: ignore
                     {},
                     color_map,
-                    taxonomy.get("colorMap"),
+                    taxonomy.get("colorMap"),  # type: ignore
                 )
                 class_map = color_map
 
@@ -723,7 +724,7 @@ class Export:
     async def export_nifti_label_data(
         self,
         datapoint: Dict,
-        taxonomy: Dict,
+        taxonomy: Taxonomy,
         task_file: Optional[str],
         image_dir: Optional[str],
         segmentation_dir: Optional[str],
@@ -1221,7 +1222,7 @@ class Export:
             }]
         """
         # pylint: disable=too-many-locals
-        taxonomy: Dict = {}
+        taxonomy: Taxonomy = {}  # type: ignore
         if with_labels:
             taxonomy = self.context.project.get_taxonomy(
                 self.org_id, tax_id=None, name=self.taxonomy_name

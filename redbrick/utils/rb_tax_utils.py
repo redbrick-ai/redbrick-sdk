@@ -1,12 +1,14 @@
 """Taxonomy utilities."""
 
-from typing import Dict, List, Optional
+from typing import List, Optional
+
+from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
 
 
-def format_taxonomy(taxonomy: Dict) -> Dict:
+def format_taxonomy(taxonomy: Taxonomy) -> Taxonomy:
     """Parse taxonomy object."""
     keys = ["orgId", "name", "createdAt", "archived", "isNew"]
-    if taxonomy["isNew"]:
+    if taxonomy["isNew"]:  # type: ignore
         keys.extend(
             [
                 "taxId",
@@ -28,10 +30,10 @@ def format_taxonomy(taxonomy: Dict) -> Dict:
             ]
         )
 
-    return {key: taxonomy[key] for key in keys}
+    return {key: taxonomy[key] for key in keys}  # type: ignore
 
 
-def validate_attribute(attribute: Dict, message: str) -> None:
+def validate_attribute(attribute: Attribute, message: str) -> None:
     """Validate attribute."""
     if attribute.get("name") is None:
         raise ValueError(f"{message} has no `name`")
@@ -42,10 +44,10 @@ def validate_attribute(attribute: Dict, message: str) -> None:
 
 
 def validate_taxonomy(
-    study_classify: Optional[List[Dict]],
-    series_classify: Optional[List[Dict]],
-    instance_classify: Optional[List[Dict]],
-    object_types: Optional[List[Dict]],
+    study_classify: Optional[List[Attribute]],
+    series_classify: Optional[List[Attribute]],
+    instance_classify: Optional[List[Attribute]],
+    object_types: Optional[List[ObjectType]],
 ) -> None:
     """Validate taxonomy."""
     for aidx, attribute in enumerate(study_classify or []):

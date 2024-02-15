@@ -7,6 +7,7 @@ from copy import deepcopy
 
 from redbrick.stage import ReviewStage
 from redbrick.types import task as TaskType
+from redbrick.types.taxonomy import Taxonomy
 
 
 def clean_rb_label(label: Dict) -> Dict:
@@ -220,7 +221,7 @@ def dicom_rb_series(
     item_index_map: Dict[int, int],
     input_task: Dict,
     output_task: TaskType.OutputTask,
-    taxonomy: Dict,
+    taxonomy: Taxonomy,
 ) -> None:
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
@@ -551,7 +552,7 @@ def dicom_rb_series(
 
 def dicom_rb_format(
     task: Dict,
-    taxonomy: Dict,
+    taxonomy: Taxonomy,
     old_format: bool,
     no_consensus: bool,
     review_stages: List[ReviewStage],

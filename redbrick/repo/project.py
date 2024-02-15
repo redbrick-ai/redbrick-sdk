@@ -7,6 +7,7 @@ from datetime import datetime
 from redbrick.common.client import RBClient
 from redbrick.common.project import ProjectRepoInterface
 from redbrick.repo.shards import PROJECT_SHARD, STAGE_SHARD, TAXONOMY_SHARD
+from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
 
 
 class ProjectRepo(ProjectRepoInterface):
@@ -133,7 +134,7 @@ class ProjectRepo(ProjectRepoInterface):
         )
         return response["projects"]
 
-    def get_taxonomies(self, org_id: str) -> List[Dict]:
+    def get_taxonomies(self, org_id: str) -> List[Taxonomy]:
         """Get a list of taxonomies."""
         query = f"""
             query getTaxonomiesSDK($orgId: UUID!) {{
@@ -142,7 +143,7 @@ class ProjectRepo(ProjectRepoInterface):
                 }}
             }}
         """
-        response: Dict[str, List[Dict]] = self.client.execute_query(
+        response: Dict[str, List[Taxonomy]] = self.client.execute_query(
             query, {"orgId": org_id}
         )
         return response["taxonomies"]
@@ -214,10 +215,10 @@ class ProjectRepo(ProjectRepoInterface):
         self,
         org_id: str,
         name: str,
-        study_classify: Optional[List[Dict]],
-        series_classify: Optional[List[Dict]],
-        instance_classify: Optional[List[Dict]],
-        object_types: Optional[List[Dict]],
+        study_classify: Optional[List[Attribute]],
+        series_classify: Optional[List[Attribute]],
+        instance_classify: Optional[List[Attribute]],
+        object_types: Optional[List[ObjectType]],
     ) -> bool:
         """Create new taxonomy."""
         query_string = """
@@ -254,7 +255,7 @@ class ProjectRepo(ProjectRepoInterface):
 
     def get_taxonomy(
         self, org_id: str, tax_id: Optional[str], name: Optional[str]
-    ) -> Dict:
+    ) -> Taxonomy:
         """Get a taxonomy."""
         query = f"""
             query getTaxonomySDK($orgId: UUID!, $taxId: UUID, $name: String) {{
@@ -263,7 +264,7 @@ class ProjectRepo(ProjectRepoInterface):
                 }}
             }}
         """
-        response: Dict[str, Dict] = self.client.execute_query(
+        response: Dict[str, Taxonomy] = self.client.execute_query(
             query, {"orgId": org_id, "taxId": tax_id, "name": name}
         )
         return response["taxonomy"]
@@ -272,10 +273,10 @@ class ProjectRepo(ProjectRepoInterface):
         self,
         org_id: str,
         tax_id: str,
-        study_classify: Optional[List[Dict]],
-        series_classify: Optional[List[Dict]],
-        instance_classify: Optional[List[Dict]],
-        object_types: Optional[List[Dict]],
+        study_classify: Optional[List[Attribute]],
+        series_classify: Optional[List[Attribute]],
+        instance_classify: Optional[List[Attribute]],
+        object_types: Optional[List[ObjectType]],
     ) -> bool:
         """Update taxonomy."""
         query_string = """

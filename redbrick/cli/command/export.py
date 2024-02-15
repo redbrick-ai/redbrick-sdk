@@ -14,6 +14,7 @@ import tqdm  # type: ignore
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
 from redbrick.common.constants import MAX_FILE_BATCH_SIZE
+from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import assert_validation, logger
 
@@ -293,7 +294,7 @@ class CLIExportController(CLIExportInterface):
     async def _process_task(
         self,
         cached_task: str,
-        taxonomy: Dict,
+        taxonomy: Taxonomy,
         task_file: Optional[str],
         image_dir: Optional[str],
         segmentation_dir: Optional[str],

@@ -7,6 +7,7 @@ from tqdm import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
+from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
 from redbrick.workspace import RBWorkspace
 from redbrick.stage import Stage, get_project_stages, get_middle_stages
 
@@ -37,7 +38,7 @@ class RBOrganization:
         org = self.context.project.get_org(self._org_id)
         self._name = org["name"]
 
-    def taxonomies(self, only_name: bool = True) -> Union[List[str], List[Dict]]:
+    def taxonomies(self, only_name: bool = True) -> Union[List[str], List[Taxonomy]]:
         """Get a list of taxonomy names/objects in the organization."""
         taxonomies = self.context.project.get_taxonomies(self._org_id)
         if only_name:
@@ -283,10 +284,10 @@ class RBOrganization:
     def create_taxonomy(
         self,
         name: str,
-        study_classify: Optional[List[Dict]] = None,
-        series_classify: Optional[List[Dict]] = None,
-        instance_classify: Optional[List[Dict]] = None,
-        object_types: Optional[List[Dict]] = None,
+        study_classify: Optional[List[Attribute]] = None,
+        series_classify: Optional[List[Attribute]] = None,
+        instance_classify: Optional[List[Attribute]] = None,
+        object_types: Optional[List[ObjectType]] = None,
     ) -> None:
         """
         Create a Taxonomy V2.
@@ -314,7 +315,7 @@ class RBOrganization:
 
     def get_taxonomy(
         self, name: Optional[str] = None, tax_id: Optional[str] = None
-    ) -> Dict:
+    ) -> Taxonomy:
         """Get a taxonomy created in your organization based on id or name.
 
         Format reference for categories and attributes objects:
@@ -326,10 +327,10 @@ class RBOrganization:
     def update_taxonomy(
         self,
         tax_id: str,
-        study_classify: Optional[List[Dict]] = None,
-        series_classify: Optional[List[Dict]] = None,
-        instance_classify: Optional[List[Dict]] = None,
-        object_types: Optional[List[Dict]] = None,
+        study_classify: Optional[List[Attribute]] = None,
+        series_classify: Optional[List[Attribute]] = None,
+        instance_classify: Optional[List[Attribute]] = None,
+        object_types: Optional[List[ObjectType]] = None,
     ) -> None:
         """Update the categories/attributes of Taxonomy (V2) in the organization.
 
