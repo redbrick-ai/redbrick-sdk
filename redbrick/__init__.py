@@ -28,7 +28,7 @@ from redbrick.stage import Stage, LabelStage, ReviewStage
 from redbrick.utils.logging import logger
 from redbrick.utils.common_utils import config_migration
 
-from redbrick.types import task as TaskTypes
+from redbrick.types import task as TaskTypes, taxonomy as TaxonomyTypes
 
 from .config import config
 from .version_check import version_check
@@ -184,6 +184,7 @@ __all__ = [
     "RBContext",
     "StorageMethod",
     "ImportTypes",
+    "TaxonomyTypes",
     "TaskTypes",
     "TaskEventTypes",
     "TaskFilters",

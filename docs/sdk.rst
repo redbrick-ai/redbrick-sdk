@@ -51,6 +51,13 @@ Settings
    :members: label_validation, hanging_protocol, toggle_reference_standard_task
    :show-inheritance:
 
+TaxonomyTypes
+----------------------
+.. automodule:: redbrick.types.taxonomy
+   :members:
+   :undoc-members:
+
+
 TaskTypes
 ----------------------
 .. automodule:: redbrick.types.task
