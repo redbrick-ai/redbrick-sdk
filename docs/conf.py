@@ -42,6 +42,7 @@ extensions = [
     "sphinxarg.ext",
     "sphinx_inline_tabs",
     "sphinxcontrib.autoprogram",
+    "sphinx_autodoc_typehints",
 ]
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -70,3 +71,4 @@ html_static_path = []  # type: ignore
 html_static_path = ["_static"]
 html_logo = "_static/logo.png"
 autodoc_member_order = "bysource"
+autodoc_inherit_docstrings = False
