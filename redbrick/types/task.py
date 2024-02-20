@@ -43,9 +43,14 @@ class MeasurementStats(TypedDict):
 
 
 class VideoMetaData(TypedDict):
-    """Frame and tracking information for an annotation on a video."""
+    """
+    Frame/slice and tracking information for an annotation on a video or 3D volume.
 
-    #: The frame number the annotation is present on.
+    .. note:: :attr:`redbrick.types.task.VideoMetaData` is relevant for both videos and 3D volumes. It contains annotation information along the 3rd axis - in videos that's frames, in 3D volumes that is slices.
+
+    """
+
+    #: The frame number (for video) or slice index (for 3D volumes) the annotation is present on.
     frameIndex: int
 
     #: Each distinct object has a unique trackId. Two annotations on different frameIndex's with the same trackId's represent the same distinct object.
@@ -142,12 +147,19 @@ class Cuboid(TypedDict):
 class BoundingBox(TypedDict):
     """2D bounding box for 2D images, or slice by slice annotation in 3D images."""
 
+    #: Coordinates of the top left of the bounding box.
     pointTopLeft: Point2D
+
+    #: Width of the bounding box, normalized by image width.
     wNorm: float
+
+    #: Height of the bounding box, normalized by the image height.
     hNorm: float
     category: Category
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
+
+    #: Contains slice (for 3D volume) or frame (for video) information for the bounding box.
     video: NotRequired[VideoMetaData]
 
 
