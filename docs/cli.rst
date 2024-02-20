@@ -1,4 +1,4 @@
-RedBrick AI CLI
+Command Line Interface
 ========================================
 
 .. argparse::

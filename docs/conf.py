@@ -22,7 +22,7 @@ from redbrick import __version__ as sdk_version  # noqa: E402
 # -- Project information -----------------------------------------------------
 
 project = "RedBrick AI"
-copyright = "2021, RedBrick AI"  # pylint: disable=redefined-builtin
+copyright = "2023, RedBrick AI"  # pylint: disable=redefined-builtin
 author = "RedBrick AI"
 
 version = sdk_version
@@ -69,6 +69,7 @@ html_static_path = []  # type: ignore
 # provided yet on the RTD theme (see
 # https://github.com/readthedocs/sphinx_rtd_theme/issues/455).
 html_static_path = ["_static"]
-html_logo = "_static/logo.png"
+html_css_files = ["css/custom.css"]
+html_logo = "_static/redbrick.svg"
 autodoc_member_order = "bysource"
 autodoc_inherit_docstrings = False

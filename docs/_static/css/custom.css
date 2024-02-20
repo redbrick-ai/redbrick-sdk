@@ -1,0 +1,14 @@
+.sidebar-logo-container {
+  height: 32px;
+
+  background-image: url('../redbrick.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.sidebar-logo {
+  display: none;
+}
+
+body:not([data-theme='light']) .sidebar-logo-container {
+  background-image: url('../redbrick--darkmode.svg');
+}
