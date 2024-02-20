@@ -49,8 +49,8 @@ async def validate_json(
             logger.warning(
                 out.get(
                     "error",
-                    "Error: Invalid format\n"
-                    + "Docs: https://docs.redbrickai.com/python-sdk/format-reference",
+                    "Error: Invalid format\nDocs: "
+                    + "https://redbrick-sdk.readthedocs.io/en/stable/formats.html#import-format",
                 )
             )
             return []

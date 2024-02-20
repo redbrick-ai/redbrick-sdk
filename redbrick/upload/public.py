@@ -479,7 +479,7 @@ class Upload:
         Create datapoints in project.
 
         Upload data, and optionally annotations, to your project. Please visit
-        `our documentation <https://docs.redbrickai.com/python-sdk/format-reference>`_
+        `our documentation <https://redbrick-sdk.readthedocs.io/en/stable/formats.html#import-format>`_
         to understand the format for ``points``.
 
         .. code:: python
@@ -511,7 +511,7 @@ class Upload:
 
         points: List[:obj:`~redbrick.types.task.InputTask`]
             Please see the RedBrick AI reference documentation for overview of the format.
-            https://docs.redbrickai.com/python-sdk/format-reference.
+            https://redbrick-sdk.readthedocs.io/en/stable/formats.html#import-format.
             All the fields with `annotation` information are optional.
 
         is_ground_truth: bool = False
@@ -775,7 +775,7 @@ class Upload:
                     logger.warning(
                         "Items list contains multiple segmentations."
                         + " Please use new import format: "
-                        + "https://docs.redbrickai.com/python-sdk/format-reference"
+                        + "https://redbrick-sdk.readthedocs.io/en/stable/formats.html#import-format"
                     )
                     continue
 
