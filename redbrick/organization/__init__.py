@@ -292,8 +292,22 @@ class RBOrganization:
         """
         Create a Taxonomy V2.
 
-        Format reference for categories and attributes objects:
-        https://docs.redbrickai.com/python-sdk/format-reference#taxonomy-v2
+        Parameters
+        -------------
+        name:
+            Unique identifier for the taxonomy.
+
+        study_classify:
+            Study level classification applies to the task.
+
+        series_classify:
+            Series level classification applies to a single series within a task.
+
+        instance_classify:
+            Instance classification applies to a single frame (video) or slice (3D volume).
+
+        object_types:
+            Object types are used to annotate features/objects in tasks, for example, segmentation or bounding boxes.
 
         Raises
         ----------
