@@ -17,7 +17,7 @@ class StorageMethod:
 
 
 class TaskStates(str, Enum):
-    """Potential Task Status States.
+    """Task Status.
 
     - ``UNASSIGNED`` - The Task has not been assigned to a Project Admin or Member.
     - ``ASSIGNED`` - The Task has been assigned to a Project Admin or Member,

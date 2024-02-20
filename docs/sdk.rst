@@ -49,4 +49,3 @@ Settings
 .. autoclass:: redbrick.settings.Settings
    :members: label_validation, hanging_protocol, toggle_reference_standard_task
    :show-inheritance:
-

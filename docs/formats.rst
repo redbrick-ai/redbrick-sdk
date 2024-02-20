@@ -7,14 +7,14 @@ This section will document the structure used for importing and exporting data f
 
 Import format
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-The RedBrick AI SDK uses a list of :class:`redbrick.types.task.InputTask` objects for importing data. To import data through the CLI or SDK, create a JSON file that follows the same format. 
+The RedBrick AI SDK uses a list of :class:`redbrick.types.task.InputTask` objects for importing data. To import data through the CLI or SDK, create a JSON file that follows the same format.
 
 .. autoclass:: redbrick.types.task.InputTask
    :members:
 
 .. autoclass:: redbrick.types.task.Series
-   :members: 
-   
+   :members:
+
    .. autoattribute:: items
 
 
@@ -28,6 +28,9 @@ The RedBrick SDK will export a list of OutputTasks in an object, along with NIfT
 .. autoclass:: redbrick.types.task.ConsensusScore
    :members:
 
+.. autoclass:: redbrick.common.enums.TaskStates
+   :members:
+
 .. _labeling_type_target:
 
 Annotation type definitions
@@ -35,7 +38,7 @@ Annotation type definitions
 This section covers definitions of all the annotation object types. The objects are the same for importing annotations, and exporting annotations.
 
 .. automodule:: redbrick.types.task
-   :members: Landmarks, Attributes, Landmarks3D, MeasureLength, MeasureAngle, Ellipse, BoundingBox, Cuboid, Polygon, Polyline, Classification, InstanceClassification, CommonLabelProps, VideoMetaData, MeasurementStats, WorldPoint, VoxelPoint, Point2D 
+   :members: Landmarks, Attributes, Landmarks3D, MeasureLength, MeasureAngle, Ellipse, BoundingBox, Cuboid, Polygon, Polyline, Classification, InstanceClassification, CommonLabelProps, VideoMetaData, MeasurementStats, WorldPoint, VoxelPoint, Point2D
    :undoc-members:
 
 

@@ -3,6 +3,8 @@
 from typing import List, Dict, Literal, Union, TypedDict
 from typing_extensions import Required, NotRequired  # type: ignore
 
+from redbrick.common.enums import TaskStates
+
 
 class Point2D(TypedDict):
     """2D pixel point."""
@@ -50,7 +52,7 @@ class VideoMetaData(TypedDict):
     trackId: str
 
     #: If True, this annotation is user-defined. If False, this annotation is interpolated.
-    keyFrame: int
+    keyFrame: bool
 
     #: If True, this annotation is the last annotation of a specific track defined by trackId.
     endTrack: bool
@@ -97,8 +99,6 @@ class Classification(TypedDict):
     """Study or series classification."""
 
     attributes: NotRequired[Attributes]
-    category: NotRequired[Category]
-    video: NotRequired[VideoMetaData]
 
 
 class Polyline(TypedDict):
@@ -398,7 +398,7 @@ class InputTask(TypedDict, total=False):
     classification: Classification
 
     #: `priority` must between [0, 1]. Tasks will be ordered in descending order of priority.
-    priority: int
+    priority: float
 
     #: Used for displaying Task level meta-data within the annotation viewer.
     metaData: Dict[str, str]
@@ -407,17 +407,32 @@ class InputTask(TypedDict, total=False):
     preAssign: Dict[str, Union[str, List[str]]]
 
 
-class OutputTask(InputTask, total=False):
+class OutputTask(TypedDict, total=False):
     """Single task object on export."""
 
     #: System generated unique identifier for the task.
     taskId: Required[str]
 
+    #: A unique user defined string for quickly identifying and searching tasks.
+    name: Required[str]
+
+    #: List of `series` in the task :attr:`redbrick.types.task.Series`.
+    series: Required[List[Series]]
+
+    #: Study level classifications :attr:`redbrick.types.task.Classification`.
+    classification: Classification
+
+    #: Task `priority` in the range [0, 1].
+    priority: float
+
+    #: Task level meta-data within the annotation viewer.
+    metaData: Dict[str, str]
+
     #: Name of the stage in which this task currently is.
     currentStageName: str
 
-    #:
-    status: str
+    #: Current status of the task.
+    status: TaskStates
 
     #: E-mail of the user who uploaded this task.
     createdBy: str
@@ -450,5 +465,5 @@ class OutputTask(InputTask, total=False):
     #: Matrix of the agreement scores between the labelers.
     scores: List[ConsensusScore]
 
-    #:
+    #: Supertruth version produced in consensus review stage.
     superTruth: "OutputTask"
