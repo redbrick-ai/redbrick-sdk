@@ -1,5 +1,3 @@
-""""""
-
 """Task types."""
 
 from typing import List, Dict, Literal, Union, TypedDict
@@ -246,9 +244,7 @@ class ConsensusScore(TypedDict, total=False):
 
 
 class Series(TypedDict, total=False):
-    """
-    A single series represents a single volume, image, or video. A :class:`redbrick.types.task.InputTask` can have multiple series.
-    """
+    """A single series represents a single volume, image, or video. A :class:`redbrick.types.task.InputTask` can have multiple series."""
 
     #: Unique identifier for the series that will be displayed on the annotation viewport.
     name: str
@@ -260,27 +256,27 @@ class Series(TypedDict, total=False):
     .. tab:: DICOM 3D
 
         .. code:: python
-            
+
             # DICOM instances don't need to be in order.
             items = ["instance001.dcm", "instance000.dcm", "instance003.dcm]
 
     .. tab:: DICOM 2D
-        
+
         .. code:: python
 
             items = "path/to/instance.dcm"
-    
+
     .. tab:: NIfTI
 
         .. code:: python
 
             items = "path/to/nifti.nii
-    
+
     .. tab:: Video frames
-        
+
         .. code:: python
 
-            # Frames need to be in correct order. 
+            # Frames need to be in correct order.
             items = ["fram001.png", "frame002.png", "frame003.png"]
     """
 
@@ -289,8 +285,8 @@ class Series(TypedDict, total=False):
 
     segmentations: Union[str, List[str]]
     """
-    Path to your NIfTI segmentation files for uploading annotations. 
-    
+    Path to your NIfTI segmentation files for uploading annotations.
+
     Read our guide on `importing annotation <https://docs.redbrickai.com/python-sdk/importing-annotations-guide>`_ to learn more.
 
     .. tab:: Single
@@ -298,9 +294,9 @@ class Series(TypedDict, total=False):
         If your series has a single segmentation file.
 
         .. code:: python
-            
+
             items = "path/to/segmentation.nii"
-    
+
     .. tab:: Multiple
 
         If your series has multiple segmentation files for different instances.
@@ -328,18 +324,18 @@ class Series(TypedDict, total=False):
                 "2": "category b"
             }
 
-    
+
     .. tab:: Full
 
         "1" and "2" are values present the NIfTI files defined by :attr:`redbrick.types.task.Series.segmentations`. Those values will be mapped to your RedBrick AI taxonomy categories "category a" and "category b".
-        
+
         :code:`Attributes`: :attr:`redbrick.types.task.Attributes`
 
         .. code:: Python
 
             segmentMap = {
                 "1": {
-                    "category": "category a", 
+                    "category": "category a",
                     "mask": "path/to/segmentation.nii"
                     "attributes": Attributes
                 },

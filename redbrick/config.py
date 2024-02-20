@@ -59,39 +59,39 @@ class Config:
 
     @property
     def debug(self) -> bool:
-        "Enable debugging."
+        """Enable debugging."""
         if "debug" not in self._state:
             self._state["debug"] = self._options["debug"]()
         return self._state["debug"]
 
     @debug.setter
     def debug(self, val: bool) -> None:
-        "Enable debugging."
+        """Enable debugging."""
         if isinstance(val, bool):
             self._state["debug"] = val
 
     @debug.deleter
     def debug(self) -> None:
-        "Enable debugging."
+        """Enable debugging."""
         if "debug" in self._state:
             del self._state["debug"]
 
     @property
     def verify_ssl(self) -> bool:
-        "Verify SSL when downloading image files."
+        """Verify SSL when downloading image files."""
         if "verify_ssl" not in self._state:
             self._state["verify_ssl"] = self._options["verify_ssl"]()
         return self._state["verify_ssl"]
 
     @verify_ssl.setter
     def verify_ssl(self, val: bool) -> None:
-        "Verify SSL when downloading image files."
+        """Verify SSL when downloading image files."""
         if isinstance(val, bool):
             self._state["verify_ssl"] = val
 
     @verify_ssl.deleter
     def verify_ssl(self) -> None:
-        "Verify SSL when downloading image files."
+        """Verify SSL when downloading image files."""
         if "verify_ssl" in self._state:
             del self._state["verify_ssl"]
 

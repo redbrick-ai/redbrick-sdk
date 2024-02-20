@@ -1,4 +1,4 @@
-"""This section covers the formats for all Taxonomy objects. Taxonomies define a labeling schema for your RedBrick AI projects."""
+"""Section covering the formats for all Taxonomy objects. Taxonomies define a labeling schema for your RedBrick AI projects."""
 
 from typing import List, Optional, Union, TypedDict, Literal
 from typing_extensions import Required, NotRequired  # type: ignore
@@ -52,7 +52,7 @@ class Attribute(TypedDict, total=False):
     Multiple attributes with parent ["Type A"] will be visually nested under a expansion panel Type A in the user interface.
 
     .. note:: Only supported for Classifications, not for Object Attributes.
-    
+
     """
 
     #: A string containing raw text, or HTML. The hints will appear in the viewer.
