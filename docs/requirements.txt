@@ -1,7 +1,8 @@
-Sphinx==7.0.1
+Sphinx==7.2.6
 sphinx-argparse==0.4.0
 recommonmark==0.7.1
-sphinx_inline_tabs==2023.4.21
+sphinx-inline-tabs==2023.4.21
 sphinxcontrib-autoprogram==0.1.8
-furo==2023.5.20
-Cython==0.29.35
+furo==2024.1.29
+Cython==3.0.8
+sphinx-autodoc-typehints==2.0.0
