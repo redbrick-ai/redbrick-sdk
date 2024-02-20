@@ -1,3 +1,5 @@
+""""""
+
 """Task types."""
 
 from typing import List, Dict, Literal, Union, TypedDict
@@ -7,7 +9,13 @@ from redbrick.common.enums import TaskStates
 
 
 class Point2D(TypedDict):
-    """2D pixel point."""
+    """
+    2D pixel point.
+
+    The `Point2D` coordinates are normalized by the image dimensions. When you `un-normalize` the points using the image dimensions, you will get a float.
+
+    RedBrick AI's annotation canvas is higher resolution than the image to allow for sub-pixel annotation accuracy. If sub-pixel annotation accuracy isn't relevant, you can `round` the un-normalized value to the nearest whole number.
+    """
 
     #: X co-ordinate normalized by the width of the image.
     xNorm: float
@@ -17,7 +25,7 @@ class Point2D(TypedDict):
 
 
 class VoxelPoint(TypedDict):
-    """Represents a three-dimensional point in image-space, where i, j, and k are columns, rows, and k is the slice number.."""
+    """Represents a three-dimensional point in image-space, where i, j, and k  are columns, rows, and k is the slice number."""
 
     i: int
     j: int
@@ -33,20 +41,31 @@ class WorldPoint(TypedDict):
 
 
 class MeasurementStats(TypedDict):
-    """Label measurement stats."""
+    """Measurement statistics for annotations."""
 
+    #: Average pixel/voxel intensity within the annotation. In CT, this is the average HU value.
     average: float
+
+    #: Area contained within the annotation in mm^2.
     area: NotRequired[float]
+
+    #: Volume contained within the annotation in mm^3
     volume: NotRequired[float]
+
+    #: Minimum intensity value within the annotation.
     minimum: float
+
+    #: Maximum intensity value within the annotation.
     maximum: float
 
 
 class VideoMetaData(TypedDict):
     """
-    Frame/slice and tracking information for an annotation on a video or 3D volume.
+    Contains annotation information along the third axis. Frames for video, and slices for 3D volumes.
 
-    .. note:: :attr:`redbrick.types.task.VideoMetaData` is relevant for both videos and 3D volumes. It contains annotation information along the 3rd axis - in videos that's frames, in 3D volumes that is slices.
+    .. note:: :attr:`redbrick.types.task.VideoMetaData` has a misleading name. It contains information for both videos, and 3D volumes.
+
+    .. hint:: Watch `this video <https://share.redbrickai.com/vpKDGyBd>`_ for a detailed explaination of all the attributes of this object.
 
     """
 
@@ -112,8 +131,6 @@ class Polyline(TypedDict):
     points: List[Point2D]
     category: Category
     attributes: NotRequired[Attributes]
-
-    #: Video track information, if this annotation is on a video.
     video: NotRequired[VideoMetaData]
 
 
@@ -124,8 +141,6 @@ class Polygon(TypedDict):
     category: Category
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
-
-    #: Video track information, if this annotation is on a video.
     video: NotRequired[VideoMetaData]
 
 
@@ -145,7 +160,12 @@ class Cuboid(TypedDict):
 
 
 class BoundingBox(TypedDict):
-    """2D bounding box for 2D images, or slice by slice annotation in 3D images."""
+    """
+    2D bounding box for 2D images, or slice by slice annotation in 3D images.
+
+    .. hint:: See the `following diagram <https://share.redbrickai.com/T0jPZFn9>`_ to understand the coordinate system.
+
+    """
 
     #: Coordinates of the top left of the bounding box.
     pointTopLeft: Point2D
@@ -155,20 +175,32 @@ class BoundingBox(TypedDict):
 
     #: Height of the bounding box, normalized by the image height.
     hNorm: float
+
     category: Category
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
-
-    #: Contains slice (for 3D volume) or frame (for video) information for the bounding box.
     video: NotRequired[VideoMetaData]
 
 
 class Ellipse(TypedDict):
-    """Ellipse annotation. Not supported in Videos."""
+    """
+    Ellipse annotation.
 
+    .. hint:: See `this diagram <https://share.redbrickai.com/6PH9ypkl>`_ to understand the coordinate system.
+
+    .. warning:: For DICOM images of a certain type, ellipse annotations might be flipped i.e., rotating the ellipse clockwise would result in counter-clockwise rotation. If you encounter these cases, reach out to our support for instructions on how to handle this support@redbrickai.com.
+    """
+
+    #: The normalized center of the ellipse.
     pointCenter: Point2D
+
+    #: The x axis of the ellipse, normalized with by the image width. Adjusting for `rotationRad`, the x-axis of the ellipse aligns with the x-axis of the image.
     xRadiusNorm: float
+
+    #: The y axis of the ellipse, normalized with by the image width. Adjusting for `rotationRad`, the y-axis of the ellipse aligns with the y-axis of the image.
     yRadiusNorm: float
+
+    #: The rotation of the ellipse measured clockwise as the angle between the y-axis of the ellipse and y-axis of the image.
     rotationRad: float
     category: Category
     attributes: NotRequired[Attributes]
@@ -181,6 +213,8 @@ class MeasureAngle(TypedDict):
     Angle measurement label.
 
     An angle measurement is defined by three points, where `vertex` is the middle point between `point1` and `point2`. The angle between the two vectors <point1, vertex> and <point2, vertex> defines the angle measurement.
+
+    .. hint:: See `this diagram <https://share.redbrickai.com/rqW3sZtf>`_ to understand the coordinate system.
     """
 
     type: Literal["angle"]
@@ -190,9 +224,11 @@ class MeasureAngle(TypedDict):
     absolutePoint1: WorldPoint
     absoluteVertex: WorldPoint
     absolutePoint2: WorldPoint
-
-    #: Measurements can be made on oblique planes. `normal` defines the normal unit vector to the slice on which the annotation was made. For annotations made on non-oblique planes, the normal will be [0,0,1].
     normal: List[float]
+    """
+    Measurements can be made on oblique planes. `normal` defines the normal unit vector to the slice on which the annotation was made. For annotations made on non-oblique planes, the normal will be [0,0,1].
+    The measurement is fully defined even without `normal`, however, for completeness `see this diagram <https://share.redbrickai.com/CZ5BXXWK>`_ for it's definition.
+    """
 
     #: Measurement angle in degrees.
     angle: float
@@ -212,9 +248,11 @@ class MeasureLength(TypedDict):
     point2: VoxelPoint
     absolutePoint1: WorldPoint
     absolutePoint2: WorldPoint
-
-    #: Measurements can be made on oblique planes. `normal` defines the normal unit vector to the slice on which the annotation was made. For annotations made on non-oblique planes, the normal will be [0,0,1].
     normal: List[float]
+    """
+    Measurements can be made on oblique planes. `normal` defines the normal unit vector to the slice on which the annotation was made. For annotations made on non-oblique planes, the normal will be [0,0,1].
+    The measurement is fully defined even without `normal`, however, for completeness `see this diagram <https://share.redbrickai.com/CZ5BXXWK>`_ for it's definition.
+    """
 
     #: The value of the measurement in millimeters.
     length: float
@@ -443,7 +481,7 @@ class OutputTask(TypedDict, total=False):
     #: Name of the stage in which this task currently is.
     currentStageName: str
 
-    #: Current status of the task.
+    #: Current status of the task in the workflow.
     status: TaskStates
 
     #: E-mail of the user who uploaded this task.
