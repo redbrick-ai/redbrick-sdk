@@ -17,7 +17,7 @@ from redbrick.cli.command import (
     CLIIReportController,
 )
 from redbrick.cli.cli_base import CLIInterface
-from redbrick.utils.logging import log_error, logger
+from redbrick.utils.logging import logger
 
 
 class CLIController(CLIInterface):
@@ -154,8 +154,24 @@ def cli_main(argv: Optional[List[str]] = None) -> None:
         except KeyboardInterrupt:
             logger.warning("User interrupted")
         except argparse.ArgumentError as error:
-            log_error(error)
+            message = str(error)
+            if message:
+                logger.warning(message)
+
+            if args.command:
+                actions = (
+                    parser._get_positional_actions()  # pylint: disable=protected-access
+                )
+                if actions:
+                    choices = actions[0].choices
+                    if choices:
+                        subparser = dict(choices).get(args.command)
+                        if subparser:
+                            subparser.print_usage()
+                            sys.exit(1)
+
             parser.print_usage()
+            sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -102,35 +102,24 @@ def test_main_parser():
 
 
 @pytest.mark.unit
-def test_cli_main(capsys, prepare_project):
+@pytest.mark.parametrize(
+    "argv, exited, error, message",
+    [
+        (["--help"], True, False, "The RedBrick CLI offers a simple interface"),
+        (["help"], True, True, "invalid choice: 'help'"),
+        ([], True, False, "usage: pytest [-h]"),
+        (["config", "error"], True, True, "usage: pytest config [-h]"),
+        (["config", "list"], False, False, "RedBrick AI Profiles"),
+    ],
+)
+def test_cli_main(capsys, prepare_project, argv, exited, error, message):
     """Test main cli entrypoint with different inputs"""
-    _, config_path_, _, _ = prepare_project
+    with patch("redbrick.cli.project.config_path", return_value=prepare_project[1]):
+        if exited:
+            with pytest.raises(SystemExit):
+                public.cli_main(argv)
+        else:
+            public.cli_main(argv)
 
-    argv = ["--help"]
-    expected_help_text = (
-        "The RedBrick CLI offers a simple interface to quickly import and export your\n"
-        "images & annotations, and perform other high-level actions."
-    )
-    with pytest.raises(SystemExit):
-        public.cli_main(argv)
-    output = capsys.readouterr()
-    assert expected_help_text in output.out
-
-    argv = ["help"]
-    expected_error_text = "invalid choice: 'help'"
-    with pytest.raises(SystemExit):
-        public.cli_main(argv)
-    output = capsys.readouterr()
-    assert expected_error_text in output.err
-
-    argv = []
-    public.cli_main(argv)
-    output = capsys.readouterr()
-    assert "ArgumentError" in output.out
-
-    with patch("redbrick.cli.project.config_path", return_value=config_path_):
-        argv = ["config", "list"]
-        expected_text = "RedBrick AI Profiles"
-        public.cli_main(argv)
         output = capsys.readouterr()
-        assert expected_text in output.out
+        assert message in (output.err if error else output.out)
