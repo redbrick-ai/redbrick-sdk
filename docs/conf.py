@@ -74,3 +74,4 @@ html_logo = "_static/redbrick.svg"
 autodoc_member_order = "bysource"
 autodoc_inherit_docstrings = False
 html_title = f"Version {version}"
+html_favicon = "_static/favicon.ico"

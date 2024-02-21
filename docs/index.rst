@@ -22,6 +22,13 @@ To use the SDK and CLI, you need a API key. You can fetch the API key from the R
 .. image:: _static/api.png
 
 
+**Organization and project ID's**
+
+For most methods in the CLI and SDK you will need a Project and/or Organization ID. These can be found from the URL.
+
+.. image:: _static/ids.webp
+
+
 Python SDK
 ================================
 The SDK is best for writing Python scripts to interact with your RedBrick AI organization & projects. The SDK offers granular

@@ -11,6 +11,8 @@ RedBrick
    :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, Stage, LabelStage, ReviewStage
    :member-order: bysource
 
+.. _org: 
+
 Organization
 ----------------------
 .. autoclass:: redbrick.organization.RBOrganization
@@ -21,6 +23,8 @@ Workspace
 .. autoclass:: redbrick.workspace.RBWorkspace
    :members: name, org_id, workspace_id
    :show-inheritance:
+
+.. _project:
 
 Project
 ----------------------
