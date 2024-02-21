@@ -132,7 +132,7 @@ class RBClient:
             raise ConnectionError(
                 "Internal Server Error: You are probably using an invalid API key"
             )
-        if response_status == 403:
+        if response_status in (401, 403):
             raise PermissionError("Problem authenticating with Api Key")
 
     @staticmethod
