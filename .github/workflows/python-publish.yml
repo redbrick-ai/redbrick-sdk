@@ -28,9 +28,9 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python 3
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m venv .venv
@@ -40,9 +40,8 @@ jobs:
         if: matrix.os == 'macos-latest'
       - run: .venv\Scripts\activate
         if: matrix.os == 'windows-latest'
-      - run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e .[dev]
+      - name: Install dependencies
+        run: make install
       - name: Lint + Unit Tests
         run: make test
 
@@ -50,9 +49,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Build and publish
@@ -62,7 +61,5 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/activate
-          python -m pip install --upgrade pip
-          python -m pip install -e .[dev]
-          python -m build
+          make build
           twine upload dist/*
