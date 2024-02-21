@@ -41,7 +41,16 @@ from redbrick.types.task import OutputTask as TypeTask, Series as TypeTaskSeries
 
 
 class Export:
-    """Primary interface for various export methods."""
+    """
+    Primary interface for various export methods.
+
+    The export module has many functions for exporting annotations and meta-data from projects. The export module is available from the :attr:`redbrick.project.RBProject` module.
+
+    .. code:: python
+
+        >>> project = redbrick.get_project(api_key="", org_id="", project_id="")
+        >>> project.export # Export
+    """
 
     def __init__(
         self,

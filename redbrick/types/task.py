@@ -11,9 +11,14 @@ class Point2D(TypedDict):
     """
     2D pixel point.
 
-    The `Point2D` coordinates are normalized by the image dimensions. When you `un-normalize` the points using the image dimensions, you will get a float.
+    The Point2D coordinates are normalized in relation to the dimensions of the image, meaning they are scaled down to a range between 0 and 1. To convert these normalized points back to their original scale on the image, you "un-normalize" them by multiplying by the image's dimensions. This operation typically results in a floating-point number.
 
-    RedBrick AI's annotation canvas is higher resolution than the image to allow for sub-pixel annotation accuracy. If sub-pixel annotation accuracy isn't relevant, you can `round` the un-normalized value to the nearest whole number.
+    RedBrick AI enhances the precision of annotations on its canvas by **supporting a resolution higher than that of the underlying image**. This capability facilitates sub-pixel annotation accuracy. However, if sub-pixel precision is not necessary for your application, you can simplify the process **by rounding the un-normalized coordinates to the nearest whole number**. This adjustment converts the precise floating-point values back to standard pixel coordinates, making them easier to work with for general purposes.
+
+    .. important::
+
+        The origin point (0,0) from which these coordinates are measured is at the top left of the image. However, for mammography and DBT the origin is the top right of the image.
+
     """
 
     #: X co-ordinate normalized by the width of the image.
@@ -62,7 +67,7 @@ class VideoMetaData(TypedDict):
     """
     Contains annotation information along the third axis. Frames for video, and slices for 3D volumes.
 
-    .. note:: :attr:`redbrick.types.task.VideoMetaData` has a misleading name. It contains information for both videos, and 3D volumes.
+    .. warning:: :attr:`redbrick.types.task.VideoMetaData` has a misleading name. It contains information for both videos, and 3D volumes.
 
     .. hint:: Watch `this video <https://share.redbrickai.com/vpKDGyBd>`_ for a detailed explaination of all the attributes of this object.
 
@@ -185,7 +190,7 @@ class Ellipse(TypedDict):
     """
     Ellipse annotation.
 
-    .. hint:: See `this ellipse diagram <https://share.redbrickai.com/6PH9ypkl>`_ to understand the coordinate system.
+    .. hint:: See `this ellipse diagram <https://share.redbrickai.com/6PH9ypkl>`_ to understand the coordinate system. Please read the :attr:`redbrick.types.task.Point2D` documentation to understand how normalization works & the origin of the coordinate system.
 
     .. warning:: For DICOM images of a certain type, ellipse annotations might be flipped i.e., rotating the ellipse clockwise would result in counter-clockwise rotation.
         If you encounter these cases, reach out to our support for instructions on how to handle this support@redbrickai.com.

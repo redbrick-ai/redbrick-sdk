@@ -20,9 +20,13 @@ class RBOrganization:
     """
     Representation of RedBrick organization.
 
-    The RBOrganization object allows you to programmatically interact with
+    The :attr:`redbrick.organization.RBOrganization` object allows you to programmatically interact with
     your RedBrick organization. This class provides methods for querying your
-    organization and doing other high level actions.
+    organization and doing other high level actions. Retrieve the organization object in the following way:
+
+    .. code:: python
+
+        >>> org = redbrick.get_org(api_key="", org_id="")
     """
 
     def __init__(self, context: RBContext, org_id: str) -> None:

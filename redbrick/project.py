@@ -17,7 +17,16 @@ from redbrick.utils.logging import logger
 
 
 class RBProject:
-    """Interface for interacting with your RedBrick AI Projects."""
+    """
+    Representation of RedBrick project.
+
+    The :attr:`redbrick.project.RBProject` object allows you to programmatically interact with
+    your RedBrick project. You can upload data, assign tasks, and query your data with this object. Retrieve the project object in the following way:
+
+    .. code:: python
+
+        >>> project = redbrick.get_project(api_key="", org_id="", project_id="")
+    """
 
     def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
         """Construct RBProject."""
@@ -258,9 +267,9 @@ class RBProject:
         Tuple[str, str]
             Returns [storage_id, path]
 
-        Note
+        Important
         ------------
-        - You only need to run this command once per project.
+        You only need to run this command once per project.
 
         Raises
         ----------

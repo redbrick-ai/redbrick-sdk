@@ -34,7 +34,14 @@ from redbrick.types.task import InputTask
 
 
 class Upload:
-    """Primary interface to uploading new data to a project."""
+    """
+    Primary interface for uploading to a project.
+
+    .. code:: python
+
+        >>> project = redbrick.get_project(api_key="", org_id="", project_id="")
+        >>> project.upload # upload
+    """
 
     def __init__(
         self, context: RBContext, org_id: str, project_id: str, taxonomy_name: str
