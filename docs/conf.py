@@ -43,6 +43,7 @@ extensions = [
     "sphinx_inline_tabs",
     "sphinxcontrib.autoprogram",
     "sphinx_autodoc_typehints",
+    "sphinx_design",
 ]
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -58,7 +59,6 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # a list of builtin themes.
 #
 html_theme = "furo"
-
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
@@ -73,3 +73,4 @@ html_css_files = ["css/custom.css"]
 html_logo = "_static/redbrick.svg"
 autodoc_member_order = "bysource"
 autodoc_inherit_docstrings = False
+html_title = f"Version {version}"

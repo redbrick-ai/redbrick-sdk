@@ -1,3 +1,5 @@
+.. _sdk:
+
 Python SDK
 ========================================
 The SDK is best for writing Python scripts to interact with your RedBrick AI organization & projects. The SDK offers granular
