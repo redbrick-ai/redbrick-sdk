@@ -38,7 +38,7 @@ Annotation type definitions
 This section covers definitions of all the annotation object types. The objects are the same for importing annotations, and exporting annotations.
 
 .. list-table:: Annotation type support
-   :widths: 50 50 50 50 
+   :widths: 50 50 50 50
    :header-rows: 1
 
    * - **Annotation type**

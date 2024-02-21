@@ -1,6 +1,5 @@
+# noqa
 """"""
-
-"""Task types."""
 
 from typing import List, Dict, Literal, Union, TypedDict
 from typing_extensions import Required, NotRequired  # type: ignore
@@ -186,9 +185,10 @@ class Ellipse(TypedDict):
     """
     Ellipse annotation.
 
-    .. hint:: See `this diagram <https://share.redbrickai.com/6PH9ypkl>`_ to understand the coordinate system.
+    .. hint:: See `this ellipse diagram <https://share.redbrickai.com/6PH9ypkl>`_ to understand the coordinate system.
 
-    .. warning:: For DICOM images of a certain type, ellipse annotations might be flipped i.e., rotating the ellipse clockwise would result in counter-clockwise rotation. If you encounter these cases, reach out to our support for instructions on how to handle this support@redbrickai.com.
+    .. warning:: For DICOM images of a certain type, ellipse annotations might be flipped i.e., rotating the ellipse clockwise would result in counter-clockwise rotation.
+        If you encounter these cases, reach out to our support for instructions on how to handle this support@redbrickai.com.
     """
 
     #: The normalized center of the ellipse.
@@ -214,7 +214,7 @@ class MeasureAngle(TypedDict):
 
     An angle measurement is defined by three points, where `vertex` is the middle point between `point1` and `point2`. The angle between the two vectors <point1, vertex> and <point2, vertex> defines the angle measurement.
 
-    .. hint:: See `this diagram <https://share.redbrickai.com/rqW3sZtf>`_ to understand the coordinate system.
+    .. hint:: See `this angle diagram <https://share.redbrickai.com/rqW3sZtf>`_ to understand the coordinate system.
     """
 
     type: Literal["angle"]
@@ -227,7 +227,7 @@ class MeasureAngle(TypedDict):
     normal: List[float]
     """
     Measurements can be made on oblique planes. `normal` defines the normal unit vector to the slice on which the annotation was made. For annotations made on non-oblique planes, the normal will be [0,0,1].
-    The measurement is fully defined even without `normal`, however, for completeness `see this diagram <https://share.redbrickai.com/CZ5BXXWK>`_ for it's definition.
+    The measurement is fully defined even without `normal`, however, for completeness `see this angle diagram <https://share.redbrickai.com/CZ5BXXWK>`_ for it's definition.
     """
 
     #: Measurement angle in degrees.
@@ -251,7 +251,7 @@ class MeasureLength(TypedDict):
     normal: List[float]
     """
     Measurements can be made on oblique planes. `normal` defines the normal unit vector to the slice on which the annotation was made. For annotations made on non-oblique planes, the normal will be [0,0,1].
-    The measurement is fully defined even without `normal`, however, for completeness `see this diagram <https://share.redbrickai.com/CZ5BXXWK>`_ for it's definition.
+    The measurement is fully defined even without `normal`, however, for completeness `see this length diagram <https://share.redbrickai.com/CZ5BXXWK>`_ for it's definition.
     """
 
     #: The value of the measurement in millimeters.
@@ -389,7 +389,11 @@ class Series(TypedDict, total=False):
                     "mask": "path/to/segmentation.nii"
                     "attributes": Attributes
                 },
-                "2": "category b"
+                "2": {
+                    "category": "category b",
+                    "mask": "path/to/segmentation.nii"
+                    "attributes": Attributes
+                }
             }
     """
 
