@@ -34,7 +34,7 @@ redbrick = "redbrick.cli:cli_main"
 
 [project.urls]
 Homepage = "https://www.redbrickai.com"
-Documentation = "https://redbrick-sdk.readthedocs.io"
+Documentation = "https://sdk.redbrickai.com"
 Changelog = "https://github.com/redbrick-ai/redbrick-sdk/releases"
 
 [project.optional-dependencies]

@@ -815,7 +815,7 @@ class Export:
 
         Meta-data and category information returned as an Object. Segmentations are written to
         your disk in NIfTI-1 format. Please `visit our
-        documentation <https://redbrick-sdk.readthedocs.io/en/stable/formats.html#export-format>`_
+        documentation <https://sdk.redbrickai.com/formats/index.html#export>`_
         for more information on the format.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key, url)
@@ -890,7 +890,7 @@ class Export:
         -----------
         Iterator[:obj:`~redbrick.types.task.OutputTask`]
             Datapoint and labels in RedBrick AI format. See
-            https://redbrick-sdk.readthedocs.io/en/stable/formats.html#export-format
+            https://sdk.redbrickai.com/formats/index.html#export
 
 
         .. note:: If both `semantic_mask` and `binary_mask` options are True,

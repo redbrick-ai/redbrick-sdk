@@ -11,7 +11,7 @@ RedBrick
    :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, Stage, LabelStage, ReviewStage
    :member-order: bysource
 
-.. _org: 
+.. _org:
 
 Organization
 ----------------------

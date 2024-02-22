@@ -3,6 +3,4 @@ as well as making your datasets easily available for training. Use this SDK to a
 
 Please feel free to submit issues on github or at [support@redbrickai.com](mailto:support@redbrickai.com) if you run into any problems or have suggestions.
 
-Visit [docs.redbrickai.com/python-sdk/sdk-overview](https://docs.redbrickai.com/python-sdk/sdk-overview) for tutorials on how to use this library.
-
-
+Visit [docs](https://sdk.redbrickai.com) for tutorials on how to use this library.

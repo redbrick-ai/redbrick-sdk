@@ -1,10 +1,10 @@
-.. _formats: 
+.. _formats:
 
 Formats
 ==============================
 This section will document the structure used for importing and exporting data from RedBrick AI. For importing & exporting annotations please refer to the :ref:`labeling_type_target`.
 
-Import format
+Import
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 The RedBrick AI SDK uses a list of :class:`redbrick.types.task.InputTask` objects for importing data. To import data through the CLI or SDK, create a JSON file that follows the same format.
 
@@ -17,9 +17,9 @@ The RedBrick AI SDK uses a list of :class:`redbrick.types.task.InputTask` object
    .. autoattribute:: items
 
 
-Export format
+Export
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-The RedBrick SDK will export a list of OutputTasks in an object, along with NIfTI segmentation files if they exist, written to the disk. The CLI will export in the same format in a JSON file.
+The RedBrick SDK will export a list of :class:`redbrick.types.task.OutputTask` objects, along with NIfTI segmentation files if they exist, written to the disk. The CLI will export in the same format in a JSON file.
 
 .. autoclass:: redbrick.types.task.OutputTask
    :members:
@@ -35,5 +35,5 @@ The RedBrick SDK will export a list of OutputTasks in an object, along with NIfT
 .. toctree::
   :hidden:
 
-  Annotation types
-  Taxonomy
+  annotations
+  taxonomy

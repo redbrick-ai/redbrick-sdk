@@ -44,6 +44,7 @@ extensions = [
     "sphinxcontrib.autoprogram",
     "sphinx_autodoc_typehints",
     "sphinx_design",
+    "sphinx_copybutton",
 ]
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -69,9 +70,18 @@ html_static_path = []  # type: ignore
 # provided yet on the RTD theme (see
 # https://github.com/readthedocs/sphinx_rtd_theme/issues/455).
 html_static_path = ["_static"]
-html_css_files = ["css/custom.css"]
-html_logo = "_static/redbrick.svg"
 autodoc_member_order = "bysource"
 autodoc_inherit_docstrings = False
 html_title = f"Version {version}"
 html_favicon = "_static/favicon.ico"
+
+# https://pradyunsg.me/furo/customisation
+html_theme_options = {
+    "light_logo": "redbrick.svg",
+    "dark_logo": "redbrick--darkmode.svg",
+    "source_repository": "https://github.com/redbrick-ai/redbrick-sdk/",
+    "source_branch": "master",
+    "source_directory": "docs/",
+    "navigation_with_keys": True,
+    "top_of_page_button": None,
+}

@@ -9,7 +9,7 @@ The RedBrick AI SDK and CLI are useful for managing data IO operations, and prog
 
 **Installation**
 
-The SDK and CLI are available on PyPI and can be installed using `pip`. 
+The SDK and CLI are available on PyPI and can be installed using `pip`.
 
 .. code:: bash
 
@@ -17,7 +17,7 @@ The SDK and CLI are available on PyPI and can be installed using `pip`.
 
 **Authentication**
 
-To use the SDK and CLI, you need a API key. You can fetch the API key from the RedBrick AI dashboard, found on the right sidebar "API keys". 
+To use the SDK and CLI, you need a API key. You can fetch the API key from the RedBrick AI dashboard, found on the right sidebar "API keys".
 
 .. image:: _static/api.png
 
@@ -34,9 +34,11 @@ Python SDK
 The SDK is best for writing Python scripts to interact with your RedBrick AI organization & projects. The SDK offers granular
 functions for programmatically manipulating data, importing annotations, assigning tasks, and more.
 
-.. card:: 
-   
-   See the :ref:`sdk` **↗** documentation for more information.
+.. card::
+   :link: sdk
+   :link-type: ref
+
+   :material-regular:`link;1.5rem;sd-mr-2` See the :ref:`sdk` documentation for more information.
 
 
 .. toctree::
@@ -49,9 +51,11 @@ Command Line Interface
 =======================================
 The RedBrick CLI offers a simple interface to quickly import and export your images & annotations, and perform other high-level actions.
 
-.. card:: 
+.. card::
+   :link: cli
+   :link-type: ref
 
-   See the :ref:`CLI` **↗** documentation for more information.
+   :material-regular:`link;1.5rem;sd-mr-2` See the :ref:`cli` documentation for more information.
 
 .. toctree::
    :hidden:
@@ -63,17 +67,17 @@ The RedBrick CLI offers a simple interface to quickly import and export your ima
 
 Formats
 ===================
-Formats for importing & exporting data, and interfacing with various entities on RedBrick AI. 
+Formats for importing & exporting data, and interfacing with various entities on RedBrick AI.
 
-.. card:: 
+.. card::
+   :link: formats
+   :link-type: ref
 
-   See the :ref:`formats` **↗** documentation for more information.
+   :material-regular:`link;1.5rem;sd-mr-2` See the :ref:`formats` documentation for more information.
 
 
 .. toctree::
    :hidden:
    :maxdepth: 2
 
-   Formats/index
-
-
+   formats/index
