@@ -367,7 +367,6 @@ but may increase the upload time.""",
                     self.args.label_validate,
                     self.args.concurrency,
                     False,
-                    self.args.rt_struct,
                 )
             )
 

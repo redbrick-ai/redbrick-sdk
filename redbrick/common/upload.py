@@ -1,6 +1,6 @@
 """Abstract interface to upload."""
 
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Sequence
 from abc import ABC, abstractmethod
 
 import aiohttp
@@ -112,3 +112,15 @@ class UploadControllerInterface(ABC):
         tasks: List[Dict],
     ) -> Optional[str]:
         """Update tasks priorities."""
+
+    @abstractmethod
+    async def update_labels(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_id: str,
+        labels: str,
+        labels_map: Optional[Sequence[Optional[Dict]]] = None,
+    ) -> None:
+        """Update tasks labels."""

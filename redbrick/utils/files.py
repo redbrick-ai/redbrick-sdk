@@ -16,6 +16,7 @@ from natsort import natsorted, ns
 from redbrick.common.constants import MAX_FILE_BATCH_SIZE, MAX_RETRY_ATTEMPTS
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import log_error, logger
+from redbrick.config import config
 
 
 IMAGE_FILE_TYPES = {
@@ -161,7 +162,6 @@ async def upload_files(
     files: List[Tuple[str, str, str]],
     progress_bar_name: Optional[str] = "Uploading files",
     keep_progress_bar: bool = True,
-    verify_ssl: bool = True,
 ) -> List[bool]:
     """Upload files from local path to url (file path, presigned url, file type)."""
 
@@ -193,7 +193,7 @@ async def upload_files(
                         url,
                         headers=headers,
                         data=data,
-                        ssl=None if verify_ssl else False,
+                        ssl=None if config.verify_ssl else False,
                     ) as response:
                         status = response.status
         except RetryError as error:
@@ -223,7 +223,6 @@ async def download_files(
     keep_progress_bar: bool = True,
     overwrite: bool = False,
     zipped: bool = False,
-    verify_ssl: bool = True,
 ) -> List[Optional[str]]:
     """Download files from url to local path (presigned url, file path)."""
 
@@ -251,7 +250,7 @@ async def download_files(
                 with attempt:
                     async with session.get(
                         URL(url, encoded=True),
-                        ssl=None if verify_ssl else False,
+                        ssl=None if config.verify_ssl else False,
                     ) as response:
                         if response.status == 200:
                             headers = dict(response.headers)

@@ -2,7 +2,7 @@
 
 Formats
 ==============================
-This section will document the structure used for importing and exporting data from RedBrick AI. For importing & exporting annotations please refer to the :ref:`labeling_type_target`.
+This section will document the structure used for importing and exporting data from RedBrick AI.
 
 Import
 ~~~~~~~~~~~~~~~~~~~~~~~~~

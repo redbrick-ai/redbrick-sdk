@@ -380,10 +380,7 @@ class Export:
                 raise Exception("Failed to presign some files")
 
             downloaded = await download_files(
-                list(zip(presigned, local_files)),
-                "Downloading files",
-                False,
-                verify_ssl=self.context.config.verify_ssl,
+                list(zip(presigned, local_files)), "Downloading files", False
             )
 
             if any(not downloaded_file for downloaded_file in downloaded):
@@ -641,12 +638,7 @@ class Export:
         paths: List[Optional[str]]
         if segmentation_dir:
             paths = await download_files(
-                files,
-                "Downloading segmentations",
-                False,
-                True,
-                True,
-                verify_ssl=self.context.config.verify_ssl,
+                files, "Downloading segmentations", False, True, True
             )
         else:
             paths = list(list(zip(*files))[0])

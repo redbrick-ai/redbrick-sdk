@@ -265,16 +265,16 @@ class MeasureLength(TypedDict):
     attributes: NotRequired[Attributes]
 
 
-class Landmarks3D(TypedDict):
-    """3D landmarks for 3D data."""
+class Landmark3D(TypedDict):
+    """3D landmark for 3D data."""
 
     point: VoxelPoint
     category: Category
     attributes: NotRequired[Attributes]
 
 
-class Landmarks(TypedDict):
-    """2D landmarks for 2D data."""
+class Landmark(TypedDict):
+    """2D landmark for 2D data."""
 
     point: Point2D
     category: Category
@@ -411,10 +411,10 @@ class Series(TypedDict, total=False):
     pngMask: bool
 
     #: 2D landmarks for 2D data.
-    landmarks: List[Landmarks]
+    landmarks: List[Landmark]
 
     #: 3D landmarks for 3D data.
-    landmarks3d: List[Landmarks3D]
+    landmarks3d: List[Landmark3D]
 
     #: Length or angle measurements. Not supported in videos.
     measurements: List[Union[MeasureLength, MeasureAngle]]

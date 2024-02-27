@@ -90,7 +90,6 @@ class Labeling:
         project_label_storage_id: str,
         label_validate: bool,
         existing_labels: bool,
-        rt_struct: bool,
     ) -> Optional[Dict]:
         # pylint: disable=too-many-locals
         task_id = task["taskId"]
@@ -120,12 +119,9 @@ class Labeling:
                         self.org_id,
                         self.project_id,
                         task,
-                        StorageMethod.REDBRICK,
                         label_storage_id,
                         project_label_storage_id,
                         label_validate,
-                        rt_struct,
-                        self.context.config.verify_ssl,
                     )
                 except ValueError as err:
                     logger.warning(
@@ -161,7 +157,6 @@ class Labeling:
         project_label_storage_id: str,
         label_validate: bool,
         existing_labels: bool,
-        rt_struct: bool,
     ) -> List[Dict]:
         conn = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=conn) as session:
@@ -176,7 +171,6 @@ class Labeling:
                     project_label_storage_id,
                     label_validate,
                     existing_labels,
-                    rt_struct,
                 )
                 for task in tasks
             ]
@@ -192,7 +186,7 @@ class Labeling:
         *,
         finalize: bool = True,
         existing_labels: bool = False,
-        rt_struct: bool = False,
+        rt_struct: bool = False,  # pylint: disable=unused-argument
         review_result: Optional[bool] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = True,
@@ -364,7 +358,6 @@ class Labeling:
                         project_label_storage_id,
                         label_validate,
                         False,
-                        rt_struct,
                     )
                 )
             )
@@ -381,7 +374,6 @@ class Labeling:
                         project_label_storage_id,
                         label_validate,
                         existing_labels,
-                        rt_struct,
                     )
                 )
             )

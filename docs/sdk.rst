@@ -41,7 +41,7 @@ Export
 Upload
 ----------------------
 .. autoclass:: redbrick.upload.Upload
-   :members: create_datapoints, delete_tasks, delete_tasks_by_name, update_task_items, import_tasks_from_workspace, update_tasks_priority
+   :members: create_datapoints, delete_tasks, delete_tasks_by_name, update_task_items, import_tasks_from_workspace, update_tasks_priority, update_tasks_labels
    :show-inheritance:
 
 Labeling

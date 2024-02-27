@@ -2,46 +2,32 @@ Annotation type definitions
 -----------------------------
 This section covers definitions of all the annotation object types. The objects are the same for importing annotations, and exporting annotations.
 
-.. list-table:: Annotation type support
-   :widths: 50 30 30 30
-   :header-rows: 1
-   :stub-columns: 1
-   :align: center
-
-   * - **Annotation type**
-     - Video
-     - 3D volume
-     - 2D image
-   * - :attr:`redbrick.types.task.Ellipse`
-     - :material-regular:`disabled_by_default;1.5rem;sd-text-danger`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-   * - :attr:`redbrick.types.task.BoundingBox`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-   * - :attr:`redbrick.types.task.MeasureLength`
-     - :material-regular:`disabled_by_default;1.5rem;sd-text-danger`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-   * - :attr:`redbrick.types.task.MeasureAngle`
-     - :material-regular:`disabled_by_default;1.5rem;sd-text-danger`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-   * - :attr:`redbrick.types.task.Cuboid`
-     - :material-regular:`disabled_by_default;1.5rem;sd-text-danger`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-     - :material-regular:`disabled_by_default;1.5rem;sd-text-danger`
-   * - :attr:`redbrick.types.task.Polygon`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-     - :material-regular:`disabled_by_default;1.5rem;sd-text-danger`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-   * - :attr:`redbrick.types.task.Polyline`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-     - :material-regular:`disabled_by_default;1.5rem;sd-text-danger`
-     - :material-regular:`check_box;1.5rem;sd-text-success`
-
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+| :attr:`Label Type <redbrick.types.taxonomy.ObjectType.labelType>` | Label Definition                                                | 2D Image                                                      | 3D Volume                                                     | Video                                                         |
++===================================================================+=================================================================+===============================================================+===============================================================+===============================================================+
+| CLASSIFICATION (non objectType)                                   | :attr:`Classification <redbrick.types.task.Classification>`     | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          |
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+| SEGMENTATION                                                      | :attr:`CommonLabelProps <redbrick.types.task.CommonLabelProps>` | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`disabled_by_default;1.5rem;sd-text-danger` |
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+| LENGTH                                                            | :attr:`MeasureLength <redbrick.types.task.MeasureLength>`       | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`disabled_by_default;1.5rem;sd-text-danger` |
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+| ANGLE                                                             | :attr:`MeasureAngle <redbrick.types.task.MeasureAngle>`         | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`disabled_by_default;1.5rem;sd-text-danger` |
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+|                                                                   | :attr:`Landmark <redbrick.types.task.Landmark>`                 | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`remove;1.5rem`                             | :material-regular:`check_box;1.5rem;sd-text-success`          |
+| POINT                                                             +-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+|                                                                   | :attr:`Landmark3D <redbrick.types.task.Landmark3D>`             | :material-regular:`remove;1.5rem`                             | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`remove;1.5rem`                             |
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+| POLYLINE                                                          | :attr:`Polyline <redbrick.types.task.Polyline>`                 | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          |
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+| POLYGON                                                           | :attr:`Polygon <redbrick.types.task.Polygon>`                   | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          |
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+| ELLIPSE                                                           | :attr:`Ellipse <redbrick.types.task.Ellipse>`                   | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`disabled_by_default;1.5rem;sd-text-danger` |
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+| BBOX                                                              | :attr:`BoundingBox <redbrick.types.task.BoundingBox>`           | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`check_box;1.5rem;sd-text-success`          |
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
+| CUBOID                                                            | :attr:`Cuboid <redbrick.types.task.Cuboid>`                     | :material-regular:`disabled_by_default;1.5rem;sd-text-danger` | :material-regular:`check_box;1.5rem;sd-text-success`          | :material-regular:`disabled_by_default;1.5rem;sd-text-danger` |
++-------------------------------------------------------------------+-----------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+---------------------------------------------------------------+
 
 .. automodule:: redbrick.types.task
-   :members: Landmarks, Attributes, Landmarks3D, MeasureLength, MeasureAngle, Ellipse, BoundingBox, Cuboid, Polygon, Polyline, Classification, InstanceClassification, CommonLabelProps, VideoMetaData, MeasurementStats, WorldPoint, VoxelPoint, Point2D
+   :members: Landmark, Attributes, Landmark3D, MeasureLength, MeasureAngle, Ellipse, BoundingBox, Cuboid, Polygon, Polyline, Classification, InstanceClassification, CommonLabelProps, VideoMetaData, MeasurementStats, WorldPoint, VoxelPoint, Point2D
    :undoc-members:

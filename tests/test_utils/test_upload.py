@@ -85,12 +85,9 @@ async def test_process_segmentation_upload(
                 org_id,
                 project_id,
                 task,
-                StorageMethod.REDBRICK,
                 label_storage_id,
                 project_label_storage_id,
                 label_validate,
-                False,
-                True,
             )
 
     assert result == [{"labelName": "file_path", "seriesIndex": 0}]

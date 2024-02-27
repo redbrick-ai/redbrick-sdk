@@ -1,7 +1,7 @@
 """Abstract interface to upload."""
 
 import json
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Sequence
 
 import aiohttp
 
@@ -388,3 +388,45 @@ class UploadRepo(UploadControllerInterface):
             session, query_string, query_variables
         )
         return (response.get("updateTasksPriorities", {}) or {}).get("message")
+
+    async def update_labels(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_id: str,
+        labels: str,
+        labels_map: Optional[Sequence[Optional[Dict]]] = None,
+    ) -> None:
+        """Update tasks labels."""
+        query_string = """
+        mutation updateTasksLabelsSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $taskId: UUID!
+            $labelsData: String
+            $labelsMap: [LabelMapInput]
+        ) {
+            putLabels(
+                orgId: $orgId
+                projectId: $projectId
+                taskId: $taskId
+                labelsData: $labelsData
+                labelsMap: $labelsMap
+            ) {
+                ok
+                message
+            }
+        }
+        """
+
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "taskId": task_id,
+            "labelsData": labels,
+            "labelsMap": labels_map,
+        }
+
+        await self.client.execute_query_async(session, query_string, query_variables)
