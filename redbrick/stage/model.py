@@ -186,7 +186,7 @@ class ModelStage(Stage):
             return cls(
                 name=entity["name"],
                 url=entity.get("url"),
-                taxonomy_objects=ModelStage.Config.get_external_taxonomy_map(
+                taxonomy_objects=ModelStage.Config._get_external_taxonomy_map(
                     entity.get("taxonomyObjects"), taxonomy
                 ),
             )
@@ -197,11 +197,11 @@ class ModelStage(Stage):
             if self.url is not None:
                 entity["url"] = self.url
             if self.taxonomy_objects is not None:
-                entity["taxonomyObjects"] = self.get_internal_taxonomy_map(taxonomy)
+                entity["taxonomyObjects"] = self._get_internal_taxonomy_map(taxonomy)
             return entity
 
         @staticmethod
-        def get_external_taxonomy_map(
+        def _get_external_taxonomy_map(
             taxonomy_objects: Optional[List[Dict]], taxonomy: Optional[Taxonomy] = None
         ) -> Optional[List[ModelTaxonomyMap]]:
             """Convert taxonomy map to external format."""
@@ -233,7 +233,7 @@ class ModelStage(Stage):
                 for obj in taxonomy_objects
             ]
 
-        def get_internal_taxonomy_map(
+        def _get_internal_taxonomy_map(
             self, taxonomy: Optional[Taxonomy] = None
         ) -> Optional[List[Dict]]:
             """Convert taxonomy map to internal format."""
@@ -271,6 +271,8 @@ class ModelStage(Stage):
     on_submit: Union[bool, str] = True
     config: Config = field(default_factory=Config.from_entity)
 
+    BRICK_NAME = "model"
+
     @classmethod
     def from_entity(
         cls, entity: Dict, taxonomy: Optional[Taxonomy] = None
@@ -281,17 +283,17 @@ class ModelStage(Stage):
             config = json.loads(config)
         return cls(
             stage_name=entity["stageName"],
-            on_submit=entity["routing"]["nextStageName"],
+            on_submit=cls._get_next_stage_external(entity["routing"]["nextStageName"]),
             config=cls.Config.from_entity(config or {}, taxonomy),
         )
 
     def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
         """Get entity from object."""
         return {
-            "brickName": "model",
+            "brickName": self.BRICK_NAME,
             "stageName": self.stage_name,
             "routing": {
-                "nextStageName": self.get_next_stage(self.on_submit),
+                "nextStageName": self._get_next_stage_internal(self.on_submit),
             },
             "stageConfig": self.config.to_entity(taxonomy),
         }

@@ -29,7 +29,7 @@ Workspace
 Project
 ----------------------
 .. autoclass:: redbrick.project.RBProject
-   :members: name, org_id, project_id, url, taxonomy_name, workspace_id, label_storage, label_stages, review_stages, members, set_label_storage, update_stage
+   :members: name, org_id, project_id, url, taxonomy_name, workspace_id, label_storage, stages, members, set_label_storage, update_stage
    :show-inheritance:
 
 Export

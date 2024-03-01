@@ -12,7 +12,7 @@ from redbrick.common.constants import PEERLESS_ERRORS
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
-from redbrick.stage import Stage, LabelStage, ReviewStage
+from redbrick.stage import Stage, LabelStage, ReviewStage, get_stage_objects
 from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.logging import logger
 
@@ -67,15 +67,18 @@ class RBProject:
             if stage["brickName"] == "labelset-output":
                 self.output_stage_name = stage["stageName"]
 
-        self.labeling = Labeling(
-            context,
-            org_id,
-            project_id,
-            taxonomy,
-            self.label_stages,
-        )
+        label_stages: List[LabelStage] = []
+        review_stages: List[ReviewStage] = []
+        stages = self.stages
+        for stg in stages:
+            if isinstance(stg, LabelStage):
+                label_stages.append(stg)
+            elif isinstance(stg, ReviewStage):
+                review_stages.append(stg)
+
+        self.labeling = Labeling(context, org_id, project_id, taxonomy, label_stages)
         self.review = Labeling(
-            context, org_id, project_id, taxonomy, self.review_stages, review=True
+            context, org_id, project_id, taxonomy, review_stages, review=True
         )
         self.export = Export(
             context,
@@ -84,8 +87,8 @@ class RBProject:
             taxonomy,
             self.output_stage_name,
             self.consensus_enabled,
-            self.label_stages,
-            self.review_stages,
+            label_stages,
+            review_stages,
         )
         self.settings = Settings(context, org_id, project_id, taxonomy)
 
@@ -166,22 +169,9 @@ class RBProject:
         return self._label_storage
 
     @property
-    def label_stages(self) -> List[LabelStage]:
-        """Get list of label stages."""
-        return [
-            LabelStage.from_entity(stage, self.taxonomy)
-            for stage in self._stages
-            if stage["brickName"] == "manual-labeling"
-        ]
-
-    @property
-    def review_stages(self) -> List[ReviewStage]:
-        """Get list of review stages."""
-        return [
-            ReviewStage.from_entity(stage, self.taxonomy)
-            for stage in self._stages
-            if stage["brickName"] == "expert-review"
-        ]
+    def stages(self) -> List[Stage]:
+        """Get list of stages."""
+        return get_stage_objects(self._stages)
 
     @property
     def members(self) -> List[Dict]:

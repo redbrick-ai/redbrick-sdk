@@ -1,6 +1,6 @@
 """RedBrick project stages."""
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence, Type
 
 from redbrick.common.stage import Stage
 from redbrick.stage.label import LabelStage
@@ -29,7 +29,7 @@ def get_middle_stages(reviews: int) -> List[Stage]:
 
 
 def get_project_stages(
-    stages: List[Stage], taxonomy: Optional[Taxonomy] = None
+    stages: Sequence[Stage], taxonomy: Optional[Taxonomy] = None
 ) -> List[Dict]:
     """Get project stage config."""
     input_stage = {
@@ -79,3 +79,27 @@ def get_project_stages(
             )["stageName"]
 
     return [input_stage] + stage_configs + feedback_stages + [output_stage]
+
+
+def get_stage_object(
+    stage: Dict, taxonomy: Optional[Taxonomy] = None
+) -> Optional[Stage]:
+    """Get stage object."""
+    brick_map: Dict[str, Type[Stage]] = {
+        LabelStage.BRICK_NAME: LabelStage,
+        ReviewStage.BRICK_NAME: ReviewStage,
+        ModelStage.BRICK_NAME: ModelStage,
+    }
+    return (
+        brick_map[stage["brickName"]].from_entity(stage, taxonomy)
+        if stage["brickName"] in brick_map
+        else None
+    )
+
+
+def get_stage_objects(
+    stages: List[Dict], taxonomy: Optional[Taxonomy] = None
+) -> List[Stage]:
+    """Get stage objects."""
+    stage_objects = [get_stage_object(stage, taxonomy) for stage in stages]
+    return [stage_object for stage_object in stage_objects if stage_object]

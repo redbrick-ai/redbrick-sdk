@@ -80,6 +80,8 @@ class ReviewStage(Stage):
     on_reject: Union[bool, str] = False
     config: Config = field(default_factory=Config.from_entity)
 
+    BRICK_NAME = "expert-review"
+
     @classmethod
     def from_entity(
         cls, entity: Dict, taxonomy: Optional[Taxonomy] = None
@@ -90,19 +92,19 @@ class ReviewStage(Stage):
             config = json.loads(config)
         return cls(
             stage_name=entity["stageName"],
-            on_accept=entity["routing"]["passed"],
-            on_reject=entity["routing"]["failed"],
+            on_accept=cls._get_next_stage_external(entity["routing"]["passed"]),
+            on_reject=cls._get_next_stage_external(entity["routing"]["failed"]),
             config=cls.Config.from_entity(config or {}, taxonomy),
         )
 
     def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
         """Get entity from object."""
         return {
-            "brickName": "expert-review",
+            "brickName": self.BRICK_NAME,
             "stageName": self.stage_name,
             "routing": {
-                "passed": self.get_next_stage(self.on_accept),
-                "failed": self.get_next_stage(self.on_reject),
+                "passed": self._get_next_stage_internal(self.on_accept),
+                "failed": self._get_next_stage_internal(self.on_reject),
             },
             "stageConfig": self.config.to_entity(taxonomy),
         }

@@ -16,7 +16,7 @@ from redbrick.common.constants import DEFAULT_URL
 from redbrick.organization import RBOrganization
 from redbrick.workspace import RBWorkspace
 from redbrick.project import RBProject
-from redbrick.stage import Stage, LabelStage, ReviewStage
+from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
 
 from redbrick.utils.logging import logger
 from redbrick.utils.common_utils import config_migration
@@ -184,6 +184,7 @@ __all__ = [
     "Stage",
     "LabelStage",
     "ReviewStage",
+    "ModelStage",
     "RBOrganization",
     "RBWorkspace",
     "RBProject",

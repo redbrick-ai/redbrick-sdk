@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from functools import partial
-from typing import List, Optional, Dict, Union
+from typing import List, Optional, Dict, Sequence, Union
 from tqdm import tqdm  # type: ignore
 
 from redbrick.common.context import RBContext
@@ -120,7 +120,7 @@ class RBOrganization:
         self,
         name: str,
         taxonomy_name: str,
-        stages: List[Stage],
+        stages: Sequence[Stage],
         exists_okay: bool = False,
         workspace_id: Optional[str] = None,
     ) -> RBProject:

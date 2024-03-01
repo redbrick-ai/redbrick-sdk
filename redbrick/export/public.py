@@ -1042,9 +1042,6 @@ class Export:
         review_stages: List[str] = [stage.stage_name for stage in self.review_stages]
         all_stages: List[str] = label_stages + review_stages + [self.output_stage_name]
 
-        if stage_name and stage_name not in all_stages:
-            raise ValueError(f"Invalid stage name: {stage_name}")
-
         filters: TaskFilterParams = TaskFilterParams()
 
         if user_id:

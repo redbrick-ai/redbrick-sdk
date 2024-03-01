@@ -78,6 +78,8 @@ class LabelStage(Stage):
     on_submit: Union[bool, str] = True
     config: Config = field(default_factory=Config.from_entity)
 
+    BRICK_NAME = "manual-labeling"
+
     @classmethod
     def from_entity(
         cls, entity: Dict, taxonomy: Optional[Taxonomy] = None
@@ -88,17 +90,17 @@ class LabelStage(Stage):
             config = json.loads(config)
         return cls(
             stage_name=entity["stageName"],
-            on_submit=entity["routing"]["nextStageName"],
+            on_submit=cls._get_next_stage_external(entity["routing"]["nextStageName"]),
             config=cls.Config.from_entity(config or {}, taxonomy),
         )
 
     def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
         """Get entity from object."""
         return {
-            "brickName": "manual-labeling",
+            "brickName": self.BRICK_NAME,
             "stageName": self.stage_name,
             "routing": {
-                "nextStageName": self.get_next_stage(self.on_submit),
+                "nextStageName": self._get_next_stage_internal(self.on_submit),
             },
             "stageConfig": self.config.to_entity(taxonomy),
         }
