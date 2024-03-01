@@ -169,7 +169,7 @@ class RBProject:
     def label_stages(self) -> List[LabelStage]:
         """Get list of label stages."""
         return [
-            LabelStage.from_entity(stage)
+            LabelStage.from_entity(stage, self.taxonomy)
             for stage in self._stages
             if stage["brickName"] == "manual-labeling"
         ]
@@ -178,7 +178,7 @@ class RBProject:
     def review_stages(self) -> List[ReviewStage]:
         """Get list of review stages."""
         return [
-            ReviewStage.from_entity(stage)
+            ReviewStage.from_entity(stage, self.taxonomy)
             for stage in self._stages
             if stage["brickName"] == "expert-review"
         ]
@@ -301,7 +301,10 @@ class RBProject:
     def update_stage(self, stage: Stage) -> None:
         """Update stage."""
         success, pipeline = self.context.project.update_stage(
-            self.org_id, self.project_id, stage.stage_name, stage.config.to_entity()
+            self.org_id,
+            self.project_id,
+            stage.stage_name,
+            stage.config.to_entity(self.taxonomy),
         )
         if success:
             if pipeline:

@@ -1,11 +1,12 @@
 """RedBrick project stages."""
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from redbrick.common.stage import Stage
 from redbrick.stage.label import LabelStage
 from redbrick.stage.review import ReviewStage
 from redbrick.stage.model import ModelStage
+from redbrick.types.taxonomy import Taxonomy
 
 
 def get_middle_stages(reviews: int) -> List[Stage]:
@@ -27,7 +28,9 @@ def get_middle_stages(reviews: int) -> List[Stage]:
     return stages
 
 
-def get_project_stages(stages: List[Stage]) -> List[Dict]:
+def get_project_stages(
+    stages: List[Stage], taxonomy: Optional[Taxonomy] = None
+) -> List[Dict]:
     """Get project stage config."""
     input_stage = {
         "brickName": "labelset-input",
@@ -50,7 +53,7 @@ def get_project_stages(stages: List[Stage]) -> List[Dict]:
     feedback_stages: List[Dict] = []
 
     for stage in stages:
-        stage_configs.append(stage.to_entity())
+        stage_configs.append(stage.to_entity(taxonomy))
         if isinstance(stage, ReviewStage):
             if not any(
                 review_feedback_stage["routing"]["feedbackStageName"]

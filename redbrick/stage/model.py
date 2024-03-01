@@ -5,6 +5,7 @@ import json
 from typing import Any, Dict, List, Optional, TypedDict, Union
 
 from redbrick.common.stage import Stage
+from redbrick.types.taxonomy import Taxonomy
 
 
 class ModelTaxonomyMap(TypedDict):
@@ -53,7 +54,9 @@ class ModelStage(Stage):
         taxonomy_objects: Optional[List[ModelTaxonomyMap]] = None
 
         @classmethod
-        def from_entity(cls, entity: Optional[Dict] = None) -> "ModelStage.Config":
+        def from_entity(
+            cls, entity: Optional[Dict] = None, taxonomy: Optional[Taxonomy] = None
+        ) -> "ModelStage.Config":
             """Get object from entity."""
             if not entity:
                 raise ValueError("Model name is required")
@@ -63,7 +66,7 @@ class ModelStage(Stage):
                 taxonomy_objects=entity.get("taxonomyObjects"),
             )
 
-        def to_entity(self) -> Dict:
+        def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
             """Get entity from object."""
             entity: Dict[str, Any] = {"name": self.name}
             if self.url is not None:
@@ -77,7 +80,9 @@ class ModelStage(Stage):
     config: Config = field(default_factory=Config.from_entity)
 
     @classmethod
-    def from_entity(cls, entity: Dict) -> "ModelStage":
+    def from_entity(
+        cls, entity: Dict, taxonomy: Optional[Taxonomy] = None
+    ) -> "ModelStage":
         """Get object from entity"""
         config = entity.get("stageConfig")
         if config and isinstance(config, str):
@@ -85,10 +90,10 @@ class ModelStage(Stage):
         return cls(
             stage_name=entity["stageName"],
             on_submit=entity["routing"]["nextStageName"],
-            config=cls.Config.from_entity(config or {}),
+            config=cls.Config.from_entity(config or {}, taxonomy),
         )
 
-    def to_entity(self) -> Dict:
+    def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
         """Get entity from object."""
         return {
             "brickName": "model",
@@ -96,5 +101,5 @@ class ModelStage(Stage):
             "routing": {
                 "nextStageName": self.get_next_stage(self.on_submit),
             },
-            "stageConfig": self.config.to_entity(),
+            "stageConfig": self.config.to_entity(taxonomy),
         }

@@ -176,10 +176,13 @@ class RBOrganization:
                 return temp
 
         try:
+            taxonomy = self.context.project.get_taxonomy(
+                org_id=self.org_id, tax_id=None, name=taxonomy_name
+            )
             project_data = self.context.project.create_project(
                 self.org_id,
                 name,
-                get_project_stages(stages),
+                get_project_stages(stages, taxonomy),
                 "DICOM_SEGMENTATION",
                 taxonomy_name,
                 workspace_id,

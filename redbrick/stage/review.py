@@ -5,6 +5,7 @@ import json
 from typing import Any, Dict, Optional, Union
 
 from redbrick.common.stage import Stage
+from redbrick.types.taxonomy import Taxonomy
 
 
 @dataclass
@@ -51,7 +52,9 @@ class ReviewStage(Stage):
         auto_assignment_queue_size: Optional[int] = None
 
         @classmethod
-        def from_entity(cls, entity: Optional[Dict] = None) -> "ReviewStage.Config":
+        def from_entity(
+            cls, entity: Optional[Dict] = None, taxonomy: Optional[Taxonomy] = None
+        ) -> "ReviewStage.Config":
             """Get object from entity."""
             if not entity:
                 return cls()
@@ -61,7 +64,7 @@ class ReviewStage(Stage):
                 auto_assignment_queue_size=entity.get("queueSize"),
             )
 
-        def to_entity(self) -> Dict:
+        def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
             """Get entity from object."""
             entity: Dict[str, Any] = {}
             if self.review_percentage is not None:
@@ -78,7 +81,9 @@ class ReviewStage(Stage):
     config: Config = field(default_factory=Config.from_entity)
 
     @classmethod
-    def from_entity(cls, entity: Dict) -> "ReviewStage":
+    def from_entity(
+        cls, entity: Dict, taxonomy: Optional[Taxonomy] = None
+    ) -> "ReviewStage":
         """Get object from entity"""
         config = entity.get("stageConfig")
         if config and isinstance(config, str):
@@ -87,10 +92,10 @@ class ReviewStage(Stage):
             stage_name=entity["stageName"],
             on_accept=entity["routing"]["passed"],
             on_reject=entity["routing"]["failed"],
-            config=cls.Config.from_entity(config or {}),
+            config=cls.Config.from_entity(config or {}, taxonomy),
         )
 
-    def to_entity(self) -> Dict:
+    def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
         """Get entity from object."""
         return {
             "brickName": "expert-review",
@@ -99,5 +104,5 @@ class ReviewStage(Stage):
                 "passed": self.get_next_stage(self.on_accept),
                 "failed": self.get_next_stage(self.on_reject),
             },
-            "stageConfig": self.config.to_entity(),
+            "stageConfig": self.config.to_entity(taxonomy),
         }
