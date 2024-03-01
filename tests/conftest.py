@@ -69,7 +69,7 @@ def mock_export(
             "seriesClassify": [],
             "instanceClassify": [],
             "objectTypes": [],
-            "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+            "createdAt": datetime.datetime.now().isoformat(),
         },
         output_stage_name="END",
         consensus_enabled=True,

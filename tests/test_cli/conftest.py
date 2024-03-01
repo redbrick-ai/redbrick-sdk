@@ -72,7 +72,7 @@ def mock_cli_rb_context(
         "seriesClassify": [],
         "instanceClassify": [],
         "objectTypes": [],
-        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+        "createdAt": datetime.datetime.now().isoformat(),
         "isNew": True,
     }
     mock_projects_resp = [
@@ -84,7 +84,7 @@ def mock_cli_rb_context(
             "taxonomy": {"name": "mock_taxonomy"},
             "workspace": {"workspaceId": uuid.uuid4()},
             "projectUrl": "mock_project_url",
-            "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+            "createdAt": datetime.datetime.now().isoformat(),
             "consensusSettings": {"enabled": True},
         }
     ]

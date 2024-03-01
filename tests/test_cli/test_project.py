@@ -152,7 +152,7 @@ def test_initialize_project(project_and_conf_dirs, rb_context_full):
         "seriesClassify": [],
         "instanceClassify": [],
         "objectTypes": [],
-        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+        "createdAt": datetime.datetime.now().isoformat(),
         "isNew": True,
     }
     mock_project_resp = {
@@ -162,7 +162,7 @@ def test_initialize_project(project_and_conf_dirs, rb_context_full):
         "taxonomy": {"name": "mock_taxonomy"},
         "workspace": {"workspaceId": uuid.uuid4()},
         "projectUrl": "mock_project_url",
-        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+        "createdAt": datetime.datetime.now().isoformat(),
         "consensusSettings": {"enabled": True},
     }
     with patch("redbrick.cli.project.config_path", return_value=config_path_):
@@ -219,7 +219,7 @@ def test_project_properties(project_and_conf_dirs, rb_context_full):
         "seriesClassify": [],
         "instanceClassify": [],
         "objectTypes": [],
-        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+        "createdAt": datetime.datetime.now().isoformat(),
         "isNew": True,
     }
     mock_project_resp = {
@@ -229,7 +229,7 @@ def test_project_properties(project_and_conf_dirs, rb_context_full):
         "taxonomy": {"name": "mock_taxonomy"},
         "workspace": {"workspaceId": uuid.uuid4()},
         "projectUrl": "mock_project_url",
-        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+        "createdAt": datetime.datetime.now().isoformat(),
         "consensusSettings": {"enabled": True},
     }
 

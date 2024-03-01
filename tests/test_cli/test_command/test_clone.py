@@ -77,7 +77,7 @@ def test_handle_clone(
         "seriesClassify": [],
         "instanceClassify": [],
         "objectTypes": [],
-        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+        "createdAt": datetime.datetime.now().isoformat(),
         "isNew": True,
     }
     mock_projects_resp = [
@@ -89,7 +89,7 @@ def test_handle_clone(
             "taxonomy": {"name": "mock_taxonomy"},
             "workspace": {"workspaceId": uuid.uuid4()},
             "projectUrl": "mock_project_url",
-            "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+            "createdAt": datetime.datetime.now().isoformat(),
             "consensusSettings": {"enabled": True},
         }
     ]
