@@ -129,13 +129,6 @@ TOTAL_SEGMENTATOR_CATEGORIES = {
 }
 
 
-class ModelTaxonomyMap(TypedDict):
-    """Model taxonomy map."""
-
-    modelCategory: str
-    rbCategory: str
-
-
 @dataclass
 class ModelStage(Stage):
     """Model Stage.
@@ -154,6 +147,21 @@ class ModelStage(Stage):
         Stage config.
     """
 
+    class ModelTaxonomyMap(TypedDict):
+        """Model taxonomy map.
+
+        Parameters
+        --------------
+        modelCategory: str
+            Model category name.
+
+        rbCategory: str
+            Category name as it appears in the RedBrick project's taxonomy.
+        """
+
+        modelCategory: str
+        rbCategory: str
+
     @dataclass
     class Config(Stage.Config):
         """Model Stage Config.
@@ -166,13 +174,13 @@ class ModelStage(Stage):
         url: Optional[str]
             URL for self-hosted model.
 
-        taxonomy_objects: Optional[Dict[str, int]]
+        taxonomy_objects: Optional[List[ModelStage.ModelTaxonomyMap]]
             Mapping of model classes to project's taxonomy objects.
         """
 
         name: str
         url: Optional[str] = None
-        taxonomy_objects: Optional[List[ModelTaxonomyMap]] = None
+        taxonomy_objects: Optional[List["ModelStage.ModelTaxonomyMap"]] = None
 
         TOTAL_SEGMENTATOR = "TOTAL_SEGMENTATOR"
 
@@ -203,7 +211,7 @@ class ModelStage(Stage):
         @staticmethod
         def _get_external_taxonomy_map(
             taxonomy_objects: Optional[List[Dict]], taxonomy: Optional[Taxonomy] = None
-        ) -> Optional[List[ModelTaxonomyMap]]:
+        ) -> Optional[List["ModelStage.ModelTaxonomyMap"]]:
             """Convert taxonomy map to external format."""
             if (
                 taxonomy_objects is None

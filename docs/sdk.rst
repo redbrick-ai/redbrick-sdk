@@ -8,7 +8,7 @@ functions for programmatically manipulating data, importing annotations, assigni
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, Stage, LabelStage, ReviewStage
+   :members: get_org, get_workspace, get_project, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, Stage, LabelStage, ReviewStage, ModelStage
    :member-order: bysource
 
 .. _org:
@@ -29,7 +29,7 @@ Workspace
 Project
 ----------------------
 .. autoclass:: redbrick.project.RBProject
-   :members: name, org_id, project_id, url, taxonomy_name, workspace_id, label_storage, stages, members, set_label_storage, update_stage
+   :members: name, org_id, project_id, url, taxonomy_name, taxonomy, workspace_id, label_storage, stages, members, set_label_storage, update_stage
    :show-inheritance:
 
 Export
