@@ -13,6 +13,7 @@ from redbrick.common.constants import PEERLESS_ERRORS
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
 from redbrick.stage import Stage, LabelStage, ReviewStage
+from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.logging import logger
 
 
@@ -51,15 +52,15 @@ class RBProject:
         self.consensus_enabled: bool = False
         self._label_storage: Optional[Tuple[str, str]] = None
 
+        self._taxonomy: Optional[Taxonomy] = None
+
         # check if project exists on backend to validate
         self._get_project()
 
-        self.upload = Upload(
-            context,
-            org_id,
-            project_id,
-            self.taxonomy_name,
-        )
+        # check if project taxonomy is valid
+        taxonomy = self.taxonomy
+
+        self.upload = Upload(context, org_id, project_id, taxonomy)
 
         self.output_stage_name: str = "Output"
         for stage in self._stages:
@@ -70,22 +71,23 @@ class RBProject:
             context,
             org_id,
             project_id,
+            taxonomy,
             self.label_stages,
         )
         self.review = Labeling(
-            context, org_id, project_id, self.review_stages, review=True
+            context, org_id, project_id, taxonomy, self.review_stages, review=True
         )
         self.export = Export(
             context,
             org_id,
             project_id,
+            taxonomy,
             self.output_stage_name,
             self.consensus_enabled,
             self.label_stages,
             self.review_stages,
-            self.taxonomy_name,
         )
-        self.settings = Settings(context, org_id, project_id)
+        self.settings = Settings(context, org_id, project_id, taxonomy)
 
     @property
     def org_id(self) -> str:
@@ -131,6 +133,15 @@ class RBProject:
         Retrieves the taxonomy name.
         """
         return self._taxonomy_name
+
+    @property
+    def taxonomy(self) -> Taxonomy:
+        """Retrieves the project taxonomy."""
+        if not self._taxonomy:
+            self._taxonomy = self.context.project.get_taxonomy(
+                org_id=self.org_id, tax_id=None, name=self.taxonomy_name
+            )
+        return self._taxonomy
 
     @property
     def workspace_id(self) -> Optional[str]:

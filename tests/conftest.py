@@ -1,5 +1,7 @@
 """Fixtures for all tests"""
 
+import datetime
+
 import pytest
 
 from redbrick import RBContext, _populate_context
@@ -59,10 +61,19 @@ def mock_export(
         context=context,
         org_id="mock_org_id",
         project_id="mock_project_id",
+        taxonomy={
+            "orgId": "mock_org_id",
+            "taxId": "mock_tax_id",
+            "name": "mock_taxonomy",
+            "studyClassify": [],
+            "seriesClassify": [],
+            "instanceClassify": [],
+            "objectTypes": [],
+            "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+        },
         output_stage_name="END",
         consensus_enabled=True,
         label_stages=[LabelStage(stage_name="Label")],
         review_stages=[ReviewStage("Review_1"), ReviewStage("Review_2")],
-        taxonomy_name="mock_taxonomy_name",
     )
     return export

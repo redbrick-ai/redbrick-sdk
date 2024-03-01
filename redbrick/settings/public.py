@@ -2,16 +2,20 @@
 
 from redbrick.common.context import RBContext
 from redbrick.common.settings import LabelValidation, HangingProtocol
+from redbrick.types.taxonomy import Taxonomy
 
 
 class Settings:
     """Primary interface to project settings."""
 
-    def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
+    def __init__(
+        self, context: RBContext, org_id: str, project_id: str, taxonomy: Taxonomy
+    ) -> None:
         """Construct Settings object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
+        self.taxonomy = taxonomy
 
     @property
     def label_validation(self) -> LabelValidation:

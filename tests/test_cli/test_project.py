@@ -5,7 +5,7 @@ import os
 import re
 import tempfile
 import uuid
-from datetime import datetime
+import datetime
 from unittest.mock import patch
 
 import pytest
@@ -144,6 +144,17 @@ def test_initialize_project(project_and_conf_dirs, rb_context_full):
     _write_creds(config_path_, org_id)
 
     mock_org_resp = {"name": "Mock Org", "orgId": org_id}
+    mock_tax_resp = {
+        "orgId": org_id,
+        "taxId": "mock_tax_id",
+        "name": "mock_taxonomy",
+        "studyClassify": [],
+        "seriesClassify": [],
+        "instanceClassify": [],
+        "objectTypes": [],
+        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+        "isNew": True,
+    }
     mock_project_resp = {
         "status": "CREATION_SUCCESS",
         "name": "mock_project",
@@ -151,13 +162,16 @@ def test_initialize_project(project_and_conf_dirs, rb_context_full):
         "taxonomy": {"name": "mock_taxonomy"},
         "workspace": {"workspaceId": uuid.uuid4()},
         "projectUrl": "mock_project_url",
-        "createdAt": datetime.now().isoformat(),
+        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
         "consensusSettings": {"enabled": True},
     }
     with patch("redbrick.cli.project.config_path", return_value=config_path_):
         # mock repo methods
         rb_context_full.project.get_org = functools.partial(
             mock_method, response=mock_org_resp
+        )
+        rb_context_full.project.get_taxonomy = functools.partial(
+            mock_method, response=mock_tax_resp
         )
         rb_context_full.project.get_project = functools.partial(
             mock_method, response=mock_project_resp
@@ -197,6 +211,17 @@ def test_project_properties(project_and_conf_dirs, rb_context_full):
     _write_creds(config_path_, org_id, api_key=rb_context_full.client.api_key)
 
     mock_org_resp = {"name": "Mock Org", "orgId": org_id}
+    mock_tax_resp = {
+        "orgId": org_id,
+        "taxId": "mock_tax_id",
+        "name": "mock_taxonomy",
+        "studyClassify": [],
+        "seriesClassify": [],
+        "instanceClassify": [],
+        "objectTypes": [],
+        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+        "isNew": True,
+    }
     mock_project_resp = {
         "status": "CREATION_SUCCESS",
         "name": "mock_project",
@@ -204,7 +229,7 @@ def test_project_properties(project_and_conf_dirs, rb_context_full):
         "taxonomy": {"name": "mock_taxonomy"},
         "workspace": {"workspaceId": uuid.uuid4()},
         "projectUrl": "mock_project_url",
-        "createdAt": datetime.now().isoformat(),
+        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
         "consensusSettings": {"enabled": True},
     }
 
@@ -219,6 +244,9 @@ def test_project_properties(project_and_conf_dirs, rb_context_full):
         # pylint: disable=protected-access
         proj._context.project.get_org = functools.partial(
             mock_method, response=mock_org_resp
+        )
+        proj._context.project.get_taxonomy = functools.partial(
+            mock_method, response=mock_tax_resp
         )
         proj._context.project.get_project = functools.partial(
             mock_method, response=mock_project_resp

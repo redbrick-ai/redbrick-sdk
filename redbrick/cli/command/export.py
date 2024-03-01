@@ -169,11 +169,6 @@ class CLIExportController(CLIExportInterface):
                     self.project.cache.remove_data("datapoints")
 
         current_timestamp = int(datetime.now(timezone.utc).timestamp())
-        taxonomy = self.project.project.context.project.get_taxonomy(
-            self.project.project.org_id,
-            tax_id=None,
-            name=self.project.project.taxonomy_name,
-        )
         datapoint_count = self.project.project.context.export.datapoints_in_project(
             self.project.project.org_id, self.project.project.project_id, None
         )
@@ -244,7 +239,7 @@ class CLIExportController(CLIExportInterface):
 
         class_file = os.path.join(export_dir, "class_map.json")
         class_map, color_map = self.project.project.export.preprocess_export(
-            taxonomy, png_mask
+            self.project.project.taxonomy, png_mask
         )
 
         if os.path.isfile(task_file):
@@ -256,7 +251,7 @@ class CLIExportController(CLIExportInterface):
                 [
                     self._process_task(
                         cached_task,
-                        taxonomy,
+                        self.project.project.taxonomy,
                         task_file,
                         image_dir,
                         segmentation_dir,

@@ -12,6 +12,7 @@ import aiohttp
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
 from redbrick.stage import Stage
+from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.upload import process_segmentation_upload, validate_json
 from redbrick.utils.logging import log_error, logger
 from redbrick.utils.async_utils import gather_with_concurrency
@@ -69,6 +70,7 @@ class Labeling:
         context: RBContext,
         org_id: str,
         project_id: str,
+        taxonomy: Taxonomy,
         stages: Sequence[Stage],
         review: bool = False,
     ) -> None:
@@ -76,6 +78,7 @@ class Labeling:
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
+        self.taxonomy = taxonomy
         self.stages = stages
         self.review = review
 

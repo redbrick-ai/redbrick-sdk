@@ -16,6 +16,7 @@ import tqdm  # type: ignore
 from redbrick.common.context import RBContext
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import ImportTypes, StorageMethod
+from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.upload import (
@@ -42,13 +43,13 @@ class Upload:
     """
 
     def __init__(
-        self, context: RBContext, org_id: str, project_id: str, taxonomy_name: str
+        self, context: RBContext, org_id: str, project_id: str, taxonomy: Taxonomy
     ) -> None:
         """Construct Upload object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
-        self.taxonomy_name = taxonomy_name
+        self.taxonomy = taxonomy
 
     @tenacity.retry(
         stop=stop_after_attempt(1),
@@ -742,9 +743,6 @@ class Upload:
         """Prepare items from json files for upload."""
         # pylint: disable=too-many-locals, too-many-branches
         # pylint: disable=too-many-statements, import-outside-toplevel
-        taxonomy = self.context.project.get_taxonomy(
-            self.org_id, tax_id=None, name=self.taxonomy_name
-        )
         logger.debug(f"Preparing {len(files_data)} files for upload")
         points: List[Dict] = []
         uploading = set()
@@ -786,7 +784,7 @@ class Upload:
                     self.context,
                     loop,
                     self.org_id,
-                    taxonomy,
+                    self.taxonomy,
                     file_data,
                     storage_id,
                     label_storage_id,
@@ -1152,9 +1150,6 @@ class Upload:
         if not tasks:
             return
 
-        taxonomy = self.context.project.get_taxonomy(
-            self.org_id, tax_id=None, name=self.taxonomy_name
-        )
         project_label_storage_id, _ = self.context.project.get_label_storage(
             self.org_id, self.project_id
         )
@@ -1165,7 +1160,7 @@ class Upload:
                 self.context,
                 loop,
                 self.org_id,
-                taxonomy,
+                self.taxonomy,
                 tasks,
                 StorageMethod.REDBRICK,
                 label_storage_id or project_label_storage_id,

@@ -57,21 +57,21 @@ class Export:
         context: RBContext,
         org_id: str,
         project_id: str,
+        taxonomy: Taxonomy,
         output_stage_name: str,
         consensus_enabled: bool,
         label_stages: List[LabelStage],
         review_stages: List[ReviewStage],
-        taxonomy_name: str,
     ) -> None:
         """Construct Export object."""
         self.context = context
         self.org_id = org_id
         self.project_id = project_id
+        self.taxonomy = taxonomy
         self.output_stage_name = output_stage_name
         self.consensus_enabled = consensus_enabled
         self.label_stages = label_stages
         self.review_stages = review_stages
-        self.taxonomy_name = taxonomy_name
 
     def _get_raw_data_latest(
         self,
@@ -894,10 +894,6 @@ class Export:
             no_consensus if no_consensus is not None else not self.consensus_enabled
         )
 
-        taxonomy = self.context.project.get_taxonomy(
-            self.org_id, tax_id=None, name=self.taxonomy_name
-        )
-
         # Create output directory
         destination = destination or self.project_id
 
@@ -918,7 +914,7 @@ class Export:
             if not image_dir and not segmentation_dir:
                 os.makedirs(destination, exist_ok=True)
 
-        class_map, color_map = self.preprocess_export(taxonomy, png)
+        class_map, color_map = self.preprocess_export(self.taxonomy, png)
 
         if png:
             with open(
@@ -945,7 +941,7 @@ class Export:
             task: TypeTask = loop.run_until_complete(
                 self.export_nifti_label_data(  # type: ignore
                     datapoint,
-                    taxonomy,
+                    self.taxonomy,
                     task_file,
                     image_dir,
                     segmentation_dir,
@@ -1223,11 +1219,6 @@ class Export:
             }]
         """
         # pylint: disable=too-many-locals
-        taxonomy: Taxonomy = {}  # type: ignore
-        if with_labels:
-            taxonomy = self.context.project.get_taxonomy(
-                self.org_id, tax_id=None, name=self.taxonomy_name
-            )
         members = self.context.project.get_members(self.org_id, self.project_id)
         users = {}
         for member in members:
@@ -1259,7 +1250,7 @@ class Export:
                     if "labels" not in event:
                         continue
                     labels = dicom_rb_format(
-                        event["labels"], taxonomy, False, True, self.review_stages
+                        event["labels"], self.taxonomy, False, True, self.review_stages
                     )
                     event["labels"] = {"series": labels.get("series") or []}
                     if labels.get("classification") is not None:

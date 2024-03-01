@@ -46,6 +46,6 @@ def _write_creds(
         )
 
 
-def mock_method(*args, response=None):  # pylint: disable=unused-argument
+def mock_method(*args, response=None, **kwargs):  # pylint: disable=unused-argument
     """Stub function to help enable pickling of mocked methods"""
     return response

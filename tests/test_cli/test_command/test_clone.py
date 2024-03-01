@@ -5,7 +5,7 @@ import functools
 import os
 import re
 import uuid
-from datetime import datetime
+import datetime
 from unittest.mock import patch
 
 import pytest
@@ -69,6 +69,17 @@ def test_handle_clone(
     # mock repo methods
     # pylint: disable=protected-access
     mock_org_resp = {"name": "Mock Org", "orgId": org_id}
+    mock_tax_resp = {
+        "orgId": org_id,
+        "taxId": "mock_tax_id",
+        "name": "mock_taxonomy",
+        "studyClassify": [],
+        "seriesClassify": [],
+        "instanceClassify": [],
+        "objectTypes": [],
+        "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
+        "isNew": True,
+    }
     mock_projects_resp = [
         {
             "status": "CREATION_SUCCESS",
@@ -78,12 +89,15 @@ def test_handle_clone(
             "taxonomy": {"name": "mock_taxonomy"},
             "workspace": {"workspaceId": uuid.uuid4()},
             "projectUrl": "mock_project_url",
-            "createdAt": datetime.now().isoformat(),
+            "createdAt": datetime.datetime.now(datetime.UTC).isoformat(),
             "consensusSettings": {"enabled": True},
         }
     ]
     rb_context_full.project.get_org = functools.partial(
         mock_method, response=mock_org_resp
+    )
+    rb_context_full.project.get_taxonomy = functools.partial(
+        mock_method, response=mock_tax_resp
     )
     rb_context_full.project.get_project = functools.partial(
         mock_method, response=mock_projects_resp[0]
