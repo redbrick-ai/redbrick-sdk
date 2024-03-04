@@ -85,7 +85,7 @@ class CLIInfoController(CLIInfoInterface):
         """Handle set sub command."""
         if self.args.set == self.SETTING_LABELSTORAGE:
             storage_id = CLIInputUUID(None, "Storage ID").get()
-            path = CLIInputText(None, "Path prefix", "", True).get()
+            path = CLIInputText(None, "Path prefix", "", False).get()
             console = Console()
             with console.status("Set: Label Storage") as status:
                 try:

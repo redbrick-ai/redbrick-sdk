@@ -10,11 +10,19 @@ from redbrick.cli.cli_base import CLIInputParams
 class CLIInputNumber(CLIInputParams):
     """Input number handler."""
 
-    def __init__(self, entity: Optional[str], name: str) -> None:
+    def __init__(
+        self,
+        entity: Optional[str],
+        name: str,
+        default: str = "",
+        mandatory: bool = True,
+    ) -> None:
         """Init handlers."""
         self.entity = entity
         self.error_message = "Not a number"
         self.name = name
+        self.default = default
+        self.mandatory = mandatory
 
     def filtrator(self, entity: str) -> str:
         """Filter input entity."""
@@ -23,7 +31,7 @@ class CLIInputNumber(CLIInputParams):
     def validator(self, entity: str) -> bool:
         """Validate input entity."""
         number = self.filtrator(entity)
-        return number.isnumeric()
+        return number.isnumeric() if number or self.mandatory else True
 
     def get(self) -> str:
         """Get filtered number value post validation."""
@@ -33,6 +41,8 @@ class CLIInputNumber(CLIInputParams):
                 qmark=">",
                 amark=">",
                 message=self.name + ":",
+                default=self.default,
+                mandatory=self.mandatory,
                 transformer=self.filtrator,
                 filter=self.filtrator,
                 validate=self.validator,

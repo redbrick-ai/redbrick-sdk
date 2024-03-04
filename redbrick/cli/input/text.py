@@ -15,14 +15,14 @@ class CLIInputText(CLIInputParams):
         entity: Optional[str],
         name: str,
         default: str = "",
-        allow_empty: bool = False,
+        mandatory: bool = True,
     ) -> None:
         """Init handlers."""
         self.entity = entity
         self.error_message = "Empty value"
         self.name = name
         self.default = default
-        self.allow_empty = allow_empty
+        self.mandatory = mandatory
 
     def filtrator(self, entity: str) -> str:
         """Filter input entity."""
@@ -31,7 +31,7 @@ class CLIInputText(CLIInputParams):
     def validator(self, entity: str) -> bool:
         """Validate input entity."""
         text = self.filtrator(entity)
-        return True if self.allow_empty else bool(text)
+        return bool(text) if self.mandatory else True
 
     def get(self) -> str:
         """Get filtered text value post validation."""
@@ -42,6 +42,7 @@ class CLIInputText(CLIInputParams):
                 amark=">",
                 message=self.name + ":",
                 default=self.default,
+                mandatory=self.mandatory,
                 transformer=self.filtrator,
                 filter=self.filtrator,
                 validate=self.validator,

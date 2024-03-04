@@ -18,7 +18,7 @@ def test_cli_input_text_with_valid_input(mock_input_executor):
 @pytest.mark.unit
 def test_cli_input_text_with_empty_input():
     """Test `CLIInputText.validator` with empty input"""
-    cli_input_text = text.CLIInputText(None, "Test Input", allow_empty=True)
+    cli_input_text = text.CLIInputText(None, "Test Input", "", False)
     result = cli_input_text.validator("")
     assert result is True
 
