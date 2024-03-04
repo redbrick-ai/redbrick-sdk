@@ -1,6 +1,6 @@
 """Handlers to access APIs for getting workspaces."""
 
-from typing import Dict
+from typing import Dict, List
 
 from redbrick.common.client import RBClient
 from redbrick.common.workspace import WorkspaceRepoInterface
@@ -13,6 +13,23 @@ class WorkspaceRepo(WorkspaceRepoInterface):
         """Construct WorkspaceRepo."""
         self.client = client
 
+    def get_workspaces(self, org_id: str) -> List[Dict]:
+        """Get list of workspaces."""
+        query = """
+            query sdkGetWorkspacesSDK($orgId: UUID!) {
+                workspaces(orgId: $orgId) {
+                    orgId
+                    workspaceId
+                    name
+                    status
+                    createdAt
+                }
+            }
+        """
+        variables = {"orgId": org_id}
+        response: Dict[str, List[Dict]] = self.client.execute_query(query, variables)
+        return response["workspaces"]
+
     def get_workspace(self, org_id: str, workspace_id: str) -> Dict:
         """
         Get workspace name and status.
@@ -20,8 +37,8 @@ class WorkspaceRepo(WorkspaceRepoInterface):
         Raise an exception if workspace does not exist.
         """
         query = """
-            query sdkGetWorkspaceSDK($orgId: UUID!, $workspaceId: UUID!){
-                workspace(orgId: $orgId, workspaceId: $workspaceId){
+            query sdkGetWorkspaceSDK($orgId: UUID!, $workspaceId: UUID!) {
+                workspace(orgId: $orgId, workspaceId: $workspaceId) {
                     orgId
                     workspaceId
                     name

@@ -26,6 +26,15 @@ class CLIInitController(CLIInitInterface):
             help="Number of review stages",
         )
         parser.add_argument(
+            "--workspace",
+            "-w",
+            help="The workspace that you want to add this project to",
+        )
+        parser.add_argument(
+            "--sibling-tasks",
+            help="Number of tasks created for each uploaded datapoint",
+        )
+        parser.add_argument(
             "path",
             nargs="?",
             default=".",
@@ -53,6 +62,7 @@ class CLIInitController(CLIInitInterface):
 
     def handle_init(self) -> None:
         """Handle empty sub command."""
+        # pylint: disable=too-many-locals
         assert_validation(self.project.creds.exists, "Credentials missing")
 
         console = Console()
@@ -75,15 +85,65 @@ class CLIInitController(CLIInitInterface):
                 status.stop()
                 raise error
 
+        with console.status("Fetching workspaces") as status:
+            try:
+                workspaces = org.workspaces_raw()
+            except Exception as error:
+                status.stop()
+                raise error
+
         name = CLIInputText(
             self.args.name, "Name", os.path.basename(self.project.path)
         ).get()
         taxonomy = CLIInputSelect(self.args.taxonomy, "Taxonomy", taxonomies).get()
-        reviews = int(CLIInputNumber(self.args.reviews, "Reviews").get())
+        reviews = int(CLIInputNumber(self.args.reviews, "Reviews", "1").get())
+
+        workspace_ids, workspace_names, workspace_choices = [""], [""], ["--- NONE ---"]
+        for workspace in workspaces:
+            workspace_ids.append(workspace["workspaceId"])
+            workspace_names.append(workspace["name"])
+            workspace_choices.append(
+                workspace["name"] + " (" + workspace["workspaceId"] + ")"
+            )
+
+        selected_workspace = self.args.workspace
+        if selected_workspace:
+            index = -1
+            if selected_workspace in workspace_ids:
+                index = workspace_ids.index(selected_workspace)
+            elif selected_workspace in workspace_names:
+                index = workspace_names.index(selected_workspace)
+
+            if index >= 0:
+                selected_workspace = (
+                    workspace_names[index] + " (" + workspace_ids[index] + ")"
+                )
+
+        workspace_id = workspace_ids[
+            workspace_choices.index(
+                CLIInputSelect(
+                    selected_workspace, "Workspaces", workspace_choices
+                ).get()
+            )
+        ]
+
+        sibling_tasks = CLIInputNumber(
+            self.args.sibling_tasks, "Sibling Tasks", "", False
+        ).get()
 
         with console.status("Creating project") as status:
             try:
-                project = org.create_project(name, taxonomy, reviews)
+                project = org.create_project(
+                    name=name,
+                    taxonomy_name=taxonomy,
+                    reviews=reviews,
+                    workspace_id=workspace_id or None,
+                    sibling_tasks=(
+                        None
+                        if not sibling_tasks or int(sibling_tasks) <= 1
+                        else int(sibling_tasks)
+                    ),
+                )
             except Exception as error:
                 status.stop()
                 raise error

@@ -1,11 +1,15 @@
 """Interface for getting basic information about a workspace."""
 
-from typing import Dict
+from typing import Dict, List
 from abc import ABC, abstractmethod
 
 
 class WorkspaceRepoInterface(ABC):
     """Abstract interface to Workspace APIs."""
+
+    @abstractmethod
+    def get_workspaces(self, org_id: str) -> List[Dict]:
+        """Get list of workspaces."""
 
     @abstractmethod
     def get_workspace(self, org_id: str, workspace_id: str) -> Dict:

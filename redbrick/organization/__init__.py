@@ -49,6 +49,15 @@ class RBOrganization:
             return [tax["name"] for tax in taxonomies]
         return list(map(format_taxonomy, taxonomies))
 
+    def workspaces_raw(self) -> List[Dict]:
+        """Get a list of active workspaces as raw objects in the organization."""
+        workspaces = self.context.workspace.get_workspaces(self._org_id)
+        workspaces = list(
+            filter(lambda x: x["status"] == "CREATION_SUCCESS", workspaces)
+        )
+
+        return workspaces
+
     def projects_raw(self) -> List[Dict]:
         """Get a list of active projects as raw objects in the organization."""
         projects = self.context.project.get_projects(self._org_id)
@@ -123,6 +132,7 @@ class RBOrganization:
         stages: Sequence[Stage],
         exists_okay: bool = False,
         workspace_id: Optional[str] = None,
+        sibling_tasks: Optional[int] = None,
     ) -> RBProject:
         """
         Create a project within the organization.
@@ -148,7 +158,10 @@ class RBOrganization:
             do not want to keep creating new projects.
 
         workspace_id: Optional[str] = None
-            The workspace id that you want to add this project to.
+            The id of the workspace that you want to add this project to.
+
+        sibling_tasks: Optional[int] = None
+            Number of tasks created for each uploaded datapoint.
 
         Returns
         --------------
@@ -176,6 +189,9 @@ class RBOrganization:
                 return temp
 
         try:
+            sibling_tasks = (
+                None if sibling_tasks is None or sibling_tasks <= 1 else sibling_tasks
+            )
             taxonomy = self.context.project.get_taxonomy(
                 org_id=self.org_id, tax_id=None, name=taxonomy_name
             )
@@ -186,6 +202,7 @@ class RBOrganization:
                 "DICOM_SEGMENTATION",
                 taxonomy_name,
                 workspace_id,
+                sibling_tasks,
             )
         except ValueError as error:
             raise Exception(
@@ -202,6 +219,7 @@ class RBOrganization:
         reviews: int = 0,
         exists_okay: bool = False,
         workspace_id: Optional[str] = None,
+        sibling_tasks: Optional[int] = None,
     ) -> RBProject:
         """
         Create a project within the organization.
@@ -228,7 +246,10 @@ class RBOrganization:
             do not want to keep creating new projects.
 
         workspace_id: Optional[str] = None
-            The workspace id that you want to add this project to.
+            The id of the workspace that you want to add this project to.
+
+        sibling_tasks: Optional[int] = None
+            Number of tasks created for each uploaded datapoint.
 
         Returns
         --------------
@@ -236,7 +257,12 @@ class RBOrganization:
             A RedBrick Project object.
         """
         return self.create_project_advanced(
-            name, taxonomy_name, get_middle_stages(reviews), exists_okay, workspace_id
+            name,
+            taxonomy_name,
+            get_middle_stages(reviews),
+            exists_okay,
+            workspace_id,
+            sibling_tasks,
         )
 
     def get_project(

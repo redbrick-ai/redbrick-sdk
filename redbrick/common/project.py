@@ -31,6 +31,7 @@ class ProjectRepoInterface(ABC):
         td_type: str,
         tax_name: str,
         workspace_id: Optional[str],
+        sibling_tasks: Optional[int],
     ) -> Dict:
         """Create a project and return project_id."""
 

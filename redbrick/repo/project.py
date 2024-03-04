@@ -58,6 +58,7 @@ class ProjectRepo(ProjectRepoInterface):
         td_type: str,
         tax_name: str,
         workspace_id: Optional[str],
+        sibling_tasks: Optional[int],
     ) -> Dict:
         """Create a project and return project_id."""
         query = """
@@ -69,6 +70,7 @@ class ProjectRepo(ProjectRepoInterface):
                 $taxonomyName: String!
                 $taxonomyVersion: Int!
                 $workspaceId: UUID
+                $taskDuplicationCount: Int
             ) {
                 createProjectSimple(
                     orgId: $orgId
@@ -78,6 +80,7 @@ class ProjectRepo(ProjectRepoInterface):
                     taxonomyName: $taxonomyName
                     taxonomyVersion: $taxonomyVersion
                     workspaceId: $workspaceId
+                    taskDuplicationCount: $taskDuplicationCount
                 ) {
                     ok
                     errors
@@ -99,6 +102,7 @@ class ProjectRepo(ProjectRepoInterface):
             "taxonomyName": tax_name,
             "taxonomyVersion": 1,
             "workspaceId": workspace_id,
+            "taskDuplicationCount": sibling_tasks,
         }
 
         response: Dict[str, Dict] = self.client.execute_query(query, variables)
