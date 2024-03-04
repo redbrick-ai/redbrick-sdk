@@ -24,7 +24,6 @@ class Webhook(TypedDict):
 
     enabled: bool
     url: Optional[str]
-    secret: Optional[str]
 
 
 class SettingsControllerInterface(ABC):

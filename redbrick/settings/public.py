@@ -95,7 +95,7 @@ class Settings:
 
         Use webhooks to receive custom events like tasks entering stages, and many more.
 
-        Format: {"enabled": bool, "url": str, "secret": Optional[str]}
+        Format: {"enabled": bool, "url": str}
 
         .. tab:: Get
 
@@ -120,14 +120,8 @@ class Settings:
         """Project webhook."""
         if webhook["enabled"]:
             assert webhook["url"], "Webhook URL is required."
-            assert not (
-                webhook["secret"]
-                and len(webhook["secret"]) == 6
-                and webhook["secret"][:3] == "***"
-            ), "Webhook secret looks incorrect."
         else:
             webhook["url"] = None
-            webhook["secret"] = None
 
         self.context.settings.set_webhook_settings(
             self.org_id, self.project_id, webhook

@@ -125,7 +125,6 @@ class SettingsRepo(SettingsControllerInterface):
                 project(orgId: $orgId, projectId: $projectId) {
                     webhookSettings {
                         url
-                        secret
                     }
                 }
             }
@@ -137,9 +136,8 @@ class SettingsRepo(SettingsControllerInterface):
                 return {
                     "enabled": True,
                     "url": response["project"]["webhookSettings"][0]["url"],
-                    "secret": response["project"]["secret"],
                 }
-            return {"enabled": False, "url": None, "secret": None}
+            return {"enabled": False, "url": None}
 
         raise Exception("Project does not exist")
 
@@ -152,16 +150,13 @@ class SettingsRepo(SettingsControllerInterface):
                 $orgId: UUID!
                 $projectId: UUID
                 $url: String
-                $secret: String
             ) {
                 updateWebhookSettings(
                     orgId: $orgId
                     projectId: $projectId
                     url: $url
-                    secret: $secret
                 ) {
                     url
-                    secret
                 }
             }
         """
@@ -169,11 +164,9 @@ class SettingsRepo(SettingsControllerInterface):
             "orgId": org_id,
             "projectId": project_id,
             "url": None,
-            "secret": None,
         }
         if webhook["enabled"]:
             variables["url"] = webhook["url"]
-            variables["secret"] = webhook["secret"]
 
         self.client.execute_query(query, variables)
 
