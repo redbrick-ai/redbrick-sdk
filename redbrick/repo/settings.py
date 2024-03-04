@@ -7,6 +7,7 @@ from redbrick.common.settings import (
     SettingsControllerInterface,
     LabelValidation,
     HangingProtocol,
+    Webhook,
 )
 
 
@@ -115,6 +116,65 @@ class SettingsRepo(SettingsControllerInterface):
             "enabled": hanging_protocol.get("enabled", False) or False,
             "script": hanging_protocol.get("script"),
         }
+        self.client.execute_query(query, variables)
+
+    def get_webhook_settings(self, org_id: str, project_id: str) -> Webhook:
+        """Get webhook setting."""
+        query = """
+            query getWebhookSettingsSDK($orgId: UUID!, $projectId: UUID) {
+                project(orgId: $orgId, projectId: $projectId) {
+                    webhookSettings {
+                        url
+                        secret
+                    }
+                }
+            }
+        """
+        variables = {"orgId": org_id, "projectId": project_id}
+        response: Dict[str, Dict] = self.client.execute_query(query, variables)
+        if response.get("project"):
+            if response["project"]["webhookSettings"]:
+                return {
+                    "enabled": True,
+                    "url": response["project"]["webhookSettings"][0]["url"],
+                    "secret": response["project"]["secret"],
+                }
+            return {"enabled": False, "url": None, "secret": None}
+
+        raise Exception("Project does not exist")
+
+    def set_webhook_settings(
+        self, org_id: str, project_id: str, webhook: Webhook
+    ) -> None:
+        """Set webhook setting."""
+        query = """
+            mutation updateWebhookSettingsSDK(
+                $orgId: UUID!
+                $projectId: UUID
+                $url: String
+                $secret: String
+            ) {
+                updateWebhookSettings(
+                    orgId: $orgId
+                    projectId: $projectId
+                    url: $url
+                    secret: $secret
+                ) {
+                    url
+                    secret
+                }
+            }
+        """
+        variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "url": None,
+            "secret": None,
+        }
+        if webhook["enabled"]:
+            variables["url"] = webhook["url"]
+            variables["secret"] = webhook["secret"]
+
         self.client.execute_query(query, variables)
 
     def toggle_reference_standard_task(

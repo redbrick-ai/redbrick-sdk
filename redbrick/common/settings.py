@@ -19,6 +19,14 @@ class HangingProtocol(TypedDict):
     script: Optional[str]
 
 
+class Webhook(TypedDict):
+    """Project webhook."""
+
+    enabled: bool
+    url: Optional[str]
+    secret: Optional[str]
+
+
 class SettingsControllerInterface(ABC):
     """Abstract interface to define methods for Settings."""
 
@@ -41,6 +49,16 @@ class SettingsControllerInterface(ABC):
         self, org_id: str, project_id: str, hanging_protocol: HangingProtocol
     ) -> None:
         """Set project hanging protocol setting."""
+
+    @abstractmethod
+    def get_webhook_settings(self, org_id: str, project_id: str) -> Webhook:
+        """Get webhook setting."""
+
+    @abstractmethod
+    def set_webhook_settings(
+        self, org_id: str, project_id: str, webhook: Webhook
+    ) -> None:
+        """Set webhook setting."""
 
     @abstractmethod
     def toggle_reference_standard_task(

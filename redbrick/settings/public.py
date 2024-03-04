@@ -1,7 +1,7 @@
 """Public interface to settings module."""
 
 from redbrick.common.context import RBContext
-from redbrick.common.settings import LabelValidation, HangingProtocol
+from redbrick.common.settings import LabelValidation, HangingProtocol, Webhook
 from redbrick.types.taxonomy import Taxonomy
 
 
@@ -86,6 +86,51 @@ class Settings:
         """Hanging Protocol."""
         self.context.settings.set_hanging_protocol(
             self.org_id, self.project_id, hanging_protocol
+        )
+
+    @property
+    # pylint: disable=line-too-long
+    def webhook(self) -> Webhook:
+        """Project webhook.
+
+        Use webhooks to receive custom events like tasks entering stages, and many more.
+
+        Format: {"enabled": bool, "url": str, "secret": Optional[str]}
+
+        .. tab:: Get
+
+            .. code:: python
+
+                project = redbrick.get_project(org_id, project_id, api_key, url)
+                webhook = project.settings.webhook
+
+
+        .. tab:: Set
+
+            .. code:: python
+
+                project = redbrick.get_project(org_id, project_id, api_key, url)
+                project.settings.webhook = webhook
+
+        """
+        return self.context.settings.get_webhook_settings(self.org_id, self.project_id)
+
+    @webhook.setter
+    def webhook(self, webhook: Webhook) -> None:
+        """Project webhook."""
+        if webhook["enabled"]:
+            assert webhook["url"], "Webhook URL is required."
+            assert not (
+                webhook["secret"]
+                and len(webhook["secret"]) == 6
+                and webhook["secret"][:3] == "***"
+            ), "Webhook secret looks incorrect."
+        else:
+            webhook["url"] = None
+            webhook["secret"] = None
+
+        self.context.settings.set_webhook_settings(
+            self.org_id, self.project_id, webhook
         )
 
     def toggle_reference_standard_task(self, task_id: str, enable: bool) -> None:
