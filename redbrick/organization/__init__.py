@@ -95,8 +95,8 @@ class RBOrganization:
         """
         Create a workspace within the organization.
 
-        This method creates an organization in a similar fashion to the
-        quickstart on the RedBrick Ai create project page.
+        This method creates a worspace in a similar fashion to the
+        quickstart on the RedBrick AI create workspace page.
 
         Parameters
         --------------
@@ -119,8 +119,8 @@ class RBOrganization:
             )
         except ValueError as error:
             raise Exception(
-                "Project with same name exists, try setting exists_okay=True to"
-                + " return this project instead of creating a new one"
+                "Workspace with same name exists, try setting exists_okay=True to"
+                + " return this workspace instead of creating a new one"
             ) from error
 
         return RBWorkspace(self.context, self._org_id, workspace_data["workspaceId"])
@@ -137,8 +137,8 @@ class RBOrganization:
         """
         Create a project within the organization.
 
-        This method creates an organization in a similar fashion to the
-        quickstart on the RedBrick Ai create project page.
+        This method creates a project in a similar fashion to the
+        quickstart on the RedBrick AI create project page.
 
         Parameters
         --------------
@@ -224,8 +224,8 @@ class RBOrganization:
         """
         Create a project within the organization.
 
-        This method creates an organization in a similar fashion to the
-        quickstart on the RedBrick Ai create project page.
+        This method creates a project in a similar fashion to the
+        quickstart on the RedBrick AI create project page.
 
         Parameters
         --------------

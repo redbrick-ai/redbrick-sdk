@@ -63,15 +63,15 @@ class WorkspaceRepo(WorkspaceRepoInterface):
         Raise an exception if workspace already exists.
         """
         query = """
-            mutation sdkCreateWorkspaceSDK($orgId: UUID!, $workspaceName: String!){
-                createWorkspace(orgId: $orgId, workspaceName: $workspaceName){
+            mutation sdkCreateWorkspaceSDK($orgId: UUID!, $name: String!){
+                createWorkspace(orgId: $orgId, name: $name){
                     orgId
                     workspaceId
                     name
                 }
             }
         """
-        variables = {"orgId": org_id, "workspaceName": workspace_name}
+        variables = {"orgId": org_id, "name": workspace_name}
         response: Dict[str, Dict] = self.client.execute_query(query, variables)
         if response.get("createWorkspace"):
             return response["createWorkspace"]
