@@ -21,7 +21,7 @@ Organization
 Workspace
 ----------------------
 .. autoclass:: redbrick.workspace.RBWorkspace
-   :members: name, org_id, workspace_id
+   :members: name, org_id, workspace_id, metadata_schema, classification_schema, cohorts, update_schema, update_cohorts, get_datapoints, archive_datapoints, unarchive_datapoints, add_datapoints_to_cohort, remove_datapoints_from_cohort, update_datapoint_attributes
    :show-inheritance:
 
 .. _project:

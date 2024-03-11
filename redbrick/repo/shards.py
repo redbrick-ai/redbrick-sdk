@@ -1,5 +1,46 @@
 """Partial queries to prevent duplication."""
 
+ATTRIBUTE_SHARD = """
+name
+attrType
+attrId
+options {
+    name
+    optionId
+    color
+    archived
+}
+archived
+parents
+hint
+defaultValue
+"""
+
+WORKSPACE_SHARD = f"""
+orgId
+workspaceId
+name
+desc
+createdAt
+status
+metadataSchema {{
+    uniqueName
+    displayName
+    dataType
+    options
+    required
+}}
+classificationSchema {{
+    {ATTRIBUTE_SHARD}
+}}
+cohorts {{
+    name
+    color
+    createdBy
+    createdAt
+}}
+"""
+
 PROJECT_SHARD = """
 orgId
 projectId
@@ -44,168 +85,95 @@ routing {
 }
 """
 
-TAXONOMY_SHARD = """
+OLD_ATTRIBUTE_SHARD = """
+name
+attrType
+whitelist
+disabled
+"""
+
+OLD_CATEGORY_SHARD = """
+name
+children {
+    name
+    classId
+    disabled
+    children {
+        name
+        classId
+        disabled
+        children {
+            name
+            classId
+            disabled
+            children {
+                name
+                classId
+                disabled
+                children {
+                    name
+                    classId
+                    disabled
+                    children {
+                        name
+                        classId
+                        disabled
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+
+TAXONOMY_SHARD = f"""
 orgId
 name
 version
 createdAt
-categories {
-    name
-    children {
-        name
-        classId
-        disabled
-        children {
-            name
-            classId
-            disabled
-            children {
-                name
-                classId
-                disabled
-                children {
-                    name
-                    classId
-                    disabled
-                    children {
-                        name
-                        classId
-                        disabled
-                        children {
-                            name
-                            classId
-                            disabled
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-attributes {
-    name
-    attrType
-    whitelist
-    disabled
-}
-taskCategories {
-    name
-    children {
-        name
-        classId
-        disabled
-        children {
-            name
-            classId
-            disabled
-            children {
-                name
-                classId
-                disabled
-                children {
-                    name
-                    classId
-                    disabled
-                    children {
-                        name
-                        classId
-                        disabled
-                        children {
-                            name
-                            classId
-                            disabled
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-taskAttributes {
-    name
-    attrType
-    whitelist
-    disabled
-}
-colorMap {
+categories {{
+    {OLD_CATEGORY_SHARD}
+}}
+attributes {{
+    {OLD_ATTRIBUTE_SHARD}
+}}
+taskCategories {{
+    {OLD_CATEGORY_SHARD}
+}}
+taskAttributes {{
+    {OLD_ATTRIBUTE_SHARD}
+}}
+colorMap {{
     name
     color
     classid
     trail
     taskcategory
-}
+}}
 archived
 isNew
 taxId
-studyClassify {
-    name
-    attrType
-    attrId
-    options {
-        name
-        optionId
-        color
-        archived
-    }
-    archived
-    parents
-    hint
-    defaultValue
-}
-seriesClassify {
-    name
-    attrType
-    attrId
-    options {
-        name
-        optionId
-        color
-        archived
-    }
-    archived
-    parents
-    hint
-    defaultValue
-}
-instanceClassify {
-    name
-    attrType
-    attrId
-    options {
-        name
-        optionId
-        color
-        archived
-    }
-    archived
-    parents
-    hint
-    defaultValue
-}
-objectTypes {
+studyClassify {{
+    {ATTRIBUTE_SHARD}
+}}
+seriesClassify {{
+    {ATTRIBUTE_SHARD}
+}}
+instanceClassify {{
+    {ATTRIBUTE_SHARD}
+}}
+objectTypes {{
     category
     classId
     labelType
-    attributes {
-        name
-        attrType
-        attrId
-        options {
-            name
-            optionId
-            color
-            archived
-        }
-        archived
-        parents
-        hint
-        defaultValue
-    }
+    attributes {{
+        {ATTRIBUTE_SHARD}
+    }}
     color
     archived
     parents
     hint
-}
+}}
 """
 
 TASK_DATA_SHARD = """
@@ -266,6 +234,7 @@ TASK_SHARD = f"""
 def datapoint_shard(raw_items: bool, presigned_items: bool) -> str:
     """Return the datapoint shard."""
     return f"""
+        dpId
         name
         {"items(presigned: false)" if raw_items else ""}
         {"itemsPresigned:items(presigned: true)" if presigned_items else ""}

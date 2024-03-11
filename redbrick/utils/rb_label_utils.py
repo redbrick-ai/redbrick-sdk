@@ -605,7 +605,11 @@ def dicom_rb_format(
         output["updatedAt"] = task["updatedAt"]
 
     if task.get("metaData"):
-        output["metaData"] = task["metaData"]
+        output["metaData"] = (
+            json.loads(task["metaData"])
+            if isinstance(task["metaData"], str)
+            else task["metaData"]
+        )
 
     volume_series: List[TaskType.Series] = [{} for _ in range(len(task["seriesInfo"]))]
     item_index_map: Dict[int, int] = {}
