@@ -21,20 +21,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: python -m venv .venv
-      - run: .venv/bin/activate
-        if: matrix.os == 'ubuntu-latest'
-      - run: source .venv/bin/activate
-        if: matrix.os == 'macos-latest'
-      - run: .venv\Scripts\activate
-        if: matrix.os == 'windows-latest'
       - name: Install dependencies
         run: |
           cd docs
+          python -m venv .venv
+          .venv/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Build Docs
-        run: make html
+        run: |
+          cd docs
+          .venv/bin/activate
+          make html
 
   test:
     runs-on: ${{ matrix.os }}
