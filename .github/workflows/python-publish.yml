@@ -12,6 +12,30 @@ on:
     types: [created]
 
 jobs:
+  test-docs:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'release' && !github.event.pull_request.draft
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m venv .venv
+      - run: .venv/bin/activate
+        if: matrix.os == 'ubuntu-latest'
+      - run: source .venv/bin/activate
+        if: matrix.os == 'macos-latest'
+      - run: .venv\Scripts\activate
+        if: matrix.os == 'windows-latest'
+      - name: Install dependencies
+        run: |
+          cd docs
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Build Docs
+        run: make html
+
   test:
     runs-on: ${{ matrix.os }}
     if: github.event_name != 'release' && !github.event.pull_request.draft
