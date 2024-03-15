@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  cancel-in-progress: true
+
 jobs:
   test-docs:
     runs-on: ubuntu-latest
