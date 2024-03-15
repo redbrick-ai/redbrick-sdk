@@ -1,13 +1,6 @@
-# This workflow will upload a Python Package using Twine when a release is created
-# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
-
-name: Upload Python Package
+name: Deploy
 
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
   release:
     types: [created]
   workflow_dispatch:
@@ -24,61 +17,6 @@ on:
         default: true
 
 jobs:
-  test-docs:
-    runs-on: ubuntu-latest
-    if: (github.event_name == 'push' && github.ref_name == 'master') || (github.event_name == 'pull_request' && github.base_ref == 'master' && !github.event.pull_request.draft)
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python 3
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: |
-          python -m venv .venv
-          .venv/bin/activate
-          make install
-          cd docs
-          pip install -r requirements.txt
-      - name: Build Docs
-        run: |
-          .venv/bin/activate
-          cd docs
-          make html SPHINXOPTS="-W"
-
-  test:
-    runs-on: ${{ matrix.os }}
-    if: (github.event_name == 'push' && github.ref_name == 'master') || (github.event_name == 'pull_request' && github.base_ref == 'master' && !github.event.pull_request.draft)
-    env:
-      REDBRICK_SDK_API_KEY: ${{ secrets.REDBRICK_SDK_API_KEY }}
-      REDBRICK_SDK_URL: ${{ secrets.REDBRICK_SDK_URL }}
-      REDBRICK_SDK_ORG_ID: ${{ secrets.REDBRICK_SDK_ORG_ID }}
-      REDBRICK_SDK_PROJECT_ID: ${{ secrets.REDBRICK_SDK_PROJECT_ID }}
-      REDBRICK_SDK_SOURCE: GITHUB
-      REDBRICK_SDK_DEBUG: 1
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python 3
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - run: python -m venv .venv
-      - run: .venv/bin/activate
-        if: matrix.os == 'ubuntu-latest'
-      - run: source .venv/bin/activate
-        if: matrix.os == 'macos-latest'
-      - run: .venv\Scripts\activate
-        if: matrix.os == 'windows-latest'
-      - name: Install dependencies
-        run: make install
-      - name: Lint + Unit Tests
-        run: make test
-
   build:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'release'
@@ -130,7 +68,7 @@ jobs:
           .venv/bin/activate
           pip install --upgrade pip
           pip install twine
-          twine upload redbrick-sdk/*
+          twine upload redbrick-sdk/*.whl
 
   deploy-docker:
     runs-on: ubuntu-latest
