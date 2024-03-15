@@ -1,11 +1,10 @@
 FROM python:3.12-slim
-WORKDIR /usr/src/lib
+WORKDIR /usr/src/app
 
-ENV VIRTUAL_ENV="/usr/src/lib/.venv" PATH="/usr/src/lib/.venv/bin:$PATH"
-RUN python -m venv .venv && /usr/src/lib/.venv/bin/pip install --upgrade pip
+ENV VIRTUAL_ENV="/usr/src/lib/.venv" PATH="/usr/src/lib/.venv/bin:$PATH" REDBRICK_DISABLE_VERSION_CHECK="1"
+RUN python -m venv /usr/src/lib/.venv && pip install --upgrade pip
 
-COPY redbrick-sdk/*.whl ./
+COPY dist/*.whl ./
 RUN pip install *.whl && rm *.whl
 
-WORKDIR /usr/src/app
-CMD ["python"]  # ["redbrick"]
+CMD ["python", "-i", "-c", "import redbrick"]

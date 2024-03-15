@@ -34,7 +34,7 @@ jobs:
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
-          name: redbrick-sdk
+          name: dist
           path: dist
           retention-days: 90
       - id: config
@@ -68,7 +68,7 @@ jobs:
           .venv/bin/activate
           pip install --upgrade pip
           pip install twine
-          twine upload redbrick-sdk/*.whl
+          twine upload dist/*.whl
 
   deploy-docker:
     runs-on: ubuntu-latest
