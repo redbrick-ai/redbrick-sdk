@@ -1,5 +1,5 @@
 clean:
-	rm redbrick_sdk*.egg-info redbrick_sdk*.whl
+	rm -f redbrick_sdk*.egg-info redbrick_sdk*.whl
 
 install:
 	python -m pip install --upgrade pip && \
