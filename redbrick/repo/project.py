@@ -438,12 +438,15 @@ class ProjectRepo(ProjectRepoInterface):
         members: List[Dict] = result["projectMembers"]
         return members
 
-    def self_health_check(self, org_id: str, self_url: str, self_data: Dict) -> None:
+    def self_health_check(
+        self, org_id: str, self_url: str, self_data: Dict
+    ) -> Optional[str]:
         """Send a health check update from the model server."""
         query_string = """
             mutation modelHealthSDK($orgId: UUID!, $modelUrl: String!, $modelData: JSONString!) {
                 modelHealth(orgId: $orgId, modelUrl: $modelUrl, modelData: $modelData) {
                     ok
+                    message
                 }
             }
         """
@@ -452,4 +455,6 @@ class ProjectRepo(ProjectRepoInterface):
             "modelUrl": self_url,
             "modelData": json.dumps(self_data),
         }
-        self.client.execute_query(query_string, query_variables)
+        result = self.client.execute_query(query_string, query_variables)
+        if not result["modelHealth"]["ok"]:
+            return result["modelHealth"]["message"]

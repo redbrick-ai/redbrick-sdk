@@ -117,5 +117,7 @@ class ProjectRepoInterface(ABC):
         """Get members of a project."""
 
     @abstractmethod
-    def self_health_check(self, org_id: str, self_url: str, self_data: Dict) -> None:
+    def self_health_check(
+        self, org_id: str, self_url: str, self_data: Dict
+    ) -> Optional[str]:
         """Send a health check update from the model server."""
