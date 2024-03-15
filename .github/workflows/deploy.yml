@@ -34,14 +34,13 @@ jobs:
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: dist
+          name: redbrick-sdk.whl
+          path: redbrick-sdk.whl
           retention-days: 90
       - id: config
         name: Config
         run: |
-          cd dist
-          RB_SDK_VERSION=`ls redbrick-sdk-*.tar.gz | sed 's/redbrick-sdk-//' | sed 's/.tar.gz//'`
+          RB_SDK_VERSION=`python -c 'import redbrick;print(redbrick.__version__)'`
           echo "v$RB_SDK_VERSION" >> $GITHUB_STEP_SUMMARY
           echo "version=$RB_SDK_VERSION" >> "$GITHUB_OUTPUT"
     outputs:
@@ -68,7 +67,7 @@ jobs:
           .venv/bin/activate
           pip install --upgrade pip
           pip install twine
-          twine upload dist/*.whl
+          twine upload redbrick-sdk.whl
 
   deploy-docker:
     runs-on: ubuntu-latest

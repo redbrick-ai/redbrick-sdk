@@ -12,4 +12,6 @@ test:
 	pytest -n 0 tests
 
 build: install
-	python -m build -w -n
+	python -m build -w -n && \
+	mv dist/redbrick_sdk-*.whl redbrick-sdk.whl && \
+	rm -rf dist
