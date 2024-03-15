@@ -437,3 +437,19 @@ class ProjectRepo(ProjectRepoInterface):
         result = self.client.execute_query(query_string, query_variables)
         members: List[Dict] = result["projectMembers"]
         return members
+
+    def self_health_check(self, org_id: str, self_url: str, self_data: Dict) -> None:
+        """Send a health check update from the model server."""
+        query_string = """
+            mutation modelHealthSDK($orgId: UUID!, $modelUrl: String!, $modelData: JSONString!) {
+                modelHealth(orgId: $orgId, modelUrl: $modelUrl, modelData: $modelData) {
+                    ok
+                }
+            }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "modelUrl": self_url,
+            "modelData": json.dumps(self_data),
+        }
+        self.client.execute_query(query_string, query_variables)

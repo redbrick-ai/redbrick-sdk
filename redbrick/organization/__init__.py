@@ -401,3 +401,8 @@ class RBOrganization:
             object_types,
         ):
             logger.info(f"Successfully updated taxonomy: {tax_id}")
+
+    def self_health_check(self, self_url: str) -> None:
+        """Send a health check update from the model server."""
+        self_data = {}
+        self.context.project.self_health_check(self.org_id, self_url, self_data)
