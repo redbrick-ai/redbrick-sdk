@@ -12,4 +12,4 @@ test:
 	pytest -n 0 tests
 
 build: install
-	python -m build
+	python -m build -w -n
