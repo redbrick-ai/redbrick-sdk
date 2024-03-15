@@ -1,3 +1,6 @@
+clean:
+	rm redbrick_sdk*.egg-info redbrick_sdk*.whl
+
 install:
 	python -m pip install --upgrade pip && \
 	python -m pip install -e .[dev]
@@ -11,7 +14,8 @@ test:
 	pylint --rcfile=setup.cfg -j=3 --recursive=y redbrick && \
 	pytest -n 0 tests
 
-build: install
-	python -m build -w -n && \
-	mv dist/redbrick_sdk-*.whl redbrick-sdk.whl && \
-	rm -rf dist
+build: clean install
+	python -m build -w -n -o .
+
+docker: build
+	docker build -t redbrickai/redbrick-sdk:latest -t redbrickai/redbrick-sdk:`python -c 'import redbrick;print(redbrick.__version__)'` .
