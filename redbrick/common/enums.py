@@ -115,7 +115,6 @@ class TaskFilters(str, Enum):
     - ``COMPLETED`` - Tasks that have been completed successfully.
     - ``FAILED`` - Tasks that have been rejected in review.
     - ``ISSUES`` - Tasks that have issues raised and cannot be completed.
-    - ``BENCHMARK`` - Tasks that have been designated as benchmark tasks.
     """
 
     ALL = "ALL"
@@ -127,4 +126,3 @@ class TaskFilters(str, Enum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     ISSUES = "ISSUES"
-    BENCHMARK = "BENCHMARK"

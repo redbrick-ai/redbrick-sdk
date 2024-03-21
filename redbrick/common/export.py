@@ -14,7 +14,6 @@ class TaskFilterParams(TypedDict, total=False):
     taskId: str
     userId: Optional[str]
     reviewState: ReviewStates
-    benchmark: bool
     recentlyCompleted: bool
     completedAtFrom: str
     completedAtTo: str

@@ -1091,10 +1091,6 @@ class Export:
             stage_name = label_stages[0]
             filters["status"] = TaskStates.PROBLEM
             filters.pop("userId", None)
-        elif search == TaskFilters.BENCHMARK:
-            stage_name = self.output_stage_name
-            filters["benchmark"] = True
-            filters.pop("userId", None)
         else:
             raise ValueError(f"Invalid task filter: {search}")
 

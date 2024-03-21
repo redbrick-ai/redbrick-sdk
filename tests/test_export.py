@@ -239,7 +239,6 @@ def test_export_tasks(mock_export, tmpdir):
         ({"search": "COMPLETED"}, {"recentlyCompleted"}, "Label"),
         ({"search": "FAILED", "user_id": "mock"}, {"reviewState"}, "Review_1"),
         ({"search": "ISSUES", "user_id": "mock"}, {"status"}, "Label"),
-        ({"search": "BENCHMARK", "user_id": "mock"}, {"benchmark"}, "END"),
         ({"search": "InvalidFilter"}, None, "Label"),
     ],
 )
