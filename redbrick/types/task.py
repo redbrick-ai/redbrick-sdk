@@ -1,7 +1,7 @@
 # noqa
 """"""
 
-from typing import List, Dict, Literal, Union, TypedDict
+from typing import List, Dict, Literal, Optional, Union, TypedDict
 from typing_extensions import Required, NotRequired  # type: ignore
 
 from redbrick.common.enums import TaskStates
@@ -73,17 +73,20 @@ class VideoMetaData(TypedDict):
 
     """
 
+    #: The index of the file in "items" list that this annotation is present on.
+    itemIndex: int
+
     #: The frame number (for video) or slice index (for 3D volumes) the annotation is present on.
-    frameIndex: int
+    frameIndex: NotRequired[Optional[int]]
 
     #: Each distinct object has a unique trackId. Two annotations on different frameIndex's with the same trackId's represent the same distinct object.
-    trackId: str
+    trackId: NotRequired[str]
 
     #: If True, this annotation is user-defined. If False, this annotation is interpolated.
-    keyFrame: bool
+    keyFrame: NotRequired[bool]
 
     #: If True, this annotation is the last annotation of a specific track defined by trackId.
-    endTrack: bool
+    endTrack: NotRequired[bool]
 
 
 Category = Union[int, str, List[str]]
