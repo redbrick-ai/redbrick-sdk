@@ -5,6 +5,9 @@ on:
     types: [created]
   workflow_dispatch:
     inputs:
+      version:
+        description: Version
+        type: string
       pypi:
         description: PyPI
         required: true
@@ -22,6 +25,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'release'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: github.event_name == 'workflow_dispatch' && github.event.inputs.version || ''
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
