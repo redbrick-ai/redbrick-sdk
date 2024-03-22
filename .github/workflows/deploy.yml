@@ -35,10 +35,7 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/activate
-          rm -f redbrick_sdk*.egg-info redbrick_sdk*.whl
-          python -m pip install --upgrade pip setuptools
-          python -m pip install -e .[dev]
-          python -m build -w -n -o .
+          make build
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
