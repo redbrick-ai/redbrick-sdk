@@ -58,7 +58,7 @@ class LabelingRepo(LabelingControllerInterface):
                         taskType
                         createdAt
                         createdBy
-                        labelsData(interpolate: true)
+                        labelsData
                 }
             }
         }

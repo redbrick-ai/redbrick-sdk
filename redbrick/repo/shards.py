@@ -211,7 +211,7 @@ objectTypes {
 TASK_DATA_SHARD = """
     createdAt
     createdByEmail
-    labelsData(interpolate: true)
+    labelsData
     labelsStorage {
         storageId
     }
