@@ -312,10 +312,14 @@ def dicom_rb_series(
             label_obj["attributes"] = attributes
 
         video_metadata: Dict[str, TaskType.VideoMetaData] = {}
-        if isinstance(label.get("itemIndex"), int) and label["itemIndex"] >= 0:
+        if (
+            isinstance(label.get("globalitemsindex"), int)
+            and label["globalitemsindex"] >= 0
+        ) or (isinstance(label.get("frameindex"), int) and label["frameindex"] >= 0):
             video_metadata = {
                 "video": {
-                    "itemIndex": label["itemIndex"],
+                    "seriesItemIndex": label.get("globalitemsindex"),
+                    "seriesFrameIndex": label.get("seriesframeindex"),
                     "frameIndex": label.get("frameindex"),
                     "trackId": label.get("trackid", ""),
                     "keyFrame": label.get("keyframe", True),
