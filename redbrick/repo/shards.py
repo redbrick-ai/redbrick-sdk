@@ -222,7 +222,17 @@ TASK_DATA_SHARD = """
     }
 """
 
-TASK_SHARD = f"""
+NORMAL_TASK_SHARD = """
+    ... on LabelingTask {
+        state
+        assignedTo {
+            userId
+            email
+        }
+    }
+"""
+
+CONSENSUS_TASK_SHARD = f"""
     ... on LabelingTask {{
         state
         assignedTo {{
@@ -294,9 +304,7 @@ def task_shard(presigned_items: bool, with_consensus: bool) -> str:
         dpId
         currentStageName
         priority
-        currentStageSubTask{"(consensus: true)" if with_consensus else ""} {{
-            {TASK_SHARD}
-        }}
+        {f"currentStageSubTask(consensus: true) {{ {CONSENSUS_TASK_SHARD} }}" if with_consensus else f"currentStageSubTask {{ {NORMAL_TASK_SHARD} }}"}
         datapoint {{
             {datapoint_shard(True, presigned_items)}
         }}
