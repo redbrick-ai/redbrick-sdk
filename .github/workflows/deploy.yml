@@ -105,6 +105,6 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags: redbrickai/redbrick-sdk:${{ needs.build.outputs.version }}${{ github.event_name == 'release' && !github.event.release.prerelease && ',redbrickai/redbrick-sdk:latest' || '' }}
+          tags: redbrickai/redbrick-sdk:${{ needs.build.outputs.version }},redbrickai/redbrick-sdk:latest
         env:
           DOCKER_BUILDKIT: 1

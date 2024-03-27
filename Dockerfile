@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 ENV VIRTUAL_ENV="/usr/src/lib/.venv" PATH="/usr/src/lib/.venv/bin:$PATH" REDBRICK_DISABLE_VERSION_CHECK="1"
 RUN python -m venv /usr/src/lib/.venv && pip install --upgrade pip
 
-RUN apt-get install -y gcc
+RUN apt-get update && apt-get -y install gcc
 
 COPY redbrick_sdk*.whl ./
 RUN pip install redbrick_sdk*.whl && rm redbrick_sdk*.whl
