@@ -9,7 +9,6 @@ keywords = ["redbrick"]
 dependencies = [
     "aiohttp<=3.9.3,>=3.7.4",
     "dicom2nifti<=2.4.10",
-    "gputil<=1.4.0",
     "inquirerpy<=0.3.4,>=0.3.3",
     "natsort<=8.4.0,>=8.0.2",
     "nest-asyncio<=1.5.8,>=1.5.4",
@@ -17,7 +16,6 @@ dependencies = [
     "numpy<=1.26.3,>=1.15",
     "packaging<=23.2",
     "Pillow<=10.2.0,>=9.0.1",
-    "psutil<=5.9.8",
     "python-dateutil<=2.8.2",
     "requests<=2.31.0,>=2.23.0",
     "Rich<=13.7.0",
@@ -41,22 +39,24 @@ Changelog = "https://github.com/redbrick-ai/redbrick-sdk/releases"
 
 [project.optional-dependencies]
 dev = [
-    "setuptools<=69.2.0",
-    "build<=1.0.3",
-    "wheel<=0.42.0",
-    "pytest<=7.4.3",
     "black<=24.1.1",
+    "build<=1.0.3",
+    "flake8<=6.1.0",
+    "gputil<=1.4.0",
     "mypy<=1.8.0",
     "mypy-extensions<=1.0.0",
-    "pylint<=3.0.3",
+    "psutil<=5.9.8",
     "pycodestyle<=2.11.1",
     "pydocstyle<=6.3.0",
-    "flake8<=6.1.0",
-    "pytest-cov<=4.1.0,>=4.0.0",
+    "pylint<=3.0.3",
+    "pytest<=7.4.3",
     "pytest-asyncio<=0.23.2",
+    "pytest-cov<=4.1.0,>=4.0.0",
     "pytest-randomly<=3.15.0",
     "pytest-xdist<=3.5.0",
     "pytest-xdist[psutil]<=3.5.0",
+    "setuptools<=69.2.0",
+    "wheel<=0.42.0",
 ]
 
 

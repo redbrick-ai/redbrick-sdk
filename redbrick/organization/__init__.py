@@ -6,8 +6,6 @@ from typing import List, Optional, Dict, Sequence, Union
 import platform
 
 from tqdm import tqdm  # type: ignore
-import psutil  # type: ignore
-import GPUtil  # type: ignore
 
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
@@ -408,7 +406,11 @@ class RBOrganization:
 
     def self_health_check(self, self_url: str) -> Optional[str]:
         """Send a health check update from the model server."""
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals, import-outside-toplevel
+
+        import psutil  # type: ignore
+        import GPUtil  # type: ignore
+
         uname = platform.uname()
         cpu_freq = psutil.cpu_freq()
         svmem = psutil.virtual_memory()
