@@ -318,7 +318,27 @@ def dicom_rb_series(
         ) or (isinstance(label.get("frameindex"), int) and label["frameindex"] >= 0):
             video_metadata = {
                 "video": {
-                    "seriesItemIndex": label.get("globalitemsindex"),
+                    "seriesItemIndex": (
+                        input_task["seriesInfo"][volume_index]["itemsIndices"].index(
+                            label["globalitemsindex"]
+                        )
+                        if (
+                            isinstance(label.get("globalitemsindex"), int)
+                            and label["globalitemsindex"] >= 0
+                            and isinstance(input_task.get("seriesInfo"), list)
+                            and len(input_task["seriesInfo"]) > volume_index
+                            and isinstance(input_task["seriesInfo"][volume_index], dict)
+                            and isinstance(
+                                input_task["seriesInfo"][volume_index].get(
+                                    "itemsIndices"
+                                ),
+                                list,
+                            )
+                            and label["globalitemsindex"]
+                            in input_task["seriesInfo"][volume_index]["itemsIndices"]
+                        )
+                        else None
+                    ),
                     "seriesFrameIndex": label.get("seriesframeindex"),
                     "frameIndex": label.get("frameindex"),
                     "trackId": label.get("trackid", ""),

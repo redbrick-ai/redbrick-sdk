@@ -1056,6 +1056,9 @@ class Upload:
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
+        finalize: bool,
+        time_spent_ms: Optional[int],
+        extra_data: Optional[Dict],
     ) -> Optional[Dict]:
         # pylint: disable=too-many-locals
         task_id = task["taskId"]
@@ -1084,6 +1087,9 @@ class Upload:
                 task_id,
                 json.dumps(task["labels"], separators=(",", ":")),
                 labels_map,
+                finalize,
+                time_spent_ms,
+                extra_data,
             )
 
         except ValueError as error:
@@ -1099,6 +1105,9 @@ class Upload:
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
+        finalize: bool,
+        time_spent_ms: Optional[int],
+        extra_data: Optional[Dict],
     ) -> List[Dict]:
         conn = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=conn) as session:
@@ -1109,6 +1118,9 @@ class Upload:
                     label_storage_id,
                     project_label_storage_id,
                     label_validate,
+                    finalize,
+                    time_spent_ms,
+                    extra_data,
                 )
                 for task in tasks
             ]
@@ -1124,6 +1136,9 @@ class Upload:
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = True,
         concurrency: int = 50,
+        finalize: bool = False,
+        time_spent_ms: Optional[int] = None,
+        extra_data: Optional[Dict] = None,
     ) -> None:
         """Update tasks labels at any point in project pipeline.
 
@@ -1145,6 +1160,15 @@ class Upload:
             Validate label nifti instances and segment map.
 
         concurrency: int = 50
+
+        finalize: bool = False
+            Submit the task in current stage.
+
+        time_spent_ms: Optional[int] = None
+            Time spent on the task in milliseconds.
+
+        extra_data: Optional[Dict] = None
+            Extra data to be stored along with the task.
         """
         # pylint: disable=too-many-locals
         if not tasks:
@@ -1211,5 +1235,8 @@ class Upload:
                 label_storage_id or project_label_storage_id,
                 project_label_storage_id,
                 label_validate,
+                finalize,
+                time_spent_ms,
+                extra_data,
             )
         )

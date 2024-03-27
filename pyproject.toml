@@ -9,6 +9,7 @@ keywords = ["redbrick"]
 dependencies = [
     "aiohttp<=3.9.3,>=3.7.4",
     "dicom2nifti<=2.4.10",
+    "gputil<=1.4.0",
     "inquirerpy<=0.3.4,>=0.3.3",
     "natsort<=8.4.0,>=8.0.2",
     "nest-asyncio<=1.5.8,>=1.5.4",
@@ -16,6 +17,7 @@ dependencies = [
     "numpy<=1.26.3,>=1.15",
     "packaging<=23.2",
     "Pillow<=10.2.0,>=9.0.1",
+    "psutil<=5.9.8",
     "python-dateutil<=2.8.2",
     "requests<=2.31.0,>=2.23.0",
     "Rich<=13.7.0",

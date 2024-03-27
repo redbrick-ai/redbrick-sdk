@@ -397,6 +397,9 @@ class UploadRepo(UploadControllerInterface):
         task_id: str,
         labels: str,
         labels_map: Optional[Sequence[Optional[Dict]]] = None,
+        finalize: bool = False,
+        time_spent_ms: Optional[int] = None,
+        extra_data: Optional[Dict] = None,
     ) -> None:
         """Update tasks labels."""
         query_string = """
@@ -406,6 +409,9 @@ class UploadRepo(UploadControllerInterface):
             $taskId: UUID!
             $labelsData: String
             $labelsMap: [LabelMapInput]
+            $finalize: Boolean
+            $timeSpentMs: Int
+            $extraData: JSONString
         ) {
             putLabels(
                 orgId: $orgId
@@ -413,6 +419,9 @@ class UploadRepo(UploadControllerInterface):
                 taskId: $taskId
                 labelsData: $labelsData
                 labelsMap: $labelsMap
+                finalize: $finalize
+                timeSpentMs: $timeSpentMs
+                extraData: $extraData
             ) {
                 ok
                 message
@@ -427,6 +436,9 @@ class UploadRepo(UploadControllerInterface):
             "taskId": task_id,
             "labelsData": labels,
             "labelsMap": labels_map,
+            "finalize": finalize,
+            "timeSpentMs": time_spent_ms,
+            "extraData": json.dumps(extra_data),
         }
 
         await self.client.execute_query_async(session, query_string, query_variables)

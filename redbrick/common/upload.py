@@ -122,5 +122,8 @@ class UploadControllerInterface(ABC):
         task_id: str,
         labels: str,
         labels_map: Optional[Sequence[Optional[Dict]]] = None,
+        finalize: bool = False,
+        time_spent_ms: Optional[int] = None,
+        extra_data: Optional[Dict] = None,
     ) -> None:
         """Update tasks labels."""

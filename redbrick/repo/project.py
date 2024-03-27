@@ -458,3 +458,5 @@ class ProjectRepo(ProjectRepoInterface):
         result = self.client.execute_query(query_string, query_variables)
         if not result["modelHealth"]["ok"]:
             return result["modelHealth"]["message"]
+
+        return None

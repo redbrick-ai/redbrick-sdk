@@ -73,8 +73,11 @@ class VideoMetaData(TypedDict):
 
     """
 
-    #: The index of the file in "items" list that this annotation is present on.
-    itemIndex: int
+    #: The index of the file in series "items" list that this annotation is present on.
+    seriesItemIndex: Optional[int]
+
+    #: Frame index of the annotation for nifti and dicom multipart files.
+    seriesFrameIndex: NotRequired[Optional[int]]
 
     #: The frame number (for video) or slice index (for 3D volumes) the annotation is present on.
     frameIndex: NotRequired[Optional[int]]
