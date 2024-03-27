@@ -171,7 +171,7 @@ class RBProject:
     @property
     def stages(self) -> List[Stage]:
         """Get list of stages."""
-        return get_stage_objects(self._stages)
+        return get_stage_objects(self._stages, self.taxonomy)
 
     @property
     def members(self) -> List[Dict]:
