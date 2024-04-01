@@ -670,6 +670,8 @@ class Export:
                 consensus_labels = consensus_task.get("labels", []) or []
                 consensus_labels_map = consensus_task.get("labelsMap", []) or []
                 for consensus_label_map in consensus_labels_map:
+                    if not consensus_label_map:
+                        continue
                     label_map_data = await process_nifti_download(
                         consensus_labels,
                         paths[index],

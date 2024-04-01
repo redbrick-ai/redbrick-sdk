@@ -687,6 +687,7 @@ def dicom_rb_format(
         output["consensusTasks"] = consensus_tasks
         for consensus_idx, output_consensus_task in enumerate(output["consensusTasks"]):
             consensus_task = task["consensusTasks"][consensus_idx]
+            consensus_task["seriesInfo"] = task.get("seriesInfo")
             if consensus_task.get("status"):
                 output_consensus_task["status"] = consensus_task["status"]
 

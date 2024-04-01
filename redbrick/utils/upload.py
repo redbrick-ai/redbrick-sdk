@@ -27,6 +27,7 @@ async def validate_json(
     concurrency: int,
 ) -> List[Dict]:
     """Validate and convert to import format."""
+    # pylint: disable=too-many-locals
     total_input_data = len(input_data)
     logger.debug(f"Concurrency: {concurrency} for {total_input_data} items")
     inputs: List[List[InputTask]] = []
@@ -48,9 +49,11 @@ async def validate_json(
     output_data: List[Dict] = []
     for idx, (inp, out) in enumerate(zip(inputs, outputs)):
         if not out.get("isValid"):
+            start = idx * concurrency
             logger.debug(f"Error for batch: {idx}")
             logger.warning(
-                out.get(
+                f"Batch: {start}-{start + len(inp)} of {total_input_data}\n"
+                + out.get(
                     "error",
                     "Error: Invalid format\nDocs: "
                     + "https://sdk.redbrickai.com/formats/index.html#import",
