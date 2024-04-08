@@ -932,9 +932,7 @@ class Export:
             "END" if only_ground_truth else stage_name,
             None if task_id else from_timestamp,
             True,
-            bool(self.label_stages)
-            and not bool(self.review_stages)
-            and not no_consensus,
+            not no_consensus,
             task_id,
         )
 
