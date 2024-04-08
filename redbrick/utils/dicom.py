@@ -264,6 +264,35 @@ def convert_nii_to_png(
     return bool(files), list(files)
 
 
+def convert_png_to_nii(masks: Dict[str, Tuple[int, ...]]) -> None:
+    """Convert png masks to nifti."""
+    import numpy  # type: ignore
+    from nibabel.loadsave import save as nib_save  # type: ignore
+    from nibabel.nifti1 import Nifti1Image  # type: ignore
+    from PIL import Image  # type: ignore
+
+    mask_items = list(masks.items())
+
+    for mask, inst_ids in mask_items:
+        img = Image.open(mask)
+        png_mask = numpy.array(img)
+        img.close()
+
+        nib_save(
+            Nifti1Image(
+                numpy.any(png_mask, axis=2)
+                .astype(numpy.uint8)
+                .reshape(png_mask.shape[0], png_mask.shape[1], 1)
+                .swapaxes(0, 1),
+                numpy.diag([-1, -1, 1, 1]),
+            ),
+            mask + ".nii.gz",
+        )
+
+        del masks[mask]
+        masks[mask + ".nii.gz"] = inst_ids
+
+
 async def process_nifti_download(
     labels: List[Dict],
     labels_path: Optional[str],
