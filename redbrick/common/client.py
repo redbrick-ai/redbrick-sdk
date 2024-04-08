@@ -91,6 +91,7 @@ class RBClient:
             timeout=REQUEST_TIMEOUT,
             headers=self.headers,
             data=self.prepare_query(query, variables),
+            verify=False,
         )
         self._check_status_msg(response.status_code, start_time)
         return self._process_json_response(response.json(), raise_for_error)
@@ -116,6 +117,7 @@ class RBClient:
             timeout=REQUEST_TIMEOUT,
             headers=self.headers,
             data=self.prepare_query(query, variables),
+            ssl=False,
         ) as response:
             self._check_status_msg(response.status, start_time)
             return self._process_json_response(await response.json(), raise_for_error)
