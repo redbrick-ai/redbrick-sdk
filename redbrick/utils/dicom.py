@@ -184,7 +184,7 @@ def convert_to_semantic(
     return True, list(files)
 
 
-def convert_to_png(
+def convert_nii_to_png(
     masks: List[str],
     color_map: Dict,
     labels: List[Dict],
@@ -193,7 +193,7 @@ def convert_to_png(
     semantic_mask: bool,
     is_tax_v2: bool,
 ) -> Tuple[bool, List[str]]:
-    """Convert masks to png."""
+    """Convert nifti masks to png."""
     import numpy  # type: ignore
     from nibabel.loadsave import load as nib_load  # type: ignore
     from nibabel.nifti1 import Nifti1Image  # type: ignore
@@ -203,7 +203,11 @@ def convert_to_png(
     instance_class_map: Dict[int, int] = {}
     for label in labels:
         instance_class_map[label["dicom"]["instanceid"]] = label["classid"] + 1
-        category = "::".join(label["category"][0][1:])
+        category = (
+            label["category"]
+            if isinstance(label["category"], str)
+            else "::".join(label["category"][0][1:])
+        )
         cat_class_map[f"category-{label['classid'] + 1}"] = category
         cat_class_map[f"instance-{label['dicom']['instanceid']}"] = category
         for group_id in label["dicom"].get("groupids", []) or []:
@@ -229,7 +233,7 @@ def convert_to_png(
         if binary_mask:
             color_mask = numpy.zeros((mask_arr.shape[0], mask_arr.shape[1], 3))
             cat = int(input_filename.split("-")[-1])
-            if not semantic_mask:
+            if semantic_mask:
                 cat = instance_class_map.get(cat, 0)
             color_mask[mask_arr == 1] = (
                 color_map.get(cat - 1, (255, 255, 255))
@@ -344,18 +348,20 @@ async def process_nifti_download(
                         os.remove(os.path.join(dirname, path))
 
             if png_mask and label_map_data["masks"]:
-                label_map_data["png_mask"], label_map_data["masks"] = convert_to_png(
-                    (
-                        [label_map_data["masks"]]
-                        if isinstance(label_map_data["masks"], str)
-                        else label_map_data["masks"]
-                    ),
-                    color_map,
-                    filtered_labels,
-                    dirname,
-                    label_map_data["binary_mask"],
-                    label_map_data["semantic_mask"],
-                    bool(taxonomy.get("isNew")),
+                label_map_data["png_mask"], label_map_data["masks"] = (
+                    convert_nii_to_png(
+                        (
+                            [label_map_data["masks"]]
+                            if isinstance(label_map_data["masks"], str)
+                            else label_map_data["masks"]
+                        ),
+                        color_map,
+                        filtered_labels,
+                        dirname,
+                        label_map_data["binary_mask"],
+                        label_map_data["semantic_mask"],
+                        bool(taxonomy.get("isNew")),
+                    )
                 )
 
             if label_map_data["png_mask"]:
