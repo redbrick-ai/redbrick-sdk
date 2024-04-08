@@ -300,7 +300,7 @@ def test_convert_to_semantic_invalid_input_masks(nifti_instance_files, mock_labe
 
 
 @pytest.mark.unit
-def test_convert_to_png_binary_success(nifti_instance_files_png, mock_labels):
+def test_convert_nii_to_png_binary_success(nifti_instance_files_png, mock_labels):
     """Successful conversion of binary masks to PNG"""
     masks = nifti_instance_files_png
     dirname = os.path.dirname(nifti_instance_files_png[0])
@@ -309,7 +309,7 @@ def test_convert_to_png_binary_success(nifti_instance_files_png, mock_labels):
     semantic_mask = False
     is_tax_v2 = True
 
-    result, files = dicom.convert_to_png(
+    result, files = dicom.convert_nii_to_png(
         masks, color_map, mock_labels, dirname, binary_mask, semantic_mask, is_tax_v2
     )
     assert result is True
@@ -322,7 +322,9 @@ def test_convert_to_png_binary_success(nifti_instance_files_png, mock_labels):
 
 
 @pytest.mark.unit
-def test_convert_to_png_binary_semantic_success(nifti_instance_files_png, mock_labels):
+def test_convert_nii_to_png_binary_semantic_success(
+    nifti_instance_files_png, mock_labels
+):
     """Successful conversion of binary masks to PNG"""
     masks = nifti_instance_files_png
     dirname = os.path.dirname(nifti_instance_files_png[0])
@@ -331,7 +333,7 @@ def test_convert_to_png_binary_semantic_success(nifti_instance_files_png, mock_l
     semantic_mask = True
     is_tax_v2 = True
 
-    result, files = dicom.convert_to_png(
+    result, files = dicom.convert_nii_to_png(
         masks, color_map, mock_labels, dirname, binary_mask, semantic_mask, is_tax_v2
     )
     assert result is True
@@ -344,7 +346,7 @@ def test_convert_to_png_binary_semantic_success(nifti_instance_files_png, mock_l
 
 
 @pytest.mark.unit
-def test_convert_to_png_non_binary_success(nifti_instance_files_png, mock_labels):
+def test_convert_nii_to_png_non_binary_success(nifti_instance_files_png, mock_labels):
     """Successful conversion of non-binary masks to PNG"""
     masks = nifti_instance_files_png
     dirname = os.path.dirname(nifti_instance_files_png[0])
@@ -353,7 +355,7 @@ def test_convert_to_png_non_binary_success(nifti_instance_files_png, mock_labels
     semantic_mask = False
     is_tax_v2 = False
 
-    result, files = dicom.convert_to_png(
+    result, files = dicom.convert_nii_to_png(
         masks, color_map, mock_labels, dirname, binary_mask, semantic_mask, is_tax_v2
     )
     assert result is True
@@ -366,7 +368,7 @@ def test_convert_to_png_non_binary_success(nifti_instance_files_png, mock_labels
 
 
 @pytest.mark.unit
-def test_convert_to_png_invalid_mask_file(nifti_instance_files_png, mock_labels):
+def test_convert_nii_to_png_invalid_mask_file(nifti_instance_files_png, mock_labels):
     """Failed conversion due to invalid mask file"""
     masks = ["non_existent_file.nii.gz"]
     dirname = os.path.dirname(nifti_instance_files_png[0])
@@ -377,7 +379,7 @@ def test_convert_to_png_invalid_mask_file(nifti_instance_files_png, mock_labels)
     is_tax_v2 = False
 
     with pytest.raises(FileNotFoundError):
-        dicom.convert_to_png(
+        dicom.convert_nii_to_png(
             masks,
             color_map,
             mock_labels,
@@ -389,7 +391,7 @@ def test_convert_to_png_invalid_mask_file(nifti_instance_files_png, mock_labels)
 
 
 @pytest.mark.unit
-def test_convert_to_png_invalid_array_shape(nifti_instance_files, mock_labels):
+def test_convert_nii_to_png_invalid_array_shape(nifti_instance_files, mock_labels):
     """Failed conversion due to non-png array shape"""
     masks = nifti_instance_files
     dirname = os.path.dirname(nifti_instance_files[0])
@@ -399,7 +401,7 @@ def test_convert_to_png_invalid_array_shape(nifti_instance_files, mock_labels):
     is_tax_v2 = True
 
     with pytest.raises(IndexError, match="tuple index out of range"):
-        dicom.convert_to_png(
+        dicom.convert_nii_to_png(
             masks,
             color_map,
             mock_labels,
