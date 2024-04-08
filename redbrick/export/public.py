@@ -918,9 +918,10 @@ class Export:
             if not image_dir and not segmentation_dir:
                 os.makedirs(destination, exist_ok=True)
 
-        class_map, color_map = self.preprocess_export(self.taxonomy, png)
+        coloured_png = png and not binary_mask
+        class_map, color_map = self.preprocess_export(self.taxonomy, coloured_png)
 
-        if png:
+        if coloured_png:
             with open(
                 os.path.join(destination, "class_map.json"), "w", encoding="utf-8"
             ) as classes_file:

@@ -238,8 +238,9 @@ class CLIExportController(CLIExportInterface):
             os.makedirs(segmentation_dir, exist_ok=True)
 
         class_file = os.path.join(export_dir, "class_map.json")
+        coloured_png = png_mask and not binary_mask
         class_map, color_map = self.project.project.export.preprocess_export(
-            self.project.project.taxonomy, png_mask
+            self.project.project.taxonomy, coloured_png
         )
 
         if os.path.isfile(task_file):
@@ -280,7 +281,7 @@ class CLIExportController(CLIExportInterface):
             logger.info(f"Exported images to: {image_dir}")
         logger.info(f"Exported: {task_file}")
 
-        if png_mask:
+        if coloured_png:
             with open(class_file, "w", encoding="utf-8") as classes_file:
                 json.dump(class_map, classes_file, indent=2)
 

@@ -235,13 +235,7 @@ def convert_nii_to_png(
             cat = int(input_filename.split("-")[-1])
             if semantic_mask:
                 cat = instance_class_map.get(cat, 0)
-            color_mask[mask_arr == 1] = (
-                color_map.get(cat - 1, (255, 255, 255))
-                if is_tax_v2
-                else color_map.get(
-                    cat_class_map.get(input_filename, ""), (255, 255, 255)
-                )
-            )
+            color_mask[mask_arr == 1] = (255, 255, 255)
             filename = os.path.join(dirname, f"mask-{cat}.png")
             pil_color_mask = Image.fromarray(color_mask.astype(numpy.uint8))
             pil_color_mask.save(filename)
