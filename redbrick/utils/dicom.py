@@ -419,10 +419,6 @@ async def process_nifti_upload(
         from nibabel.nifti1 import Nifti1Image  # type: ignore
         from nibabel.nifti2 import Nifti2Image  # type: ignore
 
-        if png_mask:
-            log_error("PNG mask upload is not supported yet")
-            return None, {}
-
         if isinstance(files, str):
             files = [files]
         if not files or any(
@@ -430,16 +426,31 @@ async def process_nifti_upload(
         ):
             return None, {}
 
+        reverse_masks: Dict[str, Tuple[int, ...]] = {}
+        for inst_id, mask in masks.items():
+            if mask not in reverse_masks:
+                reverse_masks[mask] = tuple()
+            reverse_masks[mask] = reverse_masks[mask] + (int(inst_id),)
+
+        if png_mask:
+            if not binary_mask:
+                log_error("PNG mask upload only supports binary masks")
+                return None, {}
+
+            for mask, inst_ids in reverse_masks.items():
+                if len(inst_ids) > 1:
+                    log_error(
+                        "PNG mask upload only supports single instance per file: '{mask}'"
+                    )
+                    return None, {}
+
+            convert_png_to_nii(reverse_masks)
+            files = list(reverse_masks.keys())
+
         if len(files) == 1 and not label_validate:
             return files[0], {}
 
         try:
-            reverse_masks: Dict[str, Tuple[int, ...]] = {}
-            for inst_id, mask in masks.items():
-                if mask not in reverse_masks:
-                    reverse_masks[mask] = tuple()
-                reverse_masks[mask] = reverse_masks[mask] + (int(inst_id),)
-
             delete_files: List[str] = []
             if binary_mask:
                 for file_idx, file_path in enumerate(files):
