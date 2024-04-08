@@ -128,6 +128,8 @@ class Export:
         """Get a color from class id."""
         if color_hex:
             color_hex = color_hex.lstrip("#")
+            if len(color_hex) == 3:
+                color_hex = f"{color_hex[0]}{color_hex[0]}{color_hex[1]}{color_hex[1]}{color_hex[2]}{color_hex[2]}"
             return [int(color_hex[i : i + 2], 16) for i in (0, 2, 4)]
         num = (374761397 + int(class_id) * 3266489917) & 0xFFFFFFFF
         num = ((num ^ num >> 15) * 2246822519) & 0xFFFFFFFF
