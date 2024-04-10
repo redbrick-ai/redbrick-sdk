@@ -8,7 +8,7 @@ from redbrick.common.stage import Stage
 from redbrick.types.taxonomy import Taxonomy
 
 
-TOTAL_SEGMENTATOR_CATEGORIES = {
+CT_SEGMENTATOR_CATEGORIES = {
     1: "spleen",
     2: "kidney_right",
     3: "kidney_left",
@@ -182,7 +182,7 @@ class ModelStage(Stage):
         url: Optional[str] = None
         taxonomy_objects: Optional[List["ModelStage.ModelTaxonomyMap"]] = None
 
-        TOTAL_SEGMENTATOR = "TOTAL_SEGMENTATOR"
+        CT_SEGMENTATOR = "TOTAL_SEGMENTATOR"  # Boost
 
         @classmethod
         def from_entity(
@@ -250,12 +250,12 @@ class ModelStage(Stage):
 
             assert taxonomy, "Taxonomy is required"
 
-            if self.name == self.TOTAL_SEGMENTATOR:
-                ts_cats = set(TOTAL_SEGMENTATOR_CATEGORIES.values())
+            if self.name == self.CT_SEGMENTATOR:
+                ts_cats = set(CT_SEGMENTATOR_CATEGORIES.values())
                 for obj in self.taxonomy_objects:
                     assert (
                         obj["modelCategory"] in ts_cats
-                    ), f"{obj['modelCategory']} is not a valid {self.TOTAL_SEGMENTATOR} category"
+                    ), f"{obj['modelCategory']} is not a valid CT Segmentator category"
 
             category_map = {
                 obj["category"]: obj["classId"]
