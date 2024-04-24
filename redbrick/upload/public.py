@@ -1142,6 +1142,20 @@ class Upload:
     ) -> None:
         """Update tasks labels at any point in project pipeline.
 
+        .. code:: python
+
+            project = redbrick.get_project(...)
+            tasks = [
+                {
+                    "taskId": "...",
+                    "series": [{...}]
+                },
+            ]
+
+            # Overwrite labels in tasks
+            project.upload.update_tasks_labels(tasks)
+
+
         Parameters
         --------------
         points: List[:obj:`~redbrick.types.task.OutputTask`]
