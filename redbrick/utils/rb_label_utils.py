@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 import json
 from copy import deepcopy
 
+from redbrick.common.enums import StorageMethod
 from redbrick.stage import ReviewStage
 from redbrick.types import task as TaskType
 from redbrick.types.taxonomy import Taxonomy
@@ -192,7 +193,9 @@ def parse_entry_latest(item: Dict) -> Dict:
             for label in json.loads(task_data.get("labelsData") or "[]")
         ]
         storage_id = datapoint["storageMethod"]["storageId"]
-        label_storage_id = (task_data.get("labelsStorage") or {}).get("storageId")
+        label_storage_id = (task_data.get("labelsStorage") or {}).get(
+            "storageId"
+        ) or StorageMethod.REDBRICK
 
         return flat_rb_format(
             labels,
