@@ -1,7 +1,6 @@
 """Logging functions."""
 
 from typing import Union, Any
-import logging
 
 from rich.logging import RichHandler
 
