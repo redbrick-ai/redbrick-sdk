@@ -11,6 +11,7 @@ from typing import Dict, Set, Optional, cast
 import shtab
 import tqdm  # type: ignore
 
+from redbrick.config import config
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIExportInterface
 from redbrick.common.constants import MAX_FILE_BATCH_SIZE
@@ -181,7 +182,10 @@ class CLIExportController(CLIExportInterface):
         )
         fetched = 0
         with tqdm.tqdm(
-            datapoints, unit=" datapoints", total=datapoint_count
+            datapoints,
+            unit=" datapoints",
+            total=datapoint_count,
+            leave=config.log_info,
         ) as progress:
             for task in progress:
                 cached_tasks.add(task["taskId"])

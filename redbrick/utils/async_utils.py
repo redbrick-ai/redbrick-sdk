@@ -5,6 +5,7 @@ from typing import Any, Awaitable, Coroutine, List, Tuple, TypeVar, Optional, It
 import tqdm.asyncio  # type: ignore
 
 from redbrick.common.constants import MAX_CONCURRENCY
+from redbrick.config import config
 
 ReturnType = TypeVar("ReturnType")  # pylint: disable=invalid-name
 
@@ -22,6 +23,9 @@ async def gather_with_concurrency(
         return []
 
     max_concurrency = max(1, min(max_concurrency, MAX_CONCURRENCY))
+
+    if not config.log_info:
+        keep_progress_bar = False
 
     if max_concurrency == 1:
         output: List[ReturnType] = []

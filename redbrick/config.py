@@ -1,7 +1,9 @@
 """RedBrick SDK global config."""
 
+import logging
 from typing import Callable, TypedDict
 import os
+from typing_extensions import Required  # type: ignore
 
 
 class Config:
@@ -13,13 +15,16 @@ class Config:
         check_version: Callable[[], bool]
         debug: Callable[[], bool]
         verify_ssl: Callable[[], bool]
+        log_level: Callable[[], int]
 
     class ConfigState(TypedDict, total=False):
         """RedBrick config state."""
 
+        logger: Required[logging.Logger]
         check_version: bool
         debug: bool
         verify_ssl: bool
+        log_level: int
 
     def __init__(self) -> None:
         """Define configs."""
@@ -31,8 +36,15 @@ class Config:
             "verify_ssl": lambda: not bool(
                 os.environ.get("RB_DISABLE_SSL_VERIFICATION")
             ),
+            "log_level": lambda: int(
+                os.environ.get("REDBRICK_SDK_LOG_LEVEL", logging.INFO)
+            ),
         }
-        self._state: Config.ConfigState = {}
+        logger = logging.getLogger("redbrick")
+        logger.setLevel(
+            logging.DEBUG if self._options["debug"]() else self._options["log_level"]()
+        )
+        self._state: Config.ConfigState = {"logger": logger}
 
     def __repr__(self) -> str:
         """Class repr."""
@@ -94,6 +106,37 @@ class Config:
         """Verify SSL when downloading image files."""
         if "verify_ssl" in self._state:
             del self._state["verify_ssl"]
+
+    @property
+    def logger(self) -> logging.Logger:
+        """Default application logger."""
+        return self._state["logger"]
+
+    @property
+    def log_level(self) -> int:
+        """Default application logging severity."""
+        if "log_level" not in self._state:
+            self._state["log_level"] = self._options["log_level"]()
+        return self._state["log_level"]
+
+    @log_level.setter
+    def log_level(self, val: int) -> None:
+        """Default application logging severity."""
+        if isinstance(val, int):
+            self._state["log_level"] = val
+        self.logger.setLevel(logging.DEBUG if self.debug else self.log_level)
+
+    @log_level.deleter
+    def log_level(self) -> None:
+        """Default application logging severity."""
+        if "log_level" in self._state:
+            del self._state["log_level"]
+        self.logger.setLevel(logging.DEBUG if self.debug else self.log_level)
+
+    @property
+    def log_info(self) -> bool:
+        """Show info logs."""
+        return self.log_level <= logging.INFO
 
 
 config = Config()

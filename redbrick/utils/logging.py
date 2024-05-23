@@ -7,10 +7,7 @@ from rich.logging import RichHandler
 
 from redbrick.config import config
 
-
-__LOG_NAME__ = "redbrick"
-logger = logging.getLogger(__LOG_NAME__)
-logger.setLevel(logging.DEBUG if config.debug else logging.INFO)
+logger = config.logger
 logger.addHandler(
     RichHandler(
         level=logger.level,

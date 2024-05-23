@@ -6,6 +6,7 @@ from typing import Optional, cast
 from rich.console import Console
 
 from redbrick import _populate_context
+from redbrick.config import config
 from redbrick.common.context import RBContext
 from redbrick.organization import RBOrganization
 from redbrick.project import RBProject
@@ -106,7 +107,8 @@ class CLIProject:
                 except Exception as error:
                     status.stop()
                     raise error
-            console.print("[bold green]" + str(self._org))
+            if config.log_info:
+                console.print("[bold green]" + str(self._org))
         return self._org
 
     @property
@@ -122,7 +124,8 @@ class CLIProject:
                 except Exception as error:
                     status.stop()
                     raise error
-            console.print("[bold green]" + str(self._project))
+            if config.log_info:
+                console.print("[bold green]" + str(self._project))
         return self._project
 
     def initialize_project(self, org: RBOrganization, project: RBProject) -> None:

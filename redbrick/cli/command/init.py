@@ -6,6 +6,7 @@ from typing import List
 
 from rich.console import Console
 
+from redbrick.config import config
 from redbrick.cli.input import CLIInputNumber, CLIInputSelect, CLIInputText
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIInitInterface
@@ -72,7 +73,8 @@ class CLIInitController(CLIInitInterface):
             except Exception as error:
                 status.stop()
                 raise error
-        console.print("[bold green]" + str(org))
+        if config.log_info:
+            console.print("[bold green]" + str(org))
 
         with console.status("Fetching taxonomies") as status:
             try:
@@ -147,6 +149,7 @@ class CLIInitController(CLIInitInterface):
             except Exception as error:
                 status.stop()
                 raise error
-        console.print("[bold green]" + str(project))
+        if config.log_info:
+            console.print("[bold green]" + str(project))
 
         self.project.initialize_project(org, project)

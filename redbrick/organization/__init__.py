@@ -7,6 +7,7 @@ import platform
 
 from tqdm import tqdm  # type: ignore
 
+from redbrick.config import config
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
@@ -72,7 +73,7 @@ class RBOrganization:
         projects = self.projects_raw()
         return [
             RBProject(self.context, self._org_id, proj["projectId"])
-            for proj in tqdm(projects)
+            for proj in tqdm(projects, leave=config.log_info)
         ]
 
     @property
@@ -300,7 +301,7 @@ class RBOrganization:
             ),
             concurrency,
         )
-        with tqdm(my_iter, unit=" tasks") as progress:
+        with tqdm(my_iter, unit=" tasks", leave=config.log_info) as progress:
             tasks = [
                 {
                     "orgId": self._org_id,

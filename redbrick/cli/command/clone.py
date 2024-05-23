@@ -6,6 +6,7 @@ from argparse import ArgumentParser, Namespace
 
 from rich.console import Console
 
+from redbrick.config import config
 from redbrick.cli.input.select import CLIInputSelect
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLICloneInterface
@@ -58,7 +59,8 @@ class CLICloneController(CLICloneInterface):
             except Exception as error:
                 status.stop()
                 raise error
-        console.print("[bold green]" + str(org))
+        if config.log_info:
+            console.print("[bold green]" + str(org))
 
         with console.status("Fetching projects") as status:
             try:

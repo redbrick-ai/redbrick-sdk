@@ -13,6 +13,7 @@ import tenacity
 from tenacity.stop import stop_after_attempt
 import tqdm  # type: ignore
 
+from redbrick.config import config
 from redbrick.common.context import RBContext
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import ImportTypes, StorageMethod
@@ -751,7 +752,7 @@ class Upload:
             cur_dir = os.getcwd()
             task_dirs = [cur_dir] * len(files_data)
         for file_data, task_dir in tqdm.tqdm(  # pylint: disable=too-many-nested-blocks
-            zip(files_data, task_dirs)
+            zip(files_data, task_dirs), leave=config.log_info
         ):
             if not file_data:
                 continue

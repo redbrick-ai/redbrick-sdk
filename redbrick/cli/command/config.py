@@ -168,7 +168,8 @@ class CLIConfigController(CLIConfigInterface):
             )
 
         console = Console()
-        console.print(table)
+        if config.log_info:
+            console.print(table)
 
     def handle_set(self) -> None:
         """Handle set sub command."""
@@ -237,4 +238,5 @@ class CLIConfigController(CLIConfigInterface):
             except Exception as error:
                 status.stop()
                 raise error
-        console.print("[bold green]" + str(org))
+        if config.log_info:
+            console.print("[bold green]" + str(org))

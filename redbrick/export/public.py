@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 import tqdm  # type: ignore
 
+from redbrick.config import config
 from redbrick.common.context import RBContext
 from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
 from redbrick.common.export import TaskFilterParams
@@ -1239,7 +1240,7 @@ class Export:
             concurrency,
         )
 
-        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
+        with tqdm.tqdm(my_iter, unit=" datapoints", leave=config.log_info) as progress:
             for task in progress:
                 task = task_event_format(task, users, with_labels)
                 for event in task["events"]:
@@ -1305,7 +1306,7 @@ class Export:
             concurrency,
         )
 
-        with tqdm.tqdm(my_iter, unit=" datapoints") as progress:
+        with tqdm.tqdm(my_iter, unit=" datapoints", leave=config.log_info) as progress:
             for task in progress:
                 yield {
                     "orgId": self.org_id,
