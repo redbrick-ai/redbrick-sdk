@@ -109,26 +109,26 @@ class Config:
 
     @property
     def logger(self) -> logging.Logger:
-        """Default application logger."""
+        """Get default application logger."""
         return self._state["logger"]
 
     @property
     def log_level(self) -> int:
-        """Default application logging severity."""
+        """Get default application logging severity."""
         if "log_level" not in self._state:
             self._state["log_level"] = self._options["log_level"]()
         return self._state["log_level"]
 
     @log_level.setter
     def log_level(self, val: int) -> None:
-        """Default application logging severity."""
+        """Set default application logging severity."""
         if isinstance(val, int):
             self._state["log_level"] = val
         self.logger.setLevel(logging.DEBUG if self.debug else self.log_level)
 
     @log_level.deleter
     def log_level(self) -> None:
-        """Default application logging severity."""
+        """Reset default application logging severity."""
         if "log_level" in self._state:
             del self._state["log_level"]
         self.logger.setLevel(logging.DEBUG if self.debug else self.log_level)
