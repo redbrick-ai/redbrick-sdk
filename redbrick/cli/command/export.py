@@ -250,7 +250,7 @@ class CLIExportController(CLIExportInterface):
         if os.path.isfile(task_file):
             os.remove(task_file)
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             gather_with_concurrency(
                 min(self.args.concurrency, MAX_FILE_BATCH_SIZE),
                 [

@@ -169,8 +169,6 @@ but may increase the upload time.""",
             self.project.cache.get_data("uploads", upload_cache_hash, True, True) or []
         )
 
-        loop = asyncio.get_event_loop()
-
         if not self.args.json and items_list:
             import_file_type = CLIInputSelect(
                 self.args.type,
@@ -178,7 +176,7 @@ but may increase the upload time.""",
                 [import_type.value for import_type in ImportTypes],
             ).get()
 
-            items_list = loop.run_until_complete(
+            items_list = asyncio.run(
                 self.project.project.upload.generate_items_list(
                     items_list,
                     import_file_type,
@@ -357,7 +355,7 @@ but may increase the upload time.""",
         if points:
             logger.info(f"Found {len(points)} items")
 
-            uploads = loop.run_until_complete(
+            uploads = asyncio.run(
                 project.upload._create_tasks(
                     points,
                     segmentation_mapping,

@@ -10,6 +10,11 @@ from redbrick.config import config
 ReturnType = TypeVar("ReturnType")  # pylint: disable=invalid-name
 
 
+async def return_value(value: ReturnType) -> ReturnType:
+    """Return the same parameter value."""
+    return value
+
+
 async def gather_with_concurrency(
     max_concurrency: int,
     tasks: Iterable[Awaitable[ReturnType]],

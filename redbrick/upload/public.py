@@ -18,7 +18,7 @@ from redbrick.common.context import RBContext
 from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import ImportTypes, StorageMethod
 from redbrick.types.taxonomy import Taxonomy
-from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.async_utils import gather_with_concurrency, return_value
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.upload import (
     convert_rt_struct_to_nii_labels,
@@ -558,8 +558,7 @@ class Upload:
             label_validate,
             concurrency,
         )
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(
+        return asyncio.run(
             self._create_tasks(
                 converted_points,
                 {},
@@ -609,8 +608,7 @@ class Upload:
             True if successful, else False.
         """
         concurrency = min(concurrency, 50)
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self._delete_tasks(task_ids, concurrency))
+        return asyncio.run(self._delete_tasks(task_ids, concurrency))
 
     async def _delete_tasks_by_name(
         self, task_names: List[str], concurrency: int
@@ -653,10 +651,7 @@ class Upload:
             True if successful, else False.
         """
         concurrency = min(concurrency, 50)
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(
-            self._delete_tasks_by_name(task_names, concurrency)
-        )
+        return asyncio.run(self._delete_tasks_by_name(task_names, concurrency))
 
     async def generate_items_list(
         self,
@@ -779,21 +774,21 @@ class Upload:
                 for item in file_data:
                     item["segmentMap"] = item.get("segmentMap", task_segment_map)  # type: ignore
 
-            loop = asyncio.get_event_loop()
             if rt_struct:
-                file_data = convert_rt_struct_to_nii_labels(
-                    self.context,
-                    loop,
-                    self.org_id,
-                    self.taxonomy,
-                    file_data,
-                    storage_id,
-                    label_storage_id,
-                    label_validate,
-                    task_dir,
+                file_data = asyncio.run(
+                    convert_rt_struct_to_nii_labels(
+                        self.context,
+                        self.org_id,
+                        self.taxonomy,
+                        file_data,
+                        storage_id,
+                        label_storage_id,
+                        label_validate,
+                        task_dir,
+                    )
                 )
 
-            file_data = loop.run_until_complete(
+            file_data = asyncio.run(
                 validate_json(self.context, file_data, storage_id, concurrency)
             )
             if not file_data:
@@ -957,8 +952,7 @@ class Upload:
             False,
             concurrency,
         )
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(
+        return asyncio.run(
             self._create_tasks(
                 converted_points,
                 {},
@@ -1042,10 +1036,7 @@ class Upload:
             We recommend keeping this <= 50.
         """
         concurrency = min(concurrency, 50)
-        loop = asyncio.get_event_loop()
-        errors = loop.run_until_complete(
-            self._update_tasks_priorities(tasks, concurrency)
-        )
+        errors = asyncio.run(self._update_tasks_priorities(tasks, concurrency))
 
         if errors:
             log_error(errors[0])
@@ -1193,11 +1184,9 @@ class Upload:
             self.org_id, self.project_id
         )
 
-        loop = asyncio.get_event_loop()
-        converted_tasks = (
+        converted_tasks = asyncio.run(
             convert_rt_struct_to_nii_labels(
                 self.context,
-                loop,
                 self.org_id,
                 self.taxonomy,
                 tasks,
@@ -1206,7 +1195,7 @@ class Upload:
                 label_validate,
             )
             if rt_struct
-            else tasks
+            else return_value(tasks)
         )
 
         points: List[OutputTask] = []
@@ -1234,7 +1223,7 @@ class Upload:
         if not points:
             return
 
-        validated = loop.run_until_complete(
+        validated = asyncio.run(
             validate_json(
                 self.context,
                 points,  # type: ignore
@@ -1244,7 +1233,7 @@ class Upload:
         )
 
         points_converted = validated if validated else []
-        loop.run_until_complete(
+        asyncio.run(
             self._update_tasks_labels(
                 points_converted,
                 label_storage_id or project_label_storage_id,

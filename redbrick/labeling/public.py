@@ -283,7 +283,6 @@ class Labeling:
         if not tasks:
             return []
 
-        loop = asyncio.get_event_loop()
         failed_tasks: List[Dict] = []
         with_labels: List[OutputTask] = []
         without_labels: List[OutputTask] = []
@@ -334,7 +333,7 @@ class Labeling:
             self.org_id, self.project_id
         )
         if with_labels:
-            validated = loop.run_until_complete(
+            validated = asyncio.run(
                 validate_json(
                     self.context,
                     with_labels,  # type: ignore
@@ -351,7 +350,7 @@ class Labeling:
                 with_labels_converted = []
 
             failed_tasks.extend(
-                loop.run_until_complete(
+                asyncio.run(
                     self._put_tasks(
                         stage_name,
                         with_labels_converted,
@@ -367,7 +366,7 @@ class Labeling:
 
         if without_labels:
             failed_tasks.extend(
-                loop.run_until_complete(
+                asyncio.run(
                     self._put_tasks(
                         stage_name,
                         without_labels,  # type: ignore
@@ -443,5 +442,4 @@ class Labeling:
 
     def move_tasks_to_start(self, task_ids: List[str]) -> None:
         """Move groundtruth tasks back to start."""
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._tasks_to_start(task_ids))
+        asyncio.run(self._tasks_to_start(task_ids))

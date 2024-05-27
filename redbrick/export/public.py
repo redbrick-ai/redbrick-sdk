@@ -258,9 +258,13 @@ class Export:
                     try:
                         nii_seg = nb.load(  # type: ignore
                             os.path.abspath(
-                                series["segmentations"]
-                                if isinstance(series["segmentations"], str)
-                                else series["segmentations"][0]
+                                (
+                                    series["segmentations"]
+                                    if isinstance(series["segmentations"], str)
+                                    else series["segmentations"][0]
+                                )
+                                if "segmentations" in series
+                                else ""
                             )
                         )
                         imgh = nii_img["NII"].header
@@ -333,9 +337,13 @@ class Export:
                     os.makedirs(series_dir, exist_ok=True)
                     series_dirs.append(series_dir)
                     items_lists.append(
-                        [series["items"]]
-                        if isinstance(series["items"], str)
-                        else series["items"]
+                        (
+                            [series["items"]]
+                            if isinstance(series["items"], str)
+                            else series["items"]
+                        )
+                        if "items" in series
+                        else []
                     )
             else:
                 series_dir = os.path.join(task_dir, task_name)
@@ -394,7 +402,13 @@ class Export:
                 prev_count = 0
                 for series_dir, series in zip(series_dirs, task_series):
                     count = (
-                        1 if isinstance(series["items"], str) else len(series["items"])
+                        (
+                            1
+                            if isinstance(series["items"], str)
+                            else len(series["items"])
+                        )
+                        if "items" in series
+                        else 0
                     )
                     series_items.append(downloaded[prev_count : prev_count + count])
                     prev_count += count
@@ -941,9 +955,8 @@ class Export:
         if task_file and os.path.isfile(task_file):
             os.remove(task_file)
 
-        loop = asyncio.get_event_loop()
         for datapoint in datapoints:
-            task: TypeTask = loop.run_until_complete(
+            task: TypeTask = asyncio.run(
                 self.export_nifti_label_data(  # type: ignore
                     datapoint,
                     self.taxonomy,
@@ -1251,7 +1264,10 @@ class Export:
                         event["labels"], self.taxonomy, False, True, self.review_stages
                     )
                     event["labels"] = {"series": labels.get("series") or []}
-                    if labels.get("classification") is not None:
+                    if (
+                        "classification" in labels
+                        and labels.get("classification") is not None
+                    ):
                         event["labels"]["classification"] = labels["classification"]
                 yield task
 

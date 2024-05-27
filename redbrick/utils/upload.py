@@ -71,9 +71,8 @@ async def validate_json(
 T = TypeVar("T", InputTask, OutputTask)
 
 
-def convert_rt_struct_to_nii_labels(
+async def convert_rt_struct_to_nii_labels(
     context: RBContext,
-    loop,
     org_id: str,
     taxonomy: Taxonomy,
     tasks: List[T],
@@ -151,19 +150,17 @@ def convert_rt_struct_to_nii_labels(
                 presigned_items = context.export.presign_items(
                     org_id, storage_id, items
                 )
-                loop.run_until_complete(
-                    download_files(
-                        list(
-                            zip(
-                                presigned_items,
-                                [
-                                    os.path.join(temp_img_dir, f"{idx + 1}.dcm")
-                                    for idx in range(len(items))
-                                ],
-                            )
-                        ),
-                        f"Downloading items into: {temp_img_dir}",
+                await download_files(
+                    list(
+                        zip(
+                            presigned_items,
+                            [
+                                os.path.join(temp_img_dir, f"{idx + 1}.dcm")
+                                for idx in range(len(items))
+                            ],
+                        )
                     ),
+                    f"Downloading items into: {temp_img_dir}",
                 )
 
             if label_storage_id == StorageMethod.REDBRICK:
@@ -184,38 +181,31 @@ def convert_rt_struct_to_nii_labels(
                 presigned_segs = context.export.presign_items(
                     org_id, label_storage_id, segmentations
                 )
-                loop.run_until_complete(
-                    download_files(
-                        list(
-                            zip(
-                                presigned_segs,
-                                [
-                                    os.path.join(temp_seg_dir, f"{idx + 1}.dcm")
-                                    for idx in range(len(presigned_segs))
-                                ],
-                            )
-                        ),
-                        f"Downloading segmentations into: {temp_seg_dir}",
-                    )
+                await download_files(
+                    list(
+                        zip(
+                            presigned_segs,
+                            [
+                                os.path.join(temp_seg_dir, f"{idx + 1}.dcm")
+                                for idx in range(len(presigned_segs))
+                            ],
+                        )
+                    ),
+                    f"Downloading segmentations into: {temp_seg_dir}",
                 )
 
-            mask, segment_map = loop.run_until_complete(
-                convert_rtstruct_to_nii(
-                    [
-                        os.path.join(temp_seg_dir, seg)
-                        for seg in os.listdir(temp_seg_dir)
-                    ],
-                    temp_img_dir,
-                    segment_map,
-                    label_validate,
-                    [
-                        cat
-                        for cat in (taxonomy.get("objectTypes", []) or [])
-                        if cat["labelType"] == "SEGMENTATION"
-                        and not cat.get("archived")
-                    ],
-                )
+            mask, segment_map = await convert_rtstruct_to_nii(
+                [os.path.join(temp_seg_dir, seg) for seg in os.listdir(temp_seg_dir)],
+                temp_img_dir,
+                segment_map,
+                label_validate,
+                [
+                    cat
+                    for cat in (taxonomy.get("objectTypes", []) or [])
+                    if cat["labelType"] == "SEGMENTATION" and not cat.get("archived")
+                ],
             )
+
             shutil.rmtree(temp_img_dir)
             if not mask:
                 shutil.rmtree(temp_dir)

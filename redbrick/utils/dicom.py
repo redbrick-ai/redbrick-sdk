@@ -674,9 +674,7 @@ async def convert_nii_to_rtstruct(
 
                     data = new_data
                     unique_instances.clear()
-                    unique_instances.update(
-                        {int(new_key) for new_key in segment_remap.keys()}
-                    )
+                    unique_instances.update({int(new_key) for new_key in segment_remap})
 
                 for instance in unique_instances:
                     kwargs = {}
