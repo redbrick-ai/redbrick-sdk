@@ -537,6 +537,7 @@ async def test_convert_nii_to_rtstruct(
         categories,
         segment_map,
         semantic_mask,
+        False,
     )
     assert result is not None
     assert isinstance(result, RTStruct)

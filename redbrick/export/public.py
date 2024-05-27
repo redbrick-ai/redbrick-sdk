@@ -439,7 +439,8 @@ class Export:
                             series_dir,
                             taxonomy.get("objectTypes", []) or [],
                             series.get("segmentMap", {}) or {},
-                            semantic_mask,
+                            series.get("semanticMask", semantic_mask),
+                            series.get("binaryMask", False),
                         )
 
                         if not rtstruct:

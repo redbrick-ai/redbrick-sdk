@@ -597,6 +597,7 @@ async def convert_nii_to_rtstruct(
     categories: List[ObjectType],
     segment_map: TypeSegmentMap,
     semantic_mask: bool,
+    binary_mask: bool,
 ) -> Tuple[Optional[Any], TypeSegmentMap]:
     """Convert nifti mask to dicom rt-struct."""
     # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
@@ -643,11 +644,16 @@ async def convert_nii_to_rtstruct(
                 if 0 in unique_instances:
                     unique_instances.remove(0)
 
+                if binary_mask:
+                    unique_instances = {
+                        int(nifti_file.removesuffix(".nii.gz").rsplit("-")[-1])
+                    }
+
                 cat: Optional[Union[str, Dict]] = None
                 category: Optional[str] = None
+                segment_remap: Dict[str, Union[str, Dict]] = {}
                 if semantic_mask:
                     new_data = numpy.zeros_like(data)
-                    segment_remap: Dict[str, Union[str, Dict]] = {}
                     for instance in unique_instances:
                         cat = segment_map.get(str(instance))  # type: ignore
                         category = cat.get("category") if isinstance(cat, dict) else cat
@@ -659,21 +665,22 @@ async def convert_nii_to_rtstruct(
                             continue
 
                         new_instance = category_map[category][0] + 1
-                        new_data[data == instance] = new_instance
+                        if binary_mask:
+                            new_data[data != 0] = new_instance
+                        else:
+                            new_data[data == instance] = new_instance
                         if str(new_instance) not in segment_remap:
                             segment_remap[str(new_instance)] = cat  # type: ignore
 
                     data = new_data
-                    segment_map.clear()
-                    segment_map.update(segment_remap)  # type: ignore
                     unique_instances.clear()
                     unique_instances.update(
-                        {int(new_key) for new_key in segment_map.keys()}
+                        {int(new_key) for new_key in segment_remap.keys()}
                     )
 
                 for instance in unique_instances:
                     kwargs = {}
-                    cat = segment_map.get(str(instance))  # type: ignore
+                    cat = segment_remap.get(str(instance), segment_map.get(str(instance)))  # type: ignore
                     category = cat.get("category") if isinstance(cat, dict) else cat
                     roi_name = (
                         category
@@ -692,7 +699,10 @@ async def convert_nii_to_rtstruct(
                             + category
                         )
 
-                    rtstruct.add_roi(mask=data == instance, name=roi_name, **kwargs)
+                    if binary_mask:
+                        rtstruct.add_roi(mask=data != 0, name=roi_name, **kwargs)
+                    else:
+                        rtstruct.add_roi(mask=data == instance, name=roi_name, **kwargs)
 
             return rtstruct, new_segment_map
         except Exception as error:  # pylint: disable=broad-except
