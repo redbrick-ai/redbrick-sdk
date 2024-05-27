@@ -646,7 +646,7 @@ async def convert_nii_to_rtstruct(
 
                 if binary_mask:
                     unique_instances = {
-                        int(nifti_file.removesuffix(".nii.gz").rsplit("-")[-1])
+                        int(nifti_file.replace(".nii.gz", "").rsplit("-")[-1])
                     }
 
                 cat: Optional[Union[str, Dict]] = None
