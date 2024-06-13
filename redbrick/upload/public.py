@@ -79,6 +79,9 @@ class Upload:
                 for item in point["items"]:
                     file_types.append(get_file_type(item)[1])
                     upload_items.append(os.path.split(item)[-1])
+                for heat_map in point.get("heatMaps") or []:
+                    file_types.append(get_file_type(heat_map["item"])[1])
+                    upload_items.append(os.path.split(heat_map["item"])[-1])
                 presigned_items = self._generate_upload_presigned_url(
                     upload_items, file_types
                 )
@@ -97,13 +100,30 @@ class Upload:
                 )
                 for idx, item in enumerate(point["items"])
             ]
-            uploaded = await upload_files(
-                files,
-                f"Uploading items for {point['name'][:57]}{point['name'][57:] and '...'}",
-                False,
+            heatmap_start_idx = len(point["items"])
+            heat_maps = [
+                (
+                    heat_map["item"],
+                    presigned_items[heatmap_start_idx + idx]["presignedUrl"],
+                    file_types[heatmap_start_idx + idx],
+                )
+                for idx, heat_map in enumerate(point.get("heatMaps") or [])
+            ]
+
+            uploaded_items, uploaded_heatmaps = await asyncio.gather(
+                upload_files(
+                    files,
+                    f"Uploading items for {point['name'][:57]}{point['name'][57:] and '...'}",
+                    False,
+                ),
+                upload_files(
+                    heat_maps,
+                    f"Uploading heat maps for {point['name'][:57]}{point['name'][57:] and '...'}",
+                    False,
+                ),
             )
 
-            if not all(uploaded):
+            if not all(uploaded_items) or not all(uploaded_heatmaps):
                 log_error(f"Failed to upload {point['name']}")
                 return {
                     "name": point["name"],
@@ -113,6 +133,8 @@ class Upload:
             point["items"] = [
                 presigned_items[idx]["filePath"] for idx in range(len(point["items"]))
             ]
+            for idx, heat_map in enumerate(point.get("heatMaps") or []):
+                heat_map["item"] = presigned_items[heatmap_start_idx + idx]["filePath"]
 
         try:
             labels_map = await process_segmentation_upload(
@@ -230,6 +252,7 @@ class Upload:
                     storage_id,
                     point["name"],
                     point["items"],
+                    point.get("heatMaps"),
                     json.dumps(point.get("labels", []), separators=(",", ":")),
                     labels_map,
                     (
@@ -887,6 +910,22 @@ class Upload:
                             + "Perhaps you forgot to supply the --storage argument"
                         )
                         break
+
+                for idx, heat_map in enumerate(item.get("heatMaps") or []):
+                    heat_map_path = (
+                        heat_map["item"]
+                        if os.path.isabs(heat_map["item"])
+                        else os.path.join(task_dir, heat_map["item"])
+                    )
+                    if os.path.isfile(heat_map_path):
+                        item["heatMaps"][idx]["item"] = heat_map_path
+                    else:
+                        logger.warning(
+                            f"Could not find {heat_map['item']}. "
+                            + "Perhaps you forgot to supply the --storage argument"
+                        )
+                        break
+
                 else:
                     uploading.add(item["name"])
                     points.append(item)
