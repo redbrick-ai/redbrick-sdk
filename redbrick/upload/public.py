@@ -114,6 +114,50 @@ class Upload:
                 presigned_items[idx]["filePath"] for idx in range(len(point["items"]))
             ]
 
+            # """
+            for heat_map in point.get("heatMaps") or []:
+                file_types, upload_items, presigned_items = [], [], []
+                # Upload files in the heatMaps[index][item] key using single request
+                try:
+                    heatmap_file_path = heat_map["item"]
+                    try:
+                        file_types.append(get_file_type(heatmap_file_path)[1])
+                        upload_items.append(os.path.split(heatmap_file_path)[-1])
+                        presigned_items = self._generate_upload_presigned_url(
+                            upload_items, file_types
+                        )
+                    except Exception:  # pylint:disable=broad-except
+                        log_error(f"Failed to upload {point['name']}")
+                        return {
+                            "name": point["name"],
+                            "error": f"Failed to upload {point['name']}",
+                        }
+                    files = [
+                        (
+                            heatmap_file_path,
+                            presigned_items[0]["presignedUrl"],
+                            file_types[0],
+                        )
+                    ]
+                    uploaded = await upload_files(
+                        files,
+                        f"Uploading heatmap for {point['name'][:57]}{point['name'][57:] and '...'}",
+                        False,
+                    )
+                    if not all(uploaded):
+                        log_error(f"Failed to upload {point['name']}")
+                        return {
+                            "name": point["name"],
+                            "error": f"Failed to upload {point['name']}",
+                        }
+                    heat_map["item"] = presigned_items[0]["filePath"]
+                except Exception:  # pylint:disable=broad-except
+                    log_error(f"Failed to upload {point['name']}")
+                    return {
+                        "name": point["name"],
+                        "error": f"Failed to upload {point['name']}",
+                    }
+            # """
         try:
             labels_map = await process_segmentation_upload(
                 self.context,
@@ -230,6 +274,7 @@ class Upload:
                     storage_id,
                     point["name"],
                     point["items"],
+                    point.get("heatMaps"),
                     json.dumps(point.get("labels", []), separators=(",", ":")),
                     labels_map,
                     (

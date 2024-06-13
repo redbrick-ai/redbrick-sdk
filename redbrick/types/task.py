@@ -408,6 +408,8 @@ class Series(TypedDict, total=False):
             }
     """
 
+    heatMaps: List[Dict]
+
     #: Treats all files in :attr:`redbrick.types.task.Series.segmentations` as binary masks. That is, any non-zero value will be treated as a single instance.
     binaryMask: bool
 
