@@ -326,7 +326,7 @@ class HeatMap(TypedDict, total=False):
     opacityPoints3d: List[float]
 
     #: RGB points.
-    rgbaPoints: List[float]
+    rgbPoints: List[float]
 
 
 class Series(TypedDict, total=False):
