@@ -1,5 +1,6 @@
 """Public interface to settings module."""
 
+from typing import Optional
 from redbrick.common.context import RBContext
 from redbrick.common.settings import LabelValidation, HangingProtocol, Webhook
 from redbrick.types.taxonomy import Taxonomy
@@ -131,4 +132,44 @@ class Settings:
         """Toggle reference standard task."""
         self.context.settings.toggle_reference_standard_task(
             self.org_id, self.project_id, task_id, enable
+        )
+
+    @property
+    # pylint: disable=line-too-long
+    def task_duplication(self) -> Optional[int]:
+        """Sibling task count.
+
+        Use task duplication to create multiple tasks for a single uploaded datapoint. Please visit
+        `task duplication <https://docs.redbrickai.com/projects/multiple-labeling/task-duplication>`_
+        for more info.
+
+        Format: Optional[int]
+
+        .. tab:: Get
+
+            .. code:: python
+
+                project = redbrick.get_project(org_id, project_id, api_key, url)
+                count = project.settings.task_duplication
+
+
+        .. tab:: Set
+
+            .. code:: python
+
+                project = redbrick.get_project(org_id, project_id, api_key, url)
+                project.settings.task_duplication = count
+
+        """
+        return self.context.settings.get_sibling_tasks_count(
+            self.org_id, self.project_id
+        )
+
+    @task_duplication.setter
+    def task_duplication(self, count: Optional[int]) -> None:
+        """Hanging Protocol."""
+        if not count or count <= 1:
+            count = None
+        self.context.settings.set_sibling_tasks_count(
+            self.org_id, self.project_id, count
         )

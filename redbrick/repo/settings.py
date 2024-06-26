@@ -1,6 +1,6 @@
 """Handlers to access APIs for project settings."""
 
-from typing import Dict
+from typing import Dict, Optional
 
 from redbrick.common.client import RBClient
 from redbrick.common.settings import (
@@ -197,4 +197,47 @@ class SettingsRepo(SettingsControllerInterface):
             "taskId": task_id,
             "enable": enable,
         }
+        self.client.execute_query(query, variables)
+
+    def get_sibling_tasks_count(self, org_id: str, project_id: str) -> Optional[int]:
+        """Get sibling tasks count setting."""
+        query = """
+            query getSiblingTasksCountSDK($orgId: UUID!, $projectId: UUID!) {
+                project(orgId: $orgId, projectId: $projectId) {
+                    taskDuplicationCount
+                }
+            }
+        """
+        variables = {"orgId": org_id, "projectId": project_id}
+        response: Dict[str, Dict] = self.client.execute_query(query, variables)
+        if response.get("project"):
+            return response["project"].get("taskDuplicationCount")
+
+        raise Exception("Project does not exist")
+
+    def set_sibling_tasks_count(
+        self, org_id: str, project_id: str, count: Optional[int] = None
+    ) -> None:
+        """Set sibling tasks count setting."""
+        query = """
+            mutation updateProjectTaskDuplicationSDK(
+                $orgId: UUID!
+                $projectId: UUID!
+                $taskDuplicationCount: Int
+            ) {
+                updateProjectTaskDuplication(
+                    orgId: $orgId
+                    projectId: $projectId
+                    taskDuplicationCount: $taskDuplicationCount
+                ) {
+                    ok
+                }
+            }
+        """
+        variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "taskDuplicationCount": count,
+        }
+
         self.client.execute_query(query, variables)

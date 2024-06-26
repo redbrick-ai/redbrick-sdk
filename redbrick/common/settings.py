@@ -64,3 +64,13 @@ class SettingsControllerInterface(ABC):
         self, org_id: str, project_id: str, task_id: str, enable: bool
     ) -> None:
         """Toggle reference standard task."""
+
+    @abstractmethod
+    def get_sibling_tasks_count(self, org_id: str, project_id: str) -> Optional[int]:
+        """Get sibling tasks count setting."""
+
+    @abstractmethod
+    def set_sibling_tasks_count(
+        self, org_id: str, project_id: str, count: Optional[int] = None
+    ) -> None:
+        """Set sibling tasks count setting."""
