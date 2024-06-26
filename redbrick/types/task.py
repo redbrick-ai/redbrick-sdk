@@ -307,17 +307,26 @@ class ConsensusScore(TypedDict, total=False):
 class HeatMap(TypedDict, total=False):
     """Heat map."""
 
-    #: Heat map name.
+    #: Name.
     name: str
 
-    # Heat map file path.
+    #: File path.
     item: Required[str]
 
-    # Preset.
+    #: Preset.
     preset: str
 
-    # Data range.
+    #: Data range.
     dataRange: List[float]
+
+    #: Opacity points.
+    opacityPoints: List[float]
+
+    #: Opacity points 3D.
+    opacityPoints3d: List[float]
+
+    #: RGB points.
+    rgbaPoints: List[float]
 
 
 class Series(TypedDict, total=False):
