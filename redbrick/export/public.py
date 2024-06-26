@@ -990,6 +990,7 @@ class Export:
         user_id: Optional[str] = None,
         task_id: Optional[str] = None,
         task_name: Optional[str] = None,
+        exact_match: bool = False,
         completed_at: Optional[Tuple[Optional[float], Optional[float]]] = None,
     ) -> Iterator[Dict]:
         """
@@ -1028,6 +1029,10 @@ class Export:
             If present, will return data for the given task name.
             This will do a prefix search with the given task name.
 
+        exact_match: bool = False
+            Applicable when searching for tasks by task_name.
+            If True, will do a full match instead of partial match.
+
         completed_at: Optional[Tuple[Optional[float], Optional[float]]] = None
             If present, will return tasks that were completed in the given time range.
             The tuple contains the `from` and `to` timestamps respectively.
@@ -1064,9 +1069,13 @@ class Export:
 
         if user_id:
             filters["userId"] = user_id
+
         if task_id:
             filters["taskId"] = task_id
             task_name = task_id
+        elif task_name:
+            if exact_match:
+                task_name = f'"{task_name.strip('"')}"'
 
         if search == TaskFilters.ALL:
             stage_name = None
