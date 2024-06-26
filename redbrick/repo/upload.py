@@ -71,6 +71,7 @@ class UploadRepo(UploadControllerInterface):
                     priority: $priority
                 ) {
                     taskId
+                    taskIds
                 }
             }
         """
