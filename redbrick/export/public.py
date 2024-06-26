@@ -1075,7 +1075,7 @@ class Export:
             task_name = task_id
         elif task_name:
             if exact_match:
-                task_name = f'"{task_name.strip('"')}"'
+                task_name = '"' + task_name.strip('"') + '"'
 
         if search == TaskFilters.ALL:
             stage_name = None
