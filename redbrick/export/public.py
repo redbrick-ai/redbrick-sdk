@@ -301,7 +301,6 @@ class Export:
         taxonomy: Taxonomy,
         rt_struct: bool,
         semantic_mask: bool,
-        ignore_altadb: bool = True,
     ) -> Tuple[TypeTask, List[str]]:
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         path_pattern = re.compile(r"[^\w.]+")
@@ -355,11 +354,15 @@ class Export:
             to_presign = []
             local_files = []
 
-            if ignore_altadb:
-                items_lists = [
-                    self.filter_out_altadb_items(items_list)
-                    for items_list in items_lists
-                ]
+            if any(self.contains_altadb_item(item_list) for item_list in items_lists):
+                logger.warning(
+                    f"Task {task.get('taskId')} contains items from AltADB. Download ignored for the task."
+                )
+                # Delete if the task directory is empty
+                if os.path.exists(task_dir) and not os.listdir(task_dir):
+                    os.rmdir(task_dir)
+                return task, series_dirs
+
             for series_dir, paths in zip(series_dirs, items_lists):
                 file_names = [
                     re.sub(
@@ -1352,6 +1355,6 @@ class Export:
                     "cycle": task["cycle"],
                 }
 
-    def filter_out_altadb_items(self, items_list: List[str]) -> List[str]:
+    def contains_altadb_item(self, items_list: List[str]) -> bool:
         """Filter out altadb items."""
-        return [item for item in items_list if not item.startswith("altadb://")]
+        return any(item.startswith("altadb:") for item in items_list)
