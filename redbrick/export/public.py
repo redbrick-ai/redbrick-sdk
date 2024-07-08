@@ -354,12 +354,11 @@ class Export:
 
             to_presign = []
             local_files = []
-            def filter_out_altadb_items(items_list: List[str]) -> List[str]:
-                return [item for item in items_list if not item.startswith("altadb://")]
 
             if ignore_altadb:
                 items_lists = [
-                    filter_out_altadb_items(items_list) for items_list in items_lists
+                    self.filter_out_altadb_items(items_list)
+                    for items_list in items_lists
                 ]
             for series_dir, paths in zip(series_dirs, items_lists):
                 file_names = [
@@ -1352,3 +1351,7 @@ class Export:
                     "completedAt": task["date"],
                     "cycle": task["cycle"],
                 }
+
+    def filter_out_altadb_items(self, items_list: List[str]) -> List[str]:
+        """Filter out altadb items."""
+        return [item for item in items_list if not item.startswith("altadb://")]
