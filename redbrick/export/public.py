@@ -301,6 +301,7 @@ class Export:
         taxonomy: Taxonomy,
         rt_struct: bool,
         semantic_mask: bool,
+        ignore_altadb: bool = True,
     ) -> Tuple[TypeTask, List[str]]:
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         path_pattern = re.compile(r"[^\w.]+")
@@ -353,6 +354,13 @@ class Export:
 
             to_presign = []
             local_files = []
+            def filter_out_altadb_items(items_list: List[str]) -> List[str]:
+                return [item for item in items_list if not item.startswith("altadb://")]
+
+            if ignore_altadb:
+                items_lists = [
+                    filter_out_altadb_items(items_list) for items_list in items_lists
+                ]
             for series_dir, paths in zip(series_dirs, items_lists):
                 file_names = [
                     re.sub(
