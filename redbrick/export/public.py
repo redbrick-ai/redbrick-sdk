@@ -361,7 +361,7 @@ class Export:
                 # Delete if the task directory is empty
                 if os.path.exists(task_dir) and not os.listdir(task_dir):
                     os.rmdir(task_dir)
-                return task, series_dirs
+                return task, []
 
             for series_dir, paths in zip(series_dirs, items_lists):
                 file_names = [
