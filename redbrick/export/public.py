@@ -355,13 +355,12 @@ class Export:
             local_files = []
 
             if any(self.contains_altadb_item(item_list) for item_list in items_lists):
-                logger.warning(
-                    f"Task {task.get('taskId')} contains items from AltADB. Download ignored for the task."
-                )
                 # Delete if the task directory is empty
                 if os.path.exists(task_dir) and not os.listdir(task_dir):
                     os.rmdir(task_dir)
-                return task, []
+                raise Exception(
+                    f"Task {task.get('taskId')} contains items from AltADB. Download ignored for the task."
+                )
 
             for series_dir, paths in zip(series_dirs, items_lists):
                 file_names = [
