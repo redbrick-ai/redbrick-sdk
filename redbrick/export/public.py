@@ -356,7 +356,7 @@ class Export:
 
             if any(self.contains_altadb_item(item_list) for item_list in items_lists):
                 # Delete if the task directory is empty
-                if os.path.exists(task_dir) and not os.listdir(task_dir):
+                if os.path.isdir(task_dir) and not os.listdir(task_dir):
                     os.rmdir(task_dir)
                 raise Exception(
                     f"Task {task.get('taskId')} contains items from AltADB. Download ignored for the task."
