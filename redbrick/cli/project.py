@@ -1,7 +1,7 @@
 """Main CLI project."""
 
 import os
-from typing import Optional, cast
+from typing import Dict, Optional, cast
 
 from rich.console import Console
 
@@ -11,6 +11,7 @@ from redbrick.common.context import RBContext
 from redbrick.organization import RBOrganization
 from redbrick.project import RBProject
 from redbrick.cli.entity import CLICache, CLIConfiguration, CLICredentials
+from redbrick.repo.project import ProjectRepo
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.logging import assert_validation, logger
 
@@ -148,3 +149,44 @@ class CLIProject:
         logger.info(
             f"Successfully initialized {project} in {self.path}\nURL: {project.url}"
         )
+
+
+def get_org_from_profile(
+    profile_name: Optional[str] = None,
+) -> Optional[RBOrganization]:
+    """Get the org from the profile name in credentials file"""
+    cli_project = CLIProject()
+    profile: Dict[str, str]
+    if not profile_name:
+        profile_name = cli_project.creds.selected_profile
+
+    if profile_name in cli_project.creds.profile_names:
+        assert isinstance(profile_name, str)
+        profile = cli_project.creds.get_profile(profile_name)
+        key, org_id, url = profile["key"], profile["org"], profile["url"]
+        context = RBContext(key, url)
+        context.project = ProjectRepo(client=context.client)
+
+        return RBOrganization(context, org_id)
+    raise ValueError(f"Profile {profile_name} does not exist in credentials")
+
+
+def get_project_from_profile_and_path(
+    project_id: str,
+    project_path: str = ".",
+    profile_name: Optional[str] = None,
+) -> Optional[RBProject]:
+    """Get project details frmo project id and path"""
+    cli_project = CLIProject(project_path)
+    profile: Dict[str, str]
+    if not profile_name:
+        profile_name = cli_project.creds.selected_profile
+
+    if profile_name in cli_project.creds.profile_names:
+        assert isinstance(profile_name, str)
+        profile = cli_project.creds.get_profile(profile_name)
+        key, org_id, url = profile["key"], profile["org"], profile["url"]
+        context = RBContext(key, url)
+        context.project = ProjectRepo(client=context.client)
+        return RBProject(context, org_id, project_id)
+    return None
