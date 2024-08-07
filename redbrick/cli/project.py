@@ -153,9 +153,10 @@ class CLIProject:
 
 def get_org_from_profile(
     profile_name: Optional[str] = None,
+    path: str = ".",
 ) -> Optional[RBOrganization]:
     """Get the org from the profile name in credentials file"""
-    cli_project = CLIProject()
+    cli_project = CLIProject(path=path)
     profile: Dict[str, str]
     if not profile_name:
         profile_name = cli_project.creds.selected_profile
