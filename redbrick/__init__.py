@@ -220,7 +220,9 @@ def get_project_from_profile(
 
     cli_project = CLIProject.from_path(required=False, profile=profile_name)
     if cli_project:
-        return cli_project.project
+        return RBProject(
+            cli_project.context, cli_project.org_id, cli_project.project_id
+        )
     raise ValueError(
         f"{get_project_from_profile.__name__}"
         + " called without a project id outside a project directory"
