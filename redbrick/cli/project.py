@@ -1,7 +1,7 @@
 """Main CLI project."""
 
 import os
-from typing import Dict, Optional, cast
+from typing import Optional, cast
 
 from rich.console import Console
 
@@ -11,7 +11,6 @@ from redbrick.common.context import RBContext
 from redbrick.organization import RBOrganization
 from redbrick.project import RBProject
 from redbrick.cli.entity import CLICache, CLIConfiguration, CLICredentials
-from redbrick.repo.project import ProjectRepo
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.logging import assert_validation, logger
 
