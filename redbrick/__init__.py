@@ -177,7 +177,16 @@ def get_project(
 def get_org_from_profile(
     profile_name: Optional[str] = None,
 ) -> RBOrganization:
-    """Get the org from the profile name in credentials file"""
+    """Get the org from the profile name in credentials file
+
+    >>> org = get_org_from_profile()
+
+    Parameters
+    ---------------
+    profile_name: str
+        Name of the profile stored in the credentials file
+
+    """
     # pylint: disable=import-outside-toplevel, cyclic-import
     from redbrick.cli.entity import CLICredentials
 
@@ -195,7 +204,18 @@ def get_org_from_profile(
 def get_project_from_profile(
     project_id: Optional[str] = None, profile_name: Optional[str] = None
 ) -> Optional[RBProject]:
-    """Get the RBProject object using the credentials file"""
+    """Get the RBProject object using the credentials file
+
+    project = get_project_from_profile()
+
+    Parameters
+    ---------------
+    project_id: Optional[str] = None
+        project id which has to be fetched.
+        `None` is valid only when called from the project root.
+    profile_name: str
+        Name of the profile stored in the credentials file
+    """
     # pylint: disable=import-outside-toplevel, cyclic-import
     from redbrick.cli.project import CLIProject
     from redbrick.cli.entity import CLICredentials
