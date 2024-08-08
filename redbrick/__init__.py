@@ -177,6 +177,7 @@ def _extract_profile_details(
     profile_name: Optional[str] = None,
 ) -> Tuple[str, str, str]:
     """Get the API key details from the profile name."""
+    # pylint: disable=import-outside-toplevel, cyclic-import
     from redbrick.cli.entity import CLICredentials
 
     creds_file = os.path.join(config_path(), "credentials")
@@ -203,7 +204,6 @@ def get_org_from_profile(
         Name of the profile stored in the credentials file
 
     """
-    # pylint: disable=import-outside-toplevel, cyclic-import
     api_key, org_id, url = _extract_profile_details(profile_name)
     return get_org(org_id, api_key, url)
 
