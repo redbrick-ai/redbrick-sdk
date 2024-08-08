@@ -3,7 +3,7 @@
 import os
 import sys
 import asyncio
-from typing import Optional
+from typing import Optional, Tuple
 
 
 import nest_asyncio  # type: ignore
@@ -175,7 +175,7 @@ def get_project(
 
 def _extract_profile_details(
     profile_name: Optional[str] = None,
-) -> tuple[str, str, str]:
+) -> Tuple[str, str, str]:
     """Get the API key details from the profile name."""
     from redbrick.cli.entity import CLICredentials
 
