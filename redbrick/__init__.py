@@ -1,7 +1,11 @@
 """"""
 
+import os
 import sys
 import asyncio
+from typing import Optional
+from configparser import ConfigParser
+
 
 import nest_asyncio  # type: ignore
 
@@ -19,7 +23,7 @@ from redbrick.project import RBProject
 from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
 
 from redbrick.utils.logging import logger
-from redbrick.utils.common_utils import config_migration
+from redbrick.utils.common_utils import config_migration, config_path
 
 from redbrick.types import task as TaskTypes, taxonomy as TaxonomyTypes
 
@@ -170,6 +174,52 @@ def get_project(
     return RBProject(context, org_id, project_id)
 
 
+def get_org_from_profile(
+    profile_name: Optional[str] = None,
+) -> RBOrganization:
+    """Get the org from the profile name in credentials file"""
+    # pylint: disable=import-outside-toplevel
+    from redbrick.cli.entity import CLICredentials
+
+    creds_file = os.path.join(config_path(), "credentials")
+    creds = CLICredentials(creds_file)
+    org_creds = creds.get_profile(profile_name or creds.selected_profile)
+    api_key, org_id, url = (
+        org_creds["key"],
+        org_creds["org"],
+        org_creds["url"],
+    )
+    context = _populate_context(RBContext(api_key, url))
+    return RBOrganization(context, org_id)
+
+
+def get_project_from_profile(
+    project_id: Optional[str] = None, profile_name: Optional[str] = None
+) -> Optional[RBProject]:
+    """Get the RBProject object using the credentials file"""
+
+    org = get_org_from_profile(profile_name)
+    assert org
+    if not project_id:
+        conf_file = os.path.join(".redbrick", "config")
+        if not os.path.isfile(conf_file):
+            logger.error(
+                "You have not given the project id"
+                + " and are not inside a valid project directory"
+            )
+            return None
+        configparser = ConfigParser()
+        configparser.read(conf_file)
+        if "project" not in configparser.sections():
+            logger.error(
+                "You are either outside a valid project "
+                + "or project config file is tampered."
+            )
+            return None
+        project_id = configparser.get("project", "id")
+    return org.get_project(project_id)
+
+
 __all__ = [
     "__version__",
     "config",
@@ -191,4 +241,6 @@ __all__ = [
     "get_org",
     "get_workspace",
     "get_project",
+    "get_org_from_profile",
+    "get_project_from_profile",
 ]

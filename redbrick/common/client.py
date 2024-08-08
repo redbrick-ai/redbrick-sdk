@@ -18,7 +18,7 @@ from redbrick.config import config
 from redbrick.common.constants import (
     DEFAULT_URL,
     MAX_RETRY_ATTEMPTS,
-    REQUEST_TIMEOUT,
+    # REQUEST_TIMEOUT,
     PEERLESS_ERRORS,
 )
 from redbrick.utils.logging import assert_validation, log_error, logger
@@ -88,7 +88,7 @@ class RBClient:
         logger.debug("Executing: " + query.strip().split("\n")[0])
         response = self.session.post(
             self.url,
-            timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
+            timeout=30,
             headers=self.headers,
             data=self.prepare_query(query, variables),
         )
@@ -113,7 +113,7 @@ class RBClient:
         logger.debug("Executing async: " + query.strip().split("\n")[0])
         async with aio_session.post(
             self.url,
-            timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
+            timeout=30,
             headers=self.headers,
             data=self.prepare_query(query, variables),
         ) as response:
