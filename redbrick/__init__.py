@@ -4,7 +4,6 @@ import os
 import sys
 import asyncio
 from typing import Optional
-from configparser import ConfigParser
 
 
 import nest_asyncio  # type: ignore
