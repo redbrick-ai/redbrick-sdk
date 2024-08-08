@@ -189,37 +189,36 @@ def get_org_from_profile(
         org_creds["org"],
         org_creds["url"],
     )
-    context = _populate_context(RBContext(api_key, url))
-    return RBOrganization(context, org_id)
+    return get_org(org_id, api_key, url)
 
 
 def get_project_from_profile(
     project_id: Optional[str] = None, profile_name: Optional[str] = None
 ) -> Optional[RBProject]:
     """Get the RBProject object using the credentials file"""
-    org = get_org_from_profile(profile_name)
-    assert org
+    # pylint: disable=import-outside-toplevel, cyclic-import
+    from redbrick.cli.project import CLIProject
+    from redbrick.cli.entity import CLICredentials
+
     if not project_id:
-        conf_file = os.path.join(".redbrick", "config")
-        if not os.path.isfile(conf_file):
-            logger.error(
-                "You have not given the project id"
-                + " and are not inside a valid project directory"
-            )
-            return None
-        configparser = ConfigParser()
-        configparser.read(conf_file)
-        if "project" not in configparser.sections():
-            logger.error(
-                "You are either outside a valid project "
-                + "or project config file is tampered."
-            )
-            return None
-        project_id = configparser.get("project", "id")
-        org_id = configparser.get("org", "id")
-        if org_id != org.org_id:
-            logger.error("The profile and project belong to different organization")
-    return org.get_project(project_id)
+
+        cli_project = CLIProject.from_path(required=False)
+        if cli_project:
+            return cli_project.project
+        logger.error(
+            f"{get_project_from_profile.__name__}"
+            + " called without a project id outside a project directory"
+        )
+        return None
+    creds_file = os.path.join(config_path(), "credentials")
+    creds = CLICredentials(creds_file)
+    org_creds = creds.get_profile(profile_name or creds.selected_profile)
+    api_key, org_id, url = (
+        org_creds["key"],
+        org_creds["org"],
+        org_creds["url"],
+    )
+    return get_project(org_id, project_id, api_key, url)
 
 
 __all__ = [
