@@ -1,10 +1,11 @@
 """CLI credentials handler."""
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 from configparser import ConfigParser
 
 from redbrick.common.context import RBContext
+from redbrick.utils.common_utils import config_path
 from redbrick.utils.logging import assert_validation
 
 
@@ -13,12 +14,18 @@ class CLICredentials:
 
     _creds_file: str
     _creds: ConfigParser
+    _profile: Optional[str]
 
     ENV_VAR: str = "REDBRICK_PROFILE"
     DEFAULT_PROFILE: str = "default"
 
-    def __init__(self, creds_file: str) -> None:
+    def __init__(
+        self, creds_file: Optional[str] = None, profile: Optional[str] = None
+    ) -> None:
         """Initialize CLICredentials."""
+        if not creds_file:
+            creds_file = os.path.join(config_path(), "credentials")
+        self._profile = profile
         self._creds_file = creds_file
         self._creds = ConfigParser()
 
@@ -47,7 +54,7 @@ class CLICredentials:
     def selected_profile(self) -> str:
         """Get name of default selected profile."""
         assert_validation(self.exists, "Credentials file does not exist")
-        profile = os.environ.get(self.ENV_VAR)
+        profile = self._profile or os.environ.get(self.ENV_VAR)
         if not profile:
             assert_validation(
                 self.DEFAULT_PROFILE in self._creds

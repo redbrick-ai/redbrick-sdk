@@ -204,13 +204,16 @@ def get_org_from_profile(
         Name of the profile stored in the credentials file
 
     """
-    api_key, org_id, url = _extract_profile_details(profile_name)
-    return get_org(org_id, api_key, url)
+    # pylint: disable=import-outside-toplevel, cyclic-import
+    from redbrick.cli.entity import CLICredentials
+
+    creds = CLICredentials(profile=profile_name)
+    return RBOrganization(_populate_context(context=creds.context), creds.org_id)
 
 
 def get_project_from_profile(
     project_id: Optional[str] = None, profile_name: Optional[str] = None
-) -> Optional[RBProject]:
+) -> RBProject:
     """Get the RBProject object using the credentials file
 
     project = get_project_from_profile()
@@ -219,25 +222,27 @@ def get_project_from_profile(
     ---------------
     project_id: Optional[str] = None
         project id which has to be fetched.
-        `None` is valid only when called from the project root.
+        `None` is valid only when called within project directory.
     profile_name: str
         Name of the profile stored in the credentials file
     """
     # pylint: disable=import-outside-toplevel, cyclic-import
     from redbrick.cli.project import CLIProject
+    from redbrick.cli.entity import CLICredentials
 
-    if not project_id:
-
-        cli_project = CLIProject.from_path(required=False)
-        if cli_project:
-            return cli_project.project
-        logger.error(
-            f"{get_project_from_profile.__name__}"
-            + " called without a project id outside a project directory"
+    if project_id:
+        creds = CLICredentials(profile=profile_name)
+        return RBProject(
+            _populate_context(context=creds.context), creds.org_id, project_id
         )
-        return None
-    api_key, org_id, url = _extract_profile_details(profile_name)
-    return get_project(org_id, project_id, api_key, url)
+
+    cli_project = CLIProject.from_path(required=False, profile=profile_name)
+    if cli_project:
+        return cli_project.project
+    raise ValueError(
+        f"{get_project_from_profile.__name__}"
+        + " called without a project id outside a project directory"
+    )
 
 
 __all__ = [
