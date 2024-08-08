@@ -173,24 +173,6 @@ def get_project(
     return RBProject(context, org_id, project_id)
 
 
-def _extract_profile_details(
-    profile_name: Optional[str] = None,
-) -> Tuple[str, str, str]:
-    """Get the API key details from the profile name."""
-    # pylint: disable=import-outside-toplevel, cyclic-import
-    from redbrick.cli.entity import CLICredentials
-
-    creds_file = os.path.join(config_path(), "credentials")
-    creds = CLICredentials(creds_file)
-    org_creds = creds.get_profile(profile_name or creds.selected_profile)
-    api_key, org_id, url = (
-        org_creds["key"],
-        org_creds["org"],
-        org_creds["url"],
-    )
-    return api_key, org_id, url
-
-
 def get_org_from_profile(
     profile_name: Optional[str] = None,
 ) -> RBOrganization:
