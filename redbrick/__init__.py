@@ -178,7 +178,7 @@ def get_org_from_profile(
     profile_name: Optional[str] = None,
 ) -> RBOrganization:
     """Get the org from the profile name in credentials file"""
-    # pylint: disable=import-outside-toplevel
+    # pylint: disable=import-outside-toplevel, cyclic-import
     from redbrick.cli.entity import CLICredentials
 
     creds_file = os.path.join(config_path(), "credentials")
@@ -197,7 +197,6 @@ def get_project_from_profile(
     project_id: Optional[str] = None, profile_name: Optional[str] = None
 ) -> Optional[RBProject]:
     """Get the RBProject object using the credentials file"""
-
     org = get_org_from_profile(profile_name)
     assert org
     if not project_id:
