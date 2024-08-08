@@ -216,6 +216,9 @@ def get_project_from_profile(
             )
             return None
         project_id = configparser.get("project", "id")
+        org_id = configparser.get("org", "id")
+        if org_id != org.org_id:
+            logger.error("The profile and project belong to different organization")
     return org.get_project(project_id)
 
 
