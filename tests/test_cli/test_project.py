@@ -29,7 +29,7 @@ def test_init(project_and_conf_dirs):
     _write_creds(config_path_, org_id)
 
     # create CLIProject obj
-    with patch("redbrick.cli.project.config_path", return_value=config_path_):
+    with patch("redbrick.cli.entity.creds.config_path", return_value=config_path_):
         proj = CLIProject(path=project_path)
 
     # assertions
@@ -56,7 +56,7 @@ def test_init_no_creds(project_and_conf_dirs):
     # prepare project config
     _write_config(project_path, org_id)
 
-    with patch("redbrick.cli.project.config_path", return_value=config_path_):
+    with patch("redbrick.cli.entity.creds.config_path", return_value=config_path_):
         with pytest.raises(
             Exception,
             match="No credentials found, please set it up with `redbrick config`",
@@ -73,7 +73,7 @@ def test_init_no_config(project_and_conf_dirs):
     # prepare project creds
     _write_creds(config_path_, org_id)
 
-    with patch("redbrick.cli.project.config_path", return_value=config_path_):
+    with patch("redbrick.cli.entity.creds.config_path", return_value=config_path_):
         with pytest.raises(
             expected_exception=Exception,
             match=re.escape(
@@ -103,7 +103,7 @@ def test_init_from_path(project_and_conf_dirs):
     project_path, config_path_ = project_and_conf_dirs
     org_id = str(uuid.uuid4())
 
-    with patch("redbrick.cli.project.config_path", return_value=config_path_):
+    with patch("redbrick.cli.entity.creds.config_path", return_value=config_path_):
         with tempfile.TemporaryDirectory(dir=project_path) as inner_dir:
             with pytest.raises(
                 Exception, match="No redbrick project found. Searched upto"
@@ -115,7 +115,7 @@ def test_init_from_path(project_and_conf_dirs):
     _write_creds(config_path_, org_id)
 
     with tempfile.TemporaryDirectory(dir=project_path) as inner_dir:
-        with patch("redbrick.cli.project.config_path", return_value=config_path_):
+        with patch("redbrick.cli.entity.creds.config_path", return_value=config_path_):
             proj = CLIProject.from_path(path=inner_dir)
 
         # assertions
@@ -165,7 +165,7 @@ def test_initialize_project(project_and_conf_dirs, rb_context_full):
         "createdAt": datetime.datetime.now().isoformat(),
         "consensusSettings": {"enabled": True},
     }
-    with patch("redbrick.cli.project.config_path", return_value=config_path_):
+    with patch("redbrick.cli.entity.creds.config_path", return_value=config_path_):
         # mock repo methods
         rb_context_full.project.get_org = functools.partial(
             mock_method, response=mock_org_resp
@@ -233,7 +233,7 @@ def test_project_properties(project_and_conf_dirs, rb_context_full):
         "consensusSettings": {"enabled": True},
     }
 
-    with patch("redbrick.cli.project.config_path", return_value=config_path_):
+    with patch("redbrick.cli.entity.creds.config_path", return_value=config_path_):
         # initialize project
         proj = CLIProject(path=project_path, required=False)
 

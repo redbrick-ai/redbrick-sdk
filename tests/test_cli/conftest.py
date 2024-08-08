@@ -120,9 +120,13 @@ def mock_upload_controller(
     _, cli = public.cli_parser(only_parser=False)
 
     handle_upload = cli.upload.handle_upload
-    with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
+    with patch(
+        "redbrick.cli.entity.creds.config_path", return_value=config_path_
+    ), patch(
         "redbrick.cli.command.clone.CLIProject._context", rb_context_full
-    ), patch.object(cli.upload, "handle_upload"):
+    ), patch.object(
+        cli.upload, "handle_upload"
+    ):
         args = argparse.Namespace(command=cli.CLONE)
         cli.upload.handler(args)
         _ = cli.upload.project.project
@@ -147,9 +151,13 @@ def mock_export_controller(
     _, cli = public.cli_parser(only_parser=False)
 
     handle_export = cli.export.handle_export
-    with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
+    with patch(
+        "redbrick.cli.entity.creds.config_path", return_value=config_path_
+    ), patch(
         "redbrick.cli.command.export.CLIProject._context", rb_context_full
-    ), patch.object(cli.export, "handle_export"):
+    ), patch.object(
+        cli.export, "handle_export"
+    ):
         args = argparse.Namespace(command=cli.CLONE)
         cli.export.handler(args)
         _ = cli.export.project.project
@@ -174,9 +182,13 @@ def mock_info_controller(
     _, cli = public.cli_parser(only_parser=False)
 
     handle_info = cli.info.handle_info
-    with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
+    with patch(
+        "redbrick.cli.entity.creds.config_path", return_value=config_path_
+    ), patch(
         "redbrick.cli.command.info.CLIProject._context", rb_context_full
-    ), patch.object(cli.info, "handle_info"):
+    ), patch.object(
+        cli.info, "handle_info"
+    ):
         args = argparse.Namespace(command=cli.INFO, path=".", get=None, set=None)
         cli.info.handler(args)
         _ = cli.info.project.project
@@ -202,9 +214,13 @@ def mock_report_controller(
     _, cli = public.cli_parser(only_parser=False)
 
     handle_report = cli.report.handle_report
-    with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
+    with patch(
+        "redbrick.cli.entity.creds.config_path", return_value=config_path_
+    ), patch(
         "redbrick.cli.command.report.CLIProject._context", rb_context_full
-    ), patch.object(cli.report, "handle_report"):
+    ), patch.object(
+        cli.report, "handle_report"
+    ):
         args = argparse.Namespace(command=cli.INFO, path=".", get=None, set=None)
         cli.report.handler(args)
         _ = cli.report.project.project

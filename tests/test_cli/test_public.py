@@ -114,7 +114,9 @@ def test_main_parser():
 )
 def test_cli_main(capsys, prepare_project, argv, exited, error, message):
     """Test main cli entrypoint with different inputs"""
-    with patch("redbrick.cli.project.config_path", return_value=prepare_project[1]):
+    with patch(
+        "redbrick.cli.entity.creds.config_path", return_value=prepare_project[1]
+    ):
         if exited:
             with pytest.raises(SystemExit):
                 public.cli_main(argv)

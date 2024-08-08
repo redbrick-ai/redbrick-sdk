@@ -20,7 +20,7 @@ def test_handler(prepare_project, monkeypatch):
     _, cli = public.cli_parser(only_parser=False)
 
     with patch(
-        "redbrick.cli.project.config_path", return_value=config_path_
+        "redbrick.cli.entity.creds.config_path", return_value=config_path_
     ), patch.object(cli.upload, "handle_upload") as _handle_upload:
         args = argparse.Namespace(command=cli.CLONE, path=project_path)
         cli.upload.handler(args)
