@@ -108,9 +108,9 @@ def test_handle_clone(
     rb_context_full.project.get_stages = functools.partial(mock_method, response=[])
     # pylint: enable=protected-access
 
-    with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
-        "redbrick.cli.command.clone.CLIProject._context", rb_context_full
-    ):
+    with patch(
+        "redbrick.cli.entity.creds.config_path", return_value=config_path_
+    ), patch("redbrick.cli.command.clone.CLIProject._context", rb_context_full):
         _project_desc = project_id if select_by_id else project_name
         cli.clone.args = argparse.Namespace(
             command=cli.CLONE, path=None, project=_project_desc

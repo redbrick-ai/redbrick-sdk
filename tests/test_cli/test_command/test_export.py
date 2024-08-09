@@ -20,7 +20,7 @@ def test_handler(prepare_project, monkeypatch):
     _, cli = public.cli_parser(only_parser=False)
 
     with patch(
-        "redbrick.cli.project.config_path", return_value=config_path_
+        "redbrick.cli.entity.creds.config_path", return_value=config_path_
     ), patch.object(cli.export, "handle_export") as _handle_export:
         args = argparse.Namespace(command=cli.EXPORT, path=project_path)
         cli.export.handler(args)

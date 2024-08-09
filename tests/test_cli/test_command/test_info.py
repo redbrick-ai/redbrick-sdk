@@ -18,7 +18,7 @@ def test_handler(prepare_project, monkeypatch):
     _, cli = public.cli_parser(only_parser=False)
 
     with patch(
-        "redbrick.cli.project.config_path", return_value=config_path_
+        "redbrick.cli.entity.creds.config_path", return_value=config_path_
     ), patch.object(cli.info, "handle_get"), patch.object(
         cli.info, "handle_set"
     ), patch.object(
@@ -106,9 +106,9 @@ def test_handle_info(
     _, cli = public.cli_parser(only_parser=False)
     controller: CLIInfoController = cli.info
 
-    with patch("redbrick.cli.project.config_path", return_value=config_path_), patch(
-        "redbrick.cli.command.info.CLIProject._context", rb_context_full
-    ):
+    with patch(
+        "redbrick.cli.entity.creds.config_path", return_value=config_path_
+    ), patch("redbrick.cli.command.info.CLIProject._context", rb_context_full):
         args = argparse.Namespace(
             command=cli.INFO, path=project_path, get=None, set=None
         )

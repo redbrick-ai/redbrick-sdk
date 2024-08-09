@@ -11,7 +11,6 @@ from redbrick.common.context import RBContext
 from redbrick.organization import RBOrganization
 from redbrick.project import RBProject
 from redbrick.cli.entity import CLICache, CLIConfiguration, CLICredentials
-from redbrick.utils.common_utils import config_path
 from redbrick.utils.logging import assert_validation, logger
 
 
@@ -28,7 +27,9 @@ class CLIProject:
     _org: Optional[RBOrganization] = None
     _project: Optional[RBProject] = None
 
-    def __init__(self, path: str = ".", required: bool = True) -> None:
+    def __init__(
+        self, path: str = ".", required: bool = True, profile: Optional[str] = None
+    ) -> None:
         """Initialize CLIProject."""
         self.path = os.path.realpath(path)
         assert_validation(
@@ -36,8 +37,7 @@ class CLIProject:
         )
 
         self._rb_dir = os.path.join(self.path, ".redbrick")
-        self._creds_file = os.path.join(config_path(), "credentials")
-        self.creds = CLICredentials(self._creds_file)
+        self.creds = CLICredentials(profile=profile)
         self.conf = CLIConfiguration(os.path.join(self._rb_dir, "config"))
         self.cache = CLICache(os.path.join(self._rb_dir, "cache"), self.conf)
 
@@ -58,13 +58,13 @@ class CLIProject:
 
     @classmethod
     def from_path(
-        cls, path: str = ".", required: bool = True
+        cls, path: str = ".", required: bool = True, profile: Optional[str] = None
     ) -> Optional["CLIProject"]:
         """Get CLIProject from given directory."""
         path = os.path.realpath(path)
 
         if os.path.isdir(os.path.join(path, ".redbrick")):
-            return cls(path, required)
+            return cls(path, required, profile)
 
         parent = os.path.realpath(os.path.join(path, ".."))
 
@@ -73,7 +73,7 @@ class CLIProject:
                 raise Exception(f"No redbrick project found. Searched upto {path}")
             return None
 
-        return cls.from_path(parent, required)
+        return cls.from_path(parent, required, profile)
 
     @property
     def context(self) -> RBContext:

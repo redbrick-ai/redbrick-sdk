@@ -1,7 +1,10 @@
 """"""
 
+import os
 import sys
 import asyncio
+from typing import Optional, Tuple
+
 
 import nest_asyncio  # type: ignore
 
@@ -19,14 +22,14 @@ from redbrick.project import RBProject
 from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
 
 from redbrick.utils.logging import logger
-from redbrick.utils.common_utils import config_migration
+from redbrick.utils.common_utils import config_migration, config_path
 
 from redbrick.types import task as TaskTypes, taxonomy as TaxonomyTypes
 
 from .config import config
 from .version_check import version_check
 
-__version__ = "2.18.0"
+__version__ = "2.18.1"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -170,6 +173,62 @@ def get_project(
     return RBProject(context, org_id, project_id)
 
 
+def get_org_from_profile(
+    profile_name: Optional[str] = None,
+) -> RBOrganization:
+    """Get the org from the profile name in credentials file
+
+    >>> org = get_org_from_profile()
+
+    Parameters
+    ---------------
+    profile_name: str
+        Name of the profile stored in the credentials file
+
+    """
+    # pylint: disable=import-outside-toplevel, cyclic-import
+    from redbrick.cli.entity import CLICredentials
+
+    creds = CLICredentials(profile=profile_name)
+    return RBOrganization(_populate_context(context=creds.context), creds.org_id)
+
+
+def get_project_from_profile(
+    project_id: Optional[str] = None, profile_name: Optional[str] = None
+) -> RBProject:
+    """Get the RBProject object using the credentials file
+
+    project = get_project_from_profile()
+
+    Parameters
+    ---------------
+    project_id: Optional[str] = None
+        project id which has to be fetched.
+        `None` is valid only when called within project directory.
+    profile_name: str
+        Name of the profile stored in the credentials file
+    """
+    # pylint: disable=import-outside-toplevel, cyclic-import
+    from redbrick.cli.project import CLIProject
+    from redbrick.cli.entity import CLICredentials
+
+    if project_id:
+        creds = CLICredentials(profile=profile_name)
+        return RBProject(
+            _populate_context(context=creds.context), creds.org_id, project_id
+        )
+
+    cli_project = CLIProject.from_path(required=False, profile=profile_name)
+    if cli_project:
+        return RBProject(
+            cli_project.context, cli_project.org_id, cli_project.project_id
+        )
+    raise ValueError(
+        f"{get_project_from_profile.__name__}"
+        + " called without a project id outside a project directory"
+    )
+
+
 __all__ = [
     "__version__",
     "config",
@@ -191,4 +250,6 @@ __all__ = [
     "get_org",
     "get_workspace",
     "get_project",
+    "get_org_from_profile",
+    "get_project_from_profile",
 ]

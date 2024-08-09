@@ -18,7 +18,7 @@ def test_handler(prepare_project, monkeypatch):
     _, cli = public.cli_parser(only_parser=False)
 
     with patch(
-        "redbrick.cli.project.config_path", return_value=config_path_
+        "redbrick.cli.entity.creds.config_path", return_value=config_path_
     ), patch.object(cli.report, "handle_report"):
         args = argparse.Namespace(
             type=cli.report.TYPE_ALL,
