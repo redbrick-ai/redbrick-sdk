@@ -152,7 +152,23 @@ class ProjectRepo(ProjectRepoInterface):
         )
         return response["taxonomies"]
 
-    def delete_project(self, org_id: str, project_id: str) -> None:
+    def delete_taxonomy(
+        self, org_id: str, tax_id: Optional[str], name: Optional[str]
+    ) -> bool:
+        """Delete Taxonomy."""
+        query = """
+            mutation removeTaxonomySDK($orgId: UUID!, $taxId: UUID, $name: String) {
+                removeTaxonomy(orgId: $orgId, taxId: $taxId, name: $name) {
+                    ok
+                }
+            }
+        """
+        response = self.client.execute_query(
+            query, {"orgId": org_id, "taxId": tax_id, "name": name}
+        )
+        return (response.get("removeTaxonomy") or {}).get("ok") or False
+
+    def delete_project(self, org_id: str, project_id: str) -> bool:
         """Delete Project."""
         query = """
             mutation removeProjectSDK($orgId: UUID!, $projectId: UUID!) {
@@ -161,7 +177,10 @@ class ProjectRepo(ProjectRepoInterface):
                 }
             }
         """
-        self.client.execute_query(query, {"orgId": org_id, "projectId": project_id})
+        response = self.client.execute_query(
+            query, {"orgId": org_id, "projectId": project_id}
+        )
+        return (response.get("removeProject") or {}).get("ok") or False
 
     def get_labeling_information(
         self,

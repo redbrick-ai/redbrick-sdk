@@ -48,7 +48,13 @@ class ProjectRepoInterface(ABC):
         """Get a list of taxonomies."""
 
     @abstractmethod
-    def delete_project(self, org_id: str, project_id: str) -> None:
+    def delete_taxonomy(
+        self, org_id: str, tax_id: Optional[str], name: Optional[str]
+    ) -> bool:
+        """Delete Taxonomy."""
+
+    @abstractmethod
+    def delete_project(self, org_id: str, project_id: str) -> bool:
         """Delete Project."""
 
     @abstractmethod

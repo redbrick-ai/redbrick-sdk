@@ -287,6 +287,10 @@ class RBOrganization:
 
         return RBProject(self.context, self._org_id, projects[0]["projectId"])
 
+    def delete_project(self, project_id: str) -> bool:
+        """Delete a project by ID."""
+        return self.context.project.delete_project(self._org_id, project_id)
+
     def labeling_time(
         self, start_date: datetime, end_date: datetime, concurrency: int = 50
     ) -> List[Dict]:
@@ -404,6 +408,12 @@ class RBOrganization:
             object_types,
         ):
             logger.info(f"Successfully updated taxonomy: {tax_id}")
+
+    def delete_taxonomy(
+        self, name: Optional[str] = None, tax_id: Optional[str] = None
+    ) -> bool:
+        """Delete a taxonomy by name or ID."""
+        return self.context.project.delete_taxonomy(self._org_id, tax_id, name)
 
     def self_health_check(self, self_url: str) -> Optional[str]:
         """Send a health check update from the model server."""

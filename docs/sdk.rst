@@ -16,7 +16,7 @@ RedBrick
 Organization
 ----------------------
 .. autoclass:: redbrick.organization.RBOrganization
-   :members: name, org_id, create_workspace, create_project, create_project_advanced, get_project, taxonomies, projects_raw, projects, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy
+   :members: name, org_id, create_workspace, create_project, create_project_advanced, get_project, projects_raw, projects, delete_project, taxonomies, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy, delete_taxonomy
 
 Workspace
 ----------------------
