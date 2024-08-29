@@ -10,7 +10,7 @@ class UploadControllerInterface(ABC):
     """Abstract interface to define methods for Upload."""
 
     @abstractmethod
-    async def create_datapoint_async(
+    async def create_datapoint_async(  # pylint: disable=too-many-locals
         self,
         aio_client: aiohttp.ClientSession,
         org_id: str,
