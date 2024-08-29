@@ -1,9 +1,8 @@
 """"""
 
-import os
 import sys
 import asyncio
-from typing import Optional, Tuple
+from typing import Optional
 
 
 import nest_asyncio  # type: ignore
@@ -22,14 +21,14 @@ from redbrick.project import RBProject
 from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
 
 from redbrick.utils.logging import logger
-from redbrick.utils.common_utils import config_migration, config_path
+from redbrick.utils.common_utils import config_migration
 
 from redbrick.types import task as TaskTypes, taxonomy as TaxonomyTypes
 
 from .config import config
 from .version_check import version_check
 
-__version__ = "2.18.1"
+__version__ = "2.18.2"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
