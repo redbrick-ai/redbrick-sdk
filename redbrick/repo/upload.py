@@ -25,6 +25,7 @@ class UploadRepo(UploadControllerInterface):
         name: str,
         items: List[str],
         heat_maps: Optional[List[Dict]],
+        transforms: Optional[List[Dict]],
         labels_data: Optional[str],
         labels_map: Optional[List[Dict]] = None,
         series_info: Optional[List[Dict]] = None,
@@ -45,6 +46,7 @@ class UploadRepo(UploadControllerInterface):
                 $projectId: UUID!
                 $items: [String!]!
                 $heatMaps: [HeatMapInput!]
+                $transforms: [TransformInput!]
                 $name: String!
                 $storageId: UUID!
                 $labelsData: String
@@ -60,6 +62,7 @@ class UploadRepo(UploadControllerInterface):
                     projectId: $projectId
                     items: $items
                     heatMaps: $heatMaps
+                    transforms: $transforms
                     name: $name
                     storageId: $storageId
                     labelsData: $labelsData
@@ -81,6 +84,7 @@ class UploadRepo(UploadControllerInterface):
             "projectId": project_id,
             "items": items,
             "heatMaps": heat_maps,
+            "transforms": transforms,
             "name": name,
             "storageId": storage_id,
             "labelsData": labels_data,

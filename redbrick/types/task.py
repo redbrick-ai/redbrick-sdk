@@ -329,6 +329,13 @@ class HeatMap(TypedDict, total=False):
     rgbPoints: List[float]
 
 
+class Transform(TypedDict):
+    """Transform."""
+
+    #: Transformation matrix (4x4).
+    transform: List[List[float]]
+
+
 class Series(TypedDict, total=False):
     """A single series represents a single volume, image, or video. A :class:`redbrick.types.task.InputTask` can have multiple series."""
 
@@ -435,6 +442,9 @@ class Series(TypedDict, total=False):
 
     #: Heatmaps for the series.
     heatMaps: List[HeatMap]
+
+    #: Transforms for the series.
+    transforms: List[Transform]
 
     #: Treats all files in :attr:`redbrick.types.task.Series.segmentations` as binary masks. That is, any non-zero value will be treated as a single instance.
     binaryMask: bool

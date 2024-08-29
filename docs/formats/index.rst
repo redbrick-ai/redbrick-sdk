@@ -19,6 +19,8 @@ The RedBrick AI SDK uses a list of :class:`redbrick.types.task.InputTask` object
 .. autoclass:: redbrick.types.task.HeatMap
    :members:
 
+.. autoclass:: redbrick.types.task.Transform
+   :members:
 
 Export
 ~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -19,6 +19,7 @@ class UploadControllerInterface(ABC):
         name: str,
         items: List[str],
         heat_maps: Optional[List[Dict]],
+        transforms: Optional[List[Dict]],
         labels_data: Optional[str],
         labels_map: Optional[List[Dict]] = None,
         series_info: Optional[List[Dict]] = None,

@@ -253,6 +253,7 @@ class Upload:
                     point["name"],
                     point["items"],
                     point.get("heatMaps"),
+                    point.get("transforms"),
                     json.dumps(point.get("labels", []), separators=(",", ":")),
                     labels_map,
                     (
