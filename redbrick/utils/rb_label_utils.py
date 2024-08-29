@@ -314,6 +314,9 @@ def dicom_rb_series(
         if attributes:
             label_obj["attributes"] = attributes
 
+        if label.get("linkid") is not None:
+            label_obj["group"] = label["linkid"]
+
         video_metadata: Dict[str, TaskType.VideoMetaData] = {}
         if (
             isinstance(label.get("globalitemsindex"), int)

@@ -112,6 +112,9 @@ class CommonLabelProps(TypedDict, total=False):
     #: Filepath to segmentation file for this annotation.
     mask: Union[str, List[str]]
 
+    #: Linked label group id.
+    group: str
+
 
 SegmentMap = Dict[Union[str, int], Union[str, int, List[str], CommonLabelProps]]
 
@@ -128,11 +131,17 @@ class InstanceClassification(TypedDict):
     #: Classification value for this frame.
     values: Attributes
 
+    #: Linked label group id.
+    group: NotRequired[str]
+
 
 class Classification(TypedDict):
     """Study or series classification."""
 
     attributes: NotRequired[Attributes]
+
+    #: Linked label group id.
+    group: NotRequired[str]
 
 
 class Polyline(TypedDict):
@@ -143,6 +152,9 @@ class Polyline(TypedDict):
     attributes: NotRequired[Attributes]
     video: NotRequired[VideoMetaData]
 
+    #: Linked label group id.
+    group: NotRequired[str]
+
 
 class Polygon(TypedDict):
     """Closed polygons, not supported in 3D images."""
@@ -152,6 +164,9 @@ class Polygon(TypedDict):
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
     video: NotRequired[VideoMetaData]
+
+    #: Linked label group id.
+    group: NotRequired[str]
 
 
 class Cuboid(TypedDict):
@@ -167,6 +182,9 @@ class Cuboid(TypedDict):
     category: Category
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
+
+    #: Linked label group id.
+    group: NotRequired[str]
 
 
 class BoundingBox(TypedDict):
@@ -190,6 +208,9 @@ class BoundingBox(TypedDict):
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
     video: NotRequired[VideoMetaData]
+
+    #: Linked label group id.
+    group: NotRequired[str]
 
 
 class Ellipse(TypedDict):
@@ -217,6 +238,9 @@ class Ellipse(TypedDict):
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
     video: NotRequired[VideoMetaData]
+
+    #: Linked label group id.
+    group: NotRequired[str]
 
 
 class MeasureAngle(TypedDict):
@@ -246,6 +270,9 @@ class MeasureAngle(TypedDict):
     category: Category
     attributes: NotRequired[Attributes]
 
+    #: Linked label group id.
+    group: NotRequired[str]
+
 
 class MeasureLength(TypedDict):
     """
@@ -270,6 +297,9 @@ class MeasureLength(TypedDict):
     category: Category
     attributes: NotRequired[Attributes]
 
+    #: Linked label group id.
+    group: NotRequired[str]
+
 
 class Landmark3D(TypedDict):
     """3D landmark for 3D data."""
@@ -277,6 +307,9 @@ class Landmark3D(TypedDict):
     point: VoxelPoint
     category: Category
     attributes: NotRequired[Attributes]
+
+    #: Linked label group id.
+    group: NotRequired[str]
 
 
 class Landmark(TypedDict):
@@ -286,6 +319,9 @@ class Landmark(TypedDict):
     category: Category
     attributes: NotRequired[Attributes]
     video: NotRequired[VideoMetaData]
+
+    #: Linked label group id.
+    group: NotRequired[str]
 
 
 class ConsensusScore(TypedDict, total=False):
