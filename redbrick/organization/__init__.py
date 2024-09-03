@@ -169,9 +169,8 @@ class RBOrganization:
 
         consensus_settings: Optional[Dict[str, Any]] = None
             Consensus settings for the project. It has keys:
-                - enabled
-                - minAnnotations
-                - autoAcceptThreshold.
+                - minAnnotations: int
+                - autoAcceptThreshold: float (range [0, 1])
 
         Returns
         --------------
@@ -181,27 +180,7 @@ class RBOrganization:
         Raises
         --------------
         ValueError:
-            Project with same name but with different type or taxonomy.
-
-        Example
-        --------------
-        >>> org = redbrick.get_org(api_key="", org_id="")
-        >>> project = org.create_project_advanced(
-        ...     "Project With Consensus",
-        ...     "All", # Taxonomy name
-        ...     2, # Number of review stages
-        ...     False, #raise error if project with same name exists
-        ...     None, # workspace_id
-        ...     None, # sibling_tasks, as it is consensus project
-        ...     {
-        ...         "enabled": True,
-        ...         "minAnnotations": 2,
-        ...         "autoAcceptThreshold": 0.9
-        ...     } # consensus_settings
-        ... )
-        >>> project
-        RedBrick Project - Project With Consensus - ( UUID )
-
+            If a project with the same name exists but has a different type or taxonomy.
 
         """
         if exists_okay:
@@ -239,7 +218,7 @@ class RBOrganization:
                 taxonomy_name,
                 workspace_id,
                 sibling_tasks,
-                consensus_settings,
+                {**consensus_settings, "enabled": True} if consensus_settings else None,
             )
         except ValueError as error:
             raise Exception(
@@ -291,9 +270,8 @@ class RBOrganization:
 
         consensus_settings: Optional[Dict[str, Any]] = None
             Consensus settings for the project. It has keys:
-                - enabled
-                - minAnnotations
-                - autoAcceptThreshold.
+                - minAnnotations: int
+                - autoAcceptThreshold: float (range [0, 1])
 
         Returns
         --------------
@@ -305,24 +283,6 @@ class RBOrganization:
         ValueError:
             If a project with the same name exists but has a different type or taxonomy.
 
-        Example
-        --------------
-        >>> org = redbrick.get_org(api_key="", org_id="")
-        >>> project = org.create_project_advanced(
-        ...     "Project With Consensus",
-        ...     "All", # Taxonomy name
-        ...     2, # Number of review stages
-        ...     False, #raise error if project with same name exists
-        ...     None, # workspace_id
-        ...     None, # sibling_tasks, as it is consensus project
-        ...     {
-        ...         "enabled": True,
-        ...         "minAnnotations": 2,
-        ...         "autoAcceptThreshold": 0.9
-        ...     } # consensus_settings
-        ... )
-        >>> project
-        RedBrick Project - Project With Consensus - ( UUID )
         """
         return self.create_project_advanced(
             name,
