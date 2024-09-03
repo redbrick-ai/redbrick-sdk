@@ -301,18 +301,3 @@ class RBProject:
                 self._stages = pipeline
         else:
             logger.warning("Error updating stage.")
-
-    def update_consensus_settings(
-        self,
-        enabled: bool,
-        min_annotations: Optional[int] = None,
-        auto_accept_threshold: Optional[float] = None,
-    ) -> Optional[bool]:
-        """Update consensus settings."""
-        return self.context.project.update_consensus_settings(
-            self.org_id,
-            self.project_id,
-            enabled,
-            min_annotations,
-            auto_accept_threshold,
-        )
