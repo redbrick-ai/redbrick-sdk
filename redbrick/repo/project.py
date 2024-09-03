@@ -483,3 +483,41 @@ class ProjectRepo(ProjectRepoInterface):
             return result["modelHealth"]["message"]
 
         return None
+
+    def update_consensus_settings(
+        self,
+        org_id: str,
+        project_id: str,
+        enabled: bool,
+        min_annotations: Optional[int] = None,
+        auto_accept_threshold: Optional[float] = None,
+    ) -> bool:
+        """Update consensus settings for a project."""
+        query_string = """
+        mutation updateConsensusSettingsSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $enabled: Boolean!
+            $minAnnotations: Int
+            $autoAcceptThreshold: Float
+        ) {
+            updateConsensusSettings(
+                orgId: $orgId
+                projectId: $projectId
+                enabled: $enabled
+                minAnnotations: $minAnnotations
+                autoAcceptThreshold: $autoAcceptThreshold
+            ) {
+                ok
+            }
+        }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "enabled": enabled,
+            "minAnnotations": min_annotations,
+            "autoAcceptThreshold": auto_accept_threshold,
+        }
+        result = self.client.execute_query(query_string, query_variables)
+        return bool(result and result.get("updateConsensusSettings", {}).get("ok"))

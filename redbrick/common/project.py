@@ -128,3 +128,14 @@ class ProjectRepoInterface(ABC):
         self, org_id: str, self_url: str, self_data: Dict
     ) -> Optional[str]:
         """Send a health check update from the model server."""
+
+    @abstractmethod
+    def update_consensus_settings(
+        self,
+        org_id: str,
+        project_id: str,
+        enabled: bool,
+        min_annotations: Optional[int] = None,
+        auto_accept_threshold: Optional[float] = None,
+    ) -> bool:
+        """Update consensus settings for a project."""
