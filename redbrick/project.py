@@ -307,7 +307,7 @@ class RBProject:
         enabled: bool,
         min_annotations: Optional[int] = None,
         auto_accept_threshold: Optional[float] = None,
-    ) -> bool:
+    ) -> Optional[bool]:
         """Update consensus settings."""
         return self.context.project.update_consensus_settings(
             self.org_id,

@@ -491,7 +491,7 @@ class ProjectRepo(ProjectRepoInterface):
         enabled: bool,
         min_annotations: Optional[int] = None,
         auto_accept_threshold: Optional[float] = None,
-    ) -> bool:
+    ) -> Optional[bool]:
         """Update consensus settings for a project."""
         query_string = """
         mutation updateConsensusSettingsSDK(
@@ -520,4 +520,4 @@ class ProjectRepo(ProjectRepoInterface):
             "autoAcceptThreshold": auto_accept_threshold,
         }
         result = self.client.execute_query(query_string, query_variables)
-        return bool(result and result.get("updateConsensusSettings", {}).get("ok"))
+        return bool(result and (result.get("updateConsensusSettings") or {}).get("ok"))

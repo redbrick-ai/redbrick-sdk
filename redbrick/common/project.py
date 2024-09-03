@@ -137,5 +137,5 @@ class ProjectRepoInterface(ABC):
         enabled: bool,
         min_annotations: Optional[int] = None,
         auto_accept_threshold: Optional[float] = None,
-    ) -> bool:
+    ) -> Optional[bool]:
         """Update consensus settings for a project."""
