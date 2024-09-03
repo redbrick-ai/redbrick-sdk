@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from functools import partial
-from typing import List, Optional, Dict, Sequence, Union
+from typing import Any, List, Optional, Dict, Sequence, Union
 import platform
 
 from tqdm import tqdm  # type: ignore
@@ -136,6 +136,7 @@ class RBOrganization:
         exists_okay: bool = False,
         workspace_id: Optional[str] = None,
         sibling_tasks: Optional[int] = None,
+        consensus_settings: Optional[Dict[str, Any]] = None,
     ) -> RBProject:
         """
         Create a project within the organization.
@@ -166,10 +167,21 @@ class RBOrganization:
         sibling_tasks: Optional[int] = None
             Number of tasks created for each uploaded datapoint.
 
+        consensus_settings: Optional[Dict[str, Any]] = None
+            Consensus settings for the project. It has keys:
+                - minAnnotations: int
+                - autoAcceptThreshold?: float (range [0, 1])
+
         Returns
         --------------
         redbrick.project.RBProject
             A RedBrick Project object.
+
+        Raises
+        --------------
+        ValueError:
+            If a project with the same name exists but has a different type or taxonomy.
+
         """
         if exists_okay:
             logger.info("exists_okay=True... checking for project with same name")
@@ -206,6 +218,7 @@ class RBOrganization:
                 taxonomy_name,
                 workspace_id,
                 sibling_tasks,
+                {**consensus_settings, "enabled": True} if consensus_settings else None,
             )
         except ValueError as error:
             raise Exception(
@@ -223,6 +236,7 @@ class RBOrganization:
         exists_okay: bool = False,
         workspace_id: Optional[str] = None,
         sibling_tasks: Optional[int] = None,
+        consensus_settings: Optional[Dict[str, Any]] = None,
     ) -> RBProject:
         """
         Create a project within the organization.
@@ -254,10 +268,21 @@ class RBOrganization:
         sibling_tasks: Optional[int] = None
             Number of tasks created for each uploaded datapoint.
 
+        consensus_settings: Optional[Dict[str, Any]] = None
+            Consensus settings for the project. It has keys:
+                - minAnnotations: int
+                - autoAcceptThreshold?: float (range [0, 1])
+
         Returns
         --------------
         redbrick.project.RBProject
             A RedBrick Project object.
+
+        Raises
+        --------------
+        ValueError:
+            If a project with the same name exists but has a different type or taxonomy.
+
         """
         return self.create_project_advanced(
             name,
@@ -266,6 +291,7 @@ class RBOrganization:
             exists_okay,
             workspace_id,
             sibling_tasks,
+            consensus_settings,
         )
 
     def get_project(

@@ -1,7 +1,7 @@
 """Handlers to access APIs for getting projects."""
 
 import json
-from typing import List, Dict, Tuple, Optional
+from typing import Any, List, Dict, Tuple, Optional
 from datetime import datetime
 
 from redbrick.common.client import RBClient
@@ -59,6 +59,7 @@ class ProjectRepo(ProjectRepoInterface):
         tax_name: str,
         workspace_id: Optional[str],
         sibling_tasks: Optional[int],
+        consensus_settings: Optional[Dict[str, Any]] = None,
     ) -> Dict:
         """Create a project and return project_id."""
         query = """
@@ -71,6 +72,7 @@ class ProjectRepo(ProjectRepoInterface):
                 $taxonomyVersion: Int!
                 $workspaceId: UUID
                 $taskDuplicationCount: Int
+                $consensusSettings: ConsensusSettingsInput
             ) {
                 createProjectSimple(
                     orgId: $orgId
@@ -81,6 +83,7 @@ class ProjectRepo(ProjectRepoInterface):
                     taxonomyVersion: $taxonomyVersion
                     workspaceId: $workspaceId
                     taskDuplicationCount: $taskDuplicationCount
+                    consensusSettings: $consensusSettings
                 ) {
                     ok
                     errors
@@ -103,6 +106,7 @@ class ProjectRepo(ProjectRepoInterface):
             "taxonomyVersion": 1,
             "workspaceId": workspace_id,
             "taskDuplicationCount": sibling_tasks,
+            "consensusSettings": consensus_settings,
         }
 
         response: Dict[str, Dict] = self.client.execute_query(query, variables)

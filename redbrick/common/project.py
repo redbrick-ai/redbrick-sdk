@@ -1,7 +1,7 @@
 """Interface for getting basic information about a project."""
 
 from datetime import datetime
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 from abc import ABC, abstractmethod
 
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
@@ -32,6 +32,7 @@ class ProjectRepoInterface(ABC):
         tax_name: str,
         workspace_id: Optional[str],
         sibling_tasks: Optional[int],
+        consensus_settings: Optional[Dict[str, Any]] = None,
     ) -> Dict:
         """Create a project and return project_id."""
 
