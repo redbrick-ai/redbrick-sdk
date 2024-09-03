@@ -170,7 +170,7 @@ class RBOrganization:
         consensus_settings: Optional[Dict[str, Any]] = None
             Consensus settings for the project. It has keys:
                 - minAnnotations: int
-                - autoAcceptThreshold: float (range [0, 1])
+                - autoAcceptThreshold?: float (range [0, 1])
 
         Returns
         --------------
@@ -271,7 +271,7 @@ class RBOrganization:
         consensus_settings: Optional[Dict[str, Any]] = None
             Consensus settings for the project. It has keys:
                 - minAnnotations: int
-                - autoAcceptThreshold: float (range [0, 1])
+                - autoAcceptThreshold?: float (range [0, 1])
 
         Returns
         --------------
