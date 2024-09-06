@@ -591,7 +591,12 @@ class Export:
             )
 
         return dicom_rb_format(
-            task, taxonomy, old_format, no_consensus, self.review_stages
+            task,
+            taxonomy,
+            old_format,
+            no_consensus,
+            self.review_stages,
+            segmentation_dir is None,
         )
 
     async def download_and_process_segmentations(
@@ -1279,7 +1284,12 @@ class Export:
                     if "labels" not in event:
                         continue
                     labels = dicom_rb_format(
-                        event["labels"], self.taxonomy, False, True, self.review_stages
+                        event["labels"],
+                        self.taxonomy,
+                        False,
+                        True,
+                        self.review_stages,
+                        True,
                     )
                     event["labels"] = {"series": labels.get("series") or []}
                     if (

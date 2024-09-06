@@ -112,6 +112,9 @@ class CommonLabelProps(TypedDict, total=False):
     #: Filepath to segmentation file for this annotation.
     mask: Union[str, List[str]]
 
+    #: Overlapping instances that this label is part of (when without_masks is set).
+    overlappingGroups: List[int]
+
     #: Linked label group id.
     group: str
 

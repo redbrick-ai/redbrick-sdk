@@ -225,6 +225,7 @@ def dicom_rb_series(
     input_task: Dict,
     output_task: TaskType.OutputTask,
     taxonomy: Taxonomy,
+    without_masks: bool = False,
 ) -> None:
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
@@ -437,6 +438,10 @@ def dicom_rb_series(
                     segment_map_instance: TaskType.CommonLabelProps = {**label_obj}
                     if mask:
                         segment_map_instance["mask"] = mask
+                    if without_masks and label["dicom"].get("groupids"):
+                        segment_map_instance["overlappingGroups"] = label["dicom"][
+                            "groupids"
+                        ]
 
                     cur_series = series[volume_index]
                     if "segmentMap" not in cur_series:
@@ -587,6 +592,7 @@ def dicom_rb_format(
     old_format: bool,
     no_consensus: bool,
     review_stages: List[ReviewStage],
+    without_masks: bool = False,
 ) -> TaskType.OutputTask:
     """Get new dicom rb task format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals, unused-argument
@@ -664,7 +670,7 @@ def dicom_rb_format(
             consensus_task = task["consensusTasks"][0]
             task["labels"] = consensus_task.get("labels")
             task["labelsMap"] = consensus_task.get("labelsMap")
-        dicom_rb_series(item_index_map, task, output, taxonomy)
+        dicom_rb_series(item_index_map, task, output, taxonomy, without_masks)
     else:
         output["consensus"] = True
         if "consensusScore" in task:  # Review_1, END
@@ -684,7 +690,9 @@ def dicom_rb_format(
                 output["superTruth"]["updatedBy"] = task["updatedBy"]
             if task.get("updatedAt"):
                 output["superTruth"]["updatedAt"] = task["updatedAt"]
-            dicom_rb_series(item_index_map, task, output["superTruth"], taxonomy)
+            dicom_rb_series(
+                item_index_map, task, output["superTruth"], taxonomy, without_masks
+            )
 
         consensus_tasks: List[TaskType.OutputTask] = [
             {"series": [{**series} for series in volume_series]}  # type: ignore
@@ -724,7 +732,11 @@ def dicom_rb_format(
                     output_consensus_task["scores"].append(score)
 
             dicom_rb_series(
-                item_index_map, consensus_task, output_consensus_task, taxonomy
+                item_index_map,
+                consensus_task,
+                output_consensus_task,
+                taxonomy,
+                without_masks,
             )
 
     return output
