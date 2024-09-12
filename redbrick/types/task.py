@@ -119,7 +119,7 @@ class CommonLabelProps(TypedDict, total=False):
     group: str
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 SegmentMap = Dict[Union[str, int], Union[str, int, List[str], CommonLabelProps]]
@@ -141,7 +141,7 @@ class InstanceClassification(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class Classification(TypedDict):
@@ -153,7 +153,7 @@ class Classification(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class Polyline(TypedDict):
@@ -168,7 +168,7 @@ class Polyline(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class Polygon(TypedDict):
@@ -184,7 +184,7 @@ class Polygon(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class Cuboid(TypedDict):
@@ -205,7 +205,7 @@ class Cuboid(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class BoundingBox(TypedDict):
@@ -234,7 +234,7 @@ class BoundingBox(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class Ellipse(TypedDict):
@@ -267,7 +267,7 @@ class Ellipse(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class MeasureAngle(TypedDict):
@@ -301,7 +301,7 @@ class MeasureAngle(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class MeasureLength(TypedDict):
@@ -331,7 +331,7 @@ class MeasureLength(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class Landmark3D(TypedDict):
@@ -345,7 +345,7 @@ class Landmark3D(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class Landmark(TypedDict):
@@ -360,7 +360,7 @@ class Landmark(TypedDict):
     group: NotRequired[str]
 
     #: Read only status
-    readonly: NotRequired[bool]
+    readOnly: NotRequired[bool]
 
 
 class ConsensusScore(TypedDict, total=False):
