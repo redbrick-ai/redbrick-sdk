@@ -555,6 +555,7 @@ class Export:
             label_map.get("labelName") if label_map else None
             for label_map in labels_map
         ]
+        len_map = len(presign_paths)
 
         if task.get("consensusTasks"):
             for consensus_task in task["consensusTasks"]:
@@ -568,7 +569,7 @@ class Export:
                             else None
                         )
                         for consensus_label_map in (
-                            consensus_task.get("labelsMap", []) or []
+                            consensus_task.get("labelsMap") or ([None] * len_map)
                         )
                     ]
                 )
@@ -696,13 +697,17 @@ class Export:
                 label["semanticMask"] = label_map_data["semantic_mask"]
                 label["pngMask"] = label_map_data["png_mask"]
 
-        if len(paths) > len(labels_map) and task.get("consensusTasks"):
-            index = len(labels_map)
+        len_map = len(labels_map)
+        if len(paths) > len_map and task.get("consensusTasks"):
+            index = len_map
             for consensus_task in task["consensusTasks"]:
                 consensus_labels = consensus_task.get("labels", []) or []
-                consensus_labels_map = consensus_task.get("labelsMap", []) or []
+                consensus_labels_map = consensus_task.get("labelsMap") or (
+                    [None] * len_map
+                )
                 for consensus_label_map in consensus_labels_map:
                     if not consensus_label_map:
+                        index += 1
                         continue
                     label_map_data = await process_nifti_download(
                         consensus_labels,
