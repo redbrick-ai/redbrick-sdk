@@ -317,6 +317,8 @@ def dicom_rb_series(
 
         if label.get("linkid") is not None:
             label_obj["group"] = label["linkid"]
+        if label.get("readonly"):
+            label_obj["readOnly"] = label["readonly"]
 
         video_metadata: Dict[str, TaskType.VideoMetaData] = {}
         if (
