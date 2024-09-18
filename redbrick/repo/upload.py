@@ -146,7 +146,7 @@ class UploadRepo(UploadControllerInterface):
             "seriesInfo": series_info,
         }
         if meta_data:
-            query_variables["metaData"] = json.dumps(meta_data, indent=0)
+            query_variables["metaData"] = json.dumps(meta_data)
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables
         )
