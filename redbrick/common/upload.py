@@ -44,6 +44,7 @@ class UploadControllerInterface(ABC):
         task_id: str,
         items: List[str],
         series_info: Optional[List[Dict]] = None,
+        meta_data: Optional[Dict[str, str]] = None,
     ) -> Dict:
         """Update items in a datapoint."""
 

@@ -109,6 +109,7 @@ class UploadRepo(UploadControllerInterface):
         task_id: str,
         items: List[str],
         series_info: Optional[List[Dict]] = None,
+        meta_data: Optional[Dict[str, str]] = None,
     ) -> Dict:
         """Update items in a datapoint."""
         query_string = """
@@ -119,6 +120,7 @@ class UploadRepo(UploadControllerInterface):
                 $taskId: UUID!
                 $items: [String!]!
                 $seriesInfo: [SeriesInfoInput!]
+                $metaData: String
             ) {
                 updateTaskItems(
                     orgId: $orgId
@@ -127,6 +129,7 @@ class UploadRepo(UploadControllerInterface):
                     taskId: $taskId
                     items: $items
                     seriesInfo: $seriesInfo
+                    metaData: $metaData
                 ) {
                     ok
                     message
@@ -142,6 +145,8 @@ class UploadRepo(UploadControllerInterface):
             "items": items,
             "seriesInfo": series_info,
         }
+        if meta_data:
+            query_variables["metaData"] = json.dumps(meta_data, indent=0)
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables
         )
