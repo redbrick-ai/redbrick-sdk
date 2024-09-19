@@ -45,6 +45,7 @@ class LabelStage(Stage):
         auto_assignment: Optional[bool] = None
         auto_assignment_queue_size: Optional[int] = None
         show_uploaded_annotations: Optional[bool] = None
+        ro_label_edit_perm: Optional[str] = None
 
         @classmethod
         def from_entity(
@@ -61,6 +62,7 @@ class LabelStage(Stage):
                     if entity.get("blindedAnnotation") is None
                     else not entity["blindedAnnotation"]
                 ),
+                ro_label_edit_perm=entity.get("roLabelEditPerm"),
             )
 
         def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
@@ -72,6 +74,7 @@ class LabelStage(Stage):
                 entity["queueSize"] = self.auto_assignment_queue_size
             if self.show_uploaded_annotations is not None:
                 entity["blindedAnnotation"] = not self.show_uploaded_annotations
+            entity["roLabelEditPerm"] = self.ro_label_edit_perm
             return entity
 
     stage_name: str

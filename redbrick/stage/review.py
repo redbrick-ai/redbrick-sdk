@@ -50,6 +50,7 @@ class ReviewStage(Stage):
         review_percentage: Optional[float] = None
         auto_assignment: Optional[bool] = None
         auto_assignment_queue_size: Optional[int] = None
+        ro_label_edit_perm: Optional[str] = None
 
         @classmethod
         def from_entity(
@@ -62,6 +63,7 @@ class ReviewStage(Stage):
                 review_percentage=entity.get("reviewPercent"),
                 auto_assignment=entity.get("autoAssign"),
                 auto_assignment_queue_size=entity.get("queueSize"),
+                ro_label_edit_perm=entity.get("roLabelEditPerm"),
             )
 
         def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
@@ -73,6 +75,7 @@ class ReviewStage(Stage):
                 entity["autoAssign"] = self.auto_assignment
             if self.auto_assignment_queue_size is not None:
                 entity["queueSize"] = self.auto_assignment_queue_size
+            entity["roLabelEditPerm"] = self.ro_label_edit_perm
             return entity
 
     stage_name: str
