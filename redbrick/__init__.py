@@ -13,6 +13,7 @@ from redbrick.common.enums import (
     ImportTypes,
     TaskEventTypes,
     TaskFilters,
+    ProjectMemberRole,
 )
 from redbrick.common.constants import DEFAULT_URL
 from redbrick.organization import RBOrganization
@@ -240,6 +241,7 @@ __all__ = [
     "TaskTypes",
     "TaskEventTypes",
     "TaskFilters",
+    "ProjectMemberRole",
     "Stage",
     "LabelStage",
     "ReviewStage",

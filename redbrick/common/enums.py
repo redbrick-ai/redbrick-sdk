@@ -126,3 +126,17 @@ class TaskFilters(str, Enum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     ISSUES = "ISSUES"
+
+
+class ProjectMemberRole(str, Enum):
+    """Enumerate access levels for Project.
+
+    - ``ADMIN`` - Project Admin
+    - ``MANAGER`` - Project Manager
+    - ``LABELER`` - Project Labeler
+
+    """
+
+    ADMIN = "ADMIN"
+    MANAGER = "MANAGER"
+    LABELER = "LABELER"
