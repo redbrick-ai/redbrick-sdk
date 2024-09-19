@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import json
 from typing import Any, Dict, Optional, Union
 
+from redbrick.common.enums import ProjectMemberRole
 from redbrick.common.stage import Stage
 from redbrick.types.taxonomy import Taxonomy
 
@@ -40,11 +41,15 @@ class LabelStage(Stage):
 
         show_uploaded_annotations: Optional[bool]
             Show uploaded annotations to users. (Default: True)
+
+        read_only_labels_edit_access: Optional[ProjectMemberRole]
+            Access level to change the read only labels. (Default: None)
         """
 
         auto_assignment: Optional[bool] = None
         auto_assignment_queue_size: Optional[int] = None
         show_uploaded_annotations: Optional[bool] = None
+        read_only_labels_edit_access: Optional[ProjectMemberRole] = None
 
         @classmethod
         def from_entity(
@@ -61,6 +66,11 @@ class LabelStage(Stage):
                     if entity.get("blindedAnnotation") is None
                     else not entity["blindedAnnotation"]
                 ),
+                read_only_labels_edit_access=(
+                    ProjectMemberRole(entity.get("roLabelEditPerm"))
+                    if entity.get("roLabelEditPerm")
+                    else None
+                ),
             )
 
         def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
@@ -72,6 +82,8 @@ class LabelStage(Stage):
                 entity["queueSize"] = self.auto_assignment_queue_size
             if self.show_uploaded_annotations is not None:
                 entity["blindedAnnotation"] = not self.show_uploaded_annotations
+            if self.read_only_labels_edit_access:
+                entity["roLabelEditPerm"] = self.read_only_labels_edit_access.value
             return entity
 
     stage_name: str

@@ -118,6 +118,9 @@ class CommonLabelProps(TypedDict, total=False):
     #: Linked label group id.
     group: str
 
+    #: Read only status
+    readOnly: NotRequired[bool]
+
 
 SegmentMap = Dict[Union[str, int], Union[str, int, List[str], CommonLabelProps]]
 
@@ -137,6 +140,9 @@ class InstanceClassification(TypedDict):
     #: Linked label group id.
     group: NotRequired[str]
 
+    #: Read only status
+    readOnly: NotRequired[bool]
+
 
 class Classification(TypedDict):
     """Study or series classification."""
@@ -145,6 +151,9 @@ class Classification(TypedDict):
 
     #: Linked label group id.
     group: NotRequired[str]
+
+    #: Read only status
+    readOnly: NotRequired[bool]
 
 
 class Polyline(TypedDict):
@@ -158,6 +167,9 @@ class Polyline(TypedDict):
     #: Linked label group id.
     group: NotRequired[str]
 
+    #: Read only status
+    readOnly: NotRequired[bool]
+
 
 class Polygon(TypedDict):
     """Closed polygons, not supported in 3D images."""
@@ -170,6 +182,9 @@ class Polygon(TypedDict):
 
     #: Linked label group id.
     group: NotRequired[str]
+
+    #: Read only status
+    readOnly: NotRequired[bool]
 
 
 class Cuboid(TypedDict):
@@ -188,6 +203,9 @@ class Cuboid(TypedDict):
 
     #: Linked label group id.
     group: NotRequired[str]
+
+    #: Read only status
+    readOnly: NotRequired[bool]
 
 
 class BoundingBox(TypedDict):
@@ -214,6 +232,9 @@ class BoundingBox(TypedDict):
 
     #: Linked label group id.
     group: NotRequired[str]
+
+    #: Read only status
+    readOnly: NotRequired[bool]
 
 
 class Ellipse(TypedDict):
@@ -244,6 +265,9 @@ class Ellipse(TypedDict):
 
     #: Linked label group id.
     group: NotRequired[str]
+
+    #: Read only status
+    readOnly: NotRequired[bool]
 
 
 class MeasureAngle(TypedDict):
@@ -276,6 +300,9 @@ class MeasureAngle(TypedDict):
     #: Linked label group id.
     group: NotRequired[str]
 
+    #: Read only status
+    readOnly: NotRequired[bool]
+
 
 class MeasureLength(TypedDict):
     """
@@ -303,6 +330,9 @@ class MeasureLength(TypedDict):
     #: Linked label group id.
     group: NotRequired[str]
 
+    #: Read only status
+    readOnly: NotRequired[bool]
+
 
 class Landmark3D(TypedDict):
     """3D landmark for 3D data."""
@@ -313,6 +343,9 @@ class Landmark3D(TypedDict):
 
     #: Linked label group id.
     group: NotRequired[str]
+
+    #: Read only status
+    readOnly: NotRequired[bool]
 
 
 class Landmark(TypedDict):
@@ -325,6 +358,9 @@ class Landmark(TypedDict):
 
     #: Linked label group id.
     group: NotRequired[str]
+
+    #: Read only status
+    readOnly: NotRequired[bool]
 
 
 class ConsensusScore(TypedDict, total=False):
