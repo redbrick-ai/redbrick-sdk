@@ -42,8 +42,11 @@ class UploadControllerInterface(ABC):
         project_id: str,
         storage_id: str,
         task_id: str,
-        items: List[str],
+        items: Optional[List[str]] = None,
         series_info: Optional[List[Dict]] = None,
+        heat_maps: Optional[List[Dict]] = None,
+        transforms: Optional[List[Dict]] = None,
+        meta_data: Optional[str] = None,
     ) -> Dict:
         """Update items in a datapoint."""
 
