@@ -13,6 +13,7 @@ from redbrick.common.enums import (
     ImportTypes,
     TaskEventTypes,
     TaskFilters,
+    ProjectMemberRole,
 )
 from redbrick.common.constants import DEFAULT_URL
 from redbrick.organization import RBOrganization
@@ -28,7 +29,8 @@ from redbrick.types import task as TaskTypes, taxonomy as TaxonomyTypes
 from .config import config
 from .version_check import version_check
 
-__version__ = "2.18.5"
+
+__version__ = "2.18.6"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -239,6 +241,7 @@ __all__ = [
     "TaskTypes",
     "TaskEventTypes",
     "TaskFilters",
+    "ProjectMemberRole",
     "Stage",
     "LabelStage",
     "ReviewStage",

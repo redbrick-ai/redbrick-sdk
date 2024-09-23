@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import json
 from typing import Any, Dict, Optional, Union
 
+from redbrick.common.enums import ProjectMemberRole
 from redbrick.common.stage import Stage
 from redbrick.types.taxonomy import Taxonomy
 
@@ -45,11 +46,16 @@ class ReviewStage(Stage):
 
         auto_assignment_queue_size: Optional[int]
             Task auto-assignment queue size. (Default: 5)
+
+        read_only_labels_edit_access: Optional[ProjectMemberRole]
+            Access level to change the read only labels. (Default: None)
+
         """
 
         review_percentage: Optional[float] = None
         auto_assignment: Optional[bool] = None
         auto_assignment_queue_size: Optional[int] = None
+        read_only_labels_edit_access: Optional[ProjectMemberRole] = None
 
         @classmethod
         def from_entity(
@@ -62,6 +68,11 @@ class ReviewStage(Stage):
                 review_percentage=entity.get("reviewPercent"),
                 auto_assignment=entity.get("autoAssign"),
                 auto_assignment_queue_size=entity.get("queueSize"),
+                read_only_labels_edit_access=(
+                    ProjectMemberRole(entity.get("roLabelEditPerm"))
+                    if entity.get("roLabelEditPerm")
+                    else None
+                ),
             )
 
         def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
@@ -73,6 +84,8 @@ class ReviewStage(Stage):
                 entity["autoAssign"] = self.auto_assignment
             if self.auto_assignment_queue_size is not None:
                 entity["queueSize"] = self.auto_assignment_queue_size
+            if self.read_only_labels_edit_access:
+                entity["roLabelEditPerm"] = self.read_only_labels_edit_access.value
             return entity
 
     stage_name: str

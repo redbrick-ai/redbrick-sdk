@@ -72,7 +72,7 @@ class Upload:
             f"storage={storage_id}, gt={is_ground_truth}, label_storage={label_storage_id}, "
             + f"project_label_storage={project_label_storage_id}, validate={label_validate}"
         )
-        if storage_id == StorageMethod.REDBRICK:
+        if storage_id == StorageMethod.REDBRICK and point.get("items"):
             logger.debug("Uploading files to Redbrick")
             file_types, upload_items, presigned_items = [], [], []
             try:
@@ -168,11 +168,14 @@ class Upload:
                 "Task object must contain a valid `name`",
             )
             assert_validation(
-                "items" in point
-                and isinstance(point["items"], list)
-                and point["items"]
-                and all(
-                    map(lambda item: isinstance(item, str) and item, point["items"])
+                (update_items and "items" not in point)
+                or (
+                    "items" in point
+                    and isinstance(point["items"], list)
+                    and point["items"]
+                    and all(
+                        map(lambda item: isinstance(item, str) and item, point["items"])
+                    )
                 ),
                 "`items` must be a list of urls (one for image and multiple for videoframes)",
             )
@@ -203,7 +206,7 @@ class Upload:
                     self.project_id,
                     storage_id,
                     point["taskId"],
-                    point["items"],
+                    point.get("items"),
                     (
                         [
                             {
@@ -237,6 +240,13 @@ class Upload:
                             for series_info in point["seriesInfo"]
                         ]
                         if point.get("seriesInfo")
+                        else None
+                    ),
+                    point.get("heatMaps"),
+                    point.get("transforms"),
+                    (
+                        json.dumps(point["metaData"], separators=(",", ":"))
+                        if point.get("metaData")
                         else None
                     ),
                 )
@@ -906,10 +916,11 @@ class Upload:
                     if os.path.isfile(item_path):
                         item["items"][idx] = item_path
                     else:
-                        logger.warning(
-                            f"Could not find {path}. "
-                            + "Perhaps you forgot to supply the --storage argument"
-                        )
+                        if path != "test":
+                            logger.warning(
+                                f"Could not find {path}. "
+                                + "Perhaps you forgot to supply the --storage argument"
+                            )
                         break
 
                 for idx, heat_map in enumerate(item.get("heatMaps") or []):
@@ -940,7 +951,7 @@ class Upload:
         concurrency: int = 50,
     ) -> List[Dict]:
         """
-        Update items paths for the mentioned task ids.
+        Update task items, meta data, heat maps, transforms, etc. for the mentioned task ids.
 
         .. code:: python
 
@@ -981,6 +992,13 @@ class Upload:
             1. If doing direct upload, please use ``redbrick.StorageMethod.REDBRICK``
             as the storage id. Your items path must be a valid path to a locally stored image.
         """
+        for point in points:
+            point["series"] = point.get("series") or [{"name": "test", "items": "test"}]
+            for series in point["series"]:
+                if not series.get("items"):
+                    series["name"] = "test"
+                    series["items"] = "test"
+
         converted_points = self.prepare_json_files(
             [points],
             storage_id,
@@ -992,6 +1010,17 @@ class Upload:
             False,
             concurrency,
         )
+
+        no_items = False
+        for converted_point in converted_points:
+            if any(item == "test" for item in converted_point["items"]):
+                no_items = True
+                break
+
+        if no_items:
+            for converted_point in converted_points:
+                del converted_point["items"]
+
         return asyncio.run(
             self._create_tasks(
                 converted_points,
