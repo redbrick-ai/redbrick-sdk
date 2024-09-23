@@ -2,8 +2,7 @@
 
 import os
 import gzip
-import aiofiles  # type: ignore
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Set
+from typing import Any, Dict, List, Optional, Tuple, Set
 
 import asyncio
 import aiohttp
@@ -182,6 +181,9 @@ async def upload_files(
         status: int = 0
 
         headers = {"Content-Type": file_type}
+        request_params: Dict[str, Any] = {}
+        if not config.verify_ssl:
+            request_params["ssl"] = False
 
         try:
             for attempt in Retrying(
@@ -191,22 +193,19 @@ async def upload_files(
                 retry=retry_if_not_exception_type(KeyboardInterrupt),
             ):
                 with attempt:
-                    request_params: Dict[str, Any] = {
-                        "headers": headers,
-                    }
-                    if not config.verify_ssl:
-                        request_params["ssl"] = False
-
                     with open(path, "rb") as file:
                         gzipped = is_gzipped_file(path)
                         zippable = not gzipped and file_type != DICOM_FILE_TYPES[""]
-                        if gzipped or zippable:
+                        if zippable:
                             headers["Content-Encoding"] = "gzip"
                         async with session.put(
                             url,
                             headers=headers,
-                            data=(gzip.compress(file.read()) if zippable else file),
+                            data=(
+                                gzip.compress(file.read()) if zippable else file.read()
+                            ),
                             timeout=aiohttp.ClientTimeout(connect=60),
+                            **request_params,
                         ) as response:
                             status = response.status
         except RetryError as error:
