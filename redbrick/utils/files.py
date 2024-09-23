@@ -2,7 +2,8 @@
 
 import os
 import gzip
-from typing import Any, Dict, List, Optional, Tuple, Set
+import aiofiles  # type: ignore
+from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Set
 
 import asyncio
 import aiohttp
@@ -147,6 +148,13 @@ def is_gzipped_data(data: bytes) -> bool:
     return data[:2] == b"\x1f\x8b"
 
 
+def is_gzipped_file(path: str) -> bool:
+    """Check if a file is gzipped by reading the magic number."""
+    with open(path, "rb") as f:
+        magic_number = f.read(2)
+    return magic_number == b"\x1f\x8b"
+
+
 def is_dicom_file(file_name: str) -> bool:
     """Check if data is dicom."""
     with open(file_name, "rb") as fp_:
@@ -171,15 +179,9 @@ async def upload_files(
         if not path or not url or not file_type:
             return False
 
-        with open(path, mode="rb") as file_:
-            data = file_.read()
-
         status: int = 0
 
         headers = {"Content-Type": file_type}
-        if not is_gzipped_data(data) and file_type != DICOM_FILE_TYPES[""]:
-            headers["Content-Encoding"] = "gzip"
-            data = gzip.compress(data)
 
         try:
             for attempt in Retrying(
@@ -191,12 +193,22 @@ async def upload_files(
                 with attempt:
                     request_params: Dict[str, Any] = {
                         "headers": headers,
-                        "data": data,
                     }
                     if not config.verify_ssl:
                         request_params["ssl"] = False
-                    async with session.put(url, **request_params) as response:
-                        status = response.status
+
+                    with open(path, "rb") as file:
+                        gzipped = is_gzipped_file(path)
+                        zippable = not gzipped and file_type != DICOM_FILE_TYPES[""]
+                        if gzipped or zippable:
+                            headers["Content-Encoding"] = "gzip"
+                        async with session.put(
+                            url,
+                            headers=headers,
+                            data=(gzip.compress(file.read()) if zippable else file),
+                            timeout=aiohttp.ClientTimeout(connect=60),
+                        ) as response:
+                            status = response.status
         except RetryError as error:
             raise Exception("Unknown problem occurred") from error
 
