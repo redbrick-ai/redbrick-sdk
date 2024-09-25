@@ -164,6 +164,8 @@ async def upload_files(
     keep_progress_bar: bool = True,
 ) -> List[bool]:
     """Upload files from local path to url (file path, presigned url, file type)."""
+    timeout = aiohttp.ClientTimeout(connect=60)
+    verify_ssl = config.verify_ssl
 
     async def _upload_file(
         session: aiohttp.ClientSession, path: str, url: str, file_type: str
@@ -171,15 +173,13 @@ async def upload_files(
         if not path or not url or not file_type:
             return False
 
-        with open(path, mode="rb") as file_:
-            data = file_.read()
-
         status: int = 0
-
-        headers = {"Content-Type": file_type}
-        if not is_gzipped_data(data) and file_type != DICOM_FILE_TYPES[""]:
-            headers["Content-Encoding"] = "gzip"
-            data = gzip.compress(data)
+        request_params: aiohttp.client._RequestOptions = {
+            "timeout": timeout,
+            "headers": {"Content-Type": file_type},
+        }
+        if not verify_ssl:
+            request_params["ssl"] = False
 
         try:
             for attempt in Retrying(
@@ -189,19 +189,16 @@ async def upload_files(
                 retry=retry_if_not_exception_type(KeyboardInterrupt),
             ):
                 with attempt:
-                    request_params: Dict[str, Any] = {
-                        "headers": headers,
-                        "data": data,
-                    }
-                    if not config.verify_ssl:
-                        request_params["ssl"] = False
-                    async with session.put(url, **request_params) as response:
-                        status = response.status
+                    with open(path, "rb") as f_:
+                        request_params["data"] = f_
+                        async with session.put(url, **request_params) as response:
+                            status = response.status
         except RetryError as error:
             raise Exception("Unknown problem occurred") from error
 
         if status == 200:
             return True
+
         raise ConnectionError(f"Error in uploading {path} to RedBrick")
 
     conn = aiohttp.TCPConnector()
