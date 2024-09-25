@@ -457,11 +457,15 @@ def dicom_rb_series(
                     "type": "length",
                     "point1": dict(zip("ijk", label["length3d"]["point1"])),
                     "point2": dict(zip("ijk", label["length3d"]["point2"])),
-                    "absolutePoint1": dict(
-                        zip("xyz", label["length3d"]["computedpoint1world"])
+                    "absolutePoint1": (
+                        dict(zip("xyz", label["length3d"]["computedpoint1world"]))
+                        if label["length3d"]["computedpoint1world"]
+                        else None
                     ),
-                    "absolutePoint2": dict(
-                        zip("xyz", label["length3d"]["computedpoint2world"])
+                    "absolutePoint2": (
+                        dict(zip("xyz", label["length3d"]["computedpoint2world"]))
+                        if label["length3d"]["computedpoint2world"]
+                        else None
                     ),
                     "normal": label["length3d"]["normal"],
                     "length": label["length3d"]["computedlength"],
@@ -476,14 +480,20 @@ def dicom_rb_series(
                     "point1": dict(zip("ijk", label["angle3d"]["point1"])),
                     "vertex": dict(zip("ijk", label["angle3d"]["point2"])),
                     "point2": dict(zip("ijk", label["angle3d"]["point3"])),
-                    "absolutePoint1": dict(
-                        zip("xyz", label["angle3d"]["computedpoint1world"])
+                    "absolutePoint1": (
+                        dict(zip("xyz", label["angle3d"]["computedpoint1world"]))
+                        if label["angle3d"]["computedpoint1world"]
+                        else None
                     ),
-                    "absoluteVertex": dict(
-                        zip("xyz", label["angle3d"]["computedpoint2world"])
+                    "absoluteVertex": (
+                        dict(zip("xyz", label["angle3d"]["computedpoint2world"]))
+                        if label["angle3d"]["computedpoint2world"]
+                        else None
                     ),
-                    "absolutePoint2": dict(
-                        zip("xyz", label["angle3d"]["computedpoint3world"])
+                    "absolutePoint2": (
+                        dict(zip("xyz", label["angle3d"]["computedpoint3world"]))
+                        if label["angle3d"]["computedpoint2world"]
+                        else None
                     ),
                     "normal": label["angle3d"]["normal"],
                     "angle": label["angle3d"]["computedangledeg"],
@@ -563,11 +573,15 @@ def dicom_rb_series(
                 {
                     "point1": dict(zip("ijk", label["cuboid"]["point1"])),
                     "point2": dict(zip("ijk", label["cuboid"]["point2"])),
-                    "absolutePoint1": dict(
-                        zip("xyz", label["cuboid"]["computedpoint1world"])
+                    "absolutePoint1": (
+                        dict(zip("xyz", label["cuboid"]["computedpoint1world"]))
+                        if label["cuboid"]["computedpoint1world"]
+                        else None
                     ),
-                    "absolutePoint2": dict(
-                        zip("xyz", label["cuboid"]["computedpoint2world"])
+                    "absolutePoint2": (
+                        dict(zip("xyz", label["cuboid"]["computedpoint2world"]))
+                        if label["cuboid"]["computedpoint2world"]
+                        else None
                     ),
                     **label_obj,  # type: ignore
                     **measurement_stats,  # type: ignore
