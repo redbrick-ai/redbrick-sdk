@@ -293,7 +293,7 @@ class MeasureAngle(TypedDict):
     """
 
     #: Measurement angle in degrees.
-    angle: float
+    angle: Optional[float]
     category: Category
     attributes: NotRequired[Attributes]
 
