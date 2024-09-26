@@ -54,6 +54,24 @@ def assignee_format(
     return assignee
 
 
+def get_world_point(point: List[float]) -> TaskType.WorldPoint:
+    """Get the WorldPoint from a point."""
+    return {
+        "x": point[0],
+        "y": point[1],
+        "z": point[2],
+    }
+
+
+def get_voxel_point(point: List[int]) -> TaskType.VoxelPoint:
+    """Get the VoxelPoint from a point."""
+    return {
+        "i": point[0],
+        "j": point[1],
+        "k": point[2],
+    }
+
+
 def from_rb_task_data(task_data: Dict) -> Dict:
     """Get object from task data."""
     return {
@@ -454,18 +472,18 @@ def dicom_rb_series(
             measurements = volume.get("measurements", [])
             measurement: TaskType.MeasureLength = {
                 "type": "length",
-                "point1": dict(zip("ijk", label["length3d"]["point1"])),  # type: ignore
-                "point2": dict(zip("ijk", label["length3d"]["point2"])),  # type: ignore
+                "point1": get_voxel_point(label["length3d"]["point1"]),
+                "point2": get_voxel_point(label["length3d"]["point2"]),
                 "normal": label["length3d"]["normal"],
                 **label_obj,  # type: ignore
             }
             if label["length3d"].get("computedpoint1world"):
-                measurement["absolutePoint1"] = dict(  # type: ignore
-                    zip("xyz", label["length3d"]["computedpoint1world"])
+                measurement["absolutePoint1"] = get_world_point(
+                    label["length3d"]["computedpoint1world"]
                 )
             if label["length3d"].get("computedpoint2world"):
-                measurement["absolutePoint2"] = dict(  # type: ignore
-                    zip("xyz", label["length3d"]["computedpoint2world"])
+                measurement["absolutePoint2"] = get_world_point(
+                    label["length3d"]["computedpoint2world"]
                 )
             if label["length3d"].get("computedlength"):
                 measurement["length"] = label["length3d"]["computedlength"]
@@ -474,24 +492,24 @@ def dicom_rb_series(
             volume["measurements"] = volume.get("measurements", [])
             measurement_angle: TaskType.MeasureAngle = {
                 "type": "angle",
-                "point1": dict(zip("ijk", label["angle3d"]["point1"])),  # type: ignore
-                "vertex": dict(zip("ijk", label["angle3d"]["point2"])),  # type: ignore
-                "point2": dict(zip("ijk", label["angle3d"]["point3"])),  # type: ignore
+                "point1": get_voxel_point(label["angle3d"]["point1"]),
+                "vertex": get_voxel_point(label["angle3d"]["point2"]),
+                "point2": get_voxel_point(label["angle3d"]["point3"]),
                 "normal": label["angle3d"]["normal"],
                 **label_obj,  # type: ignore
             }
-            if label["angle3d"]["computedpoint1world"]:
-                measurement_angle["absolutePoint1"] = dict(
-                    zip("xyz", label["angle3d"]["computedpoint1world"])
-                )  # type: ignore
-            if label["angle3d"]["computedpoint2world"]:
-                measurement_angle["absoluteVertex"] = dict(
-                    zip("xyz", label["angle3d"]["computedpoint2world"])
-                )  # type: ignore
-            if label["angle3d"]["computedpoint2world"]:
-                measurement_angle["absolutePoint2"] = dict(
-                    zip("xyz", label["angle3d"]["computedpoint3world"])
-                )  # type: ignore
+            if label["angle3d"].get("computedpoint1world"):
+                measurement_angle["absolutePoint1"] = get_world_point(
+                    label["angle3d"]["computedpoint1world"]
+                )
+            if label["angle3d"].get("computedpoint2world"):
+                measurement_angle["absoluteVertex"] = get_world_point(
+                    label["angle3d"]["computedpoint2world"]
+                )
+            if label["angle3d"].get("computedpoint3world"):
+                measurement_angle["absolutePoint2"] = get_world_point(
+                    label["angle3d"]["computedpoint3world"]
+                )
             if label["angle3d"].get("computedangledeg"):
                 measurement_angle["angle"] = label["angle3d"]["computedangledeg"]
             volume["measurements"].append(measurement_angle)
@@ -565,15 +583,19 @@ def dicom_rb_series(
         elif label.get("cuboid"):
             volume["cuboids"] = volume.get("cuboids", [])
             cuboid: TaskType.Cuboid = {
-                "point1": dict(zip("ijk", label["cuboid"]["point1"])),
-                "point2": dict(zip("ijk", label["cuboid"]["point2"])),
+                "point1": get_voxel_point(label["cuboid"]["point1"]),
+                "point2": get_voxel_point(label["cuboid"]["point2"]),
                 **label_obj,  # type: ignore
                 **measurement_stats,  # type: ignore
             }
             if label["cuboid"].get("computedpoint1world"):
-                cuboid["absolutePoint1"] = dict(zip("xyz", label["cuboid"]["computedpoint1world"]))  # type: ignore
+                cuboid["absolutePoint1"] = get_world_point(
+                    label["cuboid"]["computedpoint1world"]
+                )
             if label["cuboid"].get("computedpoint2world"):
-                cuboid["absolutePoint2"] = dict(zip("xyz", label["cuboid"]["computedpoint2world"]))  # type: ignore
+                cuboid["absolutePoint2"] = get_world_point(
+                    label["cuboid"]["computedpoint2world"]
+                )
             volume["cuboids"].append(cuboid)
         elif label.get("polygon"):
             volume["polygons"] = volume.get("polygons", [])

@@ -195,8 +195,8 @@ class Cuboid(TypedDict):
 
     #: Bottom right diagonal corner.
     point2: VoxelPoint
-    absolutePoint1: Optional[WorldPoint]
-    absolutePoint2: Optional[WorldPoint]
+    absolutePoint1: NotRequired[WorldPoint]
+    absolutePoint2: NotRequired[WorldPoint]
     category: Category
     attributes: NotRequired[Attributes]
     stats: NotRequired[MeasurementStats]
@@ -283,9 +283,9 @@ class MeasureAngle(TypedDict):
     point1: VoxelPoint
     vertex: VoxelPoint
     point2: VoxelPoint
-    absolutePoint1: Optional[WorldPoint]
-    absoluteVertex: Optional[WorldPoint]
-    absolutePoint2: Optional[WorldPoint]
+    absolutePoint1: NotRequired[WorldPoint]
+    absoluteVertex: NotRequired[WorldPoint]
+    absolutePoint2: NotRequired[WorldPoint]
     normal: List[float]
     """
     Measurements can be made on oblique planes. `normal` defines the normal unit vector to the slice on which the annotation was made. For annotations made on non-oblique planes, the normal will be [0,0,1].
@@ -293,7 +293,7 @@ class MeasureAngle(TypedDict):
     """
 
     #: Measurement angle in degrees.
-    angle: Optional[float]
+    angle: NotRequired[float]
     category: Category
     attributes: NotRequired[Attributes]
 
@@ -314,8 +314,8 @@ class MeasureLength(TypedDict):
     type: Literal["length"]
     point1: VoxelPoint
     point2: VoxelPoint
-    absolutePoint1: Optional[WorldPoint]
-    absolutePoint2: Optional[WorldPoint]
+    absolutePoint1: NotRequired[WorldPoint]
+    absolutePoint2: NotRequired[WorldPoint]
     normal: List[float]
     """
     Measurements can be made on oblique planes. `normal` defines the normal unit vector to the slice on which the annotation was made. For annotations made on non-oblique planes, the normal will be [0,0,1].
@@ -323,7 +323,7 @@ class MeasureLength(TypedDict):
     """
 
     #: The value of the measurement in millimeters.
-    length: float
+    length: NotRequired[float]
     category: Category
     attributes: NotRequired[Attributes]
 
