@@ -147,13 +147,6 @@ def is_gzipped_data(data: bytes) -> bool:
     return data[:2] == b"\x1f\x8b"
 
 
-def is_gzipped_file(path: str) -> bool:
-    """Check if a file is gzipped by reading the magic number."""
-    with open(path, "rb") as f:
-        magic_number = f.read(2)
-    return magic_number == b"\x1f\x8b"
-
-
 def is_dicom_file(file_name: str) -> bool:
     """Check if data is dicom."""
     with open(file_name, "rb") as fp_:
@@ -171,6 +164,8 @@ async def upload_files(
     keep_progress_bar: bool = True,
 ) -> List[bool]:
     """Upload files from local path to url (file path, presigned url, file type)."""
+    timeout = aiohttp.ClientTimeout(connect=60)
+    verify_ssl = config.verify_ssl
 
     async def _upload_file(
         session: aiohttp.ClientSession, path: str, url: str, file_type: str
@@ -179,10 +174,11 @@ async def upload_files(
             return False
 
         status: int = 0
-
-        headers = {"Content-Type": file_type}
-        request_params: Dict[str, Any] = {}
-        if not config.verify_ssl:
+        request_params: aiohttp.client._RequestOptions = {
+            "timeout": timeout,
+            "headers": {"Content-Type": file_type},
+        }
+        if not verify_ssl:
             request_params["ssl"] = False
 
         try:
@@ -193,26 +189,16 @@ async def upload_files(
                 retry=retry_if_not_exception_type(KeyboardInterrupt),
             ):
                 with attempt:
-                    with open(path, "rb") as file:
-                        gzipped = is_gzipped_file(path)
-                        zippable = not gzipped and file_type != DICOM_FILE_TYPES[""]
-                        if zippable:
-                            headers["Content-Encoding"] = "gzip"
-                        async with session.put(
-                            url,
-                            headers=headers,
-                            data=(
-                                gzip.compress(file.read()) if zippable else file.read()
-                            ),
-                            timeout=aiohttp.ClientTimeout(connect=60),
-                            **request_params,
-                        ) as response:
+                    with open(path, "rb") as f_:
+                        request_params["data"] = f_
+                        async with session.put(url, **request_params) as response:
                             status = response.status
         except RetryError as error:
             raise Exception("Unknown problem occurred") from error
 
         if status == 200:
             return True
+
         raise ConnectionError(f"Error in uploading {path} to RedBrick")
 
     conn = aiohttp.TCPConnector()
