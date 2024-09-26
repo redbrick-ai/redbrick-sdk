@@ -451,55 +451,50 @@ def dicom_rb_series(
                     cur_series["segmentMap"][instance] = segment_map_instance
 
         elif label.get("length3d"):
-            volume["measurements"] = volume.get("measurements", [])
-            volume["measurements"].append(
-                {
-                    "type": "length",
-                    "point1": dict(zip("ijk", label["length3d"]["point1"])),
-                    "point2": dict(zip("ijk", label["length3d"]["point2"])),
-                    "absolutePoint1": (
-                        dict(zip("xyz", label["length3d"]["computedpoint1world"]))
-                        if label["length3d"]["computedpoint1world"]
-                        else None
-                    ),
-                    "absolutePoint2": (
-                        dict(zip("xyz", label["length3d"]["computedpoint2world"]))
-                        if label["length3d"]["computedpoint2world"]
-                        else None
-                    ),
-                    "normal": label["length3d"]["normal"],
-                    "length": label["length3d"]["computedlength"],
-                    **label_obj,  # type: ignore
-                }
-            )
+            measurements = volume.get("measurements", [])
+            measurement: TaskType.MeasureLength = {
+                "type": "length",
+                "point1": dict(zip("ijk", label["length3d"]["point1"])),  # type: ignore
+                "point2": dict(zip("ijk", label["length3d"]["point2"])),  # type: ignore
+                "normal": label["length3d"]["normal"],
+                **label_obj,  # type: ignore
+            }
+            if label["length3d"].get("computedpoint1world"):
+                measurement["absolutePoint1"] = dict(  # type: ignore
+                    zip("xyz", label["length3d"]["computedpoint1world"])
+                )
+            if label["length3d"].get("computedpoint2world"):
+                measurement["absolutePoint2"] = dict(  # type: ignore
+                    zip("xyz", label["length3d"]["computedpoint2world"])
+                )
+            if label["length3d"].get("computedlength"):
+                measurement["length"] = label["length3d"]["computedlength"]
+            measurements.append(measurement)
         elif label.get("angle3d"):
             volume["measurements"] = volume.get("measurements", [])
-            volume["measurements"].append(
-                {
-                    "type": "angle",
-                    "point1": dict(zip("ijk", label["angle3d"]["point1"])),
-                    "vertex": dict(zip("ijk", label["angle3d"]["point2"])),
-                    "point2": dict(zip("ijk", label["angle3d"]["point3"])),
-                    "absolutePoint1": (
-                        dict(zip("xyz", label["angle3d"]["computedpoint1world"]))
-                        if label["angle3d"]["computedpoint1world"]
-                        else None
-                    ),
-                    "absoluteVertex": (
-                        dict(zip("xyz", label["angle3d"]["computedpoint2world"]))
-                        if label["angle3d"]["computedpoint2world"]
-                        else None
-                    ),
-                    "absolutePoint2": (
-                        dict(zip("xyz", label["angle3d"]["computedpoint3world"]))
-                        if label["angle3d"]["computedpoint2world"]
-                        else None
-                    ),
-                    "normal": label["angle3d"]["normal"],
-                    "angle": label["angle3d"]["computedangledeg"],
-                    **label_obj,  # type: ignore
-                }
-            )
+            measurement_angle: TaskType.MeasureAngle = {
+                "type": "angle",
+                "point1": dict(zip("ijk", label["angle3d"]["point1"])),  # type: ignore
+                "vertex": dict(zip("ijk", label["angle3d"]["point2"])),  # type: ignore
+                "point2": dict(zip("ijk", label["angle3d"]["point3"])),  # type: ignore
+                "normal": label["angle3d"]["normal"],
+                **label_obj,  # type: ignore
+            }
+            if label["angle3d"]["computedpoint1world"]:
+                measurement_angle["absolutePoint1"] = dict(
+                    zip("xyz", label["angle3d"]["computedpoint1world"])
+                )  # type: ignore
+            if label["angle3d"]["computedpoint2world"]:
+                measurement_angle["absoluteVertex"] = dict(
+                    zip("xyz", label["angle3d"]["computedpoint2world"])
+                )  # type: ignore
+            if label["angle3d"]["computedpoint2world"]:
+                measurement_angle["absolutePoint2"] = dict(
+                    zip("xyz", label["angle3d"]["computedpoint3world"])
+                )  # type: ignore
+            if label["angle3d"].get("computedangledeg"):
+                measurement_angle["angle"] = label["angle3d"]["computedangledeg"]
+            volume["measurements"].append(measurement_angle)
         elif label.get("point"):
             volume["landmarks"] = volume.get("landmarks", [])
             volume["landmarks"].append(
@@ -569,24 +564,17 @@ def dicom_rb_series(
             )
         elif label.get("cuboid"):
             volume["cuboids"] = volume.get("cuboids", [])
-            volume["cuboids"].append(
-                {
-                    "point1": dict(zip("ijk", label["cuboid"]["point1"])),
-                    "point2": dict(zip("ijk", label["cuboid"]["point2"])),
-                    "absolutePoint1": (
-                        dict(zip("xyz", label["cuboid"]["computedpoint1world"]))
-                        if label["cuboid"]["computedpoint1world"]
-                        else None
-                    ),
-                    "absolutePoint2": (
-                        dict(zip("xyz", label["cuboid"]["computedpoint2world"]))
-                        if label["cuboid"]["computedpoint2world"]
-                        else None
-                    ),
-                    **label_obj,  # type: ignore
-                    **measurement_stats,  # type: ignore
-                }
-            )
+            cuboid: TaskType.Cuboid = {
+                "point1": dict(zip("ijk", label["cuboid"]["point1"])),
+                "point2": dict(zip("ijk", label["cuboid"]["point2"])),
+                **label_obj,  # type: ignore
+                **measurement_stats,  # type: ignore
+            }
+            if label["cuboid"].get("computedpoint1world"):
+                cuboid["absolutePoint1"] = dict(zip("xyz", label["cuboid"]["computedpoint1world"]))  # type: ignore
+            if label["cuboid"].get("computedpoint2world"):
+                cuboid["absolutePoint2"] = dict(zip("xyz", label["cuboid"]["computedpoint2world"]))  # type: ignore
+            volume["cuboids"].append(cuboid)
         elif label.get("polygon"):
             volume["polygons"] = volume.get("polygons", [])
             volume["polygons"].append(
