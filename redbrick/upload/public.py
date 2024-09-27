@@ -995,12 +995,9 @@ class Upload:
         """
         local_points = deepcopy(points)
         for point in local_points:
-            point["series"] = point.get("series") or [
-                {"name": "test", "items": DUMMY_FILE_PATH}
-            ]
+            point["series"] = point.get("series") or [{"items": DUMMY_FILE_PATH}]
             for series in point["series"]:
                 if not series.get("items"):
-                    series["name"] = "test"
                     series["items"] = DUMMY_FILE_PATH
 
         converted_points = self.prepare_json_files(
@@ -1287,11 +1284,8 @@ class Upload:
                 continue
 
             point["name"] = point.get("name", "test")
-            point["series"] = point.get("series") or [
-                {"name": "test", "items": DUMMY_FILE_PATH}
-            ]
+            point["series"] = point.get("series") or [{"items": DUMMY_FILE_PATH}]
             for series in point.get("series", []):
-                series["name"] = series.get("name", "test")
                 series["items"] = series.get("items", DUMMY_FILE_PATH)
             points.append(point)
 
