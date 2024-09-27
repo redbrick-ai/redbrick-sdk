@@ -9,6 +9,7 @@ from copy import deepcopy
 
 import aiohttp
 
+from redbrick.common.constants import DUMMY_FILE_PATH
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
 from redbrick.stage import Stage
@@ -306,16 +307,16 @@ class Labeling:
             elif point.get("classification") or (isinstance(point.get("series"), list)):
                 point["name"] = "test"
                 point["series"] = point.get("series") or [
-                    {"name": "test", "items": "test"}
+                    {"name": "test", "items": DUMMY_FILE_PATH}
                 ]
                 for series in point["series"]:
                     series["name"] = "test"
-                    series["items"] = "test"
+                    series["items"] = DUMMY_FILE_PATH
                 with_labels.append(point)
             # Submitted/Corrected (Old label format)
             elif isinstance(point.get("labels"), list):
                 point["name"] = "test"
-                point["items"] = ["test"]  # type: ignore
+                point["items"] = [DUMMY_FILE_PATH]  # type: ignore
                 with_labels.append(point)
             # Accepted
             elif self.review and review_result:

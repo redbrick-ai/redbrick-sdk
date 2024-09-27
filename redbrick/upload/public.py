@@ -15,7 +15,7 @@ import tqdm  # type: ignore
 
 from redbrick.config import config
 from redbrick.common.context import RBContext
-from redbrick.common.constants import MAX_CONCURRENCY
+from redbrick.common.constants import DUMMY_FILE_PATH, MAX_CONCURRENCY
 from redbrick.common.enums import ImportTypes, StorageMethod
 from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.async_utils import gather_with_concurrency, return_value
@@ -215,6 +215,7 @@ class Upload:
                                     for series_key, series_val in series_info.items()
                                     if series_key
                                     not in (
+                                        "itemsIndices",
                                         "binaryMask",
                                         "semanticMask",
                                         "pngMask",
@@ -916,7 +917,7 @@ class Upload:
                     if os.path.isfile(item_path):
                         item["items"][idx] = item_path
                     else:
-                        if path != "test":
+                        if path != DUMMY_FILE_PATH:
                             logger.warning(
                                 f"Could not find {path}. "
                                 + "Perhaps you forgot to supply the --storage argument"
@@ -992,15 +993,18 @@ class Upload:
             1. If doing direct upload, please use ``redbrick.StorageMethod.REDBRICK``
             as the storage id. Your items path must be a valid path to a locally stored image.
         """
-        for point in points:
-            point["series"] = point.get("series") or [{"name": "test", "items": "test"}]
+        local_points = deepcopy(points)
+        for point in local_points:
+            point["series"] = point.get("series") or [
+                {"name": "test", "items": DUMMY_FILE_PATH}
+            ]
             for series in point["series"]:
                 if not series.get("items"):
                     series["name"] = "test"
-                    series["items"] = "test"
+                    series["items"] = DUMMY_FILE_PATH
 
         converted_points = self.prepare_json_files(
-            [points],
+            [local_points],
             storage_id,
             StorageMethod.REDBRICK,
             None,
@@ -1013,7 +1017,7 @@ class Upload:
 
         no_items = False
         for converted_point in converted_points:
-            if any(item == "test" for item in converted_point["items"]):
+            if any(item == DUMMY_FILE_PATH for item in converted_point["items"]):
                 no_items = True
                 break
 
@@ -1283,10 +1287,12 @@ class Upload:
                 continue
 
             point["name"] = point.get("name", "test")
-            point["series"] = point.get("series") or [{"name": "test", "items": "test"}]
+            point["series"] = point.get("series") or [
+                {"name": "test", "items": DUMMY_FILE_PATH}
+            ]
             for series in point.get("series", []):
                 series["name"] = series.get("name", "test")
-                series["items"] = series.get("items", "test")
+                series["items"] = series.get("items", DUMMY_FILE_PATH)
             points.append(point)
 
         if not points:

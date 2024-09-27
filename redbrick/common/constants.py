@@ -16,3 +16,5 @@ PEERLESS_ERRORS = (
     SystemError,
     SystemExit,
 )
+
+DUMMY_FILE_PATH = "https://test"
