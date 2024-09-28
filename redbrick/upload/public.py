@@ -948,7 +948,7 @@ class Upload:
     def update_task_items(
         self,
         storage_id: str,
-        points: List[InputTask],
+        points: List[OutputTask],
         concurrency: int = 50,
     ) -> List[Dict]:
         """
@@ -1001,7 +1001,7 @@ class Upload:
                     series["items"] = DUMMY_FILE_PATH
 
         converted_points = self.prepare_json_files(
-            [local_points],
+            [local_points],  # type: ignore
             storage_id,
             StorageMethod.REDBRICK,
             None,

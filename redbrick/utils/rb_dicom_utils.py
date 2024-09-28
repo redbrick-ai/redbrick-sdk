@@ -5,6 +5,7 @@ import json
 from copy import deepcopy
 
 from redbrick.types import task as TaskType
+from redbrick.utils.logging import logger
 
 
 def dicom_dp_format(datapoint: Dict) -> Dict:
@@ -12,9 +13,17 @@ def dicom_dp_format(datapoint: Dict) -> Dict:
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals, unused-argument
 
     if not datapoint.get("seriesInfo"):
-        datapoint["seriesInfo"] = [
-            {"itemsIndices": list(range(len(datapoint["items"])))}
-        ]
+        datapoint["seriesInfo"] = [{}]
+    if any(not series.get("itemsIndices") for series in datapoint["seriesInfo"]):
+        datapoint["seriesInfo"][0]["itemsIndices"] = list(
+            range(len(datapoint["items"]))
+        )
+        if len(datapoint["seriesInfo"]) > 1:
+            logger.warning(
+                f"{datapoint['dpId']} - Putting all items in first series since split is unknown"
+            )
+            for series in datapoint["seriesInfo"][1:]:
+                series["itemsIndices"] = []
 
     output: Dict = {"dpId": datapoint["dpId"], "name": "", "series": []}
 

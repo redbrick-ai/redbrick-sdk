@@ -9,6 +9,7 @@ from redbrick.common.enums import StorageMethod
 from redbrick.stage import ReviewStage
 from redbrick.types import task as TaskType
 from redbrick.types.taxonomy import Taxonomy
+from redbrick.utils.logging import logger
 
 
 def clean_rb_label(label: Dict) -> Dict:
@@ -640,7 +641,15 @@ def dicom_rb_format(
         return {key: value for key, value in task.items() if key not in keys}  # type: ignore
 
     if not task.get("seriesInfo"):
-        task["seriesInfo"] = [{"itemsIndices": list(range(len(task["items"])))}]
+        task["seriesInfo"] = [{}]
+    if any(not series.get("itemsIndices") for series in task["seriesInfo"]):
+        task["seriesInfo"][0]["itemsIndices"] = list(range(len(task["items"])))
+        if len(task["seriesInfo"]) > 1:
+            logger.warning(
+                f"{task['taskId']} - Putting all items in first series since split is unknown"
+            )
+            for series in task["seriesInfo"][1:]:
+                series["itemsIndices"] = []
 
     output: TaskType.OutputTask = {"taskId": task["taskId"], "name": "", "series": []}
 
