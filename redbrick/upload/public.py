@@ -215,7 +215,6 @@ class Upload:
                                     for series_key, series_val in series_info.items()
                                     if series_key
                                     not in (
-                                        "itemsIndices",
                                         "binaryMask",
                                         "semanticMask",
                                         "pngMask",
@@ -1012,15 +1011,15 @@ class Upload:
             concurrency,
         )
 
-        no_items = False
         for converted_point in converted_points:
-            if any(item == DUMMY_FILE_PATH for item in converted_point["items"]):
-                no_items = True
-                break
-
-        if no_items:
-            for converted_point in converted_points:
-                del converted_point["items"]
+            if not any(
+                item == DUMMY_FILE_PATH
+                for item in (converted_point.get("items", []) or [])
+            ):
+                continue
+            converted_point.pop("items", None)
+            for info in converted_point.get("seriesInfo", []) or []:
+                info.pop("itemsIndices", None)
 
         return asyncio.run(
             self._create_tasks(
