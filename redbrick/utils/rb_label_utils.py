@@ -709,12 +709,29 @@ def dicom_rb_format(
 
     output["series"] = deepcopy(volume_series)
     heat_maps = task.get("heatMaps") or []
-    for item in heat_maps:
-        series_index: int = item.get("seriesIndex")
+    for heat_map in heat_maps:
+        series_index: int = heat_map.get("seriesIndex")
         if output["series"][series_index].get("heatMaps"):
-            output["series"][series_index]["heatMaps"].append(item)
+            output["series"][series_index]["heatMaps"].append(heat_map)
         else:
-            output["series"][series_index]["heatMaps"] = [item]
+            output["series"][series_index]["heatMaps"] = [heat_map]
+    transforms = task.get("transforms") or []
+    for linear_tranform in transforms:
+        # linear_transform is an array of size 16
+        matrix_tranform: List[List[float]] = []
+        matrix_tranform = [
+            linear_tranform.get("transform")[i : i + 4]
+            for i in range(0, len(linear_tranform.get("transform")), 4)
+        ]
+        series_index = linear_tranform.get("seriesIndex")
+        if output["series"][series_index].get("transforms"):
+            output["series"][series_index]["transforms"].append(
+                {"transform": matrix_tranform}
+            )
+        else:
+            output["series"][series_index]["transforms"] = [
+                {"transform": matrix_tranform}
+            ]
     if no_consensus:
         if task.get("consensusTasks"):
             consensus_task = task["consensusTasks"][0]
