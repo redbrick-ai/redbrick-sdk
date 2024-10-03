@@ -154,6 +154,8 @@ def flat_rb_format(
     storage_id: str,
     label_storage_id: Optional[str],
     current_stage_sub_task: Optional[Dict],
+    heatmaps: Optional[List[Dict[str, str]]],
+    transforms: Optional[List[Dict]],
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-locals
@@ -174,6 +176,8 @@ def flat_rb_format(
         "storageId": storage_id,
         "labelStorageId": label_storage_id,
         "priority": priority,
+        "heatMaps": heatmaps,
+        "transforms": transforms,
     }
 
     if current_stage_sub_task:
@@ -215,6 +219,8 @@ def parse_entry_latest(item: Dict) -> Dict:
         label_storage_id = (task_data.get("labelsStorage") or {}).get(
             "storageId"
         ) or StorageMethod.REDBRICK
+        heatmaps = datapoint.get("heatMaps")
+        transforms = datapoint.get("transforms")
 
         return flat_rb_format(
             labels,
@@ -234,6 +240,8 @@ def parse_entry_latest(item: Dict) -> Dict:
             storage_id,
             label_storage_id,
             item.get("currentStageSubTask"),
+            heatmaps,
+            transforms,
         )
     except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
         return {}
@@ -700,6 +708,13 @@ def dicom_rb_format(
             series["items"].append(task["items"][item_index])  # type: ignore
 
     output["series"] = deepcopy(volume_series)
+    heat_maps = task.get("heatMaps") or []
+    for item in heat_maps:
+        series_index: int = item.get("seriesIndex")
+        if output["series"][series_index].get("heatMaps"):
+            output["series"][series_index]["heatMaps"].append(item)
+        else:
+            output["series"][series_index]["heatMaps"] = [item]
     if no_consensus:
         if task.get("consensusTasks"):
             consensus_task = task["consensusTasks"][0]
