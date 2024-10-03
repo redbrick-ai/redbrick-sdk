@@ -112,6 +112,8 @@ def task_event_format(
                     task["datapoint"]["storageMethod"]["storageId"],
                     label_storage_id,
                     {},
+                    task["heatMaps"],
+                    task["transforms"],
                 )
 
         elif task_event["__typename"] == "Comment":
