@@ -273,6 +273,7 @@ def datapoint_shard(raw_items: bool, presigned_items: bool) -> str:
         storageMethod {{
             storageId
         }}
+        attributes
     """
 
 
