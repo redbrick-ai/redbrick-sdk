@@ -389,19 +389,19 @@ class HeatMap(TypedDict, total=False):
     item: Required[str]
 
     #: Preset.
-    preset: str
+    preset: NotRequired[str]
 
     #: Data range.
-    dataRange: List[float]
+    dataRange: NotRequired[List[float]]
 
     #: Opacity points.
-    opacityPoints: List[float]
+    opacityPoints: NotRequired[List[float]]
 
     #: Opacity points 3D.
-    opacityPoints3d: List[float]
+    opacityPoints3d: NotRequired[List[float]]
 
     #: RGB points.
-    rgbPoints: List[float]
+    rgbPoints: NotRequired[List[float]]
 
 
 class Transform(TypedDict):
