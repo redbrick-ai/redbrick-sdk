@@ -187,6 +187,8 @@ def test_flat_rb_format():
         "taskId": "task123",
         "updatedAt": "2023-10-26T12:45:00",
         "updatedBy": "user456",
+        "heatMaps": None,
+        "transforms": None,
     }
 
     result = rb_label_utils.flat_rb_format(
@@ -207,6 +209,8 @@ def test_flat_rb_format():
         storage_id,
         label_storage_id,
         current_stage_sub_task,
+        None,
+        None,
     )
     assert result == expected_result
 
@@ -278,6 +282,8 @@ def test_parse_entry_latest():
         "storageId": "11111111-1111-1111-1111-111111111111",
         "labelStorageId": "22222222-2222-2222-2222-222222222222",
         "priority": None,
+        "heatMaps": None,
+        "transforms": None,
     }
     assert result == expected
 

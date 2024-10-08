@@ -200,7 +200,7 @@ def flat_rb_format(
 
 def clean_heatmap(heatmap_data: Dict) -> TaskType.HeatMap:
     """Clean heatmap."""
-    print(f"Heatmap data: {heatmap_data}")
+    # pylint: disable=too-many-locals
     heatmap: TaskType.HeatMap = {
         "name": heatmap_data["name"],
         "item": heatmap_data["item"],
@@ -216,13 +216,13 @@ def clean_heatmap(heatmap_data: Dict) -> TaskType.HeatMap:
         heatmap["opacityPoints3d"] = heatmap_data["opacityPoints3d"]
     if heatmap_data.get("rgbPoints"):
         heatmap["rgbPoints"] = heatmap_data["rgbPoints"]
-    print(f"Heatmap: {heatmap}")
 
     return heatmap
 
 
 def parse_entry_latest(item: Dict) -> Dict:
     """Parse entry latest."""
+    # pylint: disable=too-many-locals
     try:
         task_id = item["taskId"]
         task_data = item["latestTaskData"] or {}
