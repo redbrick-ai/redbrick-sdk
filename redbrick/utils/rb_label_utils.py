@@ -156,6 +156,7 @@ def flat_rb_format(
     current_stage_sub_task: Optional[Dict],
     heatmaps: Optional[List[Dict[str, str]]],
     transforms: Optional[List[Dict]],
+    datapoint_classification: Optional[List[Dict]],
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-locals
@@ -178,6 +179,7 @@ def flat_rb_format(
         "priority": priority,
         "heatMaps": heatmaps,
         "transforms": transforms,
+        "datapointClassification": datapoint_classification,
     }
 
     if current_stage_sub_task:
@@ -221,6 +223,10 @@ def parse_entry_latest(item: Dict) -> Dict:
         ) or StorageMethod.REDBRICK
         heatmaps = datapoint.get("heatMaps")
         transforms = datapoint.get("transforms")
+        if datapoint.get("attributes"):
+            datapoint_attributes = json.loads(datapoint["attributes"])
+        else:
+            datapoint_attributes = None
 
         return flat_rb_format(
             labels,
@@ -242,6 +248,7 @@ def parse_entry_latest(item: Dict) -> Dict:
             item.get("currentStageSubTask"),
             heatmaps,
             transforms,
+            datapoint_attributes,
         )
     except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
         return {}
@@ -690,6 +697,25 @@ def dicom_rb_format(
             if isinstance(task["metaData"], str)
             else task["metaData"]
         )
+
+    # Task datapoint classification
+    if task.get("datapointClassification"):
+        attributes = {}
+        for attribute in task["datapointClassification"]:
+            attributes[attribute["name"]] = (
+                attribute["value"]
+                if not isinstance(attribute["value"], str)
+                else (
+                    True
+                    if attribute["value"].lower() == "true"
+                    else (
+                        False
+                        if attribute["value"].lower() == "false"
+                        else attribute["value"]
+                    )
+                )
+            )
+        output["datapointClassification"] = attributes
 
     volume_series: List[TaskType.Series] = [{} for _ in range(len(task["seriesInfo"]))]
     item_index_map: Dict[int, int] = {}

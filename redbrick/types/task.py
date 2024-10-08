@@ -645,3 +645,5 @@ class OutputTask(TypedDict, total=False):
 
     #: Supertruth version produced in consensus review stage.
     superTruth: "OutputTask"
+
+    datapointClassification: NotRequired[Dict]
