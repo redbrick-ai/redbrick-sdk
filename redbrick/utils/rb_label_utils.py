@@ -200,8 +200,31 @@ def flat_rb_format(
     return task
 
 
+def clean_heatmap(heatmap_data: Dict) -> TaskType.HeatMap:
+    """Clean heatmap."""
+    # pylint: disable=too-many-locals
+    heatmap: TaskType.HeatMap = {
+        "name": heatmap_data["name"],
+        "item": heatmap_data["item"],
+    }
+
+    if heatmap_data.get("preset"):
+        heatmap["preset"] = heatmap_data["preset"]
+    if heatmap_data.get("dataRange"):
+        heatmap["dataRange"] = heatmap_data["dataRange"]
+    if heatmap_data.get("opacityPoints"):
+        heatmap["opacityPoints"] = heatmap_data["opacityPoints"]
+    if heatmap_data.get("opacityPoints3d"):
+        heatmap["opacityPoints3d"] = heatmap_data["opacityPoints3d"]
+    if heatmap_data.get("rgbPoints"):
+        heatmap["rgbPoints"] = heatmap_data["rgbPoints"]
+
+    return heatmap
+
+
 def parse_entry_latest(item: Dict) -> Dict:
     """Parse entry latest."""
+    # pylint: disable=too-many-locals
     try:
         task_id = item["taskId"]
         task_data = item["latestTaskData"] or {}
@@ -738,9 +761,9 @@ def dicom_rb_format(
     for heat_map in heat_maps:
         series_index: int = heat_map.get("seriesIndex")
         if output["series"][series_index].get("heatMaps"):
-            output["series"][series_index]["heatMaps"].append(heat_map)
+            output["series"][series_index]["heatMaps"].append(clean_heatmap(heat_map))
         else:
-            output["series"][series_index]["heatMaps"] = [heat_map]
+            output["series"][series_index]["heatMaps"] = [clean_heatmap(heat_map)]
     transforms = task.get("transforms") or []
     for linear_tranform in transforms:
         # linear_transform is an array of size 16

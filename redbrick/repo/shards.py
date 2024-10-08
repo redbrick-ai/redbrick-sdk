@@ -265,6 +265,11 @@ def datapoint_shard(raw_items: bool, presigned_items: bool) -> str:
             seriesName
             name
             item
+            preset
+            dataRange
+            opacityPoints
+            opacityPoints3d
+            rgbPoints
         }}
         transforms{{
             seriesIndex
