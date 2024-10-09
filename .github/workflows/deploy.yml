@@ -34,6 +34,7 @@ jobs:
       - name: Build
         run: |
           python -m venv .venv
+          chmod +x .venv/bin/activate
           .venv/bin/activate
           make build
       - name: Upload package
@@ -71,6 +72,7 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
           python -m venv .venv
+          chmod +x .venv/bin/activate
           .venv/bin/activate
           pip install --upgrade pip
           pip install twine
