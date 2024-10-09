@@ -13,7 +13,7 @@ dependencies = [
     "natsort<9,>=8.0.2",
     "nest-asyncio<2,>=1.5.4",
     "nibabel<6,>=3.2.2",
-    "numpy<2,>=1.15",
+    "numpy<3,>=1.15",
     "packaging<25",
     "Pillow<11,>=9.0.1",
     "pydicom<3",
@@ -22,7 +22,7 @@ dependencies = [
     "Rich<14",
     "rt-utils<2",
     "shtab<2",
-    "tenacity<9",
+    "tenacity<10",
     "tqdm<5",
     "typing-extensions<5",
 ]
