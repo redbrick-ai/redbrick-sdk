@@ -4,7 +4,7 @@ name = "redbrick-sdk"
 description = "RedBrick platform Python SDK!"
 readme = "README.md"
 dynamic = ["version"]
-requires-python = ">=3.8,<3.13"
+requires-python = ">=3.8,<3.14"
 keywords = ["redbrick"]
 dependencies = [
     "aiohttp<4,>=3.10.5",
