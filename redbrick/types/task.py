@@ -389,19 +389,19 @@ class HeatMap(TypedDict, total=False):
     item: Required[str]
 
     #: Preset.
-    preset: NotRequired[str]
+    preset: str
 
     #: Data range.
-    dataRange: NotRequired[List[float]]
+    dataRange: List[float]
 
     #: Opacity points.
-    opacityPoints: NotRequired[List[float]]
+    opacityPoints: List[float]
 
     #: Opacity points 3D.
-    opacityPoints3d: NotRequired[List[float]]
+    opacityPoints3d: List[float]
 
     #: RGB points.
-    rgbPoints: NotRequired[List[float]]
+    rgbPoints: List[float]
 
 
 class Transform(TypedDict):
@@ -646,4 +646,4 @@ class OutputTask(TypedDict, total=False):
     #: Supertruth version produced in consensus review stage.
     superTruth: "OutputTask"
 
-    datapointClassification: NotRequired[Dict]
+    datapointClassification: Classification
