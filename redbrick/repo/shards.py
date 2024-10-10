@@ -260,9 +260,25 @@ def datapoint_shard(raw_items: bool, presigned_items: bool) -> str:
             dataType
             metaData
         }}
+        heatMaps {{
+            seriesIndex
+            seriesName
+            name
+            item
+            preset
+            dataRange
+            opacityPoints
+            opacityPoints3d
+            rgbPoints
+        }}
+        transforms{{
+            seriesIndex
+            transform
+        }}
         storageMethod {{
             storageId
         }}
+        attributes
     """
 
 
