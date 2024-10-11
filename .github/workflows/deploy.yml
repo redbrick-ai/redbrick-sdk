@@ -30,10 +30,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Build
         run: |
           python -m venv .venv
+          chmod +x .venv/bin/activate
           .venv/bin/activate
           make build
       - name: Upload package
@@ -60,7 +61,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Download package
         uses: actions/download-artifact@v4
         with:
@@ -71,6 +72,7 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
           python -m venv .venv
+          chmod +x .venv/bin/activate
           .venv/bin/activate
           pip install --upgrade pip
           pip install twine

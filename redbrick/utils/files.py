@@ -46,6 +46,8 @@ NIFTI_FILE_TYPES = {"nii": "application/octet-stream"}
 
 NRRD_FILE_TYPES = {"nrrd": "application/octet-stream"}
 
+REPORT_FILE_TYPES = {"txt": "text/plain"}
+
 FILE_TYPES = {
     **IMAGE_FILE_TYPES,
     **VIDEO_FILE_TYPES,
@@ -53,6 +55,7 @@ FILE_TYPES = {
     **JSON_FILE_TYPES,
     **NIFTI_FILE_TYPES,
     **NRRD_FILE_TYPES,
+    **REPORT_FILE_TYPES,
 }
 
 ALL_FILE_TYPES = {"*": "*/*"}
