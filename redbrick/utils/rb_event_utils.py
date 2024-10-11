@@ -96,9 +96,9 @@ def task_event_format(
                 ]
                 label_storage_id = task_event["taskData"]["labelsStorage"]["storageId"]
                 labels_map = task_event["taskData"].get("labelsMap", []) or []
-                task_datapoint: Optional[List[Dict]] = None
-                if task.get("datapoint"):
-                    task_datapoint = json.loads(task["datapoint"])
+                task_datapoint_attributes: Optional[List[Dict]] = task["datapoint"].get(
+                    "attributes"
+                )
                 event["labels"] = flat_rb_format(
                     labels,
                     task["datapoint"]["items"],
@@ -119,7 +119,7 @@ def task_event_format(
                     {},
                     None,
                     None,
-                    task_datapoint,
+                    task_datapoint_attributes,
                 )
 
         elif task_event["__typename"] == "Comment":

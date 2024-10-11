@@ -136,6 +136,28 @@ def from_rb_consensus_info(task: Dict) -> Dict:
     }
 
 
+def convert_datapoint_classifications(
+    classifications: List[Dict],
+) -> TaskType.Classification:
+    """Convert datapoint classifications."""
+    attributes: Dict[str, Union[str, bool, List[str]]] = {}
+    for attribute in classifications:
+        attributes[attribute["name"]] = (
+            attribute["value"]
+            if not isinstance(attribute["value"], str)
+            else (
+                True
+                if attribute["value"].lower() == "true"
+                else (
+                    False
+                    if attribute["value"].lower() == "false"
+                    else attribute["value"]
+                )
+            )
+        )
+    return {"attributes": attributes}
+
+
 def flat_rb_format(
     labels: List[Dict],
     items: List[str],
@@ -722,22 +744,10 @@ def dicom_rb_format(
 
     # Task datapoint classification
     if task.get("datapointClassification"):
-        attributes = {}
-        for attribute in task["datapointClassification"]:
-            attributes[attribute["name"]] = (
-                attribute["value"]
-                if not isinstance(attribute["value"], str)
-                else (
-                    True
-                    if attribute["value"].lower() == "true"
-                    else (
-                        False
-                        if attribute["value"].lower() == "false"
-                        else attribute["value"]
-                    )
-                )
-            )
-        output["datapointClassification"] = attributes
+
+        output["datapointClassification"] = convert_datapoint_classifications(
+            task["datapointClassification"]
+        )
 
     volume_series: List[TaskType.Series] = [{} for _ in range(len(task["seriesInfo"]))]
     item_index_map: Dict[int, int] = {}
