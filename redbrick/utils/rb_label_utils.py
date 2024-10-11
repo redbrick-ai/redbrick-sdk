@@ -202,7 +202,6 @@ def flat_rb_format(
 
 def clean_heatmap(heatmap_data: Dict) -> TaskType.HeatMap:
     """Clean heatmap."""
-    # pylint: disable=too-many-locals
     heatmap: TaskType.HeatMap = {
         "name": heatmap_data["name"],
         "item": heatmap_data["item"],
