@@ -154,7 +154,7 @@ def flat_rb_format(
     storage_id: str,
     label_storage_id: Optional[str],
     current_stage_sub_task: Optional[Dict],
-    heatmaps: Optional[List[Dict[str, str]]],
+    heat_maps: Optional[List[Dict[str, str | List[float]]]],
     transforms: Optional[List[Dict]],
     datapoint_classification: Optional[List[Dict]],
 ) -> Dict:
@@ -177,7 +177,7 @@ def flat_rb_format(
         "storageId": storage_id,
         "labelStorageId": label_storage_id,
         "priority": priority,
-        "heatMaps": heatmaps,
+        "heatMaps": heat_maps,
         "transforms": transforms,
         "datapointClassification": datapoint_classification,
     }
