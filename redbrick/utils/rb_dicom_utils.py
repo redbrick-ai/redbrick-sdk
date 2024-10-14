@@ -44,7 +44,9 @@ def dicom_dp_format(datapoint: Dict) -> Dict:
 
     if datapoint.get("attributes"):
         output["classification"] = convert_datapoint_classifications(
-            datapoint["attributes"]
+            json.loads(datapoint["attributes"])
+            if isinstance(datapoint["attributes"], str)
+            else datapoint["attributes"]
         )
 
     if datapoint.get("metaData"):
