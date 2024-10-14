@@ -136,6 +136,28 @@ def from_rb_consensus_info(task: Dict) -> Dict:
     }
 
 
+def convert_datapoint_classifications(
+    classifications: List[Dict],
+) -> TaskType.Classification:
+    """Convert datapoint classifications."""
+    attributes: Dict[str, Union[str, bool, List[str]]] = {}
+    for attribute in classifications:
+        attributes[attribute["name"]] = (
+            attribute["value"]
+            if not isinstance(attribute["value"], str)
+            else (
+                True
+                if attribute["value"].lower() == "true"
+                else (
+                    False
+                    if attribute["value"].lower() == "false"
+                    else attribute["value"]
+                )
+            )
+        )
+    return {"attributes": attributes}
+
+
 def flat_rb_format(
     labels: List[Dict],
     items: List[str],
@@ -154,6 +176,9 @@ def flat_rb_format(
     storage_id: str,
     label_storage_id: Optional[str],
     current_stage_sub_task: Optional[Dict],
+    heat_maps: Optional[List[Dict]],
+    transforms: Optional[List[Dict]],
+    datapoint_classification: Optional[List[Dict]],
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-locals
@@ -174,6 +199,9 @@ def flat_rb_format(
         "storageId": storage_id,
         "labelStorageId": label_storage_id,
         "priority": priority,
+        "heatMaps": heat_maps,
+        "transforms": transforms,
+        "datapointClassification": datapoint_classification,
     }
 
     if current_stage_sub_task:
@@ -194,8 +222,30 @@ def flat_rb_format(
     return task
 
 
+def clean_heatmap(heatmap_data: Dict) -> TaskType.HeatMap:
+    """Clean heatmap."""
+    heatmap: TaskType.HeatMap = {
+        "name": heatmap_data["name"],
+        "item": heatmap_data["item"],
+    }
+
+    if heatmap_data.get("preset"):
+        heatmap["preset"] = heatmap_data["preset"]
+    if heatmap_data.get("dataRange"):
+        heatmap["dataRange"] = heatmap_data["dataRange"]
+    if heatmap_data.get("opacityPoints"):
+        heatmap["opacityPoints"] = heatmap_data["opacityPoints"]
+    if heatmap_data.get("opacityPoints3d"):
+        heatmap["opacityPoints3d"] = heatmap_data["opacityPoints3d"]
+    if heatmap_data.get("rgbPoints"):
+        heatmap["rgbPoints"] = heatmap_data["rgbPoints"]
+
+    return heatmap
+
+
 def parse_entry_latest(item: Dict) -> Dict:
     """Parse entry latest."""
+    # pylint: disable=too-many-locals
     try:
         task_id = item["taskId"]
         task_data = item["latestTaskData"] or {}
@@ -215,6 +265,12 @@ def parse_entry_latest(item: Dict) -> Dict:
         label_storage_id = (task_data.get("labelsStorage") or {}).get(
             "storageId"
         ) or StorageMethod.REDBRICK
+        heatmaps = datapoint.get("heatMaps")
+        transforms = datapoint.get("transforms")
+        if datapoint.get("attributes"):
+            datapoint_attributes = json.loads(datapoint["attributes"])
+        else:
+            datapoint_attributes = None
 
         return flat_rb_format(
             labels,
@@ -234,6 +290,9 @@ def parse_entry_latest(item: Dict) -> Dict:
             storage_id,
             label_storage_id,
             item.get("currentStageSubTask"),
+            heatmaps,
+            transforms,
+            datapoint_attributes,
         )
     except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
         return {}
@@ -683,8 +742,18 @@ def dicom_rb_format(
             else task["metaData"]
         )
 
+    # Task datapoint classification
+    if task.get("datapointClassification"):
+
+        output["datapointClassification"] = convert_datapoint_classifications(
+            task["datapointClassification"]
+        )
+
     volume_series: List[TaskType.Series] = [{} for _ in range(len(task["seriesInfo"]))]
     item_index_map: Dict[int, int] = {}
+    heat_maps: List[Dict] = task.get("heatMaps") or []
+    transforms: List[Dict] = task.get("transforms") or []
+
     for volume_index, series_info in enumerate(task["seriesInfo"]):
         series = volume_series[volume_index]
         if series_info.get("name"):
@@ -698,6 +767,25 @@ def dicom_rb_format(
         for item_index in series_info["itemsIndices"]:
             item_index_map[item_index] = volume_index
             series["items"].append(task["items"][item_index])  # type: ignore
+
+        for heat_map in heat_maps:
+            if heat_map.get("seriesIndex") == volume_index:
+                if series.get("heatMaps"):
+                    series["heatMaps"].append(clean_heatmap(heat_map))
+                else:
+                    series["heatMaps"] = [clean_heatmap(heat_map)]
+
+        for linear_tranform in transforms:
+            if linear_tranform.get("seriesIndex") == volume_index:
+                matrix_tranform: List[List[float]] = []
+                matrix_tranform = [
+                    linear_tranform["transform"][i : i + 4]
+                    for i in range(0, len(linear_tranform["transform"]), 4)
+                ]
+                if series.get("transforms"):
+                    series["transforms"].append({"transform": matrix_tranform})
+                else:
+                    series["transforms"] = [{"transform": matrix_tranform}]
 
     output["series"] = deepcopy(volume_series)
     if no_consensus:

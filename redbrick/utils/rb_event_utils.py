@@ -3,6 +3,8 @@
 import json
 from typing import List, Dict
 
+from typing import Optional
+
 from redbrick.common.enums import TaskEventTypes
 from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format, user_format
 
@@ -94,6 +96,9 @@ def task_event_format(
                 ]
                 label_storage_id = task_event["taskData"]["labelsStorage"]["storageId"]
                 labels_map = task_event["taskData"].get("labelsMap", []) or []
+                task_datapoint_attributes: Optional[List[Dict]] = task["datapoint"].get(
+                    "attributes"
+                )
                 event["labels"] = flat_rb_format(
                     labels,
                     task["datapoint"]["items"],
@@ -112,6 +117,9 @@ def task_event_format(
                     task["datapoint"]["storageMethod"]["storageId"],
                     label_storage_id,
                     {},
+                    None,
+                    None,
+                    task_datapoint_attributes,
                 )
 
         elif task_event["__typename"] == "Comment":
