@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 WORKDIR /usr/src/app
 
 ENV VIRTUAL_ENV="/usr/src/lib/.venv" PATH="/usr/src/lib/.venv/bin:$PATH" REDBRICK_DISABLE_VERSION_CHECK="1"
