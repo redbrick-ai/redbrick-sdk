@@ -6,6 +6,7 @@ from copy import deepcopy
 
 from redbrick.types import task as TaskType
 from redbrick.utils.logging import logger
+from redbrick.utils.rb_label_utils import convert_datapoint_classifications
 
 
 def dicom_dp_format(datapoint: Dict) -> Dict:
@@ -42,22 +43,9 @@ def dicom_dp_format(datapoint: Dict) -> Dict:
         output["createdAt"] = datapoint["createdAt"]
 
     if datapoint.get("attributes"):
-        attributes = {}
-        for attribute in json.loads(datapoint["attributes"]):
-            attributes[attribute["name"]] = (
-                attribute["value"]
-                if not isinstance(attribute["value"], str)
-                else (
-                    True
-                    if attribute["value"].lower() == "true"
-                    else (
-                        False
-                        if attribute["value"].lower() == "false"
-                        else attribute["value"]
-                    )
-                )
-            )
-        output["classification"] = attributes
+        output["classification"] = convert_datapoint_classifications(
+            datapoint["attributes"]
+        )
 
     if datapoint.get("metaData"):
         output["metaData"] = (

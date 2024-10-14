@@ -646,4 +646,5 @@ class OutputTask(TypedDict, total=False):
     #: Supertruth version produced in consensus review stage.
     superTruth: "OutputTask"
 
+    #: Datapoint classification attributes.
     datapointClassification: Classification

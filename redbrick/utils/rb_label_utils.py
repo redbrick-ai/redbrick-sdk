@@ -751,8 +751,8 @@ def dicom_rb_format(
 
     volume_series: List[TaskType.Series] = [{} for _ in range(len(task["seriesInfo"]))]
     item_index_map: Dict[int, int] = {}
-    heat_maps = task.get("heatMaps") or []
-    transforms = task.get("transforms") or []
+    heat_maps: List[Dict] = task.get("heatMaps") or []
+    transforms: List[Dict] = task.get("transforms") or []
 
     for volume_index, series_info in enumerate(task["seriesInfo"]):
         series = volume_series[volume_index]
@@ -768,35 +768,26 @@ def dicom_rb_format(
             item_index_map[item_index] = volume_index
             series["items"].append(task["items"][item_index])  # type: ignore
 
-        series_heatmaps = [
-            heatmap
-            for heatmap in heat_maps
-            if heatmap.get("seriesIndex") == volume_index
-        ]
-        for heat_map in series_heatmaps:
-            if series.get("heatMaps"):
-                series["heatMaps"].append(clean_heatmap(heat_map))
-            else:
-                series["heatMaps"] = [clean_heatmap(heat_map)]
+        for heat_map in heat_maps:
+            if heat_map.get("seriesIndex") == volume_index:
+                if series.get("heatMaps"):
+                    series["heatMaps"].append(clean_heatmap(heat_map))
+                else:
+                    series["heatMaps"] = [clean_heatmap(heat_map)]
 
-        series_transforms = [
-            linear_tranform
-            for linear_tranform in transforms
-            if linear_tranform.get("seriesIndex") == volume_index
-        ]
-        for linear_tranform in series_transforms:
-            matrix_tranform: List[List[float]] = []
-            matrix_tranform = [
-                linear_tranform.get("transform")[i : i + 4]
-                for i in range(0, len(linear_tranform.get("transform")), 4)
-            ]
-            if series.get("transforms"):
-                series["transforms"].append({"transform": matrix_tranform})
-            else:
-                series["transforms"] = [{"transform": matrix_tranform}]
+        for linear_tranform in transforms:
+            if linear_tranform.get("seriesIndex") == volume_index:
+                matrix_tranform: List[List[float]] = []
+                matrix_tranform = [
+                    linear_tranform["transform"][i : i + 4]
+                    for i in range(0, len(linear_tranform["transform"]), 4)
+                ]
+                if series.get("transforms"):
+                    series["transforms"].append({"transform": matrix_tranform})
+                else:
+                    series["transforms"] = [{"transform": matrix_tranform}]
 
     output["series"] = deepcopy(volume_series)
-
     if no_consensus:
         if task.get("consensusTasks"):
             consensus_task = task["consensusTasks"][0]
