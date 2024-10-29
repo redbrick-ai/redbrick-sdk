@@ -309,6 +309,7 @@ class Upload:
                     is_ground_truth,
                     point.get("preAssign"),
                     point.get("priority"),
+                    attributes=point.get("attributes"),
                 )
                 assert_validation(response.get("taskId"), "Failed to create task")
 

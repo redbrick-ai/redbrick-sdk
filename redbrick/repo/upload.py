@@ -33,6 +33,7 @@ class UploadRepo(UploadControllerInterface):
         is_ground_truth: bool = False,
         pre_assign: Optional[Dict] = None,
         priority: Optional[float] = None,
+        attributes: Optional[str] = None,
     ) -> Dict:
         """
         Create a datapoint and returns its taskId.
@@ -56,6 +57,7 @@ class UploadRepo(UploadControllerInterface):
                 $isGroundTruth: Boolean!
                 $preAssign: String
                 $priority: Float
+                $attributes: String
             ) {
                 createDatapoint(
                     orgId: $orgId
@@ -72,6 +74,7 @@ class UploadRepo(UploadControllerInterface):
                     isGroundTruth: $isGroundTruth
                     preAssign: $preAssign
                     priority: $priority
+                    attributes: $attributes
                 ) {
                     taskId
                     taskIds
@@ -94,6 +97,7 @@ class UploadRepo(UploadControllerInterface):
             "isGroundTruth": is_ground_truth,
             "preAssign": json.dumps(pre_assign, separators=(",", ":")),
             "priority": priority,
+            "attributes": attributes,
         }
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables
