@@ -243,6 +243,16 @@ def clean_heatmap(heatmap_data: Dict) -> TaskType.HeatMap:
     return heatmap
 
 
+def clean_transform(transform_data: Dict) -> TaskType.Transform:
+    """Clean transform."""
+    return {
+        "transform": [
+            transform_data["transform"][i : i + 4]
+            for i in range(0, len(transform_data["transform"]), 4)
+        ]
+    }
+
+
 def parse_entry_latest(item: Dict) -> Dict:
     """Parse entry latest."""
     # pylint: disable=too-many-locals
@@ -529,8 +539,8 @@ def dicom_rb_series(
                     cur_series["segmentMap"][instance] = segment_map_instance
 
         elif label.get("length3d"):
-            measurements = volume.get("measurements", [])
-            measurement: TaskType.MeasureLength = {
+            volume["measurements"] = volume.get("measurements", [])
+            measurement_length: TaskType.MeasureLength = {
                 "type": "length",
                 "point1": get_voxel_point(label["length3d"]["point1"]),
                 "point2": get_voxel_point(label["length3d"]["point2"]),
@@ -538,16 +548,16 @@ def dicom_rb_series(
                 **label_obj,  # type: ignore
             }
             if label["length3d"].get("computedpoint1world"):
-                measurement["absolutePoint1"] = get_world_point(
+                measurement_length["absolutePoint1"] = get_world_point(
                     label["length3d"]["computedpoint1world"]
                 )
             if label["length3d"].get("computedpoint2world"):
-                measurement["absolutePoint2"] = get_world_point(
+                measurement_length["absolutePoint2"] = get_world_point(
                     label["length3d"]["computedpoint2world"]
                 )
             if label["length3d"].get("computedlength"):
-                measurement["length"] = label["length3d"]["computedlength"]
-            measurements.append(measurement)
+                measurement_length["length"] = label["length3d"]["computedlength"]
+            volume["measurements"].append(measurement_length)
         elif label.get("angle3d"):
             volume["measurements"] = volume.get("measurements", [])
             measurement_angle: TaskType.MeasureAngle = {
@@ -744,7 +754,6 @@ def dicom_rb_format(
 
     # Task datapoint classification
     if task.get("datapointClassification"):
-
         output["datapointClassification"] = convert_datapoint_classifications(
             task["datapointClassification"]
         )
@@ -757,7 +766,7 @@ def dicom_rb_format(
     for volume_index, series_info in enumerate(task["seriesInfo"]):
         series = volume_series[volume_index]
         if series_info.get("name"):
-            series["name"] = series_info["name"]  # type: ignore
+            series["name"] = series_info["name"]
 
         series_meta_data = series_info.get("metaData")
         if isinstance(series_meta_data, str):
@@ -766,26 +775,17 @@ def dicom_rb_format(
         series["items"] = []
         for item_index in series_info["itemsIndices"]:
             item_index_map[item_index] = volume_index
-            series["items"].append(task["items"][item_index])  # type: ignore
+            series["items"].append(task["items"][item_index])
 
         for heat_map in heat_maps:
             if heat_map.get("seriesIndex") == volume_index:
-                if series.get("heatMaps"):
-                    series["heatMaps"].append(clean_heatmap(heat_map))
-                else:
-                    series["heatMaps"] = [clean_heatmap(heat_map)]
+                series["heatMaps"] = series.get("heatMaps", [])
+                series["heatMaps"].append(clean_heatmap(heat_map))
 
-        for linear_tranform in transforms:
-            if linear_tranform.get("seriesIndex") == volume_index:
-                matrix_tranform: List[List[float]] = []
-                matrix_tranform = [
-                    linear_tranform["transform"][i : i + 4]
-                    for i in range(0, len(linear_tranform["transform"]), 4)
-                ]
-                if series.get("transforms"):
-                    series["transforms"].append({"transform": matrix_tranform})
-                else:
-                    series["transforms"] = [{"transform": matrix_tranform}]
+        for tranform in transforms:
+            if tranform.get("seriesIndex") == volume_index:
+                series["transforms"] = series.get("transforms", [])
+                series["transforms"].append(clean_transform(tranform))
 
     output["series"] = deepcopy(volume_series)
     if no_consensus:

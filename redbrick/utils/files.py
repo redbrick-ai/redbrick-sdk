@@ -164,7 +164,7 @@ def is_dicom_file(file_name: str) -> bool:
 async def upload_files(
     files: List[Tuple[str, str, str]],
     progress_bar_name: Optional[str] = "Uploading files",
-    keep_progress_bar: bool = True,
+    segmentations_upload: bool = False,
 ) -> List[bool]:
     """Upload files from local path to url (file path, presigned url, file type)."""
     timeout = aiohttp.ClientTimeout(connect=60)
@@ -181,6 +181,9 @@ async def upload_files(
             "timeout": timeout,
             "headers": {"Content-Type": file_type},
         }
+        if segmentations_upload:
+            request_params["headers"]["x-ms-blob-type"] = "BlockBlob"  # type: ignore
+
         if not verify_ssl:
             request_params["ssl"] = False
 
@@ -199,7 +202,7 @@ async def upload_files(
         except RetryError as error:
             raise Exception("Unknown problem occurred") from error
 
-        if status == 200:
+        if status in (200, 201):
             return True
 
         raise ConnectionError(f"Error in uploading {path} to RedBrick")
@@ -211,7 +214,7 @@ async def upload_files(
             for path, url, file_type in files
         ]
         uploaded = await gather_with_concurrency(
-            MAX_FILE_BATCH_SIZE, coros, progress_bar_name, keep_progress_bar
+            MAX_FILE_BATCH_SIZE, coros, progress_bar_name, keep_progress_bar=False
         )
 
     await asyncio.sleep(0.250)  # give time to close ssl connections

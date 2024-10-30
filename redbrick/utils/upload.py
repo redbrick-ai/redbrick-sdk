@@ -425,7 +425,7 @@ async def process_segmentation_upload(
                         ],
                         "Uploading labels for "
                         + f"{task['name'][:57]}{task['name'][57:] and '...'}",
-                        False,
+                        True,
                     )
                 )[0]:
                     label_map["labelName"] = presigned["filePath"]
