@@ -57,7 +57,7 @@ class UploadRepo(UploadControllerInterface):
                 $isGroundTruth: Boolean!
                 $preAssign: String
                 $priority: Float
-                $attributes: String
+                $attributes: JSONString
             ) {
                 createDatapoint(
                     orgId: $orgId
