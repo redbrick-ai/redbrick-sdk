@@ -114,12 +114,10 @@ class Upload:
                 upload_files(
                     files,
                     f"Uploading items for {point['name'][:57]}{point['name'][57:] and '...'}",
-                    False,
                 ),
                 upload_files(
                     heat_maps,
                     f"Uploading heat maps for {point['name'][:57]}{point['name'][57:] and '...'}",
-                    False,
                 ),
             )
 
