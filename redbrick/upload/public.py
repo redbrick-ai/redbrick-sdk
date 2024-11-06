@@ -242,11 +242,7 @@ class Upload:
                     ),
                     point.get("heatMaps"),
                     point.get("transforms"),
-                    (
-                        json.dumps(point["metaData"], separators=(",", ":"))
-                        if point.get("metaData")
-                        else None
-                    ),
+                    point.get("metaData"),
                 )
                 assert_validation(
                     response.get("ok"),
@@ -299,11 +295,7 @@ class Upload:
                         if point.get("seriesInfo")
                         else None
                     ),
-                    (
-                        json.dumps(point["metaData"], separators=(",", ":"))
-                        if point.get("metaData")
-                        else None
-                    ),
+                    point.get("metaData"),
                     is_ground_truth,
                     point.get("preAssign"),
                     point.get("priority"),
