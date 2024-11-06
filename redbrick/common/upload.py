@@ -23,10 +23,11 @@ class UploadControllerInterface(ABC):
         labels_data: Optional[str],
         labels_map: Optional[List[Dict]] = None,
         series_info: Optional[List[Dict]] = None,
-        meta_data: Optional[str] = None,
+        meta_data: Optional[Dict] = None,
         is_ground_truth: bool = False,
         pre_assign: Optional[Dict] = None,
         priority: Optional[float] = None,
+        attributes: Optional[List[Dict]] = None,
     ) -> Dict:
         """
         Create a datapoint and returns its taskId.
@@ -46,7 +47,7 @@ class UploadControllerInterface(ABC):
         series_info: Optional[List[Dict]] = None,
         heat_maps: Optional[List[Dict]] = None,
         transforms: Optional[List[Dict]] = None,
-        meta_data: Optional[str] = None,
+        meta_data: Optional[Dict] = None,
     ) -> Dict:
         """Update items in a datapoint."""
 

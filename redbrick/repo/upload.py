@@ -29,10 +29,11 @@ class UploadRepo(UploadControllerInterface):
         labels_data: Optional[str],
         labels_map: Optional[List[Dict]] = None,
         series_info: Optional[List[Dict]] = None,
-        meta_data: Optional[str] = None,
+        meta_data: Optional[Dict] = None,
         is_ground_truth: bool = False,
         pre_assign: Optional[Dict] = None,
         priority: Optional[float] = None,
+        attributes: Optional[List[Dict]] = None,
     ) -> Dict:
         """
         Create a datapoint and returns its taskId.
@@ -56,6 +57,7 @@ class UploadRepo(UploadControllerInterface):
                 $isGroundTruth: Boolean!
                 $preAssign: String
                 $priority: Float
+                $attributes: JSONString
             ) {
                 createDatapoint(
                     orgId: $orgId
@@ -72,6 +74,7 @@ class UploadRepo(UploadControllerInterface):
                     isGroundTruth: $isGroundTruth
                     preAssign: $preAssign
                     priority: $priority
+                    attributes: $attributes
                 ) {
                     taskId
                     taskIds
@@ -90,10 +93,15 @@ class UploadRepo(UploadControllerInterface):
             "labelsData": labels_data,
             "labelsMap": labels_map,
             "seriesInfo": series_info,
-            "metaData": meta_data,
+            "metaData": (
+                json.dumps(meta_data, separators=(",", ":")) if meta_data else None
+            ),
             "isGroundTruth": is_ground_truth,
             "preAssign": json.dumps(pre_assign, separators=(",", ":")),
             "priority": priority,
+            "attributes": (
+                json.dumps(attributes, separators=(",", ":")) if attributes else None
+            ),
         }
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables
@@ -111,7 +119,7 @@ class UploadRepo(UploadControllerInterface):
         series_info: Optional[List[Dict]] = None,
         heat_maps: Optional[List[Dict]] = None,
         transforms: Optional[List[Dict]] = None,
-        meta_data: Optional[str] = None,
+        meta_data: Optional[Dict] = None,
     ) -> Dict:
         """Update items in a datapoint."""
         query_string = """
@@ -152,7 +160,9 @@ class UploadRepo(UploadControllerInterface):
             "seriesInfo": series_info,
             "heatMaps": heat_maps,
             "transforms": transforms,
-            "metaData": meta_data,
+            "metaData": (
+                json.dumps(meta_data, separators=(",", ":")) if meta_data else None
+            ),
         }
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables
