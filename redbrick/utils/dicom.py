@@ -457,7 +457,6 @@ async def process_nifti_upload(
                         f"Each instance must have a unique file if binary_mask is True: '{file}' ({instance_numbers})"
                     )
                     return None, {}
-            files = sorted(files, key=lambda f: reverse_masks[f][0])
 
         try:
             base_img = nib_load(files[0])
@@ -486,7 +485,7 @@ async def process_nifti_upload(
                         "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
                         + f"Segmentation file(s) have instances: {actual_instance_numbers} and "
                         + f"segmentMap has instances: {expected_instance_numbers}\n"
-                        + f"Segmentation file: {files[0]}"
+                        + f"Segmentation file: {file}"
                     )
 
             if binary_mask:
