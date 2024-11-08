@@ -466,11 +466,12 @@ async def process_nifti_upload(
             ):
                 return None, {}
 
-            base_data = base_img.get_fdata(caching="unchanged")
-
             if base_img.get_data_dtype() != numpy.uint16:
-                base_img.set_data_dtype(numpy.uint16)
+                base_data = base_img.get_fdata(caching="unchanged")
                 base_data = numpy.round(base_data).astype(numpy.uint16)  # type: ignore
+                base_img.set_data_dtype(numpy.uint16)
+            else:
+                base_data = numpy.asanyarray(base_img.dataobj, dtype=numpy.uint16)
 
             if base_data.ndim != 3:
                 return None, {}
@@ -507,9 +508,11 @@ async def process_nifti_upload(
                 ):
                     return None, {}
 
-                data = img.get_fdata(caching="unchanged")
                 if img.get_data_dtype() != numpy.uint16:
+                    data = img.get_fdata(caching="unchanged")
                     data = numpy.round(data).astype(numpy.uint16)  # type: ignore
+                else:
+                    data = numpy.asanyarray(img.dataobj, dtype=numpy.uint16)
 
                 # Keep track of the instance numbers that we expect and see in the current
                 # mask, to validate after merging.
