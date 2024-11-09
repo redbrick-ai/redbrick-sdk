@@ -500,6 +500,26 @@ async def test_process_nifti_upload(tmpdir, nifti_instance_files_png):
     assert set(group_map) == instances
     assert isinstance(group_map, dict)
 
+    # Ensure no group IDs has the same value any instance ID
+    assert set().union(*group_map.values()).intersection(instances) == set()
+
+    # Verify that we can produce the expected masks from the label file and group map
+    expected_masks = {
+        1: np.array([[[1], [1], [1]], [[1], [1], [1]], [[1], [1], [1]]]),
+        2: np.array([[[0], [0], [1]], [[1], [1], [0]], [[0], [0], [0]]]),
+        3: np.array([[[1], [0], [0]], [[0], [0], [1]], [[0], [1], [0]]]),
+        4: np.array([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [1]]]),
+        5: np.array([[[0], [1], [0]], [[0], [1], [0]], [[0], [0], [1]]]),
+        9: np.array([[[0], [0], [0]], [[0], [0], [0]], [[1], [0], [0]]]),
+    }
+    global_mask = np.asanyarray(nib.load(result).dataobj, np.uint8)
+    for instance_id in instances:
+        selector = global_mask == instance_id
+        for group_id in group_map.get(instance_id, []):
+            selector = np.logical_or(selector, global_mask == group_id)
+        mask = selector.astype(np.uint8)
+        assert np.all(mask == expected_masks[instance_id])
+
 
 @pytest.mark.unit
 @pytest.mark.asyncio

@@ -479,15 +479,14 @@ async def process_nifti_upload(
             used_instances: Set[int] = set()
             instance_keys: Set[int] = set()
             instance_map: Dict[int, Set[int]] = {}
-            instance_pool = set(range(1, 65536)) - instance_keys
+            instance_pool = set(range(1, 65536))
             for instance_id, instance_groups in instances.items():
                 instance_keys.add(instance_id)
                 if instance_groups:
                     instance_pool -= set(instance_groups)
                     for instance_group in instance_groups:
-                        instance_map[instance_group] = instance_map.setdefault(
-                            instance_group, set()
-                        ) | {instance_id}
+                        instance_map.setdefault(instance_group, set()).add(instance_id)
+            instance_pool -= instance_keys
 
             group_instances = sorted(instance_pool, reverse=True)
 
@@ -495,11 +494,12 @@ async def process_nifti_upload(
                 instance_number = reverse_masks[files[0]][0]
                 base_data[numpy.nonzero(base_data)] = instance_number
                 used_instances.add(instance_number)
-            else:
+            elif label_validate:
+                non_zero_base_data = base_data[numpy.nonzero(base_data)]
                 used_instances = (
-                    set(x.item() for x in numpy.unique(base_data).round())
+                    set(x.item() for x in numpy.unique(non_zero_base_data).round())
                     & instance_keys
-                ) - {0}
+                )
 
             for file_ in files[1:]:
                 img = nib_load(file_)
@@ -572,7 +572,7 @@ async def process_nifti_upload(
                                 f"Instance ID: {base_v} is not present in segmentMap"
                             )
 
-            if used_instances != instance_keys:
+            if label_validate and used_instances != instance_keys:
                 raise ValueError(
                     "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
                     + f"Segmentation file(s) have instances: {used_instances} and "
