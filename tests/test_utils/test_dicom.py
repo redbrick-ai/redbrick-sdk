@@ -500,6 +500,9 @@ async def test_process_nifti_upload(tmpdir, nifti_instance_files_png):
     assert set(group_map) == instances
     assert isinstance(group_map, dict)
 
+    # Ensure no group IDs has the same value any instance ID
+    assert set().union(*group_map.values()).intersection(instances) == set()
+
 
 @pytest.mark.unit
 @pytest.mark.asyncio
