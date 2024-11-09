@@ -350,15 +350,15 @@ async def process_segmentation_upload(
             )
             output_labels_path, group_map = await process_nifti_upload(
                 input_labels_path,
-                set(
-                    label["dicom"]["instanceid"]
+                {
+                    label["dicom"]["instanceid"]: label["dicom"].get("groupids")
                     for label in labels
                     if label.get("dicom", {}).get("instanceid")
                     and (
                         label.get("volumeindex") is None
                         or int(label.get("volumeindex")) == volume_index
                     )
-                ),
+                },
                 series_info.get("binaryMask", False) or False,
                 series_info.get("semanticMask", False) or False,
                 series_info.get("pngMask", False) or False,
@@ -373,7 +373,12 @@ async def process_segmentation_upload(
 
             for label in labels:
                 if label.get("dicom", {}).get("instanceid") in group_map:
-                    label["dicom"]["groupids"] = group_map[label["dicom"]["instanceid"]]
+                    label["dicom"]["groupids"] = list(
+                        set(
+                            label["dicom"].get("groupids", [])
+                            + group_map[label["dicom"]["instanceid"]]
+                        )
+                    )
 
             if (
                 output_labels_path

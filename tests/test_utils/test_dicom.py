@@ -485,7 +485,7 @@ async def test_process_nifti_upload(tmpdir, nifti_instance_files_png):
     ) as mock_config_path:
         result, group_map = await dicom.process_nifti_upload(
             files,
-            instances,
+            {inst: None for inst in instances},
             binary_mask,
             semantic_mask,
             png_mask,

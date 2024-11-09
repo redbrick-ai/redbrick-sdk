@@ -49,18 +49,22 @@ async def test_process_segmentation_upload(
     nifti_instance_files_png, mock_labels, tmpdir
 ):
     """Test for `upload.process_segmentation_upload`"""
-    files = nifti_instance_files_png
+    files = [list(nifti_instance_files_png)[0]]
     org_id = "org_id"
     project_id = "project_id"
     task = {
         "name": "test_task",
         "labelsMap": [{"labelName": files, "seriesIndex": 0}],
-        "labels": mock_labels,
+        "labels": [
+            label
+            for label in mock_labels
+            if label.get("dicom", {}).get("instanceid") in (1, 2)
+        ],
         "seriesInfo": [{"binaryMask": True, "semanticMask": False, "pngMask": False}],
     }
     project_label_storage_id = "project_label_storage_id"
     label_storage_id = "label_storage_id"
-    label_validate = False
+    label_validate = True
 
     # Prepare RBContext mock
     mock_rb_context = AsyncMock()
