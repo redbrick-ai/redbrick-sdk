@@ -480,16 +480,20 @@ async def test_process_nifti_upload(tmpdir, nifti_instance_files_png):
     masks = {_mask_inst_id: _mask}
     label_validate = True
 
-    result, group_map = await dicom.process_nifti_upload(
-        files,
-        instances,
-        binary_mask,
-        semantic_mask,
-        png_mask,
-        masks,
-        label_validate,
-    )
+    with patch.object(
+        dicom, "config_path", return_value=str(tmpdir)
+    ) as mock_config_path:
+        result, group_map = await dicom.process_nifti_upload(
+            files,
+            {inst: None for inst in instances},
+            binary_mask,
+            semantic_mask,
+            png_mask,
+            masks,
+            label_validate,
+        )
 
+    mock_config_path.assert_called_once()
     assert isinstance(result, str) and result.endswith("label.nii.gz")
     assert os.path.isfile(result)
     assert isinstance(group_map, dict)
