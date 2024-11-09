@@ -476,27 +476,12 @@ async def process_nifti_upload(
             if base_data.ndim != 3:
                 return None, {}
 
-            def _validate_instance_numbers(
-                file: str,
-                expected_instance_numbers: Set[int],
-                actual_instance_numbers: Set[int],
-            ):
-                if expected_instance_numbers != actual_instance_numbers:
-                    raise ValueError(
-                        "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
-                        + f"Segmentation file(s) have instances: {actual_instance_numbers} and "
-                        + f"segmentMap has instances: {expected_instance_numbers}\n"
-                        + f"Segmentation file: {file}"
-                    )
+            used_instances: Set[int] = set()
 
-            if binary_mask:
+            if binary_mask and files[0] in reverse_masks:
                 instance_number = reverse_masks[files[0]][0]
                 base_data[numpy.nonzero(base_data)] = instance_number
-            elif label_validate:
-                base_instances = set(numpy.unique(base_data[numpy.nonzero(base_data)]))
-                _validate_instance_numbers(
-                    files[0], set(reverse_masks[files[0]]), base_instances
-                )
+                used_instances.add(instance_number)
 
             group_instances = sorted(set(range(1, 65536)) - instances, reverse=True)
 
@@ -513,11 +498,6 @@ async def process_nifti_upload(
                     data = numpy.round(data).astype(numpy.uint16)  # type: ignore
                 else:
                     data = numpy.asanyarray(img.dataobj, dtype=numpy.uint16)
-
-                # Keep track of the instance numbers that we expect and see in the current
-                # mask, to validate after merging.
-                expected_instance_numbers = set(reverse_masks[file_])
-                actual_instance_numbers = set()
 
                 # Take the non-zero indices of the mask. These are the indices
                 # that we want to merge from the current mask into the base mask.
@@ -542,16 +522,11 @@ async def process_nifti_upload(
                     return_inverse=True,
                 )
                 for i, (base_v, mask_v) in enumerate(unique_pairs):
-                    if binary_mask:
+                    if binary_mask and file_ in reverse_masks:
                         instance_number = reverse_masks[file_][0]
                     else:
                         instance_number = mask_v
-                        actual_instance_numbers.add(instance_number)
-                        if mask_v not in expected_instance_numbers:
-                            # Since this mask value is not used by any instance, we skip it.
-                            # This ensures that we don't create extra instance numbers that could
-                            # conflict with group_instances.
-                            continue
+                    used_instances.add(instance_number)
 
                     # Determine the indices into the base mask that have the current value pair
                     v_indices = tuple(d[inv == i] for d in non_zero_indices)
@@ -570,10 +545,13 @@ async def process_nifti_upload(
                         else:
                             group.update(instance_map[base_v])
 
-                if label_validate and not binary_mask:
-                    _validate_instance_numbers(
-                        file_, expected_instance_numbers, actual_instance_numbers
-                    )
+            if label_validate and used_instances != instances:
+                raise ValueError(
+                    "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
+                    + f"Segmentation file(s) have instances: {used_instances} and "
+                    + f"segmentMap has instances: {instances}\n"
+                    + f"Segmentation(s): {files}"
+                )
 
             if (
                 group_instances
