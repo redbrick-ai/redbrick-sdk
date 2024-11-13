@@ -182,8 +182,8 @@ class WorkspaceRepo(WorkspaceRepoInterface):
     ) -> None:
         """Toggle archived status for datapoints."""
         query = """
-            mutation toggleDatapointArchivedStatusSDK($orgId: UUID!, $dpIds: [String]!, $archived: Boolean!) {
-                toggleDatapointsArchivedStatus(orgId: $orgId, dpIds: $dpIds, archived: $archived) {
+            mutation toggleDatapointArchivedStatusSDK($orgId: UUID!, $dpIds: [UUID!]!, $archived: Boolean!) {
+                toggleDatapointArchivedStatus(orgId: $orgId, dpIds: $dpIds, archived: $archived) {
                     ok
                     message
                 }
@@ -206,7 +206,7 @@ class WorkspaceRepo(WorkspaceRepoInterface):
     ) -> None:
         """Toggle cohort membership for workspace datapoints."""
         query = """
-            mutation toggleCohortDatapointsSDK($orgId: UUID!, $workspaceId: UUID!, $name: String!, $dpIds: [String]!, $include: Boolean!) {
+            mutation toggleCohortDatapointsSDK($orgId: UUID!, $workspaceId: UUID!, $name: String!, $dpIds: [UUID!]!, $include: Boolean!) {
                 toggleCohortDatapoints(orgId: $orgId, workspaceId: $workspaceId, name: $name, dpIds: $dpIds, include: $include) {
                     ok
                     message
