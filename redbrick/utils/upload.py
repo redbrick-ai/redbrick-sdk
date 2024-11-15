@@ -372,7 +372,10 @@ async def process_segmentation_upload(
             )
 
             for label in labels:
-                if label.get("dicom", {}).get("instanceid") in group_map:
+                if label.get("dicom", {}).get("instanceid") in group_map and (
+                    label.get("volumeindex") is None
+                    or int(label.get("volumeindex")) == volume_index
+                ):
                     label["dicom"]["groupids"] = list(
                         set(
                             label["dicom"].get("groupids", [])
