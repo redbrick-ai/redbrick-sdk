@@ -341,7 +341,12 @@ async def process_segmentation_upload(
                     ]
 
         if input_labels_path:
-            labels = task.get("labels", []) or []
+            labels = [
+                label
+                for label in (task.get("labels", []) or [])
+                if label.get("volumeindex") is None
+                or int(label.get("volumeindex")) == volume_index
+            ]
             all_series_info = task.get("seriesInfo", []) or []
             series_info = (
                 all_series_info[volume_index]
@@ -354,10 +359,6 @@ async def process_segmentation_upload(
                     label["dicom"]["instanceid"]: label["dicom"].get("groupids")
                     for label in labels
                     if label.get("dicom", {}).get("instanceid")
-                    and (
-                        label.get("volumeindex") is None
-                        or int(label.get("volumeindex")) == volume_index
-                    )
                 },
                 series_info.get("binaryMask", False) or False,
                 series_info.get("semanticMask", False) or False,
