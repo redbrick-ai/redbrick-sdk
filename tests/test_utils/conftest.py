@@ -6,7 +6,8 @@ import tempfile
 
 import numpy as np
 import pydicom
-import pydicom._storage_sopclass_uids  # pylint: disable=protected-access
+
+import pydicom.uid
 import pytest
 import nibabel as nib
 from rt_utils import RTStructBuilder  # type: ignore
@@ -151,7 +152,8 @@ def dicom_file_and_image(
     # metadata
     meta = pydicom.Dataset()
     meta.MediaStorageSOPClassUID = (
-        pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
+        pydicom.uid.MRImageStorage
+        # pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
     )
     meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
     meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
@@ -161,7 +163,8 @@ def dicom_file_and_image(
     ds.is_little_endian = True
     ds.is_implicit_VR = False
     ds.SOPClassUID = (
-        pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
+        pydicom.uid.MRImageStorage
+        # pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
     )
     ds.PatientName = "Test^Firstname"
     ds.PatientID = "123456"
@@ -216,7 +219,8 @@ def dicom_file_and_image_tuples(tmpdir):
         # metadata
         meta = pydicom.Dataset()
         meta.MediaStorageSOPClassUID = (
-            pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
+            pydicom.uid.MRImageStorage
+            # pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
         )
         meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
         meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
@@ -226,7 +230,8 @@ def dicom_file_and_image_tuples(tmpdir):
         ds.is_little_endian = True
         ds.is_implicit_VR = False
         ds.SOPClassUID = (
-            pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
+            pydicom.uid.MRImageStorage
+            # pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
         )
         ds.PatientName = "Test^Firstname"
         ds.PatientID = "123456"
