@@ -97,7 +97,7 @@ def convert_to_binary(
     header = img.header
 
     dtype = img.get_data_dtype()
-    if dtype == numpy.uint8 or dtype == numpy.uint16:
+    if dtype in (numpy.uint8, numpy.uint16):
         data = numpy.asanyarray(img.dataobj, dtype=dtype)
     else:
         data = img.get_fdata(caching="unchanged")
