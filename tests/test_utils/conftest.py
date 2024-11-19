@@ -6,7 +6,7 @@ import tempfile
 
 import numpy as np
 import pydicom
-import pydicom._storage_sopclass_uids  # pylint: disable=protected-access
+import pydicom.uid
 import pytest
 import nibabel as nib
 from rt_utils import RTStructBuilder  # type: ignore
@@ -150,9 +150,7 @@ def dicom_file_and_image(
 
     # metadata
     meta = pydicom.Dataset()
-    meta.MediaStorageSOPClassUID = (
-        pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
-    )
+    meta.MediaStorageSOPClassUID = pydicom.uid.MRImageStorage
     meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
     meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
 
@@ -160,9 +158,7 @@ def dicom_file_and_image(
     ds.file_meta = meta
     ds.is_little_endian = True
     ds.is_implicit_VR = False
-    ds.SOPClassUID = (
-        pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
-    )
+    ds.SOPClassUID = pydicom.uid.MRImageStorage
     ds.PatientName = "Test^Firstname"
     ds.PatientID = "123456"
     ds.Modality = "MR"
@@ -215,9 +211,7 @@ def dicom_file_and_image_tuples(tmpdir):
     for i in range(2):
         # metadata
         meta = pydicom.Dataset()
-        meta.MediaStorageSOPClassUID = (
-            pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
-        )
+        meta.MediaStorageSOPClassUID = pydicom.uid.MRImageStorage
         meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
         meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
 
@@ -225,9 +219,7 @@ def dicom_file_and_image_tuples(tmpdir):
         ds.file_meta = meta
         ds.is_little_endian = True
         ds.is_implicit_VR = False
-        ds.SOPClassUID = (
-            pydicom._storage_sopclass_uids.MRImageStorage  # pylint: disable=protected-access
-        )
+        ds.SOPClassUID = pydicom.uid.MRImageStorage
         ds.PatientName = "Test^Firstname"
         ds.PatientID = "123456"
         ds.Modality = "MR"
