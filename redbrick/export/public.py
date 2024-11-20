@@ -354,13 +354,13 @@ class Export:
             to_presign = []
             local_files = []
 
-            if any(self.contains_altadb_item(item_list) for item_list in items_lists):
-                # Delete if the task directory is empty
-                if os.path.isdir(task_dir) and not os.listdir(task_dir):
-                    os.rmdir(task_dir)
-                raise Exception(
-                    f"Task {task.get('taskId')} contains items from AltADB. Download ignored for the task."
-                )
+            # if any(self.contains_altadb_item(item_list) for item_list in items_lists):
+            #     # Delete if the task directory is empty
+            #     if os.path.isdir(task_dir) and not os.listdir(task_dir):
+            #         os.rmdir(task_dir)
+            #     raise Exception(
+            #         f"Task {task.get('taskId')} contains items from AltADB. Download ignored for the task."
+            #     )
 
             for series_dir, paths in zip(series_dirs, items_lists):
                 file_names = [
@@ -419,7 +419,23 @@ class Export:
                         if "items" in series
                         else 0
                     )
-                    series_items.append(downloaded[prev_count : prev_count + count])
+                    if (
+                        isinstance(series["items"], list)
+                        and len(series["items"]) == 1
+                        and series["items"][0].startswith("altadb")
+                    ):
+                        series_item: List[Optional[str]] = []
+                        download_item = downloaded[prev_count]
+                        assert download_item
+                        if os.path.isdir(download_item):
+                            for root, _, files in os.walk(download_item):
+                                for file in files:
+                                    series_item.append(os.path.join(root, file))
+                        series_items.append(series_item)
+
+                    else:
+                        series_items.append(downloaded[prev_count : prev_count + count])
+
                     prev_count += count
 
                 for idx, series in enumerate(task.get("series", []) or []):
