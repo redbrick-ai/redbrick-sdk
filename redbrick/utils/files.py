@@ -3,17 +3,16 @@
 import os
 import gzip
 from typing import Any, Dict, List, Optional, Tuple, Set
-
 import asyncio
+
 import aiohttp
-
-
 from yarl import URL
 from tenacity import Retrying, RetryError
 from tenacity.retry import retry_if_not_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random_exponential
 from natsort import natsorted, ns
+from altadb.utils.files import save_dicom_series
 
 from redbrick.common.constants import (
     MAX_FILE_BATCH_SIZE,
@@ -22,7 +21,6 @@ from redbrick.common.constants import (
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.logging import log_error, logger
 from redbrick.config import config
-from altadb.utils.files import save_dicom_series
 
 
 IMAGE_FILE_TYPES = {
@@ -235,20 +233,14 @@ async def download_files(
     zipped: bool = False,
 ) -> List[Optional[str]]:
     """Download files from url to local path (presigned url, file path)."""
-    # pylint: disable=too-many-statements
 
     async def _download_file(
         session: aiohttp.ClientSession, url: Optional[str], path: Optional[str]
     ) -> Optional[str]:
-        # pylint: disable=no-member, too-many-branches
+        # pylint: disable=no-member
         if not url or not path:
             logger.debug(f"Downloading empty '{url}' to '{path}'")
             return None
-        if url and url.startswith("altadb://"):
-            _url = url.split("?")[0]
-            series = _url.split("/")[-1]
-            await save_dicom_series(str(url), str(path), str(series))
-            return path
 
         if not overwrite and os.path.isfile(path):
             return path
@@ -322,3 +314,29 @@ async def download_files(
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
     return [(path if isinstance(path, str) else None) for path in paths]
+
+
+async def download_files_altadb(
+    files: List[Tuple[str, str]],
+    progress_bar_name: Optional[str] = "Downloading files",
+    keep_progress_bar: bool = True,
+) -> List[Optional[List[str]]]:
+    """Download files from altadb (presigned url, file path)."""
+    paths = await gather_with_concurrency(
+        MAX_FILE_BATCH_SIZE,
+        [save_dicom_series(url, path) for url, path in files],
+        progress_bar_name,
+        keep_progress_bar,
+        True,
+    )
+    return [(path if isinstance(path, list) and path else None) for path in paths]
+
+
+def is_altadb_item(item: str) -> bool:
+    """Check if current item is an altadb item."""
+    return item.startswith("altadb:")
+
+
+def contains_altadb_item(items_list: List[str]) -> bool:
+    """Filter out altadb items."""
+    return any(is_altadb_item(item) for item in items_list)

@@ -23,7 +23,10 @@ from redbrick.utils.files import (
     IMAGE_FILE_TYPES,
     NIFTI_FILE_TYPES,
     VIDEO_FILE_TYPES,
+    contains_altadb_item,
     download_files,
+    download_files_altadb,
+    is_altadb_item,
     uniquify_path,
 )
 from redbrick.utils.logging import log_error, logger
@@ -354,14 +357,6 @@ class Export:
             to_presign = []
             local_files = []
 
-            # if any(self.contains_altadb_item(item_list) for item_list in items_lists):
-            #     # Delete if the task directory is empty
-            #     if os.path.isdir(task_dir) and not os.listdir(task_dir):
-            #         os.rmdir(task_dir)
-            #     raise Exception(
-            #         f"Task {task.get('taskId')} contains items from AltADB. Download ignored for the task."
-            #     )
-
             for series_dir, paths in zip(series_dirs, items_lists):
                 file_names = [
                     re.sub(
@@ -399,6 +394,17 @@ class Export:
             if any(not presigned_path for presigned_path in presigned):
                 raise Exception("Failed to presign some files")
 
+            presigned_altadb: List[str] = []
+            local_files_altadb: List[str] = []
+            pos = len(presigned) - 1
+            while pos >= 0:
+                if presigned[pos] and is_altadb_item(presigned[pos] or ""):
+                    presigned_altadb.append(presigned[pos] or "")
+                    local_files_altadb.append(local_files[pos])
+                    del presigned[pos]
+                    del local_files[pos]
+                pos -= 1
+
             downloaded = await download_files(
                 list(zip(presigned, local_files)), "Downloading files", False
             )
@@ -406,34 +412,29 @@ class Export:
             if any(not downloaded_file for downloaded_file in downloaded):
                 raise Exception("Failed to download some files")
 
+            downloaded_altadb = await download_files_altadb(
+                list(zip(presigned_altadb, local_files_altadb)),
+                "Downloading files",
+                False,
+            )
+
+            if any(not downloaded_files for downloaded_files in downloaded_altadb):
+                raise Exception("Failed to download some files")
+
             if task_series:
                 series_items: List[List[Optional[str]]] = []
                 prev_count = 0
                 for series_dir, series in zip(series_dirs, task_series):
-                    count = (
-                        (
-                            1
-                            if isinstance(series["items"], str)
-                            else len(series["items"])
-                        )
-                        if "items" in series
-                        else 0
+                    prev_series_items: List[str] = (
+                        [series["items"]]  # type: ignore
+                        if isinstance(series.get("items"), str)
+                        else series["items"]  # type: ignore
                     )
-                    if (
-                        isinstance(series["items"], list)
-                        and len(series["items"]) == 1
-                        and series["items"][0].startswith("altadb")
-                    ):
-                        series_item: List[Optional[str]] = []
-                        download_item = downloaded[prev_count]
-                        assert download_item
-                        if os.path.isdir(download_item):
-                            for root, _, files in os.walk(download_item):
-                                for file in files:
-                                    series_item.append(os.path.join(root, file))
-                        series_items.append(series_item)
-
+                    count = 0
+                    if contains_altadb_item(prev_series_items):
+                        series_items.append(downloaded_altadb.pop(0))  # type: ignore
                     else:
+                        count = len(prev_series_items) if "items" in series else 0
                         series_items.append(downloaded[prev_count : prev_count + count])
 
                     prev_count += count
@@ -501,7 +502,11 @@ class Export:
                         rtstruct.save(series["segmentations"])
 
             else:
-                task["items"] = downloaded  # type: ignore
+                task["items"] = [  # type: ignore
+                    altadb_file
+                    for altadb_files in downloaded_altadb
+                    for altadb_file in altadb_files or []
+                ] + downloaded
 
         except Exception as err:  # pylint: disable=broad-except
             log_error(
@@ -1384,7 +1389,3 @@ class Export:
                     "completedAt": task["date"],
                     "cycle": task["cycle"],
                 }
-
-    def contains_altadb_item(self, items_list: List[str]) -> bool:
-        """Filter out altadb items."""
-        return any(item.startswith("altadb:") for item in items_list)
