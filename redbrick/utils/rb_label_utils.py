@@ -436,13 +436,14 @@ def dicom_rb_series(
                         )
                         else None
                     ),
-                    "seriesFrameIndex": label.get("seriesframeindex"),
                     "frameIndex": label.get("frameindex"),
                     "trackId": label.get("trackid", ""),
                     "keyFrame": label.get("keyframe", True),
                     "endTrack": label.get("end", True),
                 }
             }
+            if label.get("seriesframeindex") is not None:
+                video_metadata["video"]["seriesFrameIndex"] = label["seriesframeindex"]
 
         items: List[str] = volume.get("items", []) or []  # type: ignore
 
