@@ -1034,7 +1034,7 @@ class Upload:
         .. code:: python
 
             project = redbrick.get_project(org_id, project_id, api_key, url)
-            project.upload.import_tasks_from_project(source_project_id, task_ids)
+            project.upload.import_tasks_from_workspace(source_project_id, task_ids)
 
 
         Parameters
