@@ -119,6 +119,7 @@ def task_event_format(
                     {},
                     None,
                     None,
+                    None,
                     task_datapoint_attributes,
                 )
 

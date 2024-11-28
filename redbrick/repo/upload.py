@@ -26,6 +26,7 @@ class UploadRepo(UploadControllerInterface):
         items: List[str],
         heat_maps: Optional[List[Dict]],
         transforms: Optional[List[Dict]],
+        centerlines: Optional[List[Dict]],
         labels_data: Optional[str],
         labels_map: Optional[List[Dict]] = None,
         series_info: Optional[List[Dict]] = None,
@@ -48,6 +49,7 @@ class UploadRepo(UploadControllerInterface):
                 $items: [String!]!
                 $heatMaps: [HeatMapInput!]
                 $transforms: [TransformInput!]
+                $centerline: [CenterlineInput!]
                 $name: String!
                 $storageId: UUID!
                 $labelsData: String
@@ -65,6 +67,7 @@ class UploadRepo(UploadControllerInterface):
                     items: $items
                     heatMaps: $heatMaps
                     transforms: $transforms
+                    centerline: $centerline
                     name: $name
                     storageId: $storageId
                     labelsData: $labelsData
@@ -88,6 +91,14 @@ class UploadRepo(UploadControllerInterface):
             "items": items,
             "heatMaps": heat_maps,
             "transforms": transforms,
+            "centerline": (
+                [
+                    {**centerline, "centerline": json.dumps(centerline["centerline"])}
+                    for centerline in centerlines
+                ]
+                if centerlines
+                else None
+            ),
             "name": name,
             "storageId": storage_id,
             "labelsData": labels_data,
@@ -119,6 +130,7 @@ class UploadRepo(UploadControllerInterface):
         series_info: Optional[List[Dict]] = None,
         heat_maps: Optional[List[Dict]] = None,
         transforms: Optional[List[Dict]] = None,
+        centerlines: Optional[List[Dict]] = None,
         meta_data: Optional[Dict] = None,
     ) -> Dict:
         """Update items in a datapoint."""
@@ -132,6 +144,7 @@ class UploadRepo(UploadControllerInterface):
                 $seriesInfo: [SeriesInfoInput!]
                 $heatMaps: [HeatMapInput!]
                 $transforms: [TransformInput!]
+                $centerline: [CenterlineInput!]
                 $metaData: String
             ) {
                 updateTaskItems(
@@ -143,6 +156,7 @@ class UploadRepo(UploadControllerInterface):
                     seriesInfo: $seriesInfo
                     heatMaps: $heatMaps
                     transforms: $transforms
+                    centerline: $centerline
                     metaData: $metaData
                 ) {
                     ok
@@ -160,6 +174,14 @@ class UploadRepo(UploadControllerInterface):
             "seriesInfo": series_info,
             "heatMaps": heat_maps,
             "transforms": transforms,
+            "centerline": (
+                [
+                    {**centerline, "centerline": json.dumps(centerline["centerline"])}
+                    for centerline in centerlines
+                ]
+                if centerlines
+                else None
+            ),
             "metaData": (
                 json.dumps(meta_data, separators=(",", ":")) if meta_data else None
             ),

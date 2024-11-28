@@ -271,9 +271,14 @@ def datapoint_shard(raw_items: bool, presigned_items: bool) -> str:
             opacityPoints3d
             rgbPoints
         }}
-        transforms{{
+        transforms {{
             seriesIndex
             transform
+        }}
+        centerline {{
+            seriesIndex
+            name
+            centerline
         }}
         storageMethod {{
             storageId

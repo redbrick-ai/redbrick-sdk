@@ -178,6 +178,7 @@ def flat_rb_format(
     current_stage_sub_task: Optional[Dict],
     heat_maps: Optional[List[Dict]],
     transforms: Optional[List[Dict]],
+    centerlines: Optional[List[Dict]],
     datapoint_classification: Optional[List[Dict]],
 ) -> Dict:
     """Get standard rb flat format, same as import format."""
@@ -201,6 +202,7 @@ def flat_rb_format(
         "priority": priority,
         "heatMaps": heat_maps,
         "transforms": transforms,
+        "centerline": centerlines,
         "datapointClassification": datapoint_classification,
     }
 
@@ -253,6 +255,14 @@ def clean_transform(transform_data: Dict) -> TaskType.Transform:
     }
 
 
+def clean_centerline(centerline_data: Dict) -> TaskType.Centerline:
+    """Clean centerline."""
+    return {
+        "name": centerline_data["name"],
+        "centerline": json.loads(centerline_data["centerline"]),
+    }
+
+
 def parse_entry_latest(item: Dict) -> Dict:
     """Parse entry latest."""
     # pylint: disable=too-many-locals
@@ -277,6 +287,7 @@ def parse_entry_latest(item: Dict) -> Dict:
         ) or StorageMethod.REDBRICK
         heatmaps = datapoint.get("heatMaps")
         transforms = datapoint.get("transforms")
+        centerlines = datapoint.get("centerline")
         if datapoint.get("attributes"):
             datapoint_attributes = json.loads(datapoint["attributes"])
         else:
@@ -302,6 +313,7 @@ def parse_entry_latest(item: Dict) -> Dict:
             item.get("currentStageSubTask"),
             heatmaps,
             transforms,
+            centerlines,
             datapoint_attributes,
         )
     except (AttributeError, KeyError, TypeError, json.decoder.JSONDecodeError):
@@ -365,8 +377,7 @@ def dicom_rb_series(
         if volume_index >= len(series):
             series.extend([{} for _ in range(volume_index - len(series) + 1)])
 
-    for label in labels:
-        volume: TaskType.Series = series[label.get("volumeindex", 0)]
+        volume: TaskType.Series = series[volume_index]
         label_obj: TaskType.CommonLabelProps = {}
         if "category" in label and label["category"] is not None:
             label_obj["category"] = (
@@ -762,6 +773,7 @@ def dicom_rb_format(
     item_index_map: Dict[int, int] = {}
     heat_maps: List[Dict] = task.get("heatMaps") or []
     transforms: List[Dict] = task.get("transforms") or []
+    centerlines: List[Dict] = task.get("centerline") or []
 
     for volume_index, series_info in enumerate(task["seriesInfo"]):
         series = volume_series[volume_index]
@@ -786,6 +798,11 @@ def dicom_rb_format(
             if tranform.get("seriesIndex") == volume_index:
                 series["transforms"] = series.get("transforms", [])
                 series["transforms"].append(clean_transform(tranform))
+
+        for centerline in centerlines:
+            if centerline.get("seriesIndex") == volume_index:
+                series["centerline"] = series.get("centerline", [])
+                series["centerline"].append(clean_centerline(centerline))
 
     output["series"] = deepcopy(volume_series)
     if no_consensus:

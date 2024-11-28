@@ -242,6 +242,7 @@ class Upload:
                     ),
                     point.get("heatMaps"),
                     point.get("transforms"),
+                    point.get("centerline"),
                     point.get("metaData"),
                 )
                 assert_validation(
@@ -258,6 +259,7 @@ class Upload:
                     point["items"],
                     point.get("heatMaps"),
                     point.get("transforms"),
+                    point.get("centerline"),
                     json.dumps(point.get("labels", []), separators=(",", ":")),
                     labels_map,
                     (

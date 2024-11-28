@@ -411,6 +411,16 @@ class Transform(TypedDict):
     transform: List[List[float]]
 
 
+class Centerline(TypedDict):
+    """Centerline info."""
+
+    #: Centerline name
+    name: str
+
+    #: Centerline polydata
+    centerline: Dict
+
+
 class Series(TypedDict, total=False):
     """A single series represents a single volume, image, or video. A :class:`redbrick.types.task.InputTask` can have multiple series."""
 
@@ -520,6 +530,9 @@ class Series(TypedDict, total=False):
 
     #: Transforms for the series.
     transforms: List[Transform]
+
+    #: Centerline info for the series.
+    centerline: List[Centerline]
 
     #: Treats all files in :attr:`redbrick.types.task.Series.segmentations` as binary masks. That is, any non-zero value will be treated as a single instance.
     binaryMask: bool
