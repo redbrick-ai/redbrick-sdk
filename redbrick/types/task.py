@@ -1,7 +1,7 @@
 # noqa
 """"""
 
-from typing import List, Dict, Literal, Optional, Union, TypedDict
+from typing import List, Dict, Literal, Union, TypedDict
 from typing_extensions import Required, NotRequired  # type: ignore
 
 from redbrick.common.enums import TaskStates
