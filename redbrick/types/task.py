@@ -77,10 +77,10 @@ class VideoMetaData(TypedDict):
     seriesItemIndex: NotRequired[int]
 
     #: Frame index of the annotation for nifti and dicom multipart files.
-    seriesFrameIndex: NotRequired[Optional[int]]
+    seriesFrameIndex: NotRequired[int]
 
     #: The frame number (for video) or slice index (for 3D volumes) the annotation is present on.
-    frameIndex: NotRequired[Optional[int]]
+    frameIndex: NotRequired[int]
 
     #: Each distinct object has a unique trackId. Two annotations on different frameIndex's with the same trackId's represent the same distinct object.
     trackId: NotRequired[str]
