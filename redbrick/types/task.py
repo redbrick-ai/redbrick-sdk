@@ -74,7 +74,7 @@ class VideoMetaData(TypedDict):
     """
 
     #: The index of the file in series "items" list that this annotation is present on.
-    seriesItemIndex: Optional[int]
+    seriesItemIndex: NotRequired[int]
 
     #: Frame index of the annotation for nifti and dicom multipart files.
     seriesFrameIndex: NotRequired[Optional[int]]
