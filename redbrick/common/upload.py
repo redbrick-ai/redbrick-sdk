@@ -20,6 +20,7 @@ class UploadControllerInterface(ABC):
         items: List[str],
         heat_maps: Optional[List[Dict]],
         transforms: Optional[List[Dict]],
+        centerlines: Optional[List[Dict]],
         labels_data: Optional[str],
         labels_map: Optional[List[Dict]] = None,
         series_info: Optional[List[Dict]] = None,
@@ -47,6 +48,7 @@ class UploadControllerInterface(ABC):
         series_info: Optional[List[Dict]] = None,
         heat_maps: Optional[List[Dict]] = None,
         transforms: Optional[List[Dict]] = None,
+        centerlines: Optional[List[Dict]] = None,
         meta_data: Optional[Dict] = None,
     ) -> Dict:
         """Update items in a datapoint."""

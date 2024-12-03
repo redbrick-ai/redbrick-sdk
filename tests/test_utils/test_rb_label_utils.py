@@ -189,6 +189,7 @@ def test_flat_rb_format():
         "updatedBy": "user456",
         "heatMaps": None,
         "transforms": None,
+        "centerline": None,
         "datapointClassification": None,
     }
 
@@ -210,6 +211,7 @@ def test_flat_rb_format():
         storage_id,
         label_storage_id,
         current_stage_sub_task,
+        None,
         None,
         None,
         None,
@@ -286,6 +288,7 @@ def test_parse_entry_latest():
         "priority": None,
         "heatMaps": None,
         "transforms": None,
+        "centerline": None,
         "datapointClassification": None,
     }
     assert result == expected

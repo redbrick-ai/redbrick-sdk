@@ -22,6 +22,9 @@ The RedBrick AI SDK uses a list of :class:`redbrick.types.task.InputTask` object
 .. autoclass:: redbrick.types.task.Transform
    :members:
 
+.. autoclass:: redbrick.types.task.Centerline
+   :members:
+
 Export
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 The RedBrick SDK will export a list of :class:`redbrick.types.task.OutputTask` objects, along with NIfTI segmentation files if they exist, written to the disk. The CLI will export in the same format in a JSON file.
