@@ -131,7 +131,7 @@ class Labeling:
                     logger.warning(
                         f"Failed to process segmentations: `{err}` for taskId: `{task['taskId']}`"
                     )
-                    labels_map = None
+                    return {"error": err}
 
                 await self.context.labeling.put_labeling_results(
                     session,

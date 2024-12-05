@@ -1116,7 +1116,6 @@ class Upload:
     ) -> Optional[Dict]:
         # pylint: disable=too-many-locals
         task_id = task["taskId"]
-        labels_map: List[Dict] = []
         try:
             labels_map = await process_segmentation_upload(
                 self.context,
@@ -1132,6 +1131,7 @@ class Upload:
             logger.warning(
                 f"Failed to process segmentations: `{err}` for taskId: `{task['taskId']}`"
             )
+            return {"error": err}
 
         try:
             await self.context.upload.update_labels(
