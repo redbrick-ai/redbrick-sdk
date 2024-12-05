@@ -112,12 +112,9 @@ def convert_to_binary(
         new_data = data == instance_id
         for gid in group_ids:
             new_data |= data == gid
+
         if not numpy.any(new_data):
             continue
-
-        new_data = new_data.astype(
-            numpy.uint8 if max([instance_id, *group_ids]) <= 255 else numpy.uint16
-        )
 
         filename = os.path.join(
             dirname, f"instance-{label['dicom']['instanceid']}.nii.gz"
@@ -125,9 +122,7 @@ def convert_to_binary(
         if os.path.isfile(filename):
             os.remove(filename)
 
-        new_img = Nifti1Image(new_data, affine, header)
-        if new_data.dtype == numpy.uint16:
-            new_img.set_data_dtype(numpy.uint16)
+        new_img = Nifti1Image(new_data.astype(numpy.uint8), affine, header)
         nib_save(new_img, filename)
         files.append(filename)
 
