@@ -50,12 +50,19 @@ class ReviewStage(Stage):
         read_only_labels_edit_access: Optional[ProjectMemberRole]
             Access level to change the read only labels. (Default: None)
 
+        is_pre_review: Optional[bool]
+            Is pre-review stage. (Default: False)
+
+        is_consensus_merge: Optional[bool]
+            Is consensus-merge (V2) stage. (Default: False)
         """
 
         review_percentage: Optional[float] = None
         auto_assignment: Optional[bool] = None
         auto_assignment_queue_size: Optional[int] = None
         read_only_labels_edit_access: Optional[ProjectMemberRole] = None
+        is_pre_review: Optional[bool] = None
+        is_consensus_merge: Optional[bool] = None
 
         @classmethod
         def from_entity(
@@ -73,6 +80,14 @@ class ReviewStage(Stage):
                     if entity.get("roLabelEditPerm")
                     else None
                 ),
+                is_pre_review=(
+                    None if entity.get("isPreReview") is None else entity["isPreReview"]
+                ),
+                is_consensus_merge=(
+                    None
+                    if entity.get("isConsensusMerge") is None
+                    else entity["isConsensusMerge"]
+                ),
             )
 
         def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
@@ -86,6 +101,10 @@ class ReviewStage(Stage):
                 entity["queueSize"] = self.auto_assignment_queue_size
             if self.read_only_labels_edit_access:
                 entity["roLabelEditPerm"] = self.read_only_labels_edit_access.value
+            if self.is_pre_review is not None:
+                entity["isPreReview"] = self.is_pre_review
+            if self.is_consensus_merge is not None:
+                entity["isConsensusMerge"] = self.is_consensus_merge
             return entity
 
     stage_name: str

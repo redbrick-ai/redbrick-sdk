@@ -44,12 +44,20 @@ class LabelStage(Stage):
 
         read_only_labels_edit_access: Optional[ProjectMemberRole]
             Access level to change the read only labels. (Default: None)
+
+        is_pre_label: Optional[bool]
+            Is pre-labeling stage. (Default: False)
+
+        is_consensus_label: Optional[bool]
+            Is consensus-labeling stage. (Default: False)
         """
 
         auto_assignment: Optional[bool] = None
         auto_assignment_queue_size: Optional[int] = None
         show_uploaded_annotations: Optional[bool] = None
         read_only_labels_edit_access: Optional[ProjectMemberRole] = None
+        is_pre_label: Optional[bool] = None
+        is_consensus_label: Optional[bool] = None
 
         @classmethod
         def from_entity(
@@ -71,6 +79,14 @@ class LabelStage(Stage):
                     if entity.get("roLabelEditPerm")
                     else None
                 ),
+                is_pre_label=(
+                    None if entity.get("isPreLabel") is None else entity["isPreLabel"]
+                ),
+                is_consensus_label=(
+                    None
+                    if entity.get("isConsensusLabel") is None
+                    else entity["isConsensusLabel"]
+                ),
             )
 
         def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
@@ -84,6 +100,10 @@ class LabelStage(Stage):
                 entity["blindedAnnotation"] = not self.show_uploaded_annotations
             if self.read_only_labels_edit_access:
                 entity["roLabelEditPerm"] = self.read_only_labels_edit_access.value
+            if self.is_pre_label is not None:
+                entity["isPreLabel"] = self.is_pre_label
+            if self.is_consensus_label is not None:
+                entity["isConsensusLabel"] = self.is_consensus_label
             return entity
 
     stage_name: str
