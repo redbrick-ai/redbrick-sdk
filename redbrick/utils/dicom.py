@@ -95,22 +95,29 @@ def convert_to_binary(
 
     affine = img.affine
     header = img.header
-    data = img.get_fdata(caching="unchanged")
+
+    dtype = img.get_data_dtype()
+    if dtype in (numpy.uint8, numpy.uint16):
+        data = numpy.asanyarray(img.dataobj, dtype=dtype)
+    else:
+        data = img.get_fdata(caching="unchanged")
+        data = numpy.round(data).astype(numpy.uint16)
 
     files: List[str] = []
 
     for label in labels:
-        instances: Set[int] = set(
-            [label["dicom"]["instanceid"]] + (label["dicom"].get("groupids", []) or [])
-        )
-        new_data = numpy.zeros(
-            data.shape, dtype=numpy.uint8 if max(instances) <= 255 else numpy.uint16
-        )
-        for instance in instances:
-            new_data[data == instance] = 1
+        instance_id = label["dicom"]["instanceid"]
+        group_ids = label["dicom"].get("groupids") or []
 
+        new_data = data == instance_id
+        for gid in group_ids:
+            new_data |= data == gid
         if not numpy.any(new_data):
             continue
+
+        new_data = new_data.astype(
+            numpy.uint8 if max([instance_id, *group_ids]) <= 255 else numpy.uint16
+        )
 
         filename = os.path.join(
             dirname, f"instance-{label['dicom']['instanceid']}.nii.gz"

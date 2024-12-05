@@ -197,7 +197,7 @@ def test_convert_to_binary_with_high_values(tmpdir, mock_labels):
     _labels = mock_labels + [{"dicom": {"instanceid": 256}}]
 
     mock_data = np.array([[1, 1, 2], [2, 256, 3], [3, 3, 4]])
-    img = nib.Nifti1Image(mock_data, np.eye(4), dtype=np.uint8)
+    img = nib.Nifti1Image(mock_data, np.eye(4), dtype=np.uint16)
     img.to_filename(nifti_file)
 
     success, new_files = dicom.convert_to_binary(nifti_file, _labels, tmpdir_path)
