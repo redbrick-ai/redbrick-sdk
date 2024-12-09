@@ -19,9 +19,10 @@ def test_handler(prepare_project, monkeypatch):
     monkeypatch.chdir(project_path)
     _, cli = public.cli_parser(only_parser=False)
 
-    with patch(
-        "redbrick.cli.entity.creds.config_path", return_value=config_path_
-    ), patch.object(cli.upload, "handle_upload") as _handle_upload:
+    with (
+        patch("redbrick.cli.entity.creds.config_path", return_value=config_path_),
+        patch.object(cli.upload, "handle_upload") as _handle_upload,
+    ):
         args = argparse.Namespace(command=cli.CLONE, path=project_path)
         cli.upload.handler(args)
         _handle_upload.assert_called_once()
@@ -94,14 +95,19 @@ def test_handle_upload(
 
     # pylint: enable=unused-argument
 
-    with patch(
-        "redbrick.upload.public.validate_json", mock_validate_json
-    ), patch.object(
-        controller.project.project.upload, "_create_tasks", mock_create_tasks
-    ), patch.object(
-        controller.project.project.upload, "generate_items_list", mock_gen_item_list
-    ), patch.object(
-        controller.project.project.context.project, "get_taxonomy", mock_get_taxonomy
+    with (
+        patch("redbrick.upload.public.validate_json", mock_validate_json),
+        patch.object(
+            controller.project.project.upload, "_create_tasks", mock_create_tasks
+        ),
+        patch.object(
+            controller.project.project.upload, "generate_items_list", mock_gen_item_list
+        ),
+        patch.object(
+            controller.project.project.context.project,
+            "get_taxonomy",
+            mock_get_taxonomy,
+        ),
     ):
         _dir = project_path if use_dir else json_filepath
         controller.args = argparse.Namespace(
@@ -115,6 +121,7 @@ def test_handle_upload(
             label_storage=None,
             ground_truth=False,
             label_validate=False,
+            prune_segmentations=False,
             clear_cache=False,
             concurrency=10,
             rt_struct=False,

@@ -85,6 +85,11 @@ Using this argument validates the files before upload,
 but may increase the upload time.""",
         )
         parser.add_argument(
+            "--prune-segmentations",
+            action="store_true",
+            help="Prune segmentations that are not part of the series.",
+        )
+        parser.add_argument(
             "--rt-struct",
             action="store_true",
             help="Upload segmentations from DICOM RT-Struct files.",
@@ -363,6 +368,7 @@ but may increase the upload time.""",
                     storage_id,
                     label_storage_id,
                     self.args.label_validate,
+                    self.args.prune_segmentations,
                     self.args.concurrency,
                     False,
                 )

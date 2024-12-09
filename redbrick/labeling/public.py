@@ -93,6 +93,7 @@ class Labeling:
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
+        prune_segmentations: bool,
         existing_labels: bool,
     ) -> Optional[Dict]:
         # pylint: disable=too-many-locals
@@ -126,6 +127,7 @@ class Labeling:
                         label_storage_id,
                         project_label_storage_id,
                         label_validate,
+                        prune_segmentations,
                     )
                 except ValueError as err:
                     logger.warning(
@@ -160,6 +162,7 @@ class Labeling:
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
+        prune_segmentations: bool,
         existing_labels: bool,
     ) -> List[Dict]:
         conn = aiohttp.TCPConnector()
@@ -174,6 +177,7 @@ class Labeling:
                     label_storage_id,
                     project_label_storage_id,
                     label_validate,
+                    prune_segmentations,
                     existing_labels,
                 )
                 for task in tasks
@@ -193,7 +197,8 @@ class Labeling:
         rt_struct: bool = False,  # pylint: disable=unused-argument
         review_result: Optional[bool] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
-        label_validate: bool = True,
+        label_validate: bool = False,
+        prune_segmentations: bool = False,
         concurrency: int = 50,
     ) -> List[OutputTask]:
         """
@@ -269,8 +274,11 @@ class Labeling:
             Optional label storage id to reference external nifti segmentations.
             Defaults to project settings' annotation storage_id if not specified.
 
-        label_validate: bool = True
+        label_validate: bool = False
             Validate label nifti instances and segment map.
+
+        prune_segmentations: bool = False
+            Prune segmentations that are not part of the series.
 
         concurrency: int = 50
 
@@ -360,6 +368,7 @@ class Labeling:
                         label_storage_id or project_label_storage_id,
                         project_label_storage_id,
                         label_validate,
+                        prune_segmentations,
                         False,
                     )
                 )
@@ -376,6 +385,7 @@ class Labeling:
                         label_storage_id or project_label_storage_id,
                         project_label_storage_id,
                         label_validate,
+                        prune_segmentations,
                         existing_labels,
                     )
                 )

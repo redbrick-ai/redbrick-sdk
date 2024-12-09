@@ -242,7 +242,8 @@ async def process_segmentation_upload(
     task: Dict,
     label_storage_id: str,
     project_label_storage_id: str,
-    label_validate: bool,
+    label_validate: bool = False,
+    prune_segmentations: bool = False,
 ) -> List[Dict]:
     """Process segmentation upload."""
     # pylint: disable=too-many-branches, too-many-locals, too-many-statements
@@ -341,24 +342,22 @@ async def process_segmentation_upload(
                     ]
 
         if input_labels_path:
-            labels = [
-                label
-                for label in (task.get("labels", []) or [])
-                if label.get("volumeindex") is None
-                or int(label.get("volumeindex")) == volume_index
-            ]
             all_series_info = task.get("seriesInfo", []) or []
             series_info = (
                 all_series_info[volume_index]
                 if len(all_series_info) > volume_index
                 else {}
             )
-            output_labels_path, group_map = await process_nifti_upload(
+            output_labels_path, instances = await process_nifti_upload(
                 input_labels_path,
                 {
                     label["dicom"]["instanceid"]: label["dicom"].get("groupids")
-                    for label in labels
-                    if label.get("dicom", {}).get("instanceid")
+                    for label in (task.get("labels") or [])
+                    if (
+                        label.get("volumeindex") is None
+                        or int(label.get("volumeindex")) == volume_index
+                    )
+                    and label.get("dicom", {}).get("instanceid")
                 },
                 series_info.get("binaryMask", False) or False,
                 series_info.get("semanticMask", False) or False,
@@ -370,16 +369,25 @@ async def process_segmentation_upload(
                     ).items()
                 },
                 label_validate,
+                prune_segmentations,
             )
 
-            for label in labels:
-                if label.get("dicom", {}).get("instanceid") in group_map:
-                    label["dicom"]["groupids"] = list(
-                        set(
-                            label["dicom"].get("groupids", [])
-                            + group_map[label["dicom"]["instanceid"]]
-                        )
-                    )
+            pos = len(task.get("labels") or []) - 1
+            while pos >= 0:
+                label = task["labels"][pos]
+                if (
+                    label.get("volumeindex") is None
+                    or int(label.get("volumeindex")) == volume_index
+                ) and label.get("dicom", {}).get("instanceid"):
+                    if label["dicom"]["instanceid"] in instances:
+                        group_ids = set(instances[label["dicom"]["instanceid"]] or [])
+                        if group_ids:
+                            label["dicom"]["groupids"] = list(group_ids)
+                        elif "groupids" in label["dicom"]:
+                            del label["dicom"]["groupids"]
+                    else:
+                        task["labels"].pop(pos)
+                pos -= 1
 
             if (
                 output_labels_path

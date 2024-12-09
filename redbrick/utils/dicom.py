@@ -410,13 +410,14 @@ async def process_nifti_upload(
     semantic_mask: bool,
     png_mask: bool,
     masks: Dict[str, str],
-    label_validate: bool,
-) -> Tuple[Optional[str], Dict[int, List[int]]]:
+    label_validate: bool = False,
+    prune_segmentations: bool = False,
+) -> Tuple[Optional[str], Dict[int, Optional[List[int]]]]:
     """Process nifti upload files."""
     # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
     # pylint: disable=too-many-statements, too-many-return-statements, unused-argument
     async with semaphore:
-        import numpy  # type: ignore
+        import numpy as np  # type: ignore
         from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
         from nibabel.nifti1 import Nifti1Image  # type: ignore
         from nibabel.nifti2 import Nifti2Image  # type: ignore
@@ -434,7 +435,7 @@ async def process_nifti_upload(
                 int(inst_id),
             )
 
-        if png_mask:
+        if binary_mask or png_mask:
             if not binary_mask:
                 log_error("PNG mask upload only supports binary masks")
                 return None, {}
@@ -442,23 +443,18 @@ async def process_nifti_upload(
             for mask, inst_ids in reverse_masks.items():
                 if len(inst_ids) > 1:
                     log_error(
-                        f"PNG mask upload only supports single instance per file: '{mask}'"
+                        f"Binary mask upload only supports single instance per file: '{mask}'"
                     )
                     return None, {}
 
-            convert_png_to_nii(reverse_masks)
-            files = list(reverse_masks.keys())
+            if png_mask:
+                convert_png_to_nii(reverse_masks)
+                files = list(reverse_masks.keys())
 
-        if len(files) == 1 and not label_validate:
-            return files[0], {}
-
-        if binary_mask:
-            for file, instance_numbers in reverse_masks.items():
-                if len(instance_numbers) > 1:
-                    log_error(
-                        f"Each instance must have a unique file if binary_mask is True: '{file}' ({instance_numbers})"
-                    )
-                    return None, {}
+        if len(files) == 1 and not (
+            binary_mask or label_validate or prune_segmentations
+        ):
+            return files[0], instances
 
         try:
             base_img = nib_load(files[0])
@@ -468,40 +464,44 @@ async def process_nifti_upload(
             ):
                 return None, {}
 
-            if base_img.get_data_dtype() != numpy.uint16:
-                base_data = base_img.get_fdata(caching="unchanged")
-                base_data = numpy.round(base_data).astype(numpy.uint16)  # type: ignore
-                base_img.set_data_dtype(numpy.uint16)
+            if base_img.get_data_dtype() not in (np.uint8, np.uint16):
+                base_data = np.round(base_img.get_fdata(caching="unchanged")).astype(
+                    np.uint16
+                )
+                base_img.set_data_dtype(np.uint16)
             else:
-                base_data = numpy.asanyarray(base_img.dataobj, dtype=numpy.uint16)
+                base_data = np.asanyarray(base_img.dataobj, dtype=np.uint16)
 
             if base_data.ndim != 3:
                 return None, {}
 
-            used_instances: Set[int] = set()
-            instance_keys: Set[int] = set()
-            instance_map: Dict[int, Set[int]] = {}
-            instance_pool = set(range(1, 65536))
+            group_map: Dict[int, Set[int]] = {}
+            map_instances: Set[int] = set()
+            reverse_map: Dict[Tuple[int, ...], int] = {}
             for instance_id, instance_groups in instances.items():
-                instance_keys.add(instance_id)
+                map_instances.add(instance_id)
+                reverse_map[(instance_id,)] = instance_id
                 if instance_groups:
-                    instance_pool -= set(instance_groups)
+                    map_instances.update(instance_groups)
                     for instance_group in instance_groups:
-                        instance_map.setdefault(instance_group, set()).add(instance_id)
-            instance_pool -= instance_keys
+                        group_map.setdefault(instance_group, set()).add(instance_id)
 
-            group_instances = sorted(instance_pool, reverse=True)
+            if group_map:
+                if common_instances := (set(instances.keys()) & set(group_map.keys())):
+                    raise ValueError(
+                        f"Found common instance and group ids: {common_instances}"
+                    )
+                for group_id, instance_ids in group_map.items():
+                    reverse_map[tuple(sorted(instance_ids))] = group_id
 
             if binary_mask and files[0] in reverse_masks:
                 instance_number = reverse_masks[files[0]][0]
-                base_data[numpy.nonzero(base_data)] = instance_number
-                used_instances.add(instance_number)
-            elif label_validate:
-                non_zero_base_data = base_data[numpy.nonzero(base_data)]
-                used_instances = (
-                    set(x.item() for x in numpy.unique(non_zero_base_data).round())
-                    & instance_keys
-                )
+                base_data[np.nonzero(base_data)] = instance_number
+
+            instance_pool = sorted(
+                set(range(1, 65536)) - map_instances,
+                reverse=True,
+            )
 
             for file_ in files[1:]:
                 img = nib_load(file_)
@@ -510,15 +510,16 @@ async def process_nifti_upload(
                 ):
                     return None, {}
 
-                if img.get_data_dtype() != numpy.uint16:
-                    data = img.get_fdata(caching="unchanged")
-                    data = numpy.round(data).astype(numpy.uint16)  # type: ignore
+                if img.get_data_dtype() not in (np.uint8, np.uint16):
+                    data = np.round(img.get_fdata(caching="unchanged")).astype(
+                        np.uint16
+                    )
                 else:
-                    data = numpy.asanyarray(img.dataobj, dtype=numpy.uint16)
+                    data = np.asanyarray(img.dataobj, dtype=np.uint16)
 
                 # Take the non-zero indices of the mask. These are the indices
                 # that we want to merge from the current mask into the base mask.
-                non_zero_indices = numpy.nonzero(data)
+                non_zero_indices = np.nonzero(data)
 
                 # Take the values of the base mask at the current mask's non-zero
                 # indices. These may be:
@@ -528,13 +529,13 @@ async def process_nifti_upload(
                 base_values = base_data[non_zero_indices]
 
                 # Take the values of the current mask at the current mask's non-zero
-                # indices. These will all be positive integers representing instances.
+                # indices. These will all be positive integers representing instances or groups.
                 mask_values = data[non_zero_indices]
 
                 # We identify the unique pairs of base and mask values, and update all
                 # indices that have the same pair at once.
-                unique_pairs, inv = numpy.unique(
-                    numpy.column_stack([base_values, mask_values]),
+                unique_pairs, inv = np.unique(
+                    np.column_stack([base_values, mask_values]),
                     axis=0,
                     return_inverse=True,
                 )
@@ -545,53 +546,72 @@ async def process_nifti_upload(
                     else:
                         instance_number = mask_v.round().item()
 
-                    if instance_number in instance_keys:
-                        used_instances.add(instance_number)
-                    else:
-                        raise ValueError(
-                            f"Instance ID: {instance_number} is not present in segmentMap.\n"
-                            + "Multiple segmentations with overlapping groups isn't supported yet."
-                        )
-
                     # Determine the indices into the base mask that have the current value pair
                     v_indices = tuple(d[inv == i] for d in non_zero_indices)
+
+                    mask_instances: Set[int] = set()
+                    if instance_number in group_map:
+                        mask_instances.update(group_map[instance_number])
+                    else:
+                        mask_instances.add(instance_number)
 
                     if base_v == 0:
                         # No instance, so we can just set the base value to the instance number
                         base_data[v_indices] = instance_number
+                        reverse_map[tuple(sorted(mask_instances))] = instance_number
                     else:
                         # An existing instance or group, so we create a new group with the
-                        # current instance and merge it with the overlapping instance or group.
-                        next_group_number = group_instances.pop()
-                        base_data[v_indices] = next_group_number
-                        instance_map[next_group_number] = {instance_number}
-                        if base_v in instance_keys:
-                            instance_map[next_group_number].add(base_v)
-                        elif base_v in instance_map:
-                            instance_map[next_group_number].update(instance_map[base_v])
+                        # current instance/group and merge it with the overlapping instance/group
+                        base_instances: Set[int] = set()
+                        if base_v in group_map:
+                            base_instances.update(group_map[base_v])
                         else:
-                            raise ValueError(
-                                f"Instance ID: {base_v} is not present in segmentMap"
-                            )
+                            base_instances.add(base_v)
 
-            if label_validate and used_instances != instance_keys:
-                raise ValueError(
-                    "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
-                    + f"Segmentation file(s) have instances: {used_instances} and "
-                    + f"segmentMap has instances: {instance_keys}\n"
-                    + f"Segmentation(s): {files}"
+                        if base_instances == mask_instances:
+                            continue
+
+                        group_key = tuple(sorted(base_instances | mask_instances))
+                        if group_key in reverse_map:
+                            next_group = reverse_map[group_key]
+                        else:
+                            next_group = instance_pool.pop()
+                            group_map[next_group] = set(group_key)
+                            reverse_map[group_key] = next_group
+
+                        base_data[v_indices] = next_group
+
+            if label_validate or prune_segmentations:
+                file_instances: Set[int] = set(
+                    x.item() for x in np.unique(base_data[np.nonzero(base_data)])
                 )
+                if file_instances != map_instances:
+                    if prune_segmentations:
+                        if excess := file_instances - map_instances:
+                            logger.warning(f"Pruning segmentation instances: {excess}")
+                            base_non_zero = np.nonzero(base_data)
+                            base_data[base_non_zero] = np.where(
+                                np.isin(base_data[base_non_zero], list(excess)),
+                                0,
+                                base_data[base_non_zero],
+                            )
+                            file_instances -= excess
 
-            pool_size = len(group_instances)
-            while pool_size and group_instances[pool_size - 1] < 256:
-                group_instances.pop()
-                pool_size -= 1
+                        if excess := map_instances - file_instances:
+                            logger.warning(f"Pruning segmentMap instances: {excess}")
+                            map_instances -= excess
 
-            if pool_size == (65536 - 256) and not any(v >= 256 for v in instance_keys):
-                base_img.set_data_dtype(numpy.uint8)
-                base_data = numpy.asarray(base_data, dtype=numpy.uint8)
-            else:
-                base_data = numpy.asarray(base_data, dtype=numpy.uint16)
+                    elif label_validate:
+                        raise ValueError(
+                            "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
+                            + f"Segmentation file(s) have instances: {file_instances} and "
+                            + f"segmentMap has instances: {map_instances}\n"
+                            + f"Segmentation(s): {files}"
+                        )
+
+                if not any(v >= 256 for v in file_instances):
+                    base_img.set_data_dtype(np.uint8)
+                    base_data = base_data.astype(np.uint8)
 
             if isinstance(base_img, Nifti1Image):
                 new_img = Nifti1Image(base_data, base_img.affine, base_img.header)
@@ -603,12 +623,19 @@ async def process_nifti_upload(
             filename = uniquify_path(os.path.join(dirname, "label.nii.gz"))
             nib_save(new_img, filename)
 
-            group_map: Dict[int, List[int]] = {}
-            for group_id, sub_ids in instance_map.items():
-                for sub_id in sub_ids:
-                    group_map.setdefault(sub_id, []).append(group_id)
+            segment_map: Dict[int, Optional[List[int]]] = {}
+            for instance in map_instances:
+                if instance in group_map:
+                    for instance_id in group_map[instance]:
+                        groups = segment_map.get(instance_id)
+                        if groups is None:
+                            groups = []
+                            segment_map[instance_id] = groups
+                        groups.append(instance)
+                elif instance not in segment_map:
+                    segment_map[instance] = None
 
-            return (filename, group_map)
+            return (filename, segment_map)
 
         except Exception as error:  # pylint: disable=broad-except
             log_error(error)

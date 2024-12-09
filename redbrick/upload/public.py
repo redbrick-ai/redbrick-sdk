@@ -65,6 +65,7 @@ class Upload:
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
+        prune_segmentations: bool,
         update_items: bool,
     ) -> Dict:
         # pylint:disable=too-many-locals
@@ -144,6 +145,7 @@ class Upload:
                 label_storage_id,
                 project_label_storage_id,
                 label_validate,
+                prune_segmentations,
             )
         except ValueError as err:
             logger.warning(
@@ -381,6 +383,7 @@ class Upload:
         storage_id: str,
         label_storage_id: str,
         label_validate: bool,
+        prune_segmentations: bool,
         concurrency: int,
         update_items: bool,
     ) -> List[Dict]:
@@ -428,6 +431,7 @@ class Upload:
                     label_storage_id,
                     project_label_storage_id,
                     label_validate,
+                    prune_segmentations,
                     update_items,
                 )
                 for point in points
@@ -500,6 +504,7 @@ class Upload:
         rt_struct: bool = False,
         label_storage_id: Optional[str] = None,
         label_validate: bool = False,
+        prune_segmentations: bool = False,
         concurrency: int = 50,
     ) -> List[Dict]:
         """
@@ -558,6 +563,9 @@ class Upload:
         label_validate: bool = False
             Validate label nifti instances and segment map.
 
+        prune_segmentations: bool = False
+            Prune segmentations that are not part of the series.
+
         concurrency: int = 50
 
         Returns
@@ -593,6 +601,7 @@ class Upload:
                 storage_id,
                 label_storage_id or storage_id,
                 label_validate,
+                prune_segmentations,
                 concurrency,
                 False,
             )
@@ -1022,6 +1031,7 @@ class Upload:
                 storage_id,
                 storage_id,
                 False,
+                False,
                 concurrency,
                 True,
             )
@@ -1110,6 +1120,7 @@ class Upload:
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
+        prune_segmentations: bool,
         finalize: bool,
         time_spent_ms: Optional[int],
         extra_data: Optional[Dict],
@@ -1126,6 +1137,7 @@ class Upload:
                 label_storage_id,
                 project_label_storage_id,
                 label_validate,
+                prune_segmentations,
             )
         except ValueError as err:
             logger.warning(
@@ -1159,6 +1171,7 @@ class Upload:
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
+        prune_segmentations: bool,
         finalize: bool,
         time_spent_ms: Optional[int],
         extra_data: Optional[Dict],
@@ -1172,6 +1185,7 @@ class Upload:
                     label_storage_id,
                     project_label_storage_id,
                     label_validate,
+                    prune_segmentations,
                     finalize,
                     time_spent_ms,
                     extra_data,
@@ -1188,7 +1202,8 @@ class Upload:
         *,
         rt_struct: bool = False,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
-        label_validate: bool = True,
+        label_validate: bool = False,
+        prune_segmentations: bool = False,
         concurrency: int = 50,
         finalize: bool = False,
         time_spent_ms: Optional[int] = None,
@@ -1226,6 +1241,9 @@ class Upload:
 
         label_validate: bool = False
             Validate label nifti instances and segment map.
+
+        prune_segmentations: bool = False
+            Prune segmentations that are not part of the series.
 
         concurrency: int = 50
 
@@ -1300,6 +1318,7 @@ class Upload:
                 label_storage_id or project_label_storage_id,
                 project_label_storage_id,
                 label_validate,
+                prune_segmentations,
                 finalize,
                 time_spent_ms,
                 extra_data,
