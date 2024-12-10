@@ -125,6 +125,7 @@ def test_handle_upload(
             clear_cache=False,
             concurrency=10,
             rt_struct=False,
+            mhd=False,
         )
         controller.handle_upload()
         upload_cache_hash = controller.project.conf.get_option("uploads", "cache")
