@@ -22,6 +22,7 @@ dependencies = [
     "Rich<14",
     "rt-utils<2",
     "shtab<2",
+    "SimpleITK<3",
     "tenacity<10",
     "tqdm<5",
     "typing-extensions<5",

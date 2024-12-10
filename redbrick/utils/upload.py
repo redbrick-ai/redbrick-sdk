@@ -42,7 +42,7 @@ async def validate_json(
             )
             for data in inputs
         ]
-        outputs = await gather_with_concurrency(MAX_CONCURRENCY, coros)
+        outputs = await gather_with_concurrency(MAX_CONCURRENCY, *coros)
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
 
@@ -219,6 +219,106 @@ async def convert_rt_struct_to_nii_labels(
             series["segmentations"] = os.path.join(temp_seg_dir, "segmentations.nii.gz")
             series["segmentMap"] = segment_map
             nib_save(mask, series["segmentations"])  # type: ignore
+
+        if "segmentations" in task and all(
+            "segmentations" in series
+            for series in task.get("series", []) or []  # type: ignore
+        ):
+            del task["segmentations"]  # type: ignore
+        if "segmentMap" in task and all(
+            "segmentMap" in series
+            for series in task.get("series", []) or []  # type: ignore
+        ):
+            del task["segmentMap"]  # type: ignore
+
+    return tasks
+
+
+async def convert_mhd_to_nii_labels(
+    context: RBContext,
+    org_id: str,
+    tasks: List[T],
+    label_storage_id: str,
+    task_dir: Optional[str] = None,
+) -> List[T]:
+    """Convert mhd labels to nifti."""
+    # pylint: disable=too-many-locals, import-outside-toplevel
+    from redbrick.utils.dicom import convert_mhd_to_nii
+
+    if not task_dir:
+        task_dir = os.getcwd()
+
+    for task_idx, task in enumerate(tasks):
+        for series_idx, series in enumerate(task.get("series", []) or []):
+            if "segmentations" not in series and "segmentations" in task:
+                series["segmentations"] = task["segmentations"]  # type: ignore
+            if "segmentMap" not in series and "segmentMap" in task:
+                series["segmentMap"] = task["segmentMap"]  # type: ignore
+
+            if (
+                not series.get("items")
+                or not series.get("segmentations")
+                or not series.get("segmentMap")
+            ):
+                logger.info(
+                    "Skipping mhd processing for "
+                    + f"task->{task_idx}->series->{series_idx}"
+                )
+                continue
+
+            series_segmentations = series.get("segmentations", [])
+            segmentations: List[str] = (
+                [series_segmentations]
+                if isinstance(series_segmentations, str)
+                else series_segmentations
+            )
+
+            temp_dir = os.path.join(config_path(), "temp", str(uuid4()))
+            os.makedirs(temp_dir, exist_ok=True)
+
+            if label_storage_id == StorageMethod.REDBRICK:
+                logger.info(f"Copying segmentations into: {temp_dir}")
+                for seg in segmentations:
+                    shutil.copy(
+                        (
+                            seg
+                            if os.path.isabs(seg)
+                            or not os.path.exists(os.path.join(task_dir, seg))
+                            else os.path.abspath(os.path.join(task_dir, seg))
+                        ),
+                        os.path.join(temp_dir, os.path.basename(seg)),
+                    )
+            else:
+                presigned_segs = context.export.presign_items(
+                    org_id, label_storage_id, segmentations
+                )
+                await download_files(
+                    list(
+                        zip(
+                            presigned_segs,
+                            [
+                                os.path.join(temp_dir, f"{idx + 1}.mhd")
+                                for idx in range(len(presigned_segs))
+                            ],
+                        )
+                    ),
+                    f"Downloading segmentations into: {temp_dir}",
+                )
+
+            nii_mask = convert_mhd_to_nii(
+                [os.path.join(temp_dir, seg) for seg in os.listdir(temp_dir)], temp_dir
+            )
+
+            if not nii_mask:
+                shutil.rmtree(temp_dir)
+                log_error(
+                    "Failed mhd processing for "
+                    + f"task->{task_idx}->series->{series_idx}",
+                    True,
+                )
+
+            assert nii_mask
+            series["segmentations"] = nii_mask
 
         if "segmentations" in task and all(
             "segmentations" in series

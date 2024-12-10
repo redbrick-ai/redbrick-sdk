@@ -19,9 +19,10 @@ def test_handler(prepare_project, monkeypatch):
     monkeypatch.chdir(project_path)
     _, cli = public.cli_parser(only_parser=False)
 
-    with patch(
-        "redbrick.cli.entity.creds.config_path", return_value=config_path_
-    ), patch.object(cli.export, "handle_export") as _handle_export:
+    with (
+        patch("redbrick.cli.entity.creds.config_path", return_value=config_path_),
+        patch.object(cli.export, "handle_export") as _handle_export,
+    ):
         args = argparse.Namespace(command=cli.EXPORT, path=project_path)
         cli.export.handler(args)
         _handle_export.assert_called_once()
@@ -104,18 +105,23 @@ def test_handle_export(
     mock_get_datapoints_latest = Mock(return_value=([mock_datapoint], None, None))
     # pylint: enable=unused-argument
 
-    with patch.object(
-        controller.project.project.context.project, "get_taxonomy", mock_get_taxonomy
-    ), patch.object(
-        controller.project.project.context.export,
-        "datapoints_in_project",
-        mock_datapoints_in_project,
-    ), patch.object(
-        controller.project.project.context.export,
-        "get_datapoints_latest",
-        mock_get_datapoints_latest,
-    ), patch.object(
-        controller, "_process_task"
+    with (
+        patch.object(
+            controller.project.project.context.project,
+            "get_taxonomy",
+            mock_get_taxonomy,
+        ),
+        patch.object(
+            controller.project.project.context.export,
+            "datapoints_in_project",
+            mock_datapoints_in_project,
+        ),
+        patch.object(
+            controller.project.project.context.export,
+            "get_datapoints_latest",
+            mock_get_datapoints_latest,
+        ),
+        patch.object(controller, "_process_task"),
     ):
         controller.args = argparse.Namespace(
             type=controller.TYPE_LATEST,
@@ -129,6 +135,7 @@ def test_handle_export(
             no_consensus=False,
             png=True,
             rt_struct=True,
+            mhd=False,
             clear_cache=False,
             concurrency=10,
             stage=None,  # only with "latest"

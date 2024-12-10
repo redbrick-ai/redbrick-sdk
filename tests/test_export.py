@@ -153,6 +153,7 @@ async def test_export_nifti_label_data(mock_export, task_file, get_task, returns
             False,
             False,
             False,
+            False,
             get_task,
         )
     mock_export.process_labels.assert_called_once()

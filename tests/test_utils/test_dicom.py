@@ -448,6 +448,7 @@ async def test_process_nifti_download(
         color_map=color_map,
         semantic_mask=semantic_mask,
         binary_mask=binary_mask,
+        mhd_mask=False,
         taxonomy=taxonomy,
         volume_index=volume_index,
     )

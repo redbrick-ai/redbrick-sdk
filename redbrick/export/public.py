@@ -527,6 +527,7 @@ class Export:
         old_format: bool,
         no_consensus: bool,
         png_mask: bool,
+        mhd_mask: bool,
         taxonomy: Taxonomy,
     ) -> TypeTask:
         """Process labels."""
@@ -609,6 +610,7 @@ class Export:
                 semantic_mask,
                 binary_mask,
                 png_mask,
+                mhd_mask,
                 taxonomy,
             )
 
@@ -635,6 +637,7 @@ class Export:
         semantic_mask: bool,
         binary_mask: Optional[bool],
         png_mask: bool,
+        mhd_mask: bool,
         taxonomy: Taxonomy,
     ) -> None:
         """Download and process segmentations."""
@@ -706,6 +709,7 @@ class Export:
                     color_map,
                     semantic_mask,
                     binary_mask,
+                    mhd_mask,
                     taxonomy,
                     (
                         image_index_map.get(label.get("imageIndex", -1))
@@ -737,6 +741,7 @@ class Export:
                         color_map,
                         semantic_mask,
                         binary_mask,
+                        mhd_mask,
                         taxonomy,
                         (
                             image_index_map.get(consensus_label_map.get("imageIndex"))
@@ -797,6 +802,7 @@ class Export:
         dicom_to_nifti: bool,
         png_mask: bool,
         rt_struct: bool,
+        mhd_mask: bool,
         get_task: bool,
     ) -> Optional[TypeTask]:
         """Export nifti label maps."""
@@ -810,6 +816,7 @@ class Export:
             old_format,
             no_consensus,
             png_mask,
+            mhd_mask,
             taxonomy,
         )
         if image_dir:
@@ -861,6 +868,7 @@ class Export:
         dicom_to_nifti: bool = False,
         png: bool = False,
         rt_struct: bool = False,
+        mhd: bool = False,
         destination: Optional[str] = None,
     ) -> Iterator[TypeTask]:
         """Export annotation data.
@@ -934,6 +942,9 @@ class Export:
 
         rt_struct: bool = False
             Export labels as DICOM RT-Struct. (Only for DICOM images)
+
+        mhd: bool = False
+            Export segmentation masks in MHD format.
 
         destination: Optional[str] = None
             Destination directory (Default: current directory)
@@ -1011,6 +1022,7 @@ class Export:
                     dicom_to_nifti,
                     png,
                     rt_struct,
+                    mhd,
                     True,
                 )
             )

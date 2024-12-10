@@ -295,6 +295,43 @@ def convert_png_to_nii(masks: Dict[str, Tuple[int, ...]]) -> None:
         masks[mask + ".nii.gz"] = inst_ids
 
 
+def convert_nii_to_mhd(
+    masks: List[str],
+    dirname: str,
+) -> Tuple[bool, List[str]]:
+    """Convert nifti masks to mhd."""
+    import SimpleITK as sitk
+
+    new_masks: List[str] = []
+    for mask in masks:
+        new_mask = os.path.join(dirname, mask + ".mhd")
+        new_masks.append(new_mask)
+
+        sitk_image = sitk.ReadImage(mask)
+        sitk.WriteImage(sitk_image, new_mask)
+
+        os.remove(mask)
+
+    return True, new_masks
+
+
+def convert_mhd_to_nii(masks: List[str], dirname: str) -> List[str]:
+    """Convert mhd masks to nifti."""
+    import SimpleITK as sitk
+
+    new_masks: List[str] = []
+    for mask in masks:
+        new_mask = os.path.join(dirname, mask + ".nii")
+        new_masks.append(new_mask)
+
+        sitk_image = sitk.ReadImage(mask)
+        sitk.WriteImage(sitk_image, new_mask)
+
+        os.remove(mask)
+
+    return new_masks
+
+
 async def process_nifti_download(
     labels: List[Dict],
     labels_path: Optional[str],
@@ -302,12 +339,16 @@ async def process_nifti_download(
     color_map: Dict,
     semantic_mask: bool,
     binary_mask: Optional[bool],
+    mhd_mask: bool,
     taxonomy: Taxonomy,
     volume_index: Optional[int],
 ) -> LabelMapData:
     """Process nifti download file."""
     label_map_data = LabelMapData(
-        semantic_mask=False, binary_mask=False, png_mask=False, masks=labels_path
+        semantic_mask=False,
+        binary_mask=False,
+        png_mask=False,
+        masks=labels_path,
     )
     async with semaphore:
         try:
@@ -331,7 +372,7 @@ async def process_nifti_download(
                 else any(label["dicom"].get("groupids") for label in filtered_labels)
             )
 
-            if not (png_mask or binary_mask or semantic_mask):
+            if not (png_mask or binary_mask or semantic_mask or mhd_mask):
                 return label_map_data
 
             dirname = (
@@ -393,6 +434,16 @@ async def process_nifti_download(
                 for path in os.listdir(dirname):
                     if path.startswith("instance-") or path.startswith("category-"):
                         os.remove(os.path.join(dirname, path))
+
+            if mhd_mask and label_map_data["masks"]:
+                _, label_map_data["masks"] = convert_nii_to_mhd(
+                    (
+                        [label_map_data["masks"]]
+                        if isinstance(label_map_data["masks"], str)
+                        else label_map_data["masks"]
+                    ),
+                    dirname,
+                )
 
             if not os.listdir(dirname):
                 shutil.rmtree(dirname)

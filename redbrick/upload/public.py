@@ -18,9 +18,10 @@ from redbrick.common.context import RBContext
 from redbrick.common.constants import DUMMY_FILE_PATH, MAX_CONCURRENCY
 from redbrick.common.enums import ImportTypes, StorageMethod
 from redbrick.types.taxonomy import Taxonomy
-from redbrick.utils.async_utils import gather_with_concurrency, return_value
+from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.upload import (
+    convert_mhd_to_nii_labels,
     convert_rt_struct_to_nii_labels,
     process_segmentation_upload,
     validate_json,
@@ -438,8 +439,11 @@ class Upload:
             ]
             tasks = await gather_with_concurrency(
                 min(concurrency, 10),
-                coros,
-                "Updating items" if update_items else "Creating tasks",
+                *coros,
+                progress_bar_name=(
+                    "Updating items" if update_items else "Creating tasks"
+                ),
+                keep_progress_bar=True,
             )
 
         await asyncio.sleep(0.250)  # give time to close ssl connections
@@ -502,6 +506,7 @@ class Upload:
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
         rt_struct: bool = False,
+        mhd: bool = False,
         label_storage_id: Optional[str] = None,
         label_validate: bool = False,
         prune_segmentations: bool = False,
@@ -556,6 +561,9 @@ class Upload:
         rt_struct: bool = False
             Upload segmentations from DICOM RT-Struct files.
 
+        mhd: bool = False
+            Upload segmentations from MHD files.
+
         label_storage_id: Optional[str] = None
             Optional label storage id to reference nifti segmentations.
             Defaults to items storage_id if not specified.
@@ -590,6 +598,7 @@ class Upload:
             None,
             None,
             rt_struct,
+            mhd,
             label_validate,
             concurrency,
         )
@@ -619,7 +628,9 @@ class Upload:
                 )
                 for batch in range(0, len(task_ids), concurrency)
             ]
-            success = await gather_with_concurrency(10, coros, "Deleting tasks")
+            success = await gather_with_concurrency(
+                10, *coros, progress_bar_name="Deleting tasks", keep_progress_bar=True
+            )
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return all(success)
 
@@ -660,7 +671,9 @@ class Upload:
                 )
                 for batch in range(0, len(task_names), concurrency)
             ]
-            success = await gather_with_concurrency(10, coros, "Deleting tasks")
+            success = await gather_with_concurrency(
+                10, *coros, progress_bar_name="Deleting tasks", keep_progress_bar=True
+            )
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return all(success)
 
@@ -744,7 +757,7 @@ class Upload:
                 )
                 for batch in range(0, total_groups, concurrency)
             ]
-            outputs = await gather_with_concurrency(MAX_CONCURRENCY, coros)
+            outputs = await gather_with_concurrency(MAX_CONCURRENCY, *coros)
 
         await asyncio.sleep(0.250)  # give time to close ssl connections
 
@@ -769,6 +782,7 @@ class Upload:
         task_dirs: Optional[List[str]] = None,
         uploaded: Optional[Set[str]] = None,
         rt_struct: bool = False,
+        mhd_mask: bool = False,
         label_validate: bool = False,
         concurrency: int = 50,
     ) -> List[Dict]:
@@ -811,18 +825,45 @@ class Upload:
                     item["segmentMap"] = item.get("segmentMap", task_segment_map)  # type: ignore
 
             if rt_struct:
-                file_data = asyncio.run(
-                    convert_rt_struct_to_nii_labels(
-                        self.context,
-                        self.org_id,
-                        self.taxonomy,
-                        file_data,
-                        storage_id,
-                        label_storage_id,
-                        label_validate,
-                        task_dir,
+                converted = asyncio.run(
+                    gather_with_concurrency(
+                        concurrency,
+                        *[
+                            convert_rt_struct_to_nii_labels(
+                                self.context,
+                                self.org_id,
+                                self.taxonomy,
+                                [fdata],
+                                storage_id,
+                                label_storage_id,
+                                label_validate,
+                                task_dir,
+                            )
+                            for fdata in file_data
+                        ],
+                        progress_bar_name="Converting RTSTRUCT files to NIfTI",
                     )
                 )
+                file_data = [items[0] for items in converted]
+
+            if mhd_mask:
+                converted = asyncio.run(
+                    gather_with_concurrency(
+                        concurrency,
+                        *[
+                            convert_mhd_to_nii_labels(
+                                self.context,
+                                self.org_id,
+                                [fdata],
+                                label_storage_id,
+                                task_dir,
+                            )
+                            for fdata in file_data
+                        ],
+                        progress_bar_name="Converting MHD files to NIfTI",
+                    )
+                )
+                file_data = [items[0] for items in converted]
 
             file_data = asyncio.run(
                 validate_json(self.context, file_data, storage_id, concurrency)
@@ -1010,6 +1051,7 @@ class Upload:
             None,
             False,
             False,
+            False,
             concurrency,
         )
 
@@ -1087,7 +1129,10 @@ class Upload:
                 for batch in range(0, len(tasks), concurrency)
             ]
             errors = await gather_with_concurrency(
-                10, coros, "Updating tasks' priorities"
+                10,
+                *coros,
+                progress_bar_name="Updating tasks' priorities",
+                keep_progress_bar=True,
             )
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return [error for error in errors if error]
@@ -1192,7 +1237,9 @@ class Upload:
                 )
                 for task in tasks
             ]
-            temp = await gather_with_concurrency(10, coros, "Updating tasks")
+            temp = await gather_with_concurrency(
+                10, *coros, progress_bar_name="Updating tasks", keep_progress_bar=True
+            )
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return [val for val in temp if val]
 
@@ -1201,6 +1248,7 @@ class Upload:
         tasks: List[OutputTask],
         *,
         rt_struct: bool = False,
+        mhd: bool = False,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = False,
         prune_segmentations: bool = False,
@@ -1235,6 +1283,9 @@ class Upload:
         rt_struct: bool = False
             Upload segmentations from DICOM RT-Struct files.
 
+        mhd: bool = False
+            Upload segmentations from MHD files.
+
         label_storage_id: Optional[str] = None
             Optional label storage id to reference nifti segmentations.
             Defaults to project annnotation storage_id if not specified.
@@ -1264,19 +1315,40 @@ class Upload:
             self.org_id, self.project_id
         )
 
-        converted_tasks = asyncio.run(
-            convert_rt_struct_to_nii_labels(
-                self.context,
-                self.org_id,
-                self.taxonomy,
-                tasks,
-                StorageMethod.REDBRICK,
-                label_storage_id or project_label_storage_id,
-                label_validate,
+        converted_tasks = tasks
+        if rt_struct:
+            converted = asyncio.run(
+                gather_with_concurrency(
+                    concurrency,
+                    *[
+                        convert_rt_struct_to_nii_labels(
+                            self.context,
+                            self.org_id,
+                            self.taxonomy,
+                            [task],
+                            StorageMethod.REDBRICK,
+                            label_storage_id or project_label_storage_id,
+                            label_validate,
+                        )
+                        for task in tasks
+                    ],
+                )
             )
-            if rt_struct
-            else return_value(tasks)
-        )
+            converted_tasks = [task[0] for task in converted]
+
+        if mhd:
+            converted = asyncio.run(
+                gather_with_concurrency(
+                    concurrency,
+                    *[
+                        convert_mhd_to_nii_labels(
+                            self.context, self.org_id, [task], StorageMethod.REDBRICK
+                        )
+                        for task in tasks
+                    ],
+                )
+            )
+            converted_tasks = [task[0] for task in converted]
 
         points: List[OutputTask] = []
         for task in converted_tasks:

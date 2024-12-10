@@ -1,7 +1,7 @@
 """Async utils."""
 
 import asyncio
-from typing import Any, Awaitable, Coroutine, List, Tuple, TypeVar, Optional, Iterable
+from typing import Any, Awaitable, Coroutine, List, Tuple, TypeVar, Optional
 import tqdm.asyncio  # type: ignore
 
 from redbrick.common.constants import MAX_CONCURRENCY
@@ -17,9 +17,9 @@ async def return_value(value: ReturnType) -> ReturnType:
 
 async def gather_with_concurrency(
     max_concurrency: int,
-    tasks: Iterable[Awaitable[ReturnType]],
+    *tasks: Awaitable[ReturnType],
     progress_bar_name: Optional[str] = None,
-    keep_progress_bar: bool = True,
+    keep_progress_bar: bool = False,
     return_exceptions: bool = False,
 ) -> List[ReturnType]:
     """Utilizes a Semaphore to limit concurrency to n."""

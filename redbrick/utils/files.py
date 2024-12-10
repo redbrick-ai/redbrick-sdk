@@ -218,7 +218,7 @@ async def upload_files(
             for path, url, file_type in files
         ]
         uploaded = await gather_with_concurrency(
-            MAX_FILE_BATCH_SIZE, coros, progress_bar_name, keep_progress_bar=False
+            MAX_FILE_BATCH_SIZE, *coros, progress_bar_name=progress_bar_name
         )
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
@@ -305,10 +305,10 @@ async def download_files(
         coros = [_download_file(session, url, path) for url, path in files]
         paths = await gather_with_concurrency(
             MAX_FILE_BATCH_SIZE,
-            coros,
-            progress_bar_name,
-            keep_progress_bar,
-            True,
+            *coros,
+            progress_bar_name=progress_bar_name,
+            keep_progress_bar=keep_progress_bar,
+            return_exceptions=True,
         )
         await session.close()
 
@@ -324,10 +324,10 @@ async def download_files_altadb(
     """Download files from altadb (presigned url, file path)."""
     paths = await gather_with_concurrency(
         MAX_FILE_BATCH_SIZE,
-        [save_dicom_series(url, path) for url, path in files],
-        progress_bar_name,
-        keep_progress_bar,
-        True,
+        *[save_dicom_series(url, path) for url, path in files],
+        progress_bar_name=progress_bar_name,
+        keep_progress_bar=keep_progress_bar,
+        return_exceptions=True,
     )
     return [(path if isinstance(path, list) and path else None) for path in paths]
 

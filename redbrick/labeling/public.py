@@ -14,7 +14,12 @@ from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
 from redbrick.stage import Stage
 from redbrick.types.taxonomy import Taxonomy
-from redbrick.utils.upload import process_segmentation_upload, validate_json
+from redbrick.utils.upload import (
+    convert_mhd_to_nii_labels,
+    convert_rt_struct_to_nii_labels,
+    process_segmentation_upload,
+    validate_json,
+)
 from redbrick.utils.logging import log_error, logger
 from redbrick.utils.async_utils import gather_with_concurrency
 from redbrick.types.task import OutputTask
@@ -182,7 +187,9 @@ class Labeling:
                 )
                 for task in tasks
             ]
-            temp = await gather_with_concurrency(10, coros, "Uploading tasks")
+            temp = await gather_with_concurrency(
+                10, *coros, progress_bar_name="Uploading tasks", keep_progress_bar=True
+            )
         await asyncio.sleep(0.250)  # give time to close ssl connections
         return [val for val in temp if val]
 
@@ -194,7 +201,8 @@ class Labeling:
         *,
         finalize: bool = True,
         existing_labels: bool = False,
-        rt_struct: bool = False,  # pylint: disable=unused-argument
+        rt_struct: bool = False,
+        mhd: bool = False,
         review_result: Optional[bool] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = False,
@@ -265,6 +273,9 @@ class Labeling:
 
         rt_struct: bool = False
             Upload segmentations from DICOM RT-Struct files.
+
+        mhd: bool = False
+            Upload segmentations from MHD files.
 
         review_result: Optional[bool] = None
             Accepts or rejects the task based on the boolean value.
@@ -342,6 +353,43 @@ class Labeling:
             self.org_id, self.project_id
         )
         if with_labels:
+            if rt_struct:
+                converted = asyncio.run(
+                    gather_with_concurrency(
+                        concurrency,
+                        *[
+                            convert_rt_struct_to_nii_labels(
+                                self.context,
+                                self.org_id,
+                                self.taxonomy,
+                                [task],
+                                StorageMethod.REDBRICK,
+                                label_storage_id or project_label_storage_id,
+                                label_validate,
+                            )
+                            for task in tasks
+                        ],
+                    )
+                )
+                with_labels = [task[0] for task in converted]
+
+            if mhd:
+                converted = asyncio.run(
+                    gather_with_concurrency(
+                        concurrency,
+                        *[
+                            convert_mhd_to_nii_labels(
+                                self.context,
+                                self.org_id,
+                                [task],
+                                StorageMethod.REDBRICK,
+                            )
+                            for task in tasks
+                        ],
+                    )
+                )
+                with_labels = [task[0] for task in converted]
+
             validated = asyncio.run(
                 validate_json(
                     self.context,
@@ -448,7 +496,12 @@ class Labeling:
                 )
                 for task_id in task_ids
             ]
-            await gather_with_concurrency(10, coros, "Moving tasks to Start")
+            await gather_with_concurrency(
+                10,
+                *coros,
+                progress_bar_name="Moving tasks to Start",
+                keep_progress_bar=True,
+            )
         await asyncio.sleep(0.250)  # give time to close ssl connections
 
     def move_tasks_to_start(self, task_ids: List[str]) -> None:

@@ -16,7 +16,7 @@ async def test_gather_with_concurrency__single_task():
         return 42
 
     tasks = [sample_task()]
-    result = await async_utils.gather_with_concurrency(2, tasks)
+    result = await async_utils.gather_with_concurrency(2, *tasks)
     assert result == [42]
 
 
@@ -30,7 +30,7 @@ async def test_gather_with_concurrency__multiple_tasks():
         return index
 
     tasks = [sample_task(i) for i in range(5)]
-    result = await async_utils.gather_with_concurrency(2, tasks)
+    result = await async_utils.gather_with_concurrency(2, *tasks)
     assert result == [0, 1, 2, 3, 4]
 
 
@@ -45,7 +45,7 @@ async def test_gather_with_concurrency__progress_bar():
 
     tasks = [sample_task(i) for i in range(5)]
     result = await async_utils.gather_with_concurrency(
-        2, tasks, progress_bar_name="Testing", keep_progress_bar=True
+        2, *tasks, progress_bar_name="Testing", keep_progress_bar=True
     )
     assert result == [0, 1, 2, 3, 4]
 
@@ -62,7 +62,9 @@ async def test_gather_with_concurrency__return_exceptions():
         return index
 
     tasks = [sample_task(i) for i in range(5)]
-    result = await async_utils.gather_with_concurrency(2, tasks, return_exceptions=True)
+    result = await async_utils.gather_with_concurrency(
+        2, *tasks, return_exceptions=True
+    )
     assert isinstance(result[2], Exception)
 
 
@@ -77,7 +79,7 @@ async def test_gather_with_concurrency__large_concurrency():
         return index
 
     tasks = [sample_task(i) for i in range(1_000)]
-    result = await async_utils.gather_with_concurrency(100, tasks)
+    result = await async_utils.gather_with_concurrency(100, *tasks)
     assert result == list(range(1_000))
 
 
@@ -86,5 +88,5 @@ async def test_gather_with_concurrency__large_concurrency():
 async def test_gather_with_concurrency__no_tasks():
     """Ensure `gather_with_concurrency` returns an empty result list when there are no tasks"""
     tasks = []
-    result = await async_utils.gather_with_concurrency(2, tasks)
+    result = await async_utils.gather_with_concurrency(2, *tasks)
     assert result == []
