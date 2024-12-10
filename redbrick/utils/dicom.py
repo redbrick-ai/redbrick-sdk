@@ -528,6 +528,7 @@ async def process_nifti_upload(
 
             group_map: Dict[int, Set[int]] = {}
             map_instances: Set[int] = set()
+            file_instances: Set[int] = set()
             reverse_map: Dict[Tuple[int, ...], int] = {}
             for instance_id, instance_groups in instances.items():
                 map_instances.add(instance_id)
@@ -548,9 +549,14 @@ async def process_nifti_upload(
             if binary_mask and files[0] in reverse_masks:
                 instance_number = reverse_masks[files[0]][0]
                 base_data[np.nonzero(base_data)] = instance_number
+                file_instances.add(instance_number)
+            else:
+                file_instances.update(
+                    [x.item() for x in np.unique(base_data[np.nonzero(base_data)])]
+                )
 
             instance_pool = sorted(
-                set(range(1, 65536)) - map_instances,
+                set(range(1, 65536)) - map_instances - file_instances,
                 reverse=True,
             )
 
@@ -609,6 +615,7 @@ async def process_nifti_upload(
                     if base_v == 0:
                         # No instance, so we can just set the base value to the instance number
                         base_data[v_indices] = instance_number
+                        file_instances.add(instance_number)
                         reverse_map[tuple(sorted(mask_instances))] = instance_number
                     else:
                         # An existing instance or group, so we create a new group with the
@@ -631,38 +638,34 @@ async def process_nifti_upload(
                             reverse_map[group_key] = next_group
 
                         base_data[v_indices] = next_group
+                        file_instances.add(next_group)
 
-            if label_validate or prune_segmentations:
-                file_instances: Set[int] = set(
-                    x.item() for x in np.unique(base_data[np.nonzero(base_data)])
+            if prune_segmentations and file_instances != map_instances:
+                if file_excess := file_instances - map_instances:
+                    logger.warning(f"Pruning segmentation instances: {file_excess}")
+                    base_non_zero = np.nonzero(base_data)
+                    base_data[base_non_zero] = np.where(
+                        np.isin(base_data[base_non_zero], list(file_excess)),
+                        0,
+                        base_data[base_non_zero],
+                    )
+                    file_instances -= file_excess
+
+                if map_excess := map_instances - file_instances:
+                    logger.warning(f"Pruning segmentMap instances: {map_excess}")
+                    map_instances -= map_excess
+
+            if label_validate and file_instances != map_instances:
+                raise ValueError(
+                    "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
+                    + f"Segmentation file(s) have instances: {file_instances} and "
+                    + f"segmentMap has instances: {map_instances}\n"
+                    + f"Segmentation(s): {files}"
                 )
-                if file_instances != map_instances:
-                    if prune_segmentations:
-                        if excess := file_instances - map_instances:
-                            logger.warning(f"Pruning segmentation instances: {excess}")
-                            base_non_zero = np.nonzero(base_data)
-                            base_data[base_non_zero] = np.where(
-                                np.isin(base_data[base_non_zero], list(excess)),
-                                0,
-                                base_data[base_non_zero],
-                            )
-                            file_instances -= excess
 
-                        if excess := map_instances - file_instances:
-                            logger.warning(f"Pruning segmentMap instances: {excess}")
-                            map_instances -= excess
-
-                    elif label_validate:
-                        raise ValueError(
-                            "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
-                            + f"Segmentation file(s) have instances: {file_instances} and "
-                            + f"segmentMap has instances: {map_instances}\n"
-                            + f"Segmentation(s): {files}"
-                        )
-
-                if not any(v >= 256 for v in file_instances):
-                    base_img.set_data_dtype(np.uint8)
-                    base_data = base_data.astype(np.uint8)
+            if not any(v >= 256 for v in file_instances):
+                base_img.set_data_dtype(np.uint8)
+                base_data = base_data.astype(np.uint8)
 
             if isinstance(base_img, Nifti1Image):
                 new_img = Nifti1Image(base_data, base_img.affine, base_img.header)
@@ -675,7 +678,7 @@ async def process_nifti_upload(
             nib_save(new_img, filename)
 
             segment_map: Dict[int, Optional[List[int]]] = {}
-            for instance in map_instances:
+            for instance in map_instances | file_instances:
                 if instance in group_map:
                     for instance_id in group_map[instance]:
                         groups = segment_map.get(instance_id)

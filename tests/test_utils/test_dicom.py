@@ -1,6 +1,7 @@
 """Tests for `redbrick.utils.dicom`."""
 
 import os
+from typing import Dict, List, Optional
 from unittest.mock import patch
 
 import numpy as np
@@ -469,10 +470,20 @@ async def test_process_nifti_download(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_process_nifti_upload(tmpdir, nifti_instance_files_png):
+async def test_process_nifti_upload(tmpdir, mock_labels, nifti_instance_files_png):
     """Test dicom.process_nifti_upload"""
     files = nifti_instance_files_png
-    instances = {1, 2, 3, 4, 5, 9}
+    instance_ids = {1, 2, 3, 4, 5, 9}
+    instances: Dict[int, Optional[List[int]]] = {}
+    for label in mock_labels:
+        if label.get("dicom", {}).get("instanceid") in instance_ids:
+            instances[label["dicom"]["instanceid"]] = label["dicom"].get("groupids")
+            instance_ids.difference_update([label["dicom"]["instanceid"]])
+            instance_ids.difference_update(label["dicom"].get("groupids") or [])
+
+    for instance_id in instance_ids:
+        instances[instance_id] = None
+
     semantic_mask = False  # not used
     png_mask = False  # not supported
     binary_mask = True
@@ -480,26 +491,26 @@ async def test_process_nifti_upload(tmpdir, nifti_instance_files_png):
     _mask_inst_id = _mask.split(".")[-3].split("-")[-1]
     masks = {_mask_inst_id: _mask}
     label_validate = False
+    prune_segmentations = False
 
     with patch.object(
         dicom, "config_path", return_value=str(tmpdir)
     ) as mock_config_path:
         result, group_map = await dicom.process_nifti_upload(
             files,
-            {inst: None for inst in instances},
+            instances,
             binary_mask,
             semantic_mask,
             png_mask,
             masks,
             label_validate,
+            prune_segmentations,
         )
 
     mock_config_path.assert_called_once()
     assert isinstance(result, str) and result.endswith("label.nii.gz")
     assert os.path.isfile(result)
-    assert isinstance(group_map, dict)
-    assert set(group_map) == instances
-    assert isinstance(group_map, dict)
+    assert group_map.keys() == instances.keys()
 
     # Ensure no group IDs has the same value any instance ID
     assert (
@@ -508,6 +519,23 @@ async def test_process_nifti_upload(tmpdir, nifti_instance_files_png):
         .intersection(instances)
         == set()
     )
+
+    # Verify that we can produce the expected masks from the label file and group map
+    expected_masks = {
+        1: np.array([[[1], [1], [1]], [[1], [1], [1]], [[1], [1], [1]]]),
+        2: np.array([[[0], [0], [1]], [[1], [1], [0]], [[0], [0], [0]]]),
+        3: np.array([[[1], [0], [0]], [[0], [0], [1]], [[0], [1], [0]]]),
+        4: np.array([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [1]]]),
+        5: np.array([[[0], [1], [0]], [[0], [1], [0]], [[0], [0], [1]]]),
+        9: np.array([[[0], [0], [0]], [[0], [0], [0]], [[1], [0], [0]]]),
+    }
+    global_mask = np.asanyarray(nib.load(result).dataobj, np.uint8)
+    for instance_id in instances:
+        selector = global_mask == instance_id
+        for group_id in (group_map or {}).get(instance_id) or []:
+            selector = np.logical_or(selector, global_mask == group_id)
+        mask = selector.astype(np.uint8)
+        assert np.all(mask == expected_masks[instance_id]), instance_id
 
 
 @pytest.mark.unit
