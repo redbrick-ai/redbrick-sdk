@@ -12,7 +12,8 @@ from redbrick.utils.files import uniquify_path
 from redbrick.utils.logging import log_error, logger
 from redbrick.types.task import SegmentMap as TypeSegmentMap
 
-# pylint: disable=too-many-locals, import-outside-toplevel, too-many-branches, too-many-statements
+# pylint: disable=too-many-lines, too-many-locals, too-many-branches, too-many-statements
+# pylint: disable=import-outside-toplevel, broad-except, too-many-return-statements
 
 
 semaphore = BoundedSemaphore(1)
@@ -110,7 +111,7 @@ def merge_segmentations(
         new_img.set_data_dtype(output_data.dtype)
         nib_save(new_img, output_file)
         return True
-    except Exception as err:  # pylint: disable=broad-except
+    except Exception as err:
         log_error(err)
         return False
 
@@ -484,7 +485,7 @@ async def process_nifti_download(
             if not os.listdir(dirname):
                 shutil.rmtree(dirname)
 
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             log_error(f"Failed to process {labels_path}: {error}")
 
         return label_map_data
@@ -494,15 +495,13 @@ async def process_nifti_upload(
     files: Union[str, List[str]],
     instances: Dict[int, Optional[List[int]]],
     binary_mask: bool,
-    semantic_mask: bool,
+    semantic_mask: bool,  # pylint: disable=unused-argument
     png_mask: bool,
     masks: Dict[str, str],
     label_validate: bool = False,
     prune_segmentations: bool = False,
 ) -> Tuple[Optional[str], Dict[int, Optional[List[int]]]]:
     """Process nifti upload files."""
-    # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
-    # pylint: disable=too-many-statements, too-many-return-statements, unused-argument
     async with semaphore:
         import numpy as np  # type: ignore
         from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
@@ -755,7 +754,7 @@ async def process_nifti_upload(
 
             return (filename, segment_map)
 
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             log_error(error)
             return None, {}
 
@@ -769,8 +768,6 @@ async def convert_nii_to_rtstruct(
     binary_mask: bool,
 ) -> Tuple[Optional[Any], TypeSegmentMap]:
     """Convert nifti mask to dicom rt-struct."""
-    # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
-    # pylint: disable=too-many-statements, too-many-return-statements
     async with semaphore:
         import numpy  # type: ignore
         from nibabel.loadsave import load as nib_load  # type: ignore
@@ -872,7 +869,7 @@ async def convert_nii_to_rtstruct(
                         rtstruct.add_roi(mask=data == instance, name=roi_name, **kwargs)
 
             return rtstruct, new_segment_map
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             log_error(error)
             return None, {}
 
@@ -936,8 +933,6 @@ async def convert_rtstruct_to_nii(
     categories: List[ObjectType],
 ) -> Tuple[Optional[Any], TypeSegmentMap]:
     """Convert dicom rt-struct to nifti mask."""
-    # pylint: disable=too-many-locals, too-many-branches, import-outside-toplevel
-    # pylint: disable=too-many-statements, too-many-return-statements
     if not rt_struct_files:
         log_error("No segmentations found")
         return None, {}
