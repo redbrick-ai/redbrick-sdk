@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union, TypedDict
 from asyncio import BoundedSemaphore
 import shutil
 from uuid import uuid4
-from redbrick.types.taxonomy import ObjectType, Taxonomy
 
+from redbrick.types.taxonomy import ObjectType, Taxonomy
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import uniquify_path
 from redbrick.utils.logging import log_error, logger
@@ -27,49 +27,85 @@ class LabelMapData(TypedDict):
     masks: Optional[Union[str, List[str]]]
 
 
+def merge_instances(
+    input_data: Any,
+    output_data: Any,
+    instances: Dict[Tuple[int, ...], int],
+    invert: bool = False,
+) -> None:
+    """Merge instances."""
+    import numpy as np  # type: ignore
+
+    if invert == any(0 in input_instances for input_instances in instances.keys()):
+        all_indices = np.nonzero(input_data)
+        for input_instances, output_instance in instances.items():
+            if not input_instances:
+                continue
+
+            instances_arr = np.array(list(set(input_instances)), dtype=np.uint16)
+            indices = np.isin(input_data[all_indices], instances_arr, invert=invert)
+
+            output_data[
+                tuple(all_indices[i][indices] for i in range(output_data.ndim))
+            ] = output_instance
+    else:
+        for input_instances, output_instance in instances.items():
+            if not input_instances:
+                continue
+
+            instances_arr = np.array(list(set(input_instances)), dtype=np.uint16)
+            indices = np.isin(input_data, instances_arr, invert=invert)
+            output_data[indices] = output_instance
+
+
 def merge_segmentations(
     input_file: str,
-    input_instance: int,
-    equals: bool,
     output_file: str,
-    output_instance: int,
+    instances: Dict[Tuple[int, ...], int],
+    invert: bool = False,
 ) -> bool:
     """Merge segmentations from input to output."""
-    import numpy  # type: ignore
+    import numpy as np  # type: ignore
     from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
     from nibabel.nifti1 import Nifti1Image  # type: ignore
 
     try:
         input_img = nib_load(input_file)
-
         if not isinstance(input_img, Nifti1Image):
             log_error(f"{input_file} is not a valid NIfTI1 file.")
             return False
 
-        input_data = input_img.get_fdata(caching="unchanged")
+        input_dtype = input_img.get_data_dtype()
+        if input_dtype in (np.uint8, np.uint16):
+            input_data = np.asanyarray(input_img.dataobj, dtype=input_dtype)
+        else:
+            input_data = np.round(input_img.get_fdata(caching="unchanged")).astype(
+                np.uint16
+            )
 
         if os.path.isfile(output_file):
             output_img = nib_load(output_file)
-
             if not isinstance(output_img, Nifti1Image):
                 log_error(f"{output_img} is not a valid NIfTI1 file.")
                 return False
 
             output_affine = output_img.affine
             output_header = output_img.header
-            output_data = output_img.get_fdata(caching="unchanged")
-            output_data = numpy.round(output_data).astype(numpy.uint16)
+
+            output_dtype = output_img.get_data_dtype()
+            if output_dtype in (np.uint8, np.uint16):
+                output_data = np.asanyarray(output_img.dataobj, dtype=output_dtype)
+            else:
+                output_data = np.round(
+                    output_img.get_fdata(caching="unchanged")
+                ).astype(np.uint16)
         else:
             output_affine = input_img.affine
             output_header = input_img.header
-            output_data = numpy.zeros(input_data.shape, dtype=numpy.uint16).astype(
-                numpy.uint16
-            )
+            output_data = np.zeros(input_data.shape, dtype=np.uint16)
 
-        if equals:
-            output_data[input_data == input_instance] = output_instance
-        else:
-            output_data[input_data != input_instance] = output_instance
+        merge_instances(input_data, output_data, instances, invert)
+
         new_img = Nifti1Image(output_data, output_affine, output_header)
         new_img.set_data_dtype(output_data.dtype)
         nib_save(new_img, output_file)
@@ -83,7 +119,7 @@ def convert_to_binary(
     mask: str, labels: List[Dict], dirname: str
 ) -> Tuple[bool, List[str]]:
     """Convert segmentation to binary."""
-    import numpy  # type: ignore
+    import numpy as np  # type: ignore
     from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
     from nibabel.nifti1 import Nifti1Image  # type: ignore
 
@@ -97,24 +133,26 @@ def convert_to_binary(
     header = img.header
 
     dtype = img.get_data_dtype()
-    if dtype in (numpy.uint8, numpy.uint16):
-        data = numpy.asanyarray(img.dataobj, dtype=dtype)
+    if dtype in (np.uint8, np.uint16):
+        data = np.asanyarray(img.dataobj, dtype=dtype)
     else:
-        data = img.get_fdata(caching="unchanged")
-        data = numpy.round(data).astype(numpy.uint16)
+        data = np.round(img.get_fdata(caching="unchanged")).astype(np.uint16)
 
     files: List[str] = []
 
+    non_zero = np.nonzero(data)
     for label in labels:
-        instance_id = label["dicom"]["instanceid"]
-        group_ids = label["dicom"].get("groupids") or []
+        instance_id: int = label["dicom"]["instanceid"]
+        group_ids: List[int] = label["dicom"].get("groupids") or []
+        instances = np.array(list({instance_id} | set(group_ids)), dtype=np.uint16)
 
-        new_data = data == instance_id
-        for gid in group_ids:
-            new_data |= data == gid
+        new_data = np.zeros(data.shape, dtype=np.uint8)
+        indices = np.isin(data[non_zero], instances)
 
-        if not numpy.any(new_data):
+        if not indices.any():
             continue
+
+        new_data[tuple(non_zero[i][indices] for i in range(new_data.ndim))] = 1
 
         filename = os.path.join(
             dirname, f"instance-{label['dicom']['instanceid']}.nii.gz"
@@ -122,7 +160,7 @@ def convert_to_binary(
         if os.path.isfile(filename):
             os.remove(filename)
 
-        new_img = Nifti1Image(new_data.astype(numpy.uint8), affine, header)
+        new_img = Nifti1Image(new_data, affine, header)
         nib_save(new_img, filename)
         files.append(filename)
 
@@ -152,33 +190,31 @@ def convert_to_semantic(
 
     visited: Set[int] = set()
     files: Set[str] = set()
+    to_merge: Dict[Tuple[int, ...], int] = {}
     for label in labels:
         instance = label["dicom"]["instanceid"]
         category = label["classid"] + 1
         if binary_mask:
             input_filename = os.path.join(dirname, f"instance-{instance}.nii.gz")
             output_filename = os.path.join(dirname, f"category-{category}.nii.gz")
-            merged = merge_segmentations(input_filename, 1, True, output_filename, 1)
+            if merge_segmentations(input_filename, output_filename, {(1,): 1}):
+                files.add(output_filename)
+            else:
+                log_error(f"Error processing semantic mask for: {label}")
         else:
-            merged = merge_segmentations(
-                input_filename, instance, True, output_filename, category
-            )
-            visited.add(instance)
-            for group_id in label["dicom"].get("groupids", []) or []:
-                if group_id in visited:
-                    continue
-                group_merged = merge_segmentations(
-                    input_filename, group_id, True, output_filename, category
-                )
-                if group_merged:
-                    visited.add(group_id)
-                else:
-                    log_error(f"Error processing semantic mask for: {label}")
+            instances = (
+                {instance} | set(label["dicom"].get("groupids") or [])
+            ) - visited
 
-        if merged:
+            if instances:
+                to_merge[tuple(sorted(instances))] = category
+                visited.update(instances)
+
+    if to_merge:
+        if merge_segmentations(input_filename, output_filename, to_merge):
             files.add(output_filename)
         else:
-            log_error(f"Error processing semantic mask for: {label}")
+            log_error("Error processing semantic mask")
 
     if not binary_mask:
         os.remove(input_filename)
@@ -295,17 +331,15 @@ def convert_png_to_nii(masks: Dict[str, Tuple[int, ...]]) -> None:
         masks[mask + ".nii.gz"] = inst_ids
 
 
-def convert_nii_to_mhd(
-    masks: List[str],
-    dirname: str,
-) -> Tuple[bool, List[str]]:
+def convert_nii_to_mhd(masks: List[str]) -> Tuple[bool, List[str]]:
     """Convert nifti masks to mhd."""
     import SimpleITK as sitk
 
     new_masks: List[str] = []
     for mask in masks:
-        new_mask = os.path.join(dirname, mask + ".mhd")
+        new_mask = mask.removesuffix(".gz").removesuffix(".nii") + ".mhd"
         new_masks.append(new_mask)
+        new_masks.append(new_mask.removesuffix(".mhd") + ".raw")
 
         sitk_image = sitk.ReadImage(mask)
         sitk.WriteImage(sitk_image, new_mask)
@@ -315,13 +349,16 @@ def convert_nii_to_mhd(
     return True, new_masks
 
 
-def convert_mhd_to_nii(masks: List[str], dirname: str) -> List[str]:
+def convert_mhd_to_nii(masks: List[str]) -> List[str]:
     """Convert mhd masks to nifti."""
     import SimpleITK as sitk
 
     new_masks: List[str] = []
     for mask in masks:
-        new_mask = os.path.join(dirname, mask + ".nii")
+        if mask.endswith(".raw"):
+            continue
+
+        new_mask = mask.removesuffix(".mhd") + ".nii.gz"
         new_masks.append(new_mask)
 
         sitk_image = sitk.ReadImage(mask)
@@ -441,8 +478,7 @@ async def process_nifti_download(
                         [label_map_data["masks"]]
                         if isinstance(label_map_data["masks"], str)
                         else label_map_data["masks"]
-                    ),
-                    dirname,
+                    )
                 )
 
             if not os.listdir(dirname):
@@ -546,13 +582,35 @@ async def process_nifti_upload(
                 for group_id, instance_ids in group_map.items():
                     reverse_map[tuple(sorted(instance_ids))] = group_id
 
+            base_nz = np.nonzero(base_data)
             if binary_mask and files[0] in reverse_masks:
                 instance_number = reverse_masks[files[0]][0]
-                base_data[np.nonzero(base_data)] = instance_number
+                base_data[base_nz] = instance_number
                 file_instances.add(instance_number)
             else:
-                file_instances.update(
-                    [x.item() for x in np.unique(base_data[np.nonzero(base_data)])]
+                file_instances.update([x.item() for x in np.unique(base_data[base_nz])])
+
+            if prune_segmentations and (excess := file_instances - map_instances):
+                logger.info(
+                    f"Pruning segmentation instances: {excess}\n"
+                    + f"Segmentation(s): {files}"
+                )
+                base_non_zero = np.nonzero(base_data)
+                excess_instances = np.array(list(excess), dtype=np.uint16)
+                base_prune = np.isin(base_data[base_non_zero], excess_instances)
+                base_data[
+                    base_non_zero[0][base_prune],
+                    base_non_zero[1][base_prune],
+                    base_non_zero[2][base_prune],
+                ] = 0
+                file_instances -= excess
+
+            if label_validate and (file_instances - map_instances):
+                raise ValueError(
+                    "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
+                    + f"Segmentation file has instances: {file_instances} and "
+                    + f"segmentMap has instances: {map_instances}\n"
+                    + f"Segmentation: {files[0]}"
                 )
 
             instance_pool = sorted(
@@ -596,66 +654,72 @@ async def process_nifti_upload(
                     axis=0,
                     return_inverse=True,
                 )
-                for i, (base_v_, mask_v) in enumerate(unique_pairs):
+                for idx, (base_v_, mask_v_) in enumerate(unique_pairs):
                     base_v: int = base_v_.round().item()
                     if binary_mask and file_ in reverse_masks:
                         instance_number = reverse_masks[file_][0]
                     else:
-                        instance_number = mask_v.round().item()
+                        instance_number = mask_v_.round().item()
 
-                    # Determine the indices into the base mask that have the current value pair
-                    v_indices = tuple(d[inv == i] for d in non_zero_indices)
+                    mask_instances = group_map.get(instance_number, {instance_number})
 
-                    mask_instances: Set[int] = set()
-                    if instance_number in group_map:
-                        mask_instances.update(group_map[instance_number])
-                    else:
-                        mask_instances.add(instance_number)
-
+                    new_group = False
                     if base_v == 0:
                         # No instance, so we can just set the base value to the instance number
-                        base_data[v_indices] = instance_number
-                        file_instances.add(instance_number)
-                        reverse_map[tuple(sorted(mask_instances))] = instance_number
+                        group_key = tuple(sorted(mask_instances))
                     else:
                         # An existing instance or group, so we create a new group with the
                         # current instance/group and merge it with the overlapping instance/group
-                        base_instances: Set[int] = set()
-                        if base_v in group_map:
-                            base_instances.update(group_map[base_v])
-                        else:
-                            base_instances.add(base_v)
+                        base_instances = group_map.get(base_v, {base_v})
 
                         if base_instances == mask_instances:
                             continue
 
                         group_key = tuple(sorted(base_instances | mask_instances))
                         if group_key in reverse_map:
-                            next_group = reverse_map[group_key]
+                            instance_number = reverse_map[group_key]
+                        elif len(group_key) == 1:
+                            instance_number = group_key[0]
                         else:
-                            next_group = instance_pool.pop()
-                            group_map[next_group] = set(group_key)
-                            reverse_map[group_key] = next_group
+                            instance_number = instance_pool[-1]
+                            new_group = True
 
-                        base_data[v_indices] = next_group
-                        file_instances.add(next_group)
+                    if new_group:
+                        group_map[instance_number] = set(group_key)
+                        instance_pool.pop()
+                    elif instance_number not in map_instances:
+                        if prune_segmentations:
+                            logger.info(
+                                f"Pruning segmentation instance: {instance_number}\n"
+                                + f"Segmentation: {file_}"
+                            )
+                            continue
+                        if label_validate:
+                            raise ValueError(
+                                f"Instance ID {instance_number} is not present in \n"
+                                + f"segmentMap instances: {map_instances}\n"
+                                + f"Segmentation: {file_}"
+                            )
 
-            if prune_segmentations and file_instances != map_instances:
-                if file_excess := file_instances - map_instances:
-                    logger.warning(f"Pruning segmentation instances: {file_excess}")
-                    base_non_zero = np.nonzero(base_data)
-                    base_data[base_non_zero] = np.where(
-                        np.isin(base_data[base_non_zero], list(file_excess)),
-                        0,
-                        base_data[base_non_zero],
-                    )
-                    file_instances -= file_excess
+                    # Determine the indices into the base mask that have the current value pair
+                    v_mask = inv == idx
 
-                if map_excess := map_instances - file_instances:
-                    logger.warning(f"Pruning segmentMap instances: {map_excess}")
-                    map_instances -= map_excess
+                    base_data[
+                        non_zero_indices[0][v_mask],
+                        non_zero_indices[1][v_mask],
+                        non_zero_indices[2][v_mask],
+                    ] = instance_number
+                    file_instances.add(instance_number)
+                    reverse_map[group_key] = instance_number
 
-            if label_validate and file_instances != map_instances:
+            if prune_segmentations and (excess := map_instances - file_instances):
+                logger.info(
+                    f"Pruning segmentMap instances: {excess}\n"
+                    + f"Segmentation(s): {files}"
+                )
+                map_instances -= excess
+
+            if label_validate and (map_instances - file_instances):
                 raise ValueError(
                     "Instance IDs in segmentation file(s) and segmentMap do not match.\n"
                     + f"Segmentation file(s) have instances: {file_instances} and "

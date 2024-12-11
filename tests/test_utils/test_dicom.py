@@ -32,7 +32,10 @@ def test_merge_segmentations_success(
     if pass_output is False:
         output_nifti_file = output_nifti_file.replace(".nii.gz", ".new.nii.gz")
     resp = dicom.merge_segmentations(
-        input_nifti_file, input_instance, equals, output_nifti_file, output_instance
+        input_nifti_file,
+        output_nifti_file,
+        {(input_instance,): output_instance},
+        not equals,
     )
     assert resp is True
     # Load the output NIfTI file and check the data
@@ -50,7 +53,10 @@ def test_merge_segmentations_nonexistent_input_file(output_nifti_file):
     invalid_file = "nonexistent.nii.gz"
     with pytest.raises(Exception), patch.object(dicom, "log_error") as mock_logger:
         dicom.merge_segmentations(
-            invalid_file, input_instance, equals, output_nifti_file, output_instance
+            invalid_file,
+            output_nifti_file,
+            {(input_instance,): output_instance},
+            not equals,
         )
         exception = mock_logger.call_args[0][0]
         raise exception
@@ -66,7 +72,10 @@ def test_merge_segmentations_invalid_nifti_file(input_nifti_file, output_nifti_f
         file.write("This is not a NIfTI file.")
     with pytest.raises(ImageFileError), patch.object(dicom, "log_error") as mock_logger:
         dicom.merge_segmentations(
-            input_nifti_file, input_instance, equals, output_nifti_file, output_instance
+            input_nifti_file,
+            output_nifti_file,
+            {(input_instance,): output_instance},
+            not equals,
         )
         exception = mock_logger.call_args[0][0]
         raise exception

@@ -6,18 +6,19 @@ import asyncio
 import shutil
 from uuid import uuid4
 from typing import List, Dict, TypeVar, Union, Optional, Sequence
+from urllib.parse import urlparse
 
 import aiohttp
+
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
+from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.types.taxonomy import Taxonomy
+from redbrick.types.task import InputTask, OutputTask
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import NIFTI_FILE_TYPES, download_files, upload_files
-
 from redbrick.utils.logging import log_error, logger
-from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.utils.async_utils import gather_with_concurrency
-from redbrick.types.task import InputTask, OutputTask
 
 
 async def validate_json(
@@ -292,13 +293,17 @@ async def convert_mhd_to_nii_labels(
                 presigned_segs = context.export.presign_items(
                     org_id, label_storage_id, segmentations
                 )
+                presigned_segs = [seg for seg in presigned_segs if seg]
                 await download_files(
                     list(
                         zip(
                             presigned_segs,
                             [
-                                os.path.join(temp_dir, f"{idx + 1}.mhd")
-                                for idx in range(len(presigned_segs))
+                                os.path.join(
+                                    temp_dir,
+                                    str(urlparse(seg).path).rsplit("/", 1).pop(),
+                                )
+                                for seg in presigned_segs
                             ],
                         )
                     ),
@@ -306,7 +311,7 @@ async def convert_mhd_to_nii_labels(
                 )
 
             nii_mask = convert_mhd_to_nii(
-                [os.path.join(temp_dir, seg) for seg in os.listdir(temp_dir)], temp_dir
+                [os.path.join(temp_dir, seg) for seg in os.listdir(temp_dir)]
             )
 
             if not nii_mask:
