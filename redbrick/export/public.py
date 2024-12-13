@@ -611,7 +611,7 @@ class Export:
                 binary_mask,
                 png_mask,
                 mhd_mask,
-                taxonomy,
+                bool(taxonomy.get("isNew")),
             )
 
         return dicom_rb_format(
@@ -638,12 +638,12 @@ class Export:
         binary_mask: Optional[bool],
         png_mask: bool,
         mhd_mask: bool,
-        taxonomy: Taxonomy,
+        is_tax_v2: bool = True,
     ) -> None:
         """Download and process segmentations."""
         # pylint: disable=import-outside-toplevel, too-many-locals
         # pylint: disable=too-many-branches, too-many-statements
-        from redbrick.utils.dicom import process_nifti_download
+        from redbrick.utils.dicom import process_download
 
         presigned = self.context.export.presign_items(
             self.org_id, task["labelStorageId"], presign_paths
@@ -702,7 +702,7 @@ class Export:
 
         for label, path in zip(labels_map, paths):  # type: ignore
             if label and label.get("labelName"):
-                label_map_data = await process_nifti_download(
+                label_map_data = await process_download(
                     task.get("labels", []) or [],
                     path,
                     png_mask,
@@ -710,12 +710,12 @@ class Export:
                     semantic_mask,
                     binary_mask,
                     mhd_mask,
-                    taxonomy,
                     (
                         image_index_map.get(label.get("imageIndex", -1))
                         if label.get("seriesIndex") is None
                         else label["seriesIndex"]
                     ),
+                    is_tax_v2,
                 )
                 label["labelName"] = label_map_data["masks"]
                 label["binaryMask"] = label_map_data["binary_mask"]
@@ -734,7 +734,7 @@ class Export:
                     if not consensus_label_map:
                         index += 1
                         continue
-                    label_map_data = await process_nifti_download(
+                    label_map_data = await process_download(
                         consensus_labels,
                         paths[index],
                         png_mask,
@@ -742,12 +742,12 @@ class Export:
                         semantic_mask,
                         binary_mask,
                         mhd_mask,
-                        taxonomy,
                         (
                             image_index_map.get(consensus_label_map.get("imageIndex"))
                             if consensus_label_map.get("seriesIndex") is None
                             else consensus_label_map["seriesIndex"]
                         ),
+                        is_tax_v2,
                     )
                     consensus_label_map["labelName"] = label_map_data["masks"]
                     consensus_label_map["binaryMask"] = label_map_data["binary_mask"]
