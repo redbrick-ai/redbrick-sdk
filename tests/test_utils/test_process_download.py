@@ -2,9 +2,10 @@
 
 import os
 import shutil
-from typing import Callable, Dict, Generator, List, NotRequired, Optional, TypedDict
+from typing import Callable, Dict, Generator, List, Optional, TypedDict
 from contextlib import contextmanager
 from unittest.mock import patch
+from typing_extensions import NotRequired  # type: ignore
 
 import pytest
 import numpy as np
