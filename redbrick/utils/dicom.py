@@ -537,11 +537,6 @@ async def process_nifti_upload(
                 convert_png_to_nii(reverse_masks)
                 files = list(reverse_masks.keys())
 
-        if len(files) == 1 and not (
-            binary_mask or label_validate or prune_segmentations
-        ):
-            return files[0], instances
-
         try:
             base_img = nib_load(files[0])
 
@@ -583,11 +578,14 @@ async def process_nifti_upload(
 
             base_nz = np.nonzero(base_data)
             if binary_mask and files[0] in reverse_masks:
-                instance_number = reverse_masks[files[0]][0]
-                base_data[base_nz] = instance_number
-                file_instances.add(instance_number)
+                base_data[base_nz] = reverse_masks[files[0]][0]
+                file_instances.add(reverse_masks[files[0]][0])
             else:
                 file_instances.update([x.item() for x in np.unique(base_data[base_nz])])
+
+            for file_instance in list(file_instances):
+                if file_instance in group_map:
+                    file_instances.update(group_map[file_instance])
 
             if prune_segmentations and (excess := file_instances - map_instances):
                 logger.info(
@@ -655,6 +653,7 @@ async def process_nifti_upload(
                 )
                 for idx, (base_v_, mask_v_) in enumerate(unique_pairs):
                     base_v: int = base_v_.round().item()
+                    instance_number: int
                     if binary_mask and file_ in reverse_masks:
                         instance_number = reverse_masks[file_][0]
                     else:
@@ -708,8 +707,10 @@ async def process_nifti_upload(
                         non_zero_indices[1][v_mask],
                         non_zero_indices[2][v_mask],
                     ] = instance_number
-                    file_instances.add(instance_number)
                     reverse_map[group_key] = instance_number
+                    file_instances.add(instance_number)
+                    if instance_number in group_map:
+                        file_instances.update(group_map[instance_number])
 
             if prune_segmentations and (excess := map_instances - file_instances):
                 logger.info(
