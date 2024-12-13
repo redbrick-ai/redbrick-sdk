@@ -423,7 +423,7 @@ def test_convert_nii_to_png_invalid_array_shape(nifti_instance_files, mock_label
         (False, False, False, 2),
     ],
 )
-async def test_process_download(
+async def test_utils_process_download(
     nifti_instance_files_png,
     mock_labels,
     binary_mask,
@@ -463,11 +463,13 @@ async def test_process_download(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_process_upload(tmpdir, mock_labels, nifti_instance_files_png):
+async def test_utils_process_upload(tmpdir, mock_labels, nifti_instance_files_png):
     """Test dicom.process_upload"""
     files = nifti_instance_files_png
     instance_ids = {1, 2, 3, 4, 5, 9}
+    expected_instances = {1, 2, 5}
     instances: Dict[int, Optional[List[int]]] = {}
+
     for label in mock_labels:
         if label.get("dicom", {}).get("instanceid") in instance_ids:
             instances[label["dicom"]["instanceid"]] = label["dicom"].get("groupids")
@@ -479,16 +481,16 @@ async def test_process_upload(tmpdir, mock_labels, nifti_instance_files_png):
 
     png_mask = False  # not supported
     binary_mask = True
-    _mask = nifti_instance_files_png[0]
-    _mask_inst_id = _mask.split(".")[-3].split("-")[-1]
-    masks = {_mask_inst_id: _mask}
+    masks = {
+        _mask.split(".")[-3].split("-")[-1]: _mask for _mask in nifti_instance_files_png
+    }
     label_validate = False
     prune_segmentations = False
 
     with patch.object(
         dicom, "config_path", return_value=str(tmpdir)
     ) as mock_config_path:
-        result, group_map = await dicom.process_upload(
+        result, segment_map = await dicom.process_upload(
             files,
             instances,
             binary_mask,
@@ -501,32 +503,29 @@ async def test_process_upload(tmpdir, mock_labels, nifti_instance_files_png):
     mock_config_path.assert_called_once()
     assert isinstance(result, str) and result.endswith("label.nii.gz")
     assert os.path.isfile(result)
-    assert group_map.keys() == instances.keys()
+    assert segment_map.keys() == expected_instances
 
     # Ensure no group IDs has the same value any instance ID
     assert (
         set()
-        .union(*[(val or []) for val in group_map.values()])
-        .intersection(instances)
+        .union(*[(val or []) for val in segment_map.values()])
+        .intersection(expected_instances)
         == set()
     )
 
     # Verify that we can produce the expected masks from the label file and group map
     expected_masks = {
         1: np.array([[[1], [1], [1]], [[1], [1], [1]], [[1], [1], [1]]]),
-        2: np.array([[[0], [0], [1]], [[1], [1], [0]], [[0], [0], [0]]]),
-        3: np.array([[[1], [0], [0]], [[0], [0], [1]], [[0], [1], [0]]]),
-        4: np.array([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [1]]]),
-        5: np.array([[[0], [1], [0]], [[0], [1], [0]], [[0], [0], [1]]]),
-        9: np.array([[[0], [0], [0]], [[0], [0], [0]], [[1], [0], [0]]]),
+        2: np.array([[[0], [0], [1]], [[1], [1], [1]], [[1], [1], [1]]]),
+        5: np.array([[[1], [1], [1]], [[1], [1], [1]], [[0], [0], [1]]]),
     }
     global_mask = np.asanyarray(nib.load(result).dataobj, np.uint8)
-    for instance_id in instances:
+    for instance_id in expected_instances:
         selector = global_mask == instance_id
-        for group_id in (group_map or {}).get(instance_id) or []:
+        for group_id in segment_map.get(instance_id) or []:
             selector = np.logical_or(selector, global_mask == group_id)
         mask = selector.astype(np.uint8)
-        assert np.all(mask == expected_masks[instance_id]), instance_id
+        assert np.all(mask == expected_masks[instance_id]), (instance_id, mask)
 
 
 @pytest.mark.unit

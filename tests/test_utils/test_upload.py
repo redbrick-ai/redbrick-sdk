@@ -60,11 +60,19 @@ async def test_process_segmentation_upload(
             for label in mock_labels
             if label.get("dicom", {}).get("instanceid") in (1, 2)
         ],
-        "seriesInfo": [{"binaryMask": True, "semanticMask": False, "pngMask": False}],
+        "seriesInfo": [
+            {
+                "binaryMask": True,
+                "semanticMask": False,
+                "pngMask": False,
+                "masks": {"1": files[0]},
+            }
+        ],
     }
     project_label_storage_id = "project_label_storage_id"
     label_storage_id = "label_storage_id"
     label_validate = True
+    prune_segmentations = True
 
     # Prepare RBContext mock
     mock_rb_context = AsyncMock()
@@ -77,8 +85,9 @@ async def test_process_segmentation_upload(
     }
 
     with patch.object(upload, "download_files", return_value=["downloaded_path"]):
-        with patch.object(upload, "upload_files", return_value=[True]), patch(
-            "redbrick.utils.common_utils.config_path", return_value=str(tmpdir)
+        with (
+            patch.object(upload, "upload_files", return_value=[True]),
+            patch("redbrick.utils.common_utils.config_path", return_value=str(tmpdir)),
         ):
             mock_aiohttp_session = AsyncMock()
 
@@ -92,6 +101,7 @@ async def test_process_segmentation_upload(
                 label_storage_id,
                 project_label_storage_id,
                 label_validate,
+                prune_segmentations,
             )
 
     assert result == [{"labelName": "file_path", "seriesIndex": 0}]

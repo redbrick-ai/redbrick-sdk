@@ -110,7 +110,7 @@ class ReviewStage(Stage):
     stage_name: str
     on_accept: Union[bool, str] = True
     on_reject: Union[bool, str] = False
-    config: Config = field(default_factory=Config.from_entity)
+    config: Stage.Config = field(default_factory=Config.from_entity)
 
     BRICK_NAME = "expert-review"
 

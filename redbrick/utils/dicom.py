@@ -6,7 +6,7 @@ from asyncio import BoundedSemaphore
 import shutil
 from uuid import uuid4
 
-from redbrick.types.taxonomy import ObjectType, Taxonomy
+from redbrick.types.taxonomy import ObjectType
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import uniquify_path
 from redbrick.utils.logging import log_error, logger
@@ -674,7 +674,7 @@ async def process_upload(
                         np.column_stack([basev, maskv]), axis=0, return_inverse=True
                     )
                 for idx, unique_idxs in enumerate(unique_pairs):
-                    mask_v: int = maskv if is_int else unique_idxs[1].item()
+                    mask_v: int = maskv if is_int else unique_idxs[1].item()  # type: ignore
                     if mask_v in file_excess:  # has been pruned
                         continue
 
