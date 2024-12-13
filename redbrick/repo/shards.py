@@ -85,6 +85,51 @@ routing {
 }
 """
 
+STORAGE_METHOD_SHARD = """
+orgId
+storageId
+name
+provider
+details{
+    __typename
+    ... on S3BucketStorageDetails {
+        bucket
+        region
+        duration
+        access
+        roleArn
+        endpoint
+        accelerate
+    }
+    ... on GCSBucketStorageDetails {
+        bucket
+    }
+    ... on AzureBlobStorageDetails {
+        _
+    }
+    ... on PublicStorageDetails {
+        _
+    }
+    ... on RedBrickStorageDetails {
+        _
+    }
+    ... on AltaDBStorageDetails {
+        access
+    }
+}
+createdBy{
+    userType
+    userId
+    email
+    givenName
+    familyName
+    loggedInUser
+    idProvider
+}
+createdAt
+deleted
+"""
+
 OLD_ATTRIBUTE_SHARD = """
 name
 attrType
