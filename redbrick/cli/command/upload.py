@@ -322,7 +322,8 @@ but may increase the upload time.""",
                             }
                         ]
                     if label_data.get("labelsMap"):
-                        item["labelsMap"] = []
+                        labels_map: List[Dict] = []
+                        item["labelsMap"] = labels_map
                         for label_map in label_data["labelsMap"]:
                             if not isinstance(label_map, dict):
                                 label_map = {}
@@ -343,7 +344,7 @@ but may increase the upload time.""",
                             ]
                             if len(label_map["labelName"]) == 1:
                                 label_map["labelName"] = label_map["labelName"][0]
-                            item["labelsMap"].append(
+                            labels_map.append(
                                 {
                                     "labelName": label_map["labelName"],
                                     "seriesIndex": (

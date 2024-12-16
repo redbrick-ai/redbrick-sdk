@@ -221,13 +221,10 @@ def test_convert_to_binary_with_high_values(tmpdir, mock_labels):
 def test_convert_to_semantic_with_binary_mask(nifti_instance_files, mock_labels):
     """Successful conversion to semantic with binary_mask=True"""
     masks = nifti_instance_files[:1]
-    taxonomy = {"isNew": True}
     dirname = os.path.dirname(nifti_instance_files[0])
     binary_mask = True
 
-    result, files = dicom.convert_to_semantic(
-        masks, taxonomy, mock_labels, dirname, binary_mask
-    )
+    result, files = dicom.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
     assert result is True
     assert len(files) == 3  # Should have 3 output files
     assert files != masks
@@ -239,10 +236,7 @@ def test_convert_to_semantic_without_binary_mask(nifti_instance_files, mock_labe
     masks = nifti_instance_files[:1]
     dirname = os.path.dirname(nifti_instance_files[0])
     binary_mask = False
-    taxonomy = {"isNew": True}
-    result, files = dicom.convert_to_semantic(
-        masks, taxonomy, mock_labels, dirname, binary_mask
-    )
+    result, files = dicom.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
     assert result is True
     assert len(files) == 1  # Should have 1 output file
     assert files == masks  # files unchanged
@@ -253,11 +247,10 @@ def test_convert_to_semantic_unsupported_taxonomy(nifti_instance_files, mock_lab
     """Failed conversion due to unsupported taxonomy"""
     masks = nifti_instance_files[:1]
     dirname = os.path.dirname(nifti_instance_files[0])
-    taxonomy = {"isNew": False}
     binary_mask = True
 
     result, files = dicom.convert_to_semantic(
-        masks, taxonomy, mock_labels, dirname, binary_mask
+        masks, mock_labels, dirname, binary_mask, False
     )
     assert result is False
     assert files == masks  # files remain unchanged
@@ -267,12 +260,11 @@ def test_convert_to_semantic_unsupported_taxonomy(nifti_instance_files, mock_lab
 def test_convert_to_semantic_invalid_files(nifti_instance_files, mock_labels):
     """Failed conversion due to non-existent maks file"""
     masks = ["non_existent_file.nii.gz"]
-    taxonomy = {"isNew": True}
     dirname = os.path.dirname(nifti_instance_files[0])
     binary_mask = False
 
     with pytest.raises(FileNotFoundError):
-        dicom.convert_to_semantic(masks, taxonomy, mock_labels, dirname, binary_mask)
+        dicom.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
 
 
 @pytest.mark.unit
@@ -281,12 +273,9 @@ def test_convert_to_semantic_no_labels(nifti_instance_files):
     masks = nifti_instance_files[:1]
     dirname = os.path.dirname(nifti_instance_files[0])
     labels = []
-    taxonomy = {"isNew": True}
     binary_mask = True
 
-    result, files = dicom.convert_to_semantic(
-        masks, taxonomy, labels, dirname, binary_mask
-    )
+    result, files = dicom.convert_to_semantic(masks, labels, dirname, binary_mask)
     assert result is True
     assert not files  # Should not have any output files
 
@@ -299,12 +288,9 @@ def test_convert_to_semantic_invalid_input_masks(nifti_instance_files, mock_labe
     for file in masks:
         with open(file, "ab") as file_:  # pylint: disable=unspecified-encoding
             file_.write(b"invalid append data")
-    taxonomy = {"isNew": True}
     binary_mask = False
 
-    result, files = dicom.convert_to_semantic(
-        masks, taxonomy, mock_labels, dirname, binary_mask
-    )
+    result, files = dicom.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
     assert result is True
     assert not files  # Should not have any output files
 
@@ -437,7 +423,7 @@ def test_convert_nii_to_png_invalid_array_shape(nifti_instance_files, mock_label
         (False, False, False, 2),
     ],
 )
-async def test_process_nifti_download(
+async def test_utils_process_download(
     nifti_instance_files_png,
     mock_labels,
     binary_mask,
@@ -445,13 +431,12 @@ async def test_process_nifti_download(
     png_mask,
     expected_file_count,
 ):
-    """Test dicom.process_nifti_download"""
+    """Test dicom.process_download"""
     labels_path = nifti_instance_files_png[0]
     color_map = {"red": (255, 0, 0)}
-    taxonomy = {"isNew": True}
     volume_index = 1
 
-    result = await dicom.process_nifti_download(
+    result = await dicom.process_download(
         mock_labels[:2],
         labels_path,
         png_mask=png_mask,
@@ -459,7 +444,6 @@ async def test_process_nifti_download(
         semantic_mask=semantic_mask,
         binary_mask=binary_mask,
         mhd_mask=False,
-        taxonomy=taxonomy,
         volume_index=volume_index,
     )
     masks = result["masks"]
@@ -479,11 +463,13 @@ async def test_process_nifti_download(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_process_nifti_upload(tmpdir, mock_labels, nifti_instance_files_png):
-    """Test dicom.process_nifti_upload"""
+async def test_utils_process_upload(tmpdir, mock_labels, nifti_instance_files_png):
+    """Test dicom.process_upload"""
     files = nifti_instance_files_png
     instance_ids = {1, 2, 3, 4, 5, 9}
+    expected_instances = {1, 2, 5}
     instances: Dict[int, Optional[List[int]]] = {}
+
     for label in mock_labels:
         if label.get("dicom", {}).get("instanceid") in instance_ids:
             instances[label["dicom"]["instanceid"]] = label["dicom"].get("groupids")
@@ -493,23 +479,21 @@ async def test_process_nifti_upload(tmpdir, mock_labels, nifti_instance_files_pn
     for instance_id in instance_ids:
         instances[instance_id] = None
 
-    semantic_mask = False  # not used
     png_mask = False  # not supported
     binary_mask = True
-    _mask = nifti_instance_files_png[0]
-    _mask_inst_id = _mask.split(".")[-3].split("-")[-1]
-    masks = {_mask_inst_id: _mask}
+    masks = {
+        _mask.split(".")[-3].split("-")[-1]: _mask for _mask in nifti_instance_files_png
+    }
     label_validate = False
     prune_segmentations = False
 
     with patch.object(
         dicom, "config_path", return_value=str(tmpdir)
     ) as mock_config_path:
-        result, group_map = await dicom.process_nifti_upload(
+        result, segment_map = await dicom.process_upload(
             files,
             instances,
             binary_mask,
-            semantic_mask,
             png_mask,
             masks,
             label_validate,
@@ -519,32 +503,29 @@ async def test_process_nifti_upload(tmpdir, mock_labels, nifti_instance_files_pn
     mock_config_path.assert_called_once()
     assert isinstance(result, str) and result.endswith("label.nii.gz")
     assert os.path.isfile(result)
-    assert group_map.keys() == instances.keys()
+    assert segment_map.keys() == expected_instances
 
     # Ensure no group IDs has the same value any instance ID
     assert (
         set()
-        .union(*[(val or []) for val in group_map.values()])
-        .intersection(instances)
+        .union(*[(val or []) for val in segment_map.values()])
+        .intersection(expected_instances)
         == set()
     )
 
     # Verify that we can produce the expected masks from the label file and group map
     expected_masks = {
         1: np.array([[[1], [1], [1]], [[1], [1], [1]], [[1], [1], [1]]]),
-        2: np.array([[[0], [0], [1]], [[1], [1], [0]], [[0], [0], [0]]]),
-        3: np.array([[[1], [0], [0]], [[0], [0], [1]], [[0], [1], [0]]]),
-        4: np.array([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [1]]]),
-        5: np.array([[[0], [1], [0]], [[0], [1], [0]], [[0], [0], [1]]]),
-        9: np.array([[[0], [0], [0]], [[0], [0], [0]], [[1], [0], [0]]]),
+        2: np.array([[[0], [0], [1]], [[1], [1], [1]], [[1], [1], [1]]]),
+        5: np.array([[[1], [1], [1]], [[1], [1], [1]], [[0], [0], [1]]]),
     }
     global_mask = np.asanyarray(nib.load(result).dataobj, np.uint8)
-    for instance_id in instances:
+    for instance_id in expected_instances:
         selector = global_mask == instance_id
-        for group_id in (group_map or {}).get(instance_id) or []:
+        for group_id in segment_map.get(instance_id) or []:
             selector = np.logical_or(selector, global_mask == group_id)
         mask = selector.astype(np.uint8)
-        assert np.all(mask == expected_masks[instance_id]), instance_id
+        assert np.all(mask == expected_masks[instance_id]), (instance_id, mask)
 
 
 @pytest.mark.unit

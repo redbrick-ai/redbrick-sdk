@@ -489,7 +489,7 @@ class ModelStage(Stage):
 
     stage_name: str
     on_submit: Union[bool, str] = True
-    config: Config = field(default_factory=Config.from_entity)
+    config: Stage.Config = field(default_factory=Config.from_entity)
 
     BRICK_NAME = "model"
 

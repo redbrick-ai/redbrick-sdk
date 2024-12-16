@@ -353,7 +353,7 @@ async def process_segmentation_upload(
     """Process segmentation upload."""
     # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     # pylint: disable=import-outside-toplevel, too-many-nested-blocks
-    from redbrick.utils.dicom import process_nifti_upload
+    from redbrick.utils.dicom import process_upload
 
     labels_map: List[Dict] = []
 
@@ -453,7 +453,7 @@ async def process_segmentation_upload(
                 if len(all_series_info) > volume_index
                 else {}
             )
-            output_labels_path, instances = await process_nifti_upload(
+            output_labels_path, instances = await process_upload(
                 input_labels_path,
                 {
                     label["dicom"]["instanceid"]: label["dicom"].get("groupids")
@@ -465,7 +465,6 @@ async def process_segmentation_upload(
                     and label.get("dicom", {}).get("instanceid")
                 },
                 series_info.get("binaryMask", False) or False,
-                series_info.get("semanticMask", False) or False,
                 series_info.get("pngMask", False) or False,
                 {
                     series_key: path_mapping.get(series_val, series_val) or series_val

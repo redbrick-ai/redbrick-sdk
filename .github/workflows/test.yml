@@ -71,3 +71,9 @@ jobs:
         run: make install
       - name: ${{ matrix.test }}
         run: make ${{ matrix.test }}
+      - name: Upload to Codecov
+        if: matrix.test == 'unit' && matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
