@@ -115,6 +115,7 @@ details{
     }
     ... on AltaDBStorageDetails {
         access
+        host
     }
 }
 createdBy{

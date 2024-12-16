@@ -5,6 +5,7 @@ from redbrick.common.client import RBClient
 from redbrick.common.enums import StorageProvider
 from redbrick.common.storage_method import StorageMethodRepoInterface
 from redbrick.repo.shards import STORAGE_METHOD_SHARD
+from redbrick.types.storage_method import StorageMethodDetails
 
 
 class StorageMethodRepo(StorageMethodRepoInterface):
@@ -28,7 +29,11 @@ class StorageMethodRepo(StorageMethodRepoInterface):
         return response["storageMethods"]
 
     def create_storage_method(
-        self, org_id: str, name: str, provider: StorageProvider, details: Dict[str, str]
+        self,
+        org_id: str,
+        name: str,
+        provider: StorageProvider,
+        details: StorageMethodDetails,
     ) -> bool:
         """Create a storage method."""
         query = """

@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 from redbrick.common.enums import StorageProvider
+from redbrick.types.storage_method import StorageMethodDetails
 
 
 class StorageMethodRepoInterface(ABC):
@@ -15,6 +16,10 @@ class StorageMethodRepoInterface(ABC):
 
     @abstractmethod
     def create_storage_method(
-        self, org_id: str, name: str, provider: StorageProvider, details: Dict
+        self,
+        org_id: str,
+        name: str,
+        provider: StorageProvider,
+        details: StorageMethodDetails,
     ) -> bool:
         """Create a storage method."""
