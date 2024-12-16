@@ -1,7 +1,8 @@
 """Storage Method Types"""
 
 import json
-from typing import NotRequired, TypedDict, Union
+from typing import TypedDict, Union
+from typing_extensions import NotRequired
 
 
 class InputAWSS3StorageMethodDetails(TypedDict):
