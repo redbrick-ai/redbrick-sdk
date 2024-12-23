@@ -1,6 +1,5 @@
 """Public interface to upload module."""
 
-from itertools import batched
 import shutil
 import asyncio
 import os
@@ -1408,10 +1407,10 @@ class Upload:
                     session,
                     self.org_id,
                     self.project_id,
-                    list(batched_task_ids),
+                    task_ids[batch : batch + concurrency],
                     stage_name,
                 )
-                for batched_task_ids in batched(task_ids, concurrency)
+                for batch in range(0, len(task_ids), concurrency)
             ]
             responses = await gather_with_concurrency(
                 10,
