@@ -1,5 +1,6 @@
 """Public interface to upload module."""
 
+from itertools import batched
 import shutil
 import asyncio
 import os
@@ -1396,3 +1397,51 @@ class Upload:
                 extra_data,
             )
         )
+
+    async def _send_to_stage(
+        self, task_ids: List[str], stage_name: str, concurrency: int
+    ) -> List[str]:
+        conn = aiohttp.TCPConnector()
+        async with aiohttp.ClientSession(connector=conn) as session:
+            coros = [
+                self.context.upload.send_tasks_to_stage(
+                    session,
+                    self.org_id,
+                    self.project_id,
+                    list(batched_task_ids),
+                    stage_name,
+                )
+                for batched_task_ids in batched(task_ids, concurrency)
+            ]
+            responses = await gather_with_concurrency(
+                10,
+                *coros,
+                progress_bar_name=f"Sending tasks to {stage_name} ({concurrency} per batch)",
+                keep_progress_bar=True,
+            )
+        await asyncio.sleep(0.250)  # give time to close ssl connections
+        return [response for response in responses if response]
+
+    def send_tasks_to_stage(
+        self, task_ids: List[str], stage_name: str, concurrency: int = 50
+    ) -> None:
+        """Send tasks to different stage.
+
+
+        Parameters
+        --------------
+        task_ids: List[str]
+            List of tasks to move.
+
+        stage_name: str
+            The stage to which you want to move the tasks.
+            Use "END" to move tasks to ground truth.
+
+        concurrency: int = 50
+            Batch size per request.
+        """
+        errors = asyncio.run(
+            self._send_to_stage(task_ids, stage_name, min(concurrency, 50))
+        )
+        if errors:
+            log_error(errors[0])

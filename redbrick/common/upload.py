@@ -135,3 +135,14 @@ class UploadControllerInterface(ABC):
         extra_data: Optional[Dict] = None,
     ) -> None:
         """Update tasks labels."""
+
+    @abstractmethod
+    async def send_tasks_to_stage(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_ids: List[str],
+        stage_name: str,
+    ) -> Optional[str]:
+        """Send tasks to different stage."""
