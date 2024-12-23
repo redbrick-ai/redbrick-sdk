@@ -495,3 +495,42 @@ class UploadRepo(UploadControllerInterface):
         }
 
         await self.client.execute_query_async(session, query_string, query_variables)
+
+    async def send_tasks_to_stage(
+        self,
+        session: aiohttp.ClientSession,
+        org_id: str,
+        project_id: str,
+        task_ids: List[str],
+        stage_name: str,
+    ) -> Optional[str]:
+        """Send tasks to different stage."""
+        query = """
+        mutation moveTasksSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $taskIds: [UUID!]!
+            $stageName: String!
+        ) {
+            moveTasks(
+                orgId: $orgId
+                projectId: $projectId
+                taskIds: $taskIds
+                stageName: $stageName
+            ) {
+                ok
+                message
+            }
+        }
+        """
+        variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "taskIds": task_ids,
+            "stageName": stage_name,
+        }
+
+        response: Dict = await self.client.execute_query_async(
+            session, query, variables
+        )
+        return (response.get("moveTasks") or {}).get("message")
