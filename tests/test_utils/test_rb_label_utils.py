@@ -237,6 +237,7 @@ def test_parse_entry_latest():
         ],
         "itemsPresigned": [],
         "currentStageName": "Review_1",
+        "status": "UNASSIGNED",
         "createdBy": "mock@email.com",
         "createdAt": "2023-10-20T14:31:38.610885+00:00",
         "updatedBy": "mock@email.com",

@@ -221,6 +221,9 @@ def flat_rb_format(
             for consensus_task in current_stage_sub_task["consensusInfo"]:
                 task["consensusTasks"].append(from_rb_consensus_info(consensus_task))
 
+        else:
+            task["status"] = current_stage_sub_task.get("state")
+
     return task
 
 
@@ -738,6 +741,9 @@ def dicom_rb_format(
 
     if task.get("currentStageName"):
         output["currentStageName"] = task["currentStageName"]
+
+    if task.get("status"):
+        output["status"] = task["status"]
 
     if task.get("priority") is not None:
         output["priority"] = task["priority"]

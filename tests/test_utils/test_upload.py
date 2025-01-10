@@ -1,5 +1,6 @@
 """Tests for `redbrick.utils.upload`."""
 
+import json
 from unittest.mock import Mock, patch, AsyncMock
 
 import pytest
@@ -27,7 +28,7 @@ async def test_validate_json(valid_state):
     async def mock_validate_and_convert(
         arg1, input_, *args
     ):  # pylint: disable=unused-argument
-        return {"isValid": valid_state, "converted": input_}
+        return {"isValid": valid_state, "converted": json.dumps(input_)}
 
     mock_rb_context.upload.validate_and_convert_to_import_format = (
         mock_validate_and_convert

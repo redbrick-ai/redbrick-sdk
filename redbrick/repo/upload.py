@@ -7,6 +7,7 @@ import aiohttp
 
 from redbrick.common.client import RBClient
 from redbrick.common.upload import UploadControllerInterface
+from redbrick.types.task import InputTask
 
 
 class UploadRepo(UploadControllerInterface):
@@ -331,7 +332,7 @@ class UploadRepo(UploadControllerInterface):
     async def validate_and_convert_to_import_format(
         self,
         aio_client: aiohttp.ClientSession,
-        original: str,
+        data: List[InputTask],
         convert: Optional[bool] = None,
         storage_id: Optional[str] = None,
     ) -> Dict:
@@ -354,7 +355,7 @@ class UploadRepo(UploadControllerInterface):
         }
         """
         query_variables = {
-            "original": original,
+            "original": json.dumps(data, separators=(",", ":")),
             "convert": convert,
             "storageId": storage_id,
         }

@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 
 import aiohttp
 
+from redbrick.types.task import InputTask
+
 
 class UploadControllerInterface(ABC):
     """Abstract interface to define methods for Upload."""
@@ -94,7 +96,7 @@ class UploadControllerInterface(ABC):
     async def validate_and_convert_to_import_format(
         self,
         aio_client: aiohttp.ClientSession,
-        original: str,
+        data: List[InputTask],
         convert: Optional[bool] = None,
         storage_id: Optional[str] = None,
     ) -> Dict:

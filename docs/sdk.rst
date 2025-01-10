@@ -8,7 +8,7 @@ functions for programmatically manipulating data, importing annotations, assigni
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_org, get_workspace, get_project, get_org_from_profile, get_project_from_profile, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, ProjectMemberRole, Stage, LabelStage, ReviewStage, ModelStage
+   :members: get_org, get_workspace, get_project, get_org_from_profile, get_project_from_profile, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, ProjectMemberRole, Stage, LabelStage, ReviewStage, ModelStage
    :member-order: bysource
 
 .. _org:
@@ -53,5 +53,5 @@ Labeling
 Settings
 ----------------------
 .. autoclass:: redbrick.settings.Settings
-   :members: label_validation, hanging_protocol, webhook, toggle_reference_standard_task
+   :members: label_validation, hanging_protocol, webhook, toggle_reference_standard_task, task_duplication
    :show-inheritance:

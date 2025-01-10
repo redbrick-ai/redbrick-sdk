@@ -7,6 +7,7 @@ import shutil
 from uuid import uuid4
 from typing import List, Dict, TypeVar, Union, Optional, Sequence
 from urllib.parse import urlparse
+from copy import deepcopy
 
 import aiohttp
 
@@ -37,12 +38,19 @@ async def validate_json(
 
     conn = aiohttp.TCPConnector()
     async with aiohttp.ClientSession(connector=conn) as session:
-        coros = [
-            context.upload.validate_and_convert_to_import_format(
-                session, json.dumps(data, separators=(",", ":")), True, storage_id
+        coros = []
+        for data in inputs:
+            # temp handler for missing properties
+            temp_data = deepcopy(data)
+            for task in temp_data:
+                if "status" in task:
+                    del task["status"]  # type: ignore
+
+            coros.append(
+                context.upload.validate_and_convert_to_import_format(
+                    session, temp_data, True, storage_id
+                )
             )
-            for data in inputs
-        ]
         outputs = await gather_with_concurrency(MAX_CONCURRENCY, *coros)
 
     await asyncio.sleep(0.250)  # give time to close ssl connections
