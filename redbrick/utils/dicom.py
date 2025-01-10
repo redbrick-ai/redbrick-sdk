@@ -340,10 +340,10 @@ def convert_nii_to_mhd(masks: List[str]) -> Tuple[bool, List[str]]:
     for mask in masks:
         new_mask = mask.removesuffix(".gz").removesuffix(".nii") + ".mhd"
         new_masks.append(new_mask)
-        new_masks.append(new_mask.removesuffix(".mhd") + ".raw")
+        new_masks.append(new_mask.removesuffix(".mhd") + ".zraw")
 
         sitk_image = sitk.ReadImage(mask)
-        sitk.WriteImage(sitk_image, new_mask)
+        sitk.WriteImage(sitk_image, new_mask, True)
 
         os.remove(mask)
 
@@ -356,14 +356,14 @@ def convert_mhd_to_nii(masks: List[str]) -> List[str]:
 
     new_masks: List[str] = []
     for mask in masks:
-        if mask.endswith(".raw"):
+        if mask.endswith(".raw") or mask.endswith(".zraw"):
             continue
 
         new_mask = mask.removesuffix(".mhd") + ".nii.gz"
         new_masks.append(new_mask)
 
         sitk_image = sitk.ReadImage(mask)
-        sitk.WriteImage(sitk_image, new_mask)
+        sitk.WriteImage(sitk_image, new_mask, True)
 
         os.remove(mask)
 
