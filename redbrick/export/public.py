@@ -1104,7 +1104,7 @@ class Export:
                 "series"?: [{"name"?: str, "metaData"?: dict}],
                 "assignees"?: [{
                     "user": str,
-                    "status": str,
+                    "status": TaskStates,
                     "assignedAt": datetime,
                     "lastSavedAt"?: datetime,
                     "completedAt"?: datetime,
