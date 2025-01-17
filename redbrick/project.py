@@ -301,3 +301,7 @@ class RBProject:
                 self._stages = pipeline
         else:
             logger.warning("Error updating stage.")
+
+    def post_process(self, config: Dict) -> None:
+        """Post process trial project."""
+        self.context.project.post_process(self.org_id, self.project_id, config)

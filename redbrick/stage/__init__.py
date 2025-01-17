@@ -1,6 +1,6 @@
 """RedBrick project stages."""
 
-from typing import Dict, List, Optional, Sequence, Type
+from typing import Any, Dict, List, Optional, Sequence, Type
 
 from redbrick.common.stage import Stage
 from redbrick.stage.label import LabelStage
@@ -9,15 +9,34 @@ from redbrick.stage.model import ModelStage
 from redbrick.types.taxonomy import Taxonomy
 
 
-def get_middle_stages(reviews: int) -> List[Stage]:
+def get_middle_stages(
+    reviews: int,
+    consensus_settings: Optional[Dict[str, Any]] = None,
+) -> List[Stage]:
     """Get label and review stages."""
+    consensus_enabled = bool((consensus_settings or {}).get("enabled"))
     reviews = min(max(reviews, 0), 6)
     stages: List[Stage] = []
-    stages.append(LabelStage(stage_name="Label"))
+    stages.append(
+        LabelStage(
+            stage_name="Consensus_Label" if consensus_enabled else "Label",
+            config=LabelStage.Config(
+                is_consensus_label=True if consensus_enabled else None
+            ),
+        )
+    )
     prev_stage = stages[0]
 
     for i in range(1, reviews + 1):
-        stage = ReviewStage(stage_name=f"Review_{i}", on_reject=stages[0].stage_name)
+        stage = ReviewStage(
+            stage_name=(
+                "Consensus_Best" if i == 1 and consensus_enabled else f"Review_{i}"
+            ),
+            on_reject=stages[0].stage_name,
+            config=ReviewStage.Config(
+                is_consensus_merge=True if i == 1 and consensus_enabled else None
+            ),
+        )
         stages.append(stage)
         if isinstance(prev_stage, LabelStage):
             prev_stage.on_submit = stage.stage_name

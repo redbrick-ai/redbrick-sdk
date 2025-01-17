@@ -116,6 +116,10 @@ class ProjectRepoInterface(ABC):
         """Update project stage."""
 
     @abstractmethod
+    def post_process(self, org_id: str, project_id: str, config: Dict) -> None:
+        """Post process trial project."""
+
+    @abstractmethod
     def get_current_user(self) -> Dict:
         """Get current user."""
 
