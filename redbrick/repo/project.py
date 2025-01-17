@@ -421,6 +421,32 @@ class ProjectRepo(ProjectRepoInterface):
         result = (response.get("updateStage", {}) or {}) if response else {}
         return bool(result.get("ok")), (result.get("pipeline", []) or [])
 
+    def post_process(self, org_id: str, project_id: str, config: Dict) -> None:
+        """Post process trial project."""
+        query_string = """
+        mutation postProcessTrialProjectSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $config: JSONString!
+        ) {{
+            postProcessTrialProject(
+                orgId: $orgId
+                projectId: $projectId
+                config: $config
+            ) {{
+                ok
+            }}
+        }}
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "config": json.dumps(config),
+        }
+
+        self.client.execute_query(query_string, query_variables)
+
     def get_current_user(self) -> Dict:
         """Get current user."""
         query_string = """

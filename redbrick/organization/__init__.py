@@ -287,7 +287,7 @@ class RBOrganization:
         return self.create_project_advanced(
             name,
             taxonomy_name,
-            get_middle_stages(reviews),
+            get_middle_stages(reviews, consensus_settings),
             exists_okay,
             workspace_id,
             sibling_tasks,
