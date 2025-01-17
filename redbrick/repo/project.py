@@ -428,15 +428,15 @@ class ProjectRepo(ProjectRepoInterface):
             $orgId: UUID!
             $projectId: UUID!
             $config: JSONString!
-        ) {{
+        ) {
             postProcessTrialProject(
                 orgId: $orgId
                 projectId: $projectId
                 config: $config
-            ) {{
+            ) {
                 ok
-            }}
-        }}
+            }
+        }
         """
 
         query_variables = {
