@@ -23,3 +23,17 @@ class StorageMethodRepoInterface(ABC):
         details: StorageMethodDetails,
     ) -> bool:
         """Create a storage method."""
+
+    @abstractmethod
+    def update_storage_method(
+        self,
+        org_id: str,
+        storage_method_id: str,
+        provider: StorageProvider,
+        details: StorageMethodDetails,
+    ) -> bool:
+        """Update a storage method."""
+
+    @abstractmethod
+    def delete_storage_method(self, org_id: str, storage_method_id: str) -> bool:
+        """Delete a storage method."""
