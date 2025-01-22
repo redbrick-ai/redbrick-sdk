@@ -1,7 +1,7 @@
 """Interdace for getting information about storage methods."""
 
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from redbrick.common.enums import StorageProvider
 from redbrick.types.storage_method import StorageMethodDetails
@@ -21,7 +21,7 @@ class StorageMethodRepoInterface(ABC):
         name: str,
         provider: StorageProvider,
         details: StorageMethodDetails,
-    ) -> bool:
+    ) -> Dict[str, Union[bool, Dict]]:
         """Create a storage method."""
 
     @abstractmethod
@@ -31,7 +31,7 @@ class StorageMethodRepoInterface(ABC):
         storage_method_id: str,
         provider: StorageProvider,
         details: StorageMethodDetails,
-    ) -> bool:
+    ) -> Dict[str, Union[bool, Dict]]:
         """Update a storage method."""
 
     @abstractmethod

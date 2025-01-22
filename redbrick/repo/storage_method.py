@@ -1,6 +1,6 @@
 """Handlers to access APIs for storage methods."""
 
-from typing import Dict, List
+from typing import Dict, List, Union
 from redbrick.common.client import RBClient
 from redbrick.common.enums import StorageProvider
 from redbrick.common.storage_method import StorageMethodRepoInterface
@@ -42,14 +42,17 @@ class StorageMethodRepo(StorageMethodRepoInterface):
         name: str,
         provider: StorageProvider,
         details: StorageMethodDetails,
-    ) -> bool:
+    ) -> Dict[str, Union[bool, Dict]]:
         """Create a storage method."""
-        query = """
-            mutation createStorageSDK($orgId: UUID!, $name: String!, $provider: PROVIDER!, $details: StorageDetailsInput){
-                createStorage(orgId: $orgId, name: $name, provider: $provider, details: $details){
-                ok
-                }
-            }
+        query = f"""
+            mutation createStorageSDK($orgId: UUID!, $name: String!, $provider: PROVIDER!, $details: StorageDetailsInput){{
+                createStorage(orgId: $orgId, name: $name, provider: $provider, details: $details){{
+                    ok
+                    storageMethod{{
+                        {STORAGE_METHOD_SHARD}
+                    }}
+                }}
+            }}
         """
 
         variables = {
@@ -61,7 +64,7 @@ class StorageMethodRepo(StorageMethodRepoInterface):
             },
         }
         response = self.client.execute_query(query, variables)
-        return response["createStorage"]["ok"]
+        return response["createStorage"]
 
     def update_storage_method(
         self,
@@ -69,15 +72,15 @@ class StorageMethodRepo(StorageMethodRepoInterface):
         storage_method_id: str,
         provider: StorageProvider,
         details: StorageMethodDetails,
-    ) -> bool:
+    ) -> Dict[str, Union[bool, Dict]]:
         """Update a storage method."""
         query = f"""
             mutation updateStorage($orgId: UUID!, $storageId: UUID!, $details: StorageDetailsInput){{
                 updateStorage(orgId: $orgId, storageId: $storageId, details: $details){{
+                    ok
                     storageMethod{{
                         {STORAGE_METHOD_SHARD}
                     }}
-                    ok
                 }}
             }}
         """
@@ -95,17 +98,17 @@ class StorageMethodRepo(StorageMethodRepoInterface):
             },
         }
         response = self.client.execute_query(query, variables)
-        return response["updateStorage"]["ok"]
+        return response["updateStorage"]
 
     def delete_storage_method(self, org_id: str, storage_method_id: str) -> bool:
         """Delete a storage method."""
         query = """
-            mutation removeStorageSDK($orgId: UUID!, $storageMethodId: UUID!){
-                removeStorage(orgId: $orgId, storageMethodId: $storageMethodId){
+            mutation removeStorageSDK($orgId: UUID!, $storageId: UUID!){
+                removeStorage(orgId: $orgId, storageId: $storageId){
                     ok
                 }
             }
         """
-        variables = {"orgId": org_id, "storageMethodId": storage_method_id}
+        variables = {"orgId": org_id, "storageId": storage_method_id}
         response = self.client.execute_query(query, variables)
-        return response["deleteStorage"]["ok"]
+        return response["removeStorage"]["ok"]
