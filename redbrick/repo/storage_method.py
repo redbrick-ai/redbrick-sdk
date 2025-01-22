@@ -36,6 +36,19 @@ class StorageMethodRepo(StorageMethodRepoInterface):
         response = self.client.execute_query(query, variables)
         return response["storageMethods"]
 
+    def get_storage_method(self, org_id: str, storage_method_id: str) -> Dict:
+        """Get a storage method."""
+        query = f"""
+            query getStorageSDK($orgId: UUID!, $storageId: UUID!) {{
+                storageMethod(orgId: $orgId, storageId: $storageId) {{
+                    {STORAGE_METHOD_SHARD}
+                }}
+            }}
+        """
+        variables = {"orgId": org_id, "storageId": storage_method_id}
+        response = self.client.execute_query(query, variables)
+        return response["storageMethod"]
+
     def create_storage_method(
         self,
         org_id: str,
@@ -84,12 +97,6 @@ class StorageMethodRepo(StorageMethodRepoInterface):
                 }}
             }}
         """
-        provider_map = {
-            StorageProvider.ALTA_DB: "altaDb",
-            StorageProvider.AWS_S3: "s3Bucket",
-            StorageProvider.AZURE_BLOB: "azureBucket",
-            StorageProvider.GCS: "gcsBucket",
-        }
         variables = {
             "orgId": org_id,
             "storageId": storage_method_id,

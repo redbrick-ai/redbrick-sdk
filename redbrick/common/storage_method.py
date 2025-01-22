@@ -15,6 +15,10 @@ class StorageMethodRepoInterface(ABC):
         """Get storage methods."""
 
     @abstractmethod
+    def get_storage_method(self, org_id: str, storage_method_id: str) -> Dict:
+        """Get a storage method."""
+
+    @abstractmethod
     def create_storage_method(
         self,
         org_id: str,

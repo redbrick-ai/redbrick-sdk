@@ -34,6 +34,8 @@ class RBOrganization:
         >>> org = redbrick.get_org(api_key="", org_id="")
     """
 
+    # pylint: disable=too-many-public-methods
+
     def __init__(self, context: RBContext, org_id: str) -> None:
         """Construct RBOrganization."""
         self.context = context
@@ -534,12 +536,16 @@ class RBOrganization:
         """Get a list of storage methods in the organization."""
         return self.context.storage_method.get_storage_methods(self.org_id)
 
+    def get_storage_method(self, storage_id: str) -> Dict:
+        """Get a storage method by ID."""
+        return self.context.storage_method.get_storage_method(self.org_id, storage_id)
+
     def create_storage_method(
         self,
         name: str,
         provider: StorageProvider,
         details: StorageMethodDetails,
-    ) -> bool:
+    ) -> Dict[str, Union[bool, Dict]]:
         """Create a storage method."""
         return self.context.storage_method.create_storage_method(
             self.org_id, name, provider, details
@@ -550,7 +556,7 @@ class RBOrganization:
         storage_id: str,
         provider: StorageProvider,
         details: StorageMethodDetails,
-    ) -> bool:
+    ) -> Dict[str, Union[bool, Dict]]:
         """Update a storage method."""
         return self.context.storage_method.update_storage_method(
             self.org_id, storage_id, provider, details
