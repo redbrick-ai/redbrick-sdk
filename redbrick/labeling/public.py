@@ -21,7 +21,7 @@ from redbrick.utils.upload import (
     validate_json,
 )
 from redbrick.utils.logging import log_error, logger
-from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.async_utils import gather_with_concurrency, get_session
 from redbrick.types.task import OutputTask
 
 
@@ -170,8 +170,7 @@ class Labeling:
         prune_segmentations: bool,
         existing_labels: bool,
     ) -> List[Dict]:
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        async with get_session() as session:
             coros = [
                 self._put_task(
                     session,
@@ -190,7 +189,7 @@ class Labeling:
             temp = await gather_with_concurrency(
                 10, *coros, progress_bar_name="Uploading tasks", keep_progress_bar=True
             )
-        await asyncio.sleep(0.250)  # give time to close ssl connections
+
         return [val for val in temp if val]
 
     @check_stage
@@ -488,8 +487,7 @@ class Labeling:
         )
 
     async def _tasks_to_start(self, task_ids: List[str]) -> None:
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        async with get_session() as session:
             coros = [
                 self.context.labeling.move_task_to_start(
                     session, self.org_id, self.project_id, task_id
@@ -502,7 +500,6 @@ class Labeling:
                 progress_bar_name="Moving tasks to Start",
                 keep_progress_bar=True,
             )
-        await asyncio.sleep(0.250)  # give time to close ssl connections
 
     def move_tasks_to_start(self, task_ids: List[str]) -> None:
         """Move groundtruth tasks back to start."""
