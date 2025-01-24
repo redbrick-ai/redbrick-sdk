@@ -45,3 +45,4 @@ The RedBrick SDK will export a list of :class:`redbrick.types.task.OutputTask` o
 
   annotations
   taxonomy
+  storage_method
