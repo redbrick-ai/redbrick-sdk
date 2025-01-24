@@ -77,3 +77,14 @@ class WorkspaceRepoInterface(ABC):
         self, org_id: str, dp_id: str, attributes: Dict
     ) -> None:
         """Update datapoint attributes."""
+
+    @abstractmethod
+    def add_datapoints_to_projects(
+        self,
+        org_id: str,
+        workspace_id: str,
+        project_ids: List[str],
+        dp_ids: List[str],
+        ground_truth: bool,
+    ) -> None:
+        """Add datapoints to project."""

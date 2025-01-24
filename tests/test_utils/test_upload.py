@@ -4,8 +4,8 @@ import json
 from unittest.mock import Mock, patch, AsyncMock
 
 import pytest
-from redbrick.common.enums import StorageMethod
 
+from redbrick.upload.interact import validate_json
 from redbrick.utils import upload
 
 
@@ -35,8 +35,11 @@ async def test_validate_json(valid_state):
     )
 
     # Execute the function
-    result = await upload.validate_json(
-        mock_rb_context, input_data, storage_id, concurrency
+    result = await validate_json(
+        mock_rb_context,
+        input_data,  # type: ignore
+        storage_id,
+        concurrency,
     )
     if valid_state is True:
         assert result == input_data

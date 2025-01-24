@@ -1,5 +1,6 @@
 """Interface for interacting with your RedBrick AI Workspaces."""
 
+import asyncio
 from typing import Dict, Iterator, List, Optional
 from datetime import datetime
 from functools import partial
@@ -12,6 +13,9 @@ from tenacity.wait import wait_exponential
 from redbrick.common.constants import PEERLESS_ERRORS
 
 from redbrick.common.context import RBContext
+from redbrick.types.task import InputTask
+from redbrick.upload.interact import upload_datapoints
+from redbrick.utils.async_utils import gather_with_concurrency, get_session
 from redbrick.utils.logging import logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_dicom_utils import dicom_dp_format
@@ -190,3 +194,136 @@ class RBWorkspace:
         self.context.workspace.update_datapoint_attributes(
             self.org_id, dp_id, attributes
         )
+
+    def add_datapoints_to_projects(
+        self, project_ids: List[str], dp_ids: List[str], is_ground_truth: bool = False
+    ) -> None:
+        """Add datapoints to project.
+
+        Parameters
+        --------------
+        project_ids: List[str]
+            The projects in which you'd like to add the given datapoints.
+
+        dp_ids: List[str]
+            List of datapoints that need to be added to projects.
+
+        is_ground_truth: bool = False
+            Whether to create tasks directly in ground truth stage.
+        """
+        self.context.workspace.add_datapoints_to_projects(
+            self.org_id, self.workspace_id, project_ids, dp_ids, is_ground_truth
+        )
+
+    def create_datapoints(
+        self,
+        storage_id: str,
+        points: List[InputTask],
+        *,
+        concurrency: int = 50,
+    ) -> List[Dict]:
+        """
+        Create datapoints in workspace.
+
+        Upload data to your workspace (without annotations). Please visit
+        `our documentation <https://sdk.redbrickai.com/formats/index.html#import>`_
+        to understand the format for ``points``.
+
+        .. code:: python
+
+            workspace = redbrick.get_workspace(org_id, workspace_id, api_key, url)
+            points = [
+                {
+                    "name": "...",
+                    "series": [
+                        {
+                            "items": "...",
+                        }
+                    ]
+                }
+            ]
+            workspace.create_datapoints(storage_id, points)
+
+
+        Parameters
+        --------------
+        storage_id: str
+            Your RedBrick AI external storage_id. This can be found under the Storage Tab
+            on the RedBrick AI platform. To directly upload images to rbai,
+            use redbrick.StorageMethod.REDBRICK.
+
+        points: List[:obj:`~redbrick.types.task.InputTask`]
+            Please see the RedBrick AI reference documentation for overview of the format.
+            https://sdk.redbrickai.com/formats/index.html#import.
+            Fields with `annotation` information are not supported in workspace.
+
+        concurrency: int = 50
+
+        Returns
+        -------------
+        List[Dict]
+            List of datapoint objects with key `response` if successful, else `error`
+
+        Note
+        ----------
+            1. If doing direct upload, please use ``redbrick.StorageMethod.REDBRICK``
+            as the storage id. Your items path must be a valid path to a locally stored image.
+
+            2. When doing direct upload i.e. ``redbrick.StorageMethod.REDBRICK``,
+            if you didn't specify a "name" field in your datapoints object,
+            we will assign the "items" path to it.
+        """
+        return upload_datapoints(
+            context=self.context,
+            org_id=self.org_id,
+            workspace_id=self.workspace_id,
+            project_id=None,
+            taxonomy=None,
+            storage_id=storage_id,
+            points=points,
+            is_ground_truth=False,
+            segmentation_mapping={},
+            concurrency=concurrency,
+        )
+
+    async def _delete_datapoints(self, dp_ids: List[str], concurrency: int) -> bool:
+        async with get_session() as session:
+            coros = [
+                self.context.upload.delete_datapoints(
+                    session,
+                    self.org_id,
+                    dp_ids[batch : batch + concurrency],
+                )
+                for batch in range(0, len(dp_ids), concurrency)
+            ]
+            success = await gather_with_concurrency(
+                10,
+                *coros,
+                progress_bar_name="Deleting datapoints",
+                keep_progress_bar=True,
+            )
+
+        return all(success)
+
+    def delete_datapoints(self, dp_ids: List[str], concurrency: int = 50) -> bool:
+        """Delete workspace datapoints based on ids.
+
+        >>> workspace = redbrick.get_workspace(org_id, workspace_id, api_key, url)
+        >>> workspace.delete_datapoints([...])
+
+        Parameters
+        --------------
+        dp_ids: List[str]
+            List of datapoint ids to delete.
+
+        concurrency: int = 50
+            The number of datapoints to delete at a time.
+            We recommend keeping this <= 50.
+
+        Returns
+        -------------
+        bool
+            True if successful, else False.
+        """
+        concurrency = min(concurrency, 50)
+        return asyncio.run(self._delete_datapoints(dp_ids, concurrency))

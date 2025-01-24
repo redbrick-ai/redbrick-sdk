@@ -21,7 +21,8 @@ class UploadRepo(UploadControllerInterface):
         self,
         aio_client: aiohttp.ClientSession,
         org_id: str,
-        project_id: str,
+        workspace_id: Optional[str],
+        project_id: Optional[str],
         storage_id: str,
         name: str,
         items: List[str],
@@ -46,7 +47,8 @@ class UploadRepo(UploadControllerInterface):
         query_string = """
             mutation createDatapointSDK(
                 $orgId: UUID!
-                $projectId: UUID!
+                $workspaceId: UUID
+                $projectId: UUID
                 $items: [String!]!
                 $heatMaps: [HeatMapInput!]
                 $transforms: [TransformInput!]
@@ -64,6 +66,7 @@ class UploadRepo(UploadControllerInterface):
             ) {
                 createDatapoint(
                     orgId: $orgId
+                    workspaceId: $workspaceId
                     projectId: $projectId
                     items: $items
                     heatMaps: $heatMaps
@@ -80,6 +83,7 @@ class UploadRepo(UploadControllerInterface):
                     priority: $priority
                     attributes: $attributes
                 ) {
+                    dpId
                     taskId
                     taskIds
                 }
@@ -88,6 +92,7 @@ class UploadRepo(UploadControllerInterface):
 
         query_variables = {
             "orgId": org_id,
+            "workspaceId": workspace_id,
             "projectId": project_id,
             "items": items,
             "heatMaps": heat_maps,
@@ -124,9 +129,10 @@ class UploadRepo(UploadControllerInterface):
         self,
         aio_client: aiohttp.ClientSession,
         org_id: str,
-        project_id: str,
         storage_id: str,
-        task_id: str,
+        dp_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+        task_id: Optional[str] = None,
         items: Optional[List[str]] = None,
         series_info: Optional[List[Dict]] = None,
         heat_maps: Optional[List[Dict]] = None,
@@ -135,12 +141,14 @@ class UploadRepo(UploadControllerInterface):
         meta_data: Optional[Dict] = None,
     ) -> Dict:
         """Update items in a datapoint."""
+        # pylint: disable=too-many-locals
         query_string = """
             mutation updateTaskItemsSDK(
                 $orgId: UUID!
-                $projectId: UUID!
+                $dpId: UUID
+                $projectId: UUID
+                $taskId: UUID
                 $storageId: UUID!
-                $taskId: UUID!
                 $items: [String!]
                 $seriesInfo: [SeriesInfoInput!]
                 $heatMaps: [HeatMapInput!]
@@ -150,9 +158,10 @@ class UploadRepo(UploadControllerInterface):
             ) {
                 updateTaskItems(
                     orgId: $orgId
+                    dpId: $dpId
                     projectId: $projectId
-                    storageId: $storageId
                     taskId: $taskId
+                    storageId: $storageId
                     items: $items
                     seriesInfo: $seriesInfo
                     heatMaps: $heatMaps
@@ -168,9 +177,10 @@ class UploadRepo(UploadControllerInterface):
 
         query_variables = {
             "orgId": org_id,
+            "dpId": dp_id,
             "projectId": project_id,
-            "storageId": storage_id,
             "taskId": task_id,
+            "storageId": storage_id,
             "items": items,
             "seriesInfo": series_info,
             "heatMaps": heat_maps,
@@ -227,6 +237,32 @@ class UploadRepo(UploadControllerInterface):
         result = self.client.execute_query(query_string, query_variables)
         presigned: List[Dict] = result["itemsUploadPresign"]["items"]
         return presigned
+
+    async def delete_datapoints(
+        self, aio_client: aiohttp.ClientSession, org_id: str, dp_ids: List[str]
+    ) -> bool:
+        """Delete datapoints in a workspace."""
+        query_string = """
+        mutation deleteDatapointsSDK($orgId: UUID!, $dpIds: [UUID!]!) {
+            deleteDatapoints(
+                orgId: $orgId
+                dpIds: $dpIds
+            ) {
+                ok
+            }
+        }
+        """
+        # EXECUTE THE QUERY
+        query_variables = {
+            "orgId": org_id,
+            "dpIds": dp_ids,
+        }
+
+        result: Dict[str, Dict] = await self.client.execute_query_async(
+            aio_client, query_string, query_variables
+        )
+
+        return (result.get("deleteDatapoints", {}) or {}).get("ok", False)
 
     async def delete_tasks(
         self,

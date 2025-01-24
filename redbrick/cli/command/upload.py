@@ -11,6 +11,7 @@ from redbrick.cli.input.select import CLIInputSelect
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIUploadInterface
 from redbrick.common.enums import StorageMethod, ImportTypes
+from redbrick.upload.interact import create_tasks, prepare_json_files
 from redbrick.utils.logging import assert_validation, logger
 from redbrick.utils.files import find_files_recursive
 from redbrick.types.task import InputTask
@@ -214,17 +215,20 @@ but may increase the upload time.""",
                 with open(item_group[0], "r", encoding="utf-8") as file_:
                     files_data.append(json.load(file_))
             logger.debug("Preparing json files for upload")
-            points = self.project.project.upload.prepare_json_files(
-                files_data,
-                storage_id,
-                label_storage_id,
-                segmentation_mapping,
-                task_dirs,
-                upload_cache,
-                self.args.rt_struct,
-                self.args.mhd,
-                self.args.label_validate,
-                self.args.concurrency,
+            points = prepare_json_files(
+                context=self.project.context,
+                org_id=self.project.org_id,
+                taxonomy=self.project.project.taxonomy,
+                files_data=files_data,
+                storage_id=storage_id,
+                label_storage_id=label_storage_id,
+                task_segment_map=segmentation_mapping,
+                task_dirs=task_dirs,
+                uploaded=upload_cache,
+                rt_struct=self.args.rt_struct,
+                mhd_mask=self.args.mhd,
+                label_validate=self.args.label_validate,
+                concurrency=self.args.concurrency,
             )
             segmentation_mapping = {}
         else:
@@ -368,16 +372,19 @@ but may increase the upload time.""",
             logger.info(f"Found {len(points)} items")
 
             uploads = asyncio.run(
-                project.upload._create_tasks(
-                    points,
-                    segmentation_mapping,
-                    self.args.ground_truth,
-                    storage_id,
-                    label_storage_id,
-                    self.args.label_validate,
-                    self.args.prune_segmentations,
-                    self.args.concurrency,
-                    False,
+                create_tasks(
+                    context=project.context,
+                    org_id=project.org_id,
+                    workspace_id=None,
+                    project_id=project.project_id,
+                    points=points,
+                    segmentation_mapping=segmentation_mapping,
+                    is_ground_truth=self.args.ground_truth,
+                    storage_id=storage_id,
+                    label_storage_id=label_storage_id,
+                    label_validate=self.args.label_validate,
+                    prune_segmentations=self.args.prune_segmentations,
+                    concurrency=self.args.concurrency,
                 )
             )
 

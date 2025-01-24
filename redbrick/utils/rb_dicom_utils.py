@@ -76,4 +76,10 @@ def dicom_dp_format(datapoint: Dict) -> Dict:
 
     output["series"] = deepcopy(volume_series)
 
+    if datapoint.get("archived"):
+        output["archived"] = datapoint["archived"]
+
+    if datapoint.get("cohorts"):
+        output["cohorts"] = [cohort["name"] for cohort in datapoint["cohorts"]]
+
     return output

@@ -16,7 +16,8 @@ class UploadControllerInterface(ABC):
         self,
         aio_client: aiohttp.ClientSession,
         org_id: str,
-        project_id: str,
+        workspace_id: Optional[str],
+        project_id: Optional[str],
         storage_id: str,
         name: str,
         items: List[str],
@@ -43,9 +44,10 @@ class UploadControllerInterface(ABC):
         self,
         aio_client: aiohttp.ClientSession,
         org_id: str,
-        project_id: str,
         storage_id: str,
-        task_id: str,
+        dp_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+        task_id: Optional[str] = None,
         items: Optional[List[str]] = None,
         series_info: Optional[List[Dict]] = None,
         heat_maps: Optional[List[Dict]] = None,
@@ -60,6 +62,12 @@ class UploadControllerInterface(ABC):
         self, org_id: str, project_id: str, files: List[str], file_type: List[str]
     ) -> List[Dict[Any, Any]]:
         """Get a presigned url for uploading items."""
+
+    @abstractmethod
+    async def delete_datapoints(
+        self, aio_client: aiohttp.ClientSession, org_id: str, dp_ids: List[str]
+    ) -> bool:
+        """Delete datapoints in a workspace."""
 
     @abstractmethod
     async def delete_tasks(

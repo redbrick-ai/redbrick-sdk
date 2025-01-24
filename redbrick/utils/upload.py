@@ -1,76 +1,20 @@
 """Upload implementations."""
 
 import os
-import json
 import shutil
 from uuid import uuid4
 from typing import List, Dict, TypeVar, Union, Optional, Sequence
 from urllib.parse import urlparse
-from copy import deepcopy
 
 import aiohttp
 
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
-from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.types.taxonomy import Taxonomy
 from redbrick.types.task import InputTask, OutputTask
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import NIFTI_FILE_TYPES, download_files, upload_files
 from redbrick.utils.logging import log_error, logger
-from redbrick.utils.async_utils import gather_with_concurrency, get_session
-
-
-async def validate_json(
-    context: RBContext,
-    input_data: List[InputTask],
-    storage_id: str,
-    concurrency: int,
-) -> List[Dict]:
-    """Validate and convert to import format."""
-    # pylint: disable=too-many-locals
-    total_input_data = len(input_data)
-    logger.debug(f"Concurrency: {concurrency} for {total_input_data} items")
-    inputs: List[List[InputTask]] = []
-    for batch in range(0, total_input_data, concurrency):
-        inputs.append(input_data[batch : batch + concurrency])
-
-    async with get_session() as session:
-        coros = []
-        for data in inputs:
-            # temp handler for missing properties
-            temp_data = deepcopy(data)
-            for task in temp_data:
-                if "status" in task:
-                    del task["status"]  # type: ignore
-
-            coros.append(
-                context.upload.validate_and_convert_to_import_format(
-                    session, temp_data, True, storage_id
-                )
-            )
-        outputs = await gather_with_concurrency(MAX_CONCURRENCY, *coros)
-
-    output_data: List[Dict] = []
-    for idx, (inp, out) in enumerate(zip(inputs, outputs)):
-        if not out.get("isValid"):
-            start = idx * concurrency
-            logger.debug(f"Error for batch: {idx}")
-            logger.warning(
-                f"Batch: {start}-{start + len(inp)} of {total_input_data}\n"
-                + out.get(
-                    "error",
-                    "Error: Invalid format\nDocs: "
-                    + "https://sdk.redbrickai.com/formats/index.html#import",
-                )
-            )
-            return []
-
-        output_data.extend(
-            json.loads(out["converted"]) if out.get("converted") else inp  # type: ignore
-        )
-
-    return output_data
 
 
 T = TypeVar("T", InputTask, OutputTask)

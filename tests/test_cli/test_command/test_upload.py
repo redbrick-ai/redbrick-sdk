@@ -3,13 +3,14 @@
 import argparse
 import json
 import os.path
-from typing import Dict, Optional
-from unittest.mock import patch
+from typing import Dict, Optional, Tuple
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from redbrick import ImportTypes
 from redbrick.cli import public, CLIProject
+from redbrick.common.enums import StorageMethod
 
 
 @pytest.mark.unit
@@ -77,9 +78,9 @@ def test_handle_upload(
     async def mock_validate_json(ctx, file_data, *args):
         return file_data
 
-    async def mock_create_tasks(s_id, points, *args):
+    async def mock_create_tasks(**kwargs):
         items = []
-        for point in points:
+        for point in kwargs.get("points") or []:
             _items = point["items"]
             for _item in _items:
                 items.append({"response": None, "name": _item})
@@ -93,20 +94,30 @@ def test_handle_upload(
     ) -> Dict:
         return {}
 
+    def mock_get_label_storage(org_id: str, project_id: str) -> Tuple[str, str]:
+        return (StorageMethod.REDBRICK, f"{org_id}/{project_id}")
+
     # pylint: enable=unused-argument
 
+    validate_json_mock = AsyncMock(side_effect=mock_validate_json)
+    create_tasks_mock = AsyncMock(side_effect=mock_create_tasks)
+    gen_item_list_mock = AsyncMock(side_effect=mock_gen_item_list)
+
     with (
-        patch("redbrick.upload.public.validate_json", mock_validate_json),
+        patch("redbrick.upload.interact.validate_json", validate_json_mock),
+        patch("redbrick.upload.interact.create_tasks", create_tasks_mock),
         patch.object(
-            controller.project.project.upload, "_create_tasks", mock_create_tasks
-        ),
-        patch.object(
-            controller.project.project.upload, "generate_items_list", mock_gen_item_list
+            controller.project.project.upload, "generate_items_list", gen_item_list_mock
         ),
         patch.object(
             controller.project.project.context.project,
             "get_taxonomy",
             mock_get_taxonomy,
+        ),
+        patch.object(
+            controller.project.project.context.project,
+            "get_label_storage",
+            mock_get_label_storage,
         ),
     ):
         _dir = project_path if use_dir else json_filepath
