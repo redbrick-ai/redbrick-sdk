@@ -16,6 +16,17 @@ class StorageMethod:
     REDBRICK = "22222222-2222-2222-2222-222222222222"
 
 
+class StorageProvider(Enum):
+    """Storage Provider options."""
+
+    GCS = "GCS"
+    PUBLIC = "PUBLIC"
+    AWS_S3 = "AWS_S3"
+    AZURE_BLOB = "AZURE_BLOB"
+    REDBRICK = "REDBRICK"
+    ALTA_DB = "ALTA_DB"
+
+
 class TaskStates(str, Enum):
     """Task Status.
 

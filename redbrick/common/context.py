@@ -18,6 +18,7 @@ class RBContext:
         from .settings import SettingsControllerInterface
         from .project import ProjectRepoInterface
         from .workspace import WorkspaceRepoInterface
+        from .storage_method import StorageMethodRepoInterface
 
         self.config = config
         self.client = RBClient(api_key=api_key, url=url)
@@ -28,6 +29,7 @@ class RBContext:
         self.settings: SettingsControllerInterface
         self.project: ProjectRepoInterface
         self.workspace: WorkspaceRepoInterface
+        self.storage_method: StorageMethodRepoInterface
 
         self._key_id: Optional[str] = None
 

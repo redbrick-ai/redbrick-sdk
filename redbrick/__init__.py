@@ -10,6 +10,7 @@ import nest_asyncio  # type: ignore
 from redbrick.common.context import RBContext
 from redbrick.common.enums import (
     StorageMethod,
+    StorageProvider,
     ImportTypes,
     TaskEventTypes,
     TaskFilters,
@@ -79,6 +80,7 @@ def _populate_context(context: RBContext) -> RBContext:
         SettingsRepo,
         ProjectRepo,
         WorkspaceRepo,
+        StorageMethodRepo,
     )
 
     if context.config.debug:
@@ -90,6 +92,7 @@ def _populate_context(context: RBContext) -> RBContext:
     context.settings = SettingsRepo(context.client)
     context.project = ProjectRepo(context.client)
     context.workspace = WorkspaceRepo(context.client)
+    context.storage_method = StorageMethodRepo(context.client)
     return context
 
 
@@ -237,6 +240,7 @@ __all__ = [
     "version",
     "RBContext",
     "StorageMethod",
+    "StorageProvider",
     "ImportTypes",
     "TaxonomyTypes",
     "TaskTypes",
