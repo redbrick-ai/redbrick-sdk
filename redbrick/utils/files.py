@@ -3,7 +3,6 @@
 import os
 import gzip
 from typing import Any, Dict, List, Optional, Tuple, Set
-import asyncio
 
 import aiohttp
 from yarl import URL
@@ -18,7 +17,7 @@ from redbrick.common.constants import (
     MAX_FILE_BATCH_SIZE,
     MAX_RETRY_ATTEMPTS,
 )
-from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.async_utils import gather_with_concurrency, get_session
 from redbrick.utils.logging import log_error, logger
 from redbrick.config import config
 
@@ -211,8 +210,7 @@ async def upload_files(
 
         raise ConnectionError(f"Error in uploading {path} to RedBrick")
 
-    conn = aiohttp.TCPConnector()
-    async with aiohttp.ClientSession(connector=conn) as session:
+    async with get_session() as session:
         coros = [
             _upload_file(session, path, url, file_type)
             for path, url, file_type in files
@@ -221,7 +219,6 @@ async def upload_files(
             MAX_FILE_BATCH_SIZE, *coros, progress_bar_name=progress_bar_name
         )
 
-    await asyncio.sleep(0.250)  # give time to close ssl connections
     return uploaded
 
 
@@ -300,8 +297,7 @@ async def download_files(
             os.makedirs(parent, exist_ok=True)
         dirs.add(parent)
 
-    conn = aiohttp.TCPConnector()
-    async with aiohttp.ClientSession(connector=conn) as session:
+    async with get_session() as session:
         coros = [_download_file(session, url, path) for url, path in files]
         paths = await gather_with_concurrency(
             MAX_FILE_BATCH_SIZE,
@@ -312,7 +308,6 @@ async def download_files(
         )
         await session.close()
 
-    await asyncio.sleep(0.250)  # give time to close ssl connections
     return [(path if isinstance(path, str) else None) for path in paths]
 
 

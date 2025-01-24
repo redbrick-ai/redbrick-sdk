@@ -1,10 +1,21 @@
 """Async utils."""
 
 import asyncio
-from typing import Any, Awaitable, Coroutine, List, Tuple, TypeVar, Optional
+from contextlib import asynccontextmanager
+from typing import (
+    Any,
+    AsyncGenerator,
+    Awaitable,
+    Coroutine,
+    List,
+    Tuple,
+    TypeVar,
+    Optional,
+)
+import aiohttp
 import tqdm.asyncio  # type: ignore
 
-from redbrick.common.constants import MAX_CONCURRENCY
+from redbrick.common.constants import MAX_CONCURRENCY, REQUEST_TIMEOUT
 from redbrick.config import config
 
 ReturnType = TypeVar("ReturnType")  # pylint: disable=invalid-name
@@ -84,3 +95,15 @@ async def gather_with_concurrency(
         result.append((idx, value))
 
     return [res[1] for res in sorted(result, key=lambda x: x[0])]
+
+
+@asynccontextmanager
+async def get_session() -> AsyncGenerator[aiohttp.ClientSession, None]:
+    """Get async client session."""
+    async with aiohttp.ClientSession(
+        connector=aiohttp.TCPConnector(verify_ssl=config.verify_ssl),
+        timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
+        trust_env=True,
+    ) as session:
+        yield session
+        await asyncio.sleep(0.250)

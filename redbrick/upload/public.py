@@ -18,7 +18,7 @@ from redbrick.common.context import RBContext
 from redbrick.common.constants import DUMMY_FILE_PATH, MAX_CONCURRENCY
 from redbrick.common.enums import ImportTypes, StorageMethod
 from redbrick.types.taxonomy import Taxonomy
-from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.async_utils import gather_with_concurrency, get_session
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.upload import (
     convert_mhd_to_nii_labels,
@@ -421,8 +421,7 @@ class Upload:
             self.org_id, self.project_id
         )
 
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        async with get_session() as session:
             coros = [
                 self._create_task(
                     session,
@@ -445,8 +444,6 @@ class Upload:
                 ),
                 keep_progress_bar=True,
             )
-
-        await asyncio.sleep(0.250)  # give time to close ssl connections
 
         temp_dir = os.path.join(config_path(), "temp")
         if os.path.exists(temp_dir):
@@ -617,8 +614,7 @@ class Upload:
         )
 
     async def _delete_tasks(self, task_ids: List[str], concurrency: int) -> bool:
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        async with get_session() as session:
             coros = [
                 self.context.upload.delete_tasks(
                     session,
@@ -631,7 +627,7 @@ class Upload:
             success = await gather_with_concurrency(
                 10, *coros, progress_bar_name="Deleting tasks", keep_progress_bar=True
             )
-        await asyncio.sleep(0.250)  # give time to close ssl connections
+
         return all(success)
 
     def delete_tasks(self, task_ids: List[str], concurrency: int = 50) -> bool:
@@ -660,8 +656,7 @@ class Upload:
     async def _delete_tasks_by_name(
         self, task_names: List[str], concurrency: int
     ) -> bool:
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        async with get_session() as session:
             coros = [
                 self.context.upload.delete_tasks_by_name(
                     session,
@@ -674,7 +669,7 @@ class Upload:
             success = await gather_with_concurrency(
                 10, *coros, progress_bar_name="Deleting tasks", keep_progress_bar=True
             )
-        await asyncio.sleep(0.250)  # give time to close ssl connections
+
         return all(success)
 
     def delete_tasks_by_name(
@@ -741,8 +736,7 @@ class Upload:
                         items_map[items[idx]] = item
 
         is_win = sys.platform.startswith("win")
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        async with get_session() as session:
             coros = [
                 self.context.upload.generate_items_list(
                     session,
@@ -758,8 +752,6 @@ class Upload:
                 for batch in range(0, total_groups, concurrency)
             ]
             outputs = await gather_with_concurrency(MAX_CONCURRENCY, *coros)
-
-        await asyncio.sleep(0.250)  # give time to close ssl connections
 
         output_data: List[Dict] = []
         for output in outputs:
@@ -1117,8 +1109,7 @@ class Upload:
     async def _update_tasks_priorities(
         self, tasks: List[Dict], concurrency: int
     ) -> List[str]:
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        async with get_session() as session:
             coros = [
                 self.context.upload.update_priority(
                     session,
@@ -1134,7 +1125,7 @@ class Upload:
                 progress_bar_name="Updating tasks' priorities",
                 keep_progress_bar=True,
             )
-        await asyncio.sleep(0.250)  # give time to close ssl connections
+
         return [error for error in errors if error]
 
     def update_tasks_priority(self, tasks: List[Dict], concurrency: int = 50) -> None:
@@ -1221,8 +1212,7 @@ class Upload:
         time_spent_ms: Optional[int],
         extra_data: Optional[Dict],
     ) -> List[Dict]:
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        async with get_session() as session:
             coros = [
                 self._update_task_labels(
                     session,
@@ -1240,7 +1230,7 @@ class Upload:
             temp = await gather_with_concurrency(
                 10, *coros, progress_bar_name="Updating tasks", keep_progress_bar=True
             )
-        await asyncio.sleep(0.250)  # give time to close ssl connections
+
         return [val for val in temp if val]
 
     def update_tasks_labels(
@@ -1400,8 +1390,7 @@ class Upload:
     async def _send_to_stage(
         self, task_ids: List[str], stage_name: str, concurrency: int
     ) -> List[str]:
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        async with get_session() as session:
             coros = [
                 self.context.upload.send_tasks_to_stage(
                     session,
@@ -1418,7 +1407,7 @@ class Upload:
                 progress_bar_name=f"Sending tasks to {stage_name} ({concurrency} per batch)",
                 keep_progress_bar=True,
             )
-        await asyncio.sleep(0.250)  # give time to close ssl connections
+
         return [response for response in responses if response]
 
     def send_tasks_to_stage(

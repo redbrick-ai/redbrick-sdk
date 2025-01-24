@@ -2,7 +2,6 @@
 
 import os
 import json
-import asyncio
 import shutil
 from uuid import uuid4
 from typing import List, Dict, TypeVar, Union, Optional, Sequence
@@ -19,7 +18,7 @@ from redbrick.types.task import InputTask, OutputTask
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import NIFTI_FILE_TYPES, download_files, upload_files
 from redbrick.utils.logging import log_error, logger
-from redbrick.utils.async_utils import gather_with_concurrency
+from redbrick.utils.async_utils import gather_with_concurrency, get_session
 
 
 async def validate_json(
@@ -36,8 +35,7 @@ async def validate_json(
     for batch in range(0, total_input_data, concurrency):
         inputs.append(input_data[batch : batch + concurrency])
 
-    conn = aiohttp.TCPConnector()
-    async with aiohttp.ClientSession(connector=conn) as session:
+    async with get_session() as session:
         coros = []
         for data in inputs:
             # temp handler for missing properties
@@ -52,8 +50,6 @@ async def validate_json(
                 )
             )
         outputs = await gather_with_concurrency(MAX_CONCURRENCY, *coros)
-
-    await asyncio.sleep(0.250)  # give time to close ssl connections
 
     output_data: List[Dict] = []
     for idx, (inp, out) in enumerate(zip(inputs, outputs)):
