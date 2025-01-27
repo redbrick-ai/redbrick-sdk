@@ -460,33 +460,6 @@ class ProjectRepo(ProjectRepoInterface):
         current_user: Dict = result["me"]
         return current_user
 
-    def get_members(self, org_id: str, project_id: str) -> List[Dict]:
-        """Get members of a project."""
-        query_string = """
-        query getProjectMembersSDK($orgId: UUID!, $projectId: UUID!) {
-            projectMembers(orgId: $orgId, projectId: $projectId) {
-                member {
-                    user {
-                        userId
-                        email
-                        givenName
-                        familyName
-                    }
-                    role
-                    tags
-                }
-                stageAccess {
-                    stageName
-                    access
-                }
-            }
-        }
-        """
-        query_variables = {"orgId": org_id, "projectId": project_id}
-        result = self.client.execute_query(query_string, query_variables)
-        members: List[Dict] = result["projectMembers"]
-        return members
-
     def self_health_check(
         self, org_id: str, self_url: str, self_data: Dict
     ) -> Optional[str]:

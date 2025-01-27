@@ -75,7 +75,11 @@ class LabelStage(Stage):
                     else not entity["blindedAnnotation"]
                 ),
                 read_only_labels_edit_access=(
-                    ProjectMemberRole(entity.get("roLabelEditPerm"))
+                    ProjectMemberRole(
+                        "MEMBER"
+                        if entity["roLabelEditPerm"] == "LABELER"
+                        else entity["roLabelEditPerm"]
+                    )
                     if entity.get("roLabelEditPerm")
                     else None
                 ),
@@ -99,7 +103,11 @@ class LabelStage(Stage):
             if self.show_uploaded_annotations is not None:
                 entity["blindedAnnotation"] = not self.show_uploaded_annotations
             if self.read_only_labels_edit_access:
-                entity["roLabelEditPerm"] = self.read_only_labels_edit_access.value
+                entity["roLabelEditPerm"] = (
+                    "LABELER"
+                    if self.read_only_labels_edit_access == ProjectMemberRole.MEMBER
+                    else self.read_only_labels_edit_access.value
+                )
             if self.is_pre_label is not None:
                 entity["isPreLabel"] = self.is_pre_label
             if self.is_consensus_label is not None:

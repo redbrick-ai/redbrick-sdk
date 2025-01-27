@@ -286,6 +286,55 @@ class RBWorkspace:
             concurrency=concurrency,
         )
 
+    async def _update_datapoints_metadata(
+        self, storage_id: str, points: List[Dict]
+    ) -> None:
+        async with get_session() as session:
+            await gather_with_concurrency(
+                10,
+                *[
+                    self.context.upload.update_items_async(
+                        aio_client=session,
+                        org_id=self.org_id,
+                        storage_id=storage_id,
+                        dp_id=point["dpId"],
+                        meta_data=point.get("metaData"),
+                    )
+                    for point in points
+                ],
+                progress_bar_name="Updating datapoints metadata",
+                keep_progress_bar=True,
+            )
+
+    def update_datapoints_metadata(self, storage_id: str, points: List[Dict]) -> None:
+        """Update datapoints metadata.
+
+        Update metadata for datapoints in workspace.
+
+        .. code:: python
+
+            workspace = redbrick.get_workspace(org_id, workspace_id, api_key, url)
+            points = [
+                {
+                    "dpId": "...",
+                    "metaData": {
+                        "property": "value",
+                    }
+                }
+            ]
+            workspace.update_datapoints_metadata(storage_id, points)
+
+
+        Parameters
+        --------------
+        storage_id: str
+            Storage method where the datapoints are stored.
+
+        points: List[:obj:`~redbrick.types.task.InputTask`]
+            List of datapoints with dpId and metaData values.
+        """
+        asyncio.run(self._update_datapoints_metadata(storage_id, points))
+
     async def _delete_datapoints(self, dp_ids: List[str], concurrency: int) -> bool:
         async with get_session() as session:
             coros = [

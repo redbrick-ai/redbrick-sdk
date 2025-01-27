@@ -8,7 +8,7 @@ functions for programmatically manipulating data, importing annotations, assigni
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_org, get_workspace, get_project, get_org_from_profile, get_project_from_profile, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, ProjectMemberRole, Stage, LabelStage, ReviewStage, ModelStage
+   :members: get_org, get_workspace, get_project, get_org_from_profile, get_project_from_profile, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, OrgMemberRole, ProjectMemberRole, Stage, LabelStage, ReviewStage, ModelStage, ProjectMember, ProjectMemberInput
    :member-order: bysource
 
 .. _org:
@@ -16,12 +16,12 @@ RedBrick
 Organization
 ----------------------
 .. autoclass:: redbrick.organization.RBOrganization
-   :members: name, org_id, create_workspace, create_project, create_project_advanced, get_project, projects_raw, projects, delete_project, taxonomies, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy, delete_taxonomy
+   :members: name, org_id, create_workspace, create_project, create_project_advanced, get_project, projects_raw, projects, members, delete_project, taxonomies, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy, delete_taxonomy
 
 Workspace
 ----------------------
 .. autoclass:: redbrick.workspace.RBWorkspace
-   :members: name, org_id, workspace_id, metadata_schema, classification_schema, cohorts, update_schema, update_cohorts, get_datapoints, create_datapoints, archive_datapoints, unarchive_datapoints, delete_datapoints, add_datapoints_to_cohort, add_datapoints_to_projects, remove_datapoints_from_cohort, update_datapoint_attributes
+   :members: name, org_id, workspace_id, metadata_schema, classification_schema, cohorts, update_schema, update_cohorts, get_datapoints, create_datapoints, archive_datapoints, unarchive_datapoints, delete_datapoints, add_datapoints_to_cohort, add_datapoints_to_projects, remove_datapoints_from_cohort, update_datapoint_attributes, update_datapoints_metadata
    :show-inheritance:
 
 .. _project:
@@ -54,4 +54,10 @@ Settings
 ----------------------
 .. autoclass:: redbrick.settings.Settings
    :members: label_validation, hanging_protocol, webhook, toggle_reference_standard_task, task_duplication
+   :show-inheritance:
+
+Workforce
+----------------------
+.. autoclass:: redbrick.workforce.Workforce
+   :members: get_member, list_members, add_members, update_members, remove_members
    :show-inheritance:

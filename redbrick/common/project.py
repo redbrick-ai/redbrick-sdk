@@ -124,10 +124,6 @@ class ProjectRepoInterface(ABC):
         """Get current user."""
 
     @abstractmethod
-    def get_members(self, org_id: str, project_id: str) -> List[Dict]:
-        """Get members of a project."""
-
-    @abstractmethod
     def self_health_check(
         self, org_id: str, self_url: str, self_data: Dict
     ) -> Optional[str]:

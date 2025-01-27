@@ -5,8 +5,10 @@ from functools import partial
 from typing import Any, List, Optional, Dict, Sequence, Union
 import platform
 
+from dateutil import parser  # type: ignore
 from tqdm import tqdm  # type: ignore
 
+from redbrick.common.enums import OrgMemberRole
 from redbrick.config import config
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
@@ -75,6 +77,29 @@ class RBOrganization:
             RBProject(self.context, self._org_id, proj["projectId"])
             for proj in tqdm(projects, leave=config.log_info)
         ]
+
+    @property
+    def members(self) -> List[Dict]:
+        """Get list of org members."""
+        members = self.context.workforce.org_members(self.org_id)
+        org_members = []
+        for member in members:
+            user = member["user"]
+            org_members.append(
+                {
+                    "userId": user["userId"],
+                    "email": user["email"],
+                    "givenName": user["givenName"],
+                    "familyName": user["familyName"],
+                    "role": OrgMemberRole(member["role"]),
+                    "tags": member["tags"],
+                    "is2FAEnabled": bool(user["mfaSetup"]),
+                    "lastActive": parser.parse(
+                        member.get("lastSeen", user.get("lastSeen", user["updatedAt"]))
+                    ),
+                }
+            )
+        return org_members
 
     @property
     def org_id(self) -> str:
