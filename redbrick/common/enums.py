@@ -128,15 +128,29 @@ class TaskFilters(str, Enum):
     ISSUES = "ISSUES"
 
 
+class OrgMemberRole(str, Enum):
+    """Enumerate access levels for Organization.
+
+    - ``OWNER`` - Organization Owner
+    - ``ADMIN`` - Organization Admin
+    - ``MEMBER`` - Organization Member
+
+    """
+
+    OWNER = "OWNER"
+    ADMIN = "ADMIN"
+    MEMBER = "MEMBER"
+
+
 class ProjectMemberRole(str, Enum):
     """Enumerate access levels for Project.
 
     - ``ADMIN`` - Project Admin
     - ``MANAGER`` - Project Manager
-    - ``LABELER`` - Project Labeler
+    - ``MEMBER`` - Project Member (Labeler/Reviewer)
 
     """
 
     ADMIN = "ADMIN"
     MANAGER = "MANAGER"
-    LABELER = "LABELER"
+    MEMBER = "MEMBER"

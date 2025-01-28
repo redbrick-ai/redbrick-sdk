@@ -17,9 +17,10 @@ def test_handler(prepare_project, monkeypatch):
     monkeypatch.chdir(project_path)
     _, cli = public.cli_parser(only_parser=False)
 
-    with patch(
-        "redbrick.cli.entity.creds.config_path", return_value=config_path_
-    ), patch.object(cli.report, "handle_report"):
+    with (
+        patch("redbrick.cli.entity.creds.config_path", return_value=config_path_),
+        patch.object(cli.report, "handle_report"),
+    ):
         args = argparse.Namespace(
             type=cli.report.TYPE_ALL,
             concurrency=10,
@@ -38,7 +39,7 @@ def test_handle_report(
     controller, project_path, _ = mock_report_controller
     monkeypatch.chdir(project_path)
 
-    mock_get_members = Mock(
+    mock_list_members = Mock(
         return_value=[
             {"member": {"user": {"userId": "mock_user_id", "email": "mock@email.com"}}},
         ]
@@ -85,14 +86,17 @@ def test_handle_report(
     ]
 
     mock_task_events = Mock(return_value=(mock_task_events, None))
-    with patch.object(
-        controller.project.project.context.project,
-        "get_members",
-        mock_get_members,
-    ), patch.object(
-        controller.project.project.context.export,
-        "task_events",
-        mock_task_events,
+    with (
+        patch.object(
+            controller.project.project.context.workforce,
+            "list_members",
+            mock_list_members,
+        ),
+        patch.object(
+            controller.project.project.context.export,
+            "task_events",
+            mock_task_events,
+        ),
     ):
         controller.args = argparse.Namespace(type=controller.TYPE_ALL, concurrency=10)
         # call method

@@ -1173,7 +1173,7 @@ class Export:
         else:
             raise ValueError(f"Invalid task filter: {search}")
 
-        members = self.context.project.get_members(self.org_id, self.project_id)
+        members = self.context.workforce.list_members(self.org_id, self.project_id)
         users = {}
         for member in members:
             user = member.get("member", {}).get("user", {})
@@ -1291,7 +1291,7 @@ class Export:
             }]
         """
         # pylint: disable=too-many-locals
-        members = self.context.project.get_members(self.org_id, self.project_id)
+        members = self.context.workforce.list_members(self.org_id, self.project_id)
         users = {}
         for member in members:
             user = member.get("member", {}).get("user", {})
@@ -1371,7 +1371,7 @@ class Export:
                 "cycle": number  # Task cycle
             }]
         """
-        members = self.context.project.get_members(self.org_id, self.project_id)
+        members = self.context.workforce.list_members(self.org_id, self.project_id)
         users = {}
         for member in members:
             user = member.get("member", {}).get("user", {})

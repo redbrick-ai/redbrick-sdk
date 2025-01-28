@@ -240,3 +240,41 @@ class WorkspaceRepo(WorkspaceRepoInterface):
             "attributes": json.dumps(attributes),
         }
         self.client.execute_query(query, variables)
+
+    def add_datapoints_to_projects(
+        self,
+        org_id: str,
+        workspace_id: str,
+        project_ids: List[str],
+        dp_ids: List[str],
+        ground_truth: bool,
+    ) -> None:
+        """Add datapoints to project."""
+        query = """
+        mutation importDatapointsFromWorkspaceSDK(
+            $orgId: UUID!
+            $workspaceId: UUID!
+            $projectIds: [UUID!]!
+            $dpIds: [UUID!]!
+            $isGroundTruth: Boolean
+        ) {
+            importDatapointsFromWorkspace(
+                orgId: $orgId
+                workspaceId: $workspaceId
+                projectIds: $projectIds
+                dpIds: $dpIds
+                isGroundTruth: $isGroundTruth
+            ) {
+                ok
+                message
+            }
+        }
+        """
+        variables = {
+            "orgId": org_id,
+            "workspaceId": workspace_id,
+            "projectIds": project_ids,
+            "dpIds": dp_ids,
+            "isGroundTruth": ground_truth,
+        }
+        self.client.execute_query(query, variables)

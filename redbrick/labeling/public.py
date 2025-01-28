@@ -14,11 +14,11 @@ from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
 from redbrick.stage import Stage
 from redbrick.types.taxonomy import Taxonomy
+from redbrick.upload.interact import validate_json
 from redbrick.utils.upload import (
     convert_mhd_to_nii_labels,
     convert_rt_struct_to_nii_labels,
     process_segmentation_upload,
-    validate_json,
 )
 from redbrick.utils.logging import log_error, logger
 from redbrick.utils.async_utils import gather_with_concurrency, get_session

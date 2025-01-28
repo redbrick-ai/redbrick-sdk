@@ -14,6 +14,7 @@ from redbrick.common.enums import (
     TaskEventTypes,
     TaskFilters,
     TaskStates,
+    OrgMemberRole,
     ProjectMemberRole,
 )
 from redbrick.common.constants import DEFAULT_URL
@@ -21,6 +22,7 @@ from redbrick.organization import RBOrganization
 from redbrick.workspace import RBWorkspace
 from redbrick.project import RBProject
 from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
+from redbrick.common.workforce import ProjectMember, ProjectMemberInput
 
 from redbrick.utils.logging import logger
 from redbrick.utils.common_utils import config_migration
@@ -80,6 +82,7 @@ def _populate_context(context: RBContext) -> RBContext:
         ProjectRepo,
         WorkspaceRepo,
         StorageMethodRepo,
+        WorkforceRepo,
     )
 
     if context.config.debug:
@@ -92,6 +95,7 @@ def _populate_context(context: RBContext) -> RBContext:
     context.project = ProjectRepo(context.client)
     context.workspace = WorkspaceRepo(context.client)
     context.storage_method = StorageMethodRepo(context.client)
+    context.workforce = WorkforceRepo(context.client)
     return context
 
 
@@ -245,11 +249,14 @@ __all__ = [
     "TaskEventTypes",
     "TaskFilters",
     "TaskStates",
+    "OrgMemberRole",
     "ProjectMemberRole",
     "Stage",
     "LabelStage",
     "ReviewStage",
     "ModelStage",
+    "ProjectMember",
+    "ProjectMemberInput",
     "RBOrganization",
     "RBWorkspace",
     "RBProject",

@@ -36,6 +36,7 @@ class RBProject:
         from redbrick.labeling import Labeling
         from redbrick.export import Export
         from redbrick.settings import Settings
+        from redbrick.workforce import Workforce
 
         self.context = context
 
@@ -91,6 +92,7 @@ class RBProject:
             review_stages,
         )
         self.settings = Settings(context, org_id, project_id, taxonomy)
+        self.workforce = Workforce(context, org_id, project_id)
 
     @property
     def org_id(self) -> str:
@@ -175,8 +177,12 @@ class RBProject:
 
     @property
     def members(self) -> List[Dict]:
-        """Get list of project members."""
-        members = self.context.project.get_members(self.org_id, self.project_id)
+        """Get list of project members.
+
+        .. deprecated:: 2.21.0
+            Please use :func:`project.workforce.list_members` instead.
+        """
+        members = self.context.workforce.list_members(self.org_id, self.project_id)
         project_members = []
         for member in members:
             member_obj = member.get("member", {})

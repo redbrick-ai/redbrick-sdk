@@ -76,7 +76,11 @@ class ReviewStage(Stage):
                 auto_assignment=entity.get("autoAssign"),
                 auto_assignment_queue_size=entity.get("queueSize"),
                 read_only_labels_edit_access=(
-                    ProjectMemberRole(entity.get("roLabelEditPerm"))
+                    ProjectMemberRole(
+                        "MEMBER"
+                        if entity["roLabelEditPerm"] == "LABELER"
+                        else entity["roLabelEditPerm"]
+                    )
                     if entity.get("roLabelEditPerm")
                     else None
                 ),
@@ -100,7 +104,11 @@ class ReviewStage(Stage):
             if self.auto_assignment_queue_size is not None:
                 entity["queueSize"] = self.auto_assignment_queue_size
             if self.read_only_labels_edit_access:
-                entity["roLabelEditPerm"] = self.read_only_labels_edit_access.value
+                entity["roLabelEditPerm"] = (
+                    "LABELER"
+                    if self.read_only_labels_edit_access == ProjectMemberRole.MEMBER
+                    else self.read_only_labels_edit_access.value
+                )
             if self.is_pre_review is not None:
                 entity["isPreReview"] = self.is_pre_review
             if self.is_consensus_merge is not None:
