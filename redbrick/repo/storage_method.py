@@ -2,9 +2,11 @@
 
 from typing import Dict, List, Union
 from redbrick.common.client import RBClient
-from redbrick.common.storage_method import StorageMethodRepoInterface
+from redbrick.common.storage_method import (
+    StorageMethodRepoInterface,
+    InputStorageMethodDetailsType,
+)
 from redbrick.repo.shards import STORAGE_METHOD_SHARD
-from redbrick.types.storage_method import StorageMethodDetailsType
 
 
 class StorageMethodRepo(StorageMethodRepoInterface):
@@ -40,11 +42,22 @@ class StorageMethodRepo(StorageMethodRepoInterface):
         response = self.client.execute_query(query, variables)
         return response["storageMethod"]
 
+    def presign(self, org_id: str, storage_method_id: str, path: str) -> str:
+        """Verify a storage method."""
+        query = """
+            query presignItemSDK($orgId: UUID!, $storageId: UUID!, $item: String!) {
+                presignItem(orgId: $orgId, storageId: $storageId, item: $item)
+            }
+        """
+        variables = {"orgId": org_id, "storageId": storage_method_id, "item": path}
+        response = self.client.execute_query(query, variables)
+        return response["presignItem"]
+
     def create(
         self,
         org_id: str,
         name: str,
-        details: StorageMethodDetailsType,
+        details: InputStorageMethodDetailsType,
     ) -> Dict[str, Union[bool, Dict]]:
         """Create a storage method."""
         query = f"""
@@ -71,7 +84,7 @@ class StorageMethodRepo(StorageMethodRepoInterface):
         self,
         org_id: str,
         storage_method_id: str,
-        details: StorageMethodDetailsType,
+        details: InputStorageMethodDetailsType,
     ) -> Dict[str, Union[bool, Dict]]:
         """Update a storage method."""
         query = f"""
