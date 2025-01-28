@@ -7,12 +7,11 @@ import platform
 
 from tqdm import tqdm  # type: ignore
 
-from redbrick.common.enums import StorageProvider
 from redbrick.config import config
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
+from redbrick.storage_method import StorageMethodController
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
-from redbrick.types.storage_method import StorageMethodDetails
 from redbrick.workspace import RBWorkspace
 from redbrick.stage import Stage, get_project_stages, get_middle_stages
 
@@ -44,6 +43,7 @@ class RBOrganization:
         self._name: str
 
         self._get_org()
+        self.storage_method = StorageMethodController(self.context, self.org_id)
 
     def _get_org(self) -> None:
         org = self.context.project.get_org(self._org_id)
@@ -531,39 +531,3 @@ class RBOrganization:
             ],
         }
         return self.context.project.self_health_check(self.org_id, self_url, self_data)
-
-    def get_storage_methods(self) -> List[Dict]:
-        """Get a list of storage methods in the organization."""
-        return self.context.storage_method.get_storage_methods(self.org_id)
-
-    def get_storage_method(self, storage_id: str) -> Dict:
-        """Get a storage method by ID."""
-        return self.context.storage_method.get_storage_method(self.org_id, storage_id)
-
-    def create_storage_method(
-        self,
-        name: str,
-        provider: StorageProvider,
-        details: StorageMethodDetails,
-    ) -> Dict[str, Union[bool, Dict]]:
-        """Create a storage method."""
-        return self.context.storage_method.create_storage_method(
-            self.org_id, name, provider, details
-        )
-
-    def update_storage_method(
-        self,
-        storage_id: str,
-        provider: StorageProvider,
-        details: StorageMethodDetails,
-    ) -> Dict[str, Union[bool, Dict]]:
-        """Update a storage method."""
-        return self.context.storage_method.update_storage_method(
-            self.org_id, storage_id, provider, details
-        )
-
-    def delete_storage_method(self, storage_id: str) -> bool:
-        """Delete a storage method."""
-        return self.context.storage_method.delete_storage_method(
-            self.org_id, storage_id
-        )

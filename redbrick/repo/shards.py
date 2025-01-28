@@ -91,7 +91,6 @@ storageId
 name
 provider
 details{
-    __typename
     ... on S3BucketStorageDetails {
         bucket
         region
@@ -104,15 +103,6 @@ details{
     ... on GCSBucketStorageDetails {
         bucket
     }
-    ... on AzureBlobStorageDetails {
-        _
-    }
-    ... on PublicStorageDetails {
-        _
-    }
-    ... on RedBrickStorageDetails {
-        _
-    }
     ... on AltaDBStorageDetails {
         access
         host
@@ -121,11 +111,6 @@ details{
 createdBy{
     userType
     userId
-    email
-    givenName
-    familyName
-    loggedInUser
-    idProvider
 }
 createdAt
 deleted

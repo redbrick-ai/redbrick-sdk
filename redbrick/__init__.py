@@ -10,7 +10,6 @@ import nest_asyncio  # type: ignore
 from redbrick.common.context import RBContext
 from redbrick.common.enums import (
     StorageMethod,
-    StorageProvider,
     ImportTypes,
     TaskEventTypes,
     TaskFilters,
@@ -240,7 +239,6 @@ __all__ = [
     "version",
     "RBContext",
     "StorageMethod",
-    "StorageProvider",
     "ImportTypes",
     "TaxonomyTypes",
     "TaskTypes",

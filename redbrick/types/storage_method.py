@@ -1,15 +1,56 @@
 """Storage Method Types"""
 
-from typing import TypedDict, Union
-from typing_extensions import NotRequired
+from dataclasses import dataclass, field
+from typing import Dict, Optional, Union
 
 
-class InputAWSS3StorageMethodDetails(TypedDict):
+@dataclass
+class _StorageMethodDetails:
+    """Storage Method Type."""
+
+    _provider_name: str
+    _provider_key: str
+
+    @property
+    def details(self) -> Dict[str, Optional[Union[str, int, bool]]]:
+        """Get the dictionary to be fed to the API.."""
+        raise NotImplementedError
+
+    @property
+    def provider_name(self) -> str:
+        """Get the provider name."""
+        return self._provider_name
+
+    @provider_name.setter
+    def provider_name(self, value: str) -> None:
+        """Set the provider name."""
+        raise AssertionError(f"Cannot set provider name to `{value}`")
+
+    @property
+    def provider_key(self) -> str:
+        """Get the provider key."""
+        return self._provider_key
+
+    @provider_key.setter
+    def provider_key(self, value: str) -> None:
+        """Set the provider key."""
+        raise AssertionError(f"Cannot set provider key to `{value}`")
+
+
+@dataclass
+class InputAWSS3StorageMethodDetails(_StorageMethodDetails):
     """AWS S3 Storage Method Type.
 
     Contains the necessary information to access a user's AWS S3 bucket.
     """
 
+    #: The name of the storage provider
+    _provider_name: str = field(default="AWS_S3", init=False)
+
+    #: Key required for the API
+    _provider_key: str = field(default="s3Bucket", init=False)
+
+    #: The details
     #: The name of the bucket
     bucket: str
 
@@ -17,51 +58,106 @@ class InputAWSS3StorageMethodDetails(TypedDict):
     region: str
 
     #: The duration of the session
-    duration: NotRequired[int]
+    duration: Optional[int] = None
 
     #: The access key (AWS_ACCESS_KEY_ID)
-    access: NotRequired[str]
+    access: Optional[str] = None
 
     #: The secret key (AWS_SECRET_ACCESS_KEY)
-    secret: NotRequired[str]
+    secret: Optional[str] = None
 
     # session creds
 
     #: The role ARN
-    roleArn: NotRequired[str]
+    role_arn: Optional[str] = None
 
     #: The role external ID
-    roleExternalId: NotRequired[str]
+    role_external_id: Optional[str] = None
 
     #: The endpoint
-    endpoint: NotRequired[str]
+    endpoint: Optional[str] = None
 
     #: Whether to use S3 transfer acceleration
-    accelerate: NotRequired[bool]
+    accelerate: Optional[bool] = None
+
+    @property
+    def details(self) -> Dict[str, Optional[Union[str, int, bool]]]:
+        """Get the dictionary to be fed to the API.."""
+        return {
+            k: v
+            for k, v in {
+                "bucket": self.bucket,
+                "region": self.region,
+                "duration": self.duration,
+                "access": self.access,
+                "secret": self.secret,
+                "roleArn": self.role_arn,
+                "roleExternalId": self.role_external_id,
+                "endpoint": self.endpoint,
+                "accelerate": self.accelerate,
+            }.items()
+            if v is not None
+        }
 
 
-class InputGCSStorageMethodDetails(TypedDict):
+@dataclass
+class InputGCSStorageMethodDetails(_StorageMethodDetails):
     """Storage information for DataPoints in a user's Google Cloud bucket."""
+
+    #: the name of the storage provider
+    _provider_name: str = field(default="GCS", init=False)
+
+    #: Key required for the API
+    _provider_key: str = field(default="gcsBucket", init=False)
 
     #: The name of the bucket
     bucket: str
 
     #: The service account JSON as a string
-    serviceAccount: str
+    service_account: str
+
+    @property
+    def details(self) -> Dict[str, Optional[Union[str, int, bool]]]:
+        """Get the dictionary to be fed to the API.."""
+        return {"bucket": self.bucket, "serviceAccount": self.service_account}
 
 
-class InputAzureBlobStorageMethodDetails(TypedDict):
+@dataclass
+class InputAzureBlobStorageMethodDetails(_StorageMethodDetails):
     """Azure Blob Storage Method Type."""
 
+    #: The name of the storage provider
+    _provider_name: str = field(default="AZURE_BLOB", init=False)
+
+    #: Key required for the API
+    _provider_key: str = field(default="azureBucket", init=False)
+
     #: The connection string
-    connectionString: NotRequired[str]
+    connection_string: Optional[str] = None
 
     #: The SAS URL
-    sasUrl: NotRequired[str]
+    sas_url: Optional[str] = None
+
+    @property
+    def details(self) -> Dict[str, Optional[Union[str, int, bool]]]:
+        """Get the dictionary to be fed to the API.."""
+        details: Dict[str, Optional[Union[str, int, bool]]] = {}
+        if self.connection_string is not None:
+            details["connectionString"] = self.connection_string
+        if self.sas_url is not None:
+            details["sasUrl"] = self.sas_url
+        return details
 
 
-class InputAltaDBStorageMethodDetails(TypedDict):
+@dataclass
+class InputAltaDBStorageMethodDetails(_StorageMethodDetails):
     """AltaDB Storage Method Type."""
+
+    #: The name of the storage provider
+    _provider_name: str = field(default="ALTA_DB", init=False)
+
+    #: Key required for the API
+    _provider_key: str = field(default="altaDb", init=False)
 
     #: The access key
     access: str
@@ -70,10 +166,21 @@ class InputAltaDBStorageMethodDetails(TypedDict):
     secret: str
 
     #: The host (backend URL)
-    host: NotRequired[str]
+    host: Optional[str] = None
+
+    @property
+    def details(self) -> Dict[str, Optional[Union[str, int, bool]]]:
+        """Get the dictionary to be fed to the API.."""
+        details: Dict[str, Optional[Union[str, int, bool]]] = {
+            "access": self.access,
+            "secret": self.secret,
+        }
+        if self.host is not None:
+            details["host"] = self.host
+        return details
 
 
-StorageMethodDetails = Union[
+StorageMethodDetailsType = Union[
     InputAWSS3StorageMethodDetails,
     InputGCSStorageMethodDetails,
     InputAzureBlobStorageMethodDetails,

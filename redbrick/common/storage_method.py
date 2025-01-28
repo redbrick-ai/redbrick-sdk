@@ -3,41 +3,38 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Union
 
-from redbrick.common.enums import StorageProvider
-from redbrick.types.storage_method import StorageMethodDetails
+from redbrick.types.storage_method import StorageMethodDetailsType
 
 
 class StorageMethodRepoInterface(ABC):
     """Abstract interface to Storage Method APIs."""
 
     @abstractmethod
-    def get_storage_methods(self, org_id: str) -> List[Dict]:
+    def get_all(self, org_id: str) -> List[Dict]:
         """Get storage methods."""
 
     @abstractmethod
-    def get_storage_method(self, org_id: str, storage_method_id: str) -> Dict:
+    def get(self, org_id: str, storage_method_id: str) -> Dict:
         """Get a storage method."""
 
     @abstractmethod
-    def create_storage_method(
+    def create(
         self,
         org_id: str,
         name: str,
-        provider: StorageProvider,
-        details: StorageMethodDetails,
+        details: StorageMethodDetailsType,
     ) -> Dict[str, Union[bool, Dict]]:
         """Create a storage method."""
 
     @abstractmethod
-    def update_storage_method(
+    def update(
         self,
         org_id: str,
         storage_method_id: str,
-        provider: StorageProvider,
-        details: StorageMethodDetails,
+        details: StorageMethodDetailsType,
     ) -> Dict[str, Union[bool, Dict]]:
         """Update a storage method."""
 
     @abstractmethod
-    def delete_storage_method(self, org_id: str, storage_method_id: str) -> bool:
+    def delete(self, org_id: str, storage_method_id: str) -> bool:
         """Delete a storage method."""
