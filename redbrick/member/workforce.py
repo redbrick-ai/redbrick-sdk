@@ -48,7 +48,7 @@ class Workforce:
         .. code:: python
 
             project = redbrick.get_project(org_id, project_id, api_key)
-            member = project.get_member(member_id)
+            member = project.workforce.get_member(member_id)
 
         Parameters
         --------------
@@ -68,7 +68,7 @@ class Workforce:
         .. code:: python
 
             project = redbrick.get_project(org_id, project_id, api_key)
-            members = project.list_members()
+            members = project.workforce.list_members()
 
         Returns
         -------------
@@ -83,7 +83,7 @@ class Workforce:
         .. code:: python
 
             project = redbrick.get_project(org_id, project_id, api_key)
-            member = project.add_members([{"member_id": "...", "role": "...", "stages": ["..."]}, ...])
+            member = project.workforce.add_members([{"member_id": "...", "role": "...", "stages": ["..."]}, ...])
 
         Parameters
         --------------
@@ -117,7 +117,7 @@ class Workforce:
         .. code:: python
 
             project = redbrick.get_project(org_id, project_id, api_key)
-            member = project.update_members([{"member_id": "...", "role": "...", "stages": ["..."]}, ...])
+            member = project.workforce.update_members([{"member_id": "...", "role": "...", "stages": ["..."]}, ...])
 
         Parameters
         --------------
@@ -187,7 +187,7 @@ class Workforce:
         .. code:: python
 
             project = redbrick.get_project(org_id, project_id, api_key)
-            member = project.remove_members([...])
+            member = project.workforce.remove_members([...])
 
         Parameters
         --------------

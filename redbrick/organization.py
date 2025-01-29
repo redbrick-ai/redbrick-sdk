@@ -36,12 +36,16 @@ class RBOrganization:
 
     def __init__(self, context: RBContext, org_id: str) -> None:
         """Construct RBOrganization."""
+        # pylint: disable=import-outside-toplevel
+        from redbrick.member import Team
+
         self.context = context
 
         self._org_id = org_id
         self._name: str
 
         self._get_org()
+        self.team = Team(self.context, self.org_id)
 
     def _get_org(self) -> None:
         org = self.context.project.get_org(self._org_id)
@@ -80,7 +84,14 @@ class RBOrganization:
 
     @property
     def members(self) -> List[Dict]:
-        """Get list of org members."""
+        """Get list of organization members.
+
+        .. deprecated:: 2.21.0
+            Please use :func:`org.team.list_members` instead.
+        """
+        logger.warning(
+            "org.members is deprecated. Please use `org.team.list_members()` instead"
+        )
         members = self.context.member.list_org_members(self.org_id)
         org_members = []
         for member in members:
