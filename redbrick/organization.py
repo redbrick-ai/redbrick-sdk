@@ -81,7 +81,7 @@ class RBOrganization:
     @property
     def members(self) -> List[Dict]:
         """Get list of org members."""
-        members = self.context.workforce.org_members(self.org_id)
+        members = self.context.workforce.list_org_members(self.org_id)
         org_members = []
         for member in members:
             user = member["user"]
