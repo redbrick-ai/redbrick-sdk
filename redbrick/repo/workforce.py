@@ -4,6 +4,7 @@ from typing import Dict, List
 
 from redbrick.common.client import RBClient
 from redbrick.common.workforce import WorkforceControllerInterface
+from redbrick.repo.shards import ORG_MEMBER_SHARD
 
 
 class WorkforceRepo(WorkforceControllerInterface):
@@ -15,27 +16,16 @@ class WorkforceRepo(WorkforceControllerInterface):
 
     def list_org_members(self, org_id: str) -> List[Dict]:
         """Get a list of all org members."""
-        query_string = """
+        query_string = f"""
         query membersSDK(
             $orgId: UUID!
-        ) {
+        ) {{
             members(
                 orgId: $orgId
-            ) {
-                user {
-                    userId
-                    email
-                    givenName
-                    familyName
-                    mfaSetup
-                    lastSeen
-                    updatedAt
-                }
-                role
-                tags
-                lastSeen
-            }
-        }
+            ) {{
+                {ORG_MEMBER_SHARD}
+            }}
+        }}
         """
         query_variables = {"orgId": org_id}
         result = self.client.execute_query(query_string, query_variables)
@@ -44,32 +34,25 @@ class WorkforceRepo(WorkforceControllerInterface):
 
     def list_project_members(self, org_id: str, project_id: str) -> List[Dict]:
         """Get a list of all project members."""
-        query_string = """
+        query_string = f"""
         query projectMembersSDK(
             $orgId: UUID!
             $projectId: UUID!
-        ) {
+        ) {{
             projectMembers(
                 orgId: $orgId
                 projectId: $projectId
-            ) {
-                member {
-                    user {
-                        userId
-                        email
-                        givenName
-                        familyName
-                    }
-                    role
-                    tags
-                }
+            ) {{
+                member {{
+                    {ORG_MEMBER_SHARD}
+                }}
                 role
-                stageAccess {
+                stageAccess {{
                     stageName
                     access
-                }
-            }
-        }
+                }}
+            }}
+        }}
         """
         query_variables = {"orgId": org_id, "projectId": project_id}
         result = self.client.execute_query(query_string, query_variables)

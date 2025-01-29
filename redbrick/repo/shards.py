@@ -1,5 +1,20 @@
 """Partial queries to prevent duplication."""
 
+ORG_MEMBER_SHARD = """
+user {
+    userId
+    email
+    givenName
+    familyName
+    mfaSetup
+    lastSeen
+    updatedAt
+}
+role
+tags
+lastSeen
+"""
+
 ATTRIBUTE_SHARD = """
 name
 attrType
