@@ -22,6 +22,15 @@ from redbrick.organization import RBOrganization
 from redbrick.workspace import RBWorkspace
 from redbrick.project import RBProject
 from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
+from redbrick.storage_method import (
+    StorageMethodDetails,
+    RedbrickStorageMethodDetails,
+    PublicStorageMethodDetails,
+    AWSS3StorageMethodDetails,
+    GCSStorageMethodDetails,
+    AzureBlobStorageMethodDetails,
+    AltaDBStorageMethodDetails,
+)
 from redbrick.common.workforce import ProjectMember, ProjectMemberInput
 
 from redbrick.utils.logging import logger
@@ -263,4 +272,11 @@ __all__ = [
     "get_project",
     "get_org_from_profile",
     "get_project_from_profile",
+    "StorageMethodDetails",
+    "RedbrickStorageMethodDetails",
+    "PublicStorageMethodDetails",
+    "AWSS3StorageMethodDetails",
+    "GCSStorageMethodDetails",
+    "AzureBlobStorageMethodDetails",
+    "AltaDBStorageMethodDetails",
 ]
