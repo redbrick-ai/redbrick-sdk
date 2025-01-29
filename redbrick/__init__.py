@@ -22,7 +22,7 @@ from redbrick.organization import RBOrganization
 from redbrick.workspace import RBWorkspace
 from redbrick.project import RBProject
 from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
-from redbrick.common.workforce import ProjectMember, ProjectMemberInput
+from redbrick.common.workforce import OrgMember, ProjectMember
 
 from redbrick.utils.logging import logger
 from redbrick.utils.common_utils import config_migration
@@ -253,8 +253,8 @@ __all__ = [
     "LabelStage",
     "ReviewStage",
     "ModelStage",
+    "OrgMember",
     "ProjectMember",
-    "ProjectMemberInput",
     "RBOrganization",
     "RBWorkspace",
     "RBProject",

@@ -3,7 +3,7 @@
 from typing import Dict, List
 from redbrick.common.context import RBContext
 from redbrick.common.enums import ProjectMemberRole
-from redbrick.common.workforce import ProjectMember, ProjectMemberInput
+from redbrick.common.workforce import ProjectMember
 
 
 class Workforce:
@@ -19,7 +19,10 @@ class Workforce:
         self, member_id: str, members: List[ProjectMember]
     ) -> List[ProjectMember]:
         return [
-            member for member in members if member_id in (member.user_id, member.email)
+            member
+            for member in members
+            if member_id == member.member_id
+            or (member.org_member and member_id == member.org_member.email)
         ]
 
     def _get_unique_member(
@@ -76,7 +79,7 @@ class Workforce:
         )
         return [ProjectMember.from_entity(member) for member in members]
 
-    def add_members(self, members: List[ProjectMemberInput]) -> List[ProjectMember]:
+    def add_members(self, members: List[ProjectMember]) -> List[ProjectMember]:
         """Add project members.
 
         .. code:: python
@@ -86,7 +89,7 @@ class Workforce:
 
         Parameters
         --------------
-        members: List[ProjectMemberInput]
+        members: List[ProjectMember]
             List of members to add.
 
         Returns
@@ -94,23 +97,23 @@ class Workforce:
         List[ProjectMember]
             List of added project members.
         """
-        member_ids = {member["member_id"] for member in members}
+        member_ids = {member.member_id for member in members}
         if len(member_ids) != len(members):
             raise ValueError("Duplicate member IDs found in member list")
 
         prev_members = self.list_members()
         for member in members:
             filtered_members = self._get_filtered_members(
-                member["member_id"], prev_members
+                member.member_id, prev_members
             )
             if filtered_members:
                 raise ValueError(
-                    f"Member {member['member_id']} already exists in project {self.project_id}"
+                    f"Member {member.member_id} already exists in project {self.project_id}"
                 )
 
         return self.update_members(members)
 
-    def update_members(self, members: List[ProjectMemberInput]) -> List[ProjectMember]:
+    def update_members(self, members: List[ProjectMember]) -> List[ProjectMember]:
         """Update project members.
 
         .. code:: python
@@ -120,7 +123,7 @@ class Workforce:
 
         Parameters
         --------------
-        members: List[ProjectMemberInput]
+        members: List[ProjectMember]
             List of members to update.
 
         Returns
@@ -128,7 +131,7 @@ class Workforce:
         List[ProjectMember]
             List of updated project members.
         """
-        member_ids = {member["member_id"] for member in members}
+        member_ids = {member.member_id for member in members}
         if len(member_ids) != len(members):
             raise ValueError("Duplicate member IDs found in member list")
 
@@ -141,17 +144,15 @@ class Workforce:
         memberships: List[Dict] = []
         user_ids = set()
         for member in members:
-            if member["member_id"] not in org_user_map:
-                raise ValueError(
-                    f"Member {member['member_id']} is not present in the org"
-                )
-            if org_user_map[member["member_id"]] in user_ids:
-                raise ValueError(f"Duplicate member object for {member['member_id']}")
+            if member.member_id not in org_user_map:
+                raise ValueError(f"Member {member.member_id} is not present in the org")
+            if org_user_map[member.member_id] in user_ids:
+                raise ValueError(f"Duplicate member object for {member.member_id}")
 
-            user_id = org_user_map[member["member_id"]]
+            user_id = org_user_map[member.member_id]
             user_ids.add(user_id)
 
-            if member["role"] == ProjectMemberRole.MEMBER:
+            if member.role == ProjectMemberRole.MEMBER:
                 memberships.append(
                     {
                         "userId": user_id,
@@ -159,7 +160,7 @@ class Workforce:
                         "stageAccess": (
                             [
                                 {"stageName": stage, "access": True}
-                                for stage in (member.get("stages") or [])
+                                for stage in (member.stages or [])
                             ]
                         ),
                     }
@@ -168,11 +169,7 @@ class Workforce:
                 memberships.append(
                     {
                         "userId": user_id,
-                        "role": (
-                            member["role"]
-                            if isinstance(member["role"], str)
-                            else member["role"].value
-                        ),
+                        "role": member.role.value,
                         "stageAccess": [],
                     }
                 )
@@ -183,8 +180,7 @@ class Workforce:
 
         new_members = self.list_members()
         return [
-            self._get_unique_member(member["member_id"], new_members)
-            for member in members
+            self._get_unique_member(member.member_id, new_members) for member in members
         ]
 
     def remove_members(self, member_ids: List[str]) -> None:
@@ -204,7 +200,7 @@ class Workforce:
         user_ids: List[str] = []
         for member_id in member_ids:
             member = self._get_unique_member(member_id, prev_members)
-            user_ids.append(member.user_id)
+            user_ids.append(member.member_id)
 
         self.context.workforce.remove_project_members(
             self.org_id, self.project_id, user_ids

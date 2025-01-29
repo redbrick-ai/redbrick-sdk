@@ -1,16 +1,18 @@
-"""Abstract interface to project workforce."""
+"""Abstract interface to workforce."""
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, TypedDict
+from datetime import datetime
+from typing import Dict, List, Optional
 from abc import ABC, abstractmethod
-from typing_extensions import NotRequired  # type: ignore
+
+from dateutil import parser  # type: ignore
 
 from redbrick.common.enums import OrgMemberRole, ProjectMemberRole
 
 
 @dataclass
-class ProjectMember:
-    """Project Member.
+class OrgMember:
+    """Organization Member.
 
     Parameters
     --------------
@@ -26,27 +28,71 @@ class ProjectMember:
     family_name: str
         User family name
 
-    org_role: OrgMemberRole
+    role: OrgMemberRole
         User role in organization
-
-    project_role: ProjectMemberRole
-        User role in project
 
     tags: List[str]
         Tags associated with the user
 
-    stages: Optional[List[str]] = None
-        Stages that the member has access to (Applicable for MEMBER role)
+    is_2fa_enabled: bool
+        Whether 2FA is enabled for the user
+
+    last_active: datetime
+        Last time the user was active
     """
 
     user_id: str
     email: str
     given_name: str
     family_name: str
-    org_role: OrgMemberRole
-    project_role: ProjectMemberRole
+    role: OrgMemberRole
     tags: List[str]
+    is_2fa_enabled: bool
+    last_active: datetime
+
+    @classmethod
+    def from_entity(cls, member: Dict) -> "OrgMember":
+        return cls(
+            user_id=member["user"]["userId"],
+            email=member["user"]["email"],
+            given_name=member["user"]["givenName"],
+            family_name=member["user"]["familyName"],
+            role=OrgMemberRole(member["role"]),
+            tags=member["tags"],
+            is_2fa_enabled=bool(member["user"]["mfaSetup"]),
+            last_active=parser.parse(
+                member.get(
+                    "lastSeen",
+                    member["user"].get("lastSeen", member["user"]["updatedAt"]),
+                )
+            ),
+        )
+
+
+@dataclass
+class ProjectMember:
+    """Project Member.
+
+    Parameters
+    --------------
+    member_id: str
+        Unique user ID or email
+
+    role: ProjectMemberRole
+        User role in project
+
     stages: Optional[List[str]] = None
+        Stages that the member has access to (Applicable for MEMBER role)
+
+    org_member: Optional[OrgMember] = None
+        Organization member
+        This is not required when adding/updating a member.
+    """
+
+    member_id: str
+    role: ProjectMemberRole
+    stages: Optional[List[str]] = None
+    org_member: Optional[OrgMember] = None
 
     @classmethod
     def from_entity(cls, member: Dict) -> "ProjectMember":
@@ -55,13 +101,8 @@ class ProjectMember:
             "MEMBER" if member["role"] == "LABELER" else member["role"]
         )
         return cls(
-            user_id=member["member"]["user"]["userId"],
-            email=member["member"]["user"]["email"],
-            given_name=member["member"]["user"]["givenName"],
-            family_name=member["member"]["user"]["familyName"],
-            org_role=OrgMemberRole(member["member"]["role"]),
-            project_role=role,
-            tags=member["member"]["tags"],
+            member_id=member["member"]["user"]["userId"],
+            role=role,
             stages=(
                 [
                     stage["stageName"]
@@ -71,21 +112,8 @@ class ProjectMember:
                 if role == ProjectMemberRole.MEMBER
                 else None
             ),
+            org_member=OrgMember.from_entity(member["member"]),
         )
-
-
-@dataclass
-class ProjectMemberInput(TypedDict):
-    """Project Member Input."""
-
-    #: Member ID (Either unique email or userId)
-    member_id: str
-
-    #: Member role
-    role: ProjectMemberRole
-
-    #: Stages that the member has access to (Applicable for MEMBER role)
-    stages: NotRequired[List[str]]
 
 
 class WorkforceControllerInterface(ABC):
