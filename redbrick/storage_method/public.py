@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import Dict, Union, Optional
+from redbrick.common.constants import PUBLIC_STORAGE_PROVIDER, STORAGE_PROVIDER_KEY_MAP
 from redbrick.common.storage_method import StorageMethodDetails
 
 
@@ -10,10 +11,14 @@ class PublicStorageMethodDetails(StorageMethodDetails):
     """Public Storage Method Type."""
 
     #: The name of the storage provider
-    _provider_name: str = field(default="PUBLIC", init=False, repr=False)
+    _provider_name: str = field(default=PUBLIC_STORAGE_PROVIDER, init=False, repr=False)
 
     #: Key required for the API
-    _provider_key: str = field(default="public", init=False, repr=False)
+    _provider_key: str = field(
+        default=STORAGE_PROVIDER_KEY_MAP[PUBLIC_STORAGE_PROVIDER],
+        init=False,
+        repr=False,
+    )
 
     storage_id: str = "11111111-1111-1111-1111-111111111111"
     name: str = "Public"

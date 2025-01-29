@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import Dict, Union, Optional
+from redbrick.common.constants import GCS_STORAGE_PROVIDER, STORAGE_PROVIDER_KEY_MAP
 from redbrick.common.storage_method import StorageMethodDetails
 
 
@@ -10,10 +11,12 @@ class GCSStorageMethodDetails(StorageMethodDetails):
     """Storage information for DataPoints in a user's Google Cloud bucket."""
 
     #: the name of the storage provider
-    _provider_name: str = field(default="GCS", init=False, repr=False)
+    _provider_name: str = field(default=GCS_STORAGE_PROVIDER, init=False, repr=False)
 
     #: Key required for the API
-    _provider_key: str = field(default="gcsBucket", init=False, repr=False)
+    _provider_key: str = field(
+        default=STORAGE_PROVIDER_KEY_MAP[GCS_STORAGE_PROVIDER], init=False, repr=False
+    )
 
     #: The name of the bucket
     bucket: str

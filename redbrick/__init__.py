@@ -91,6 +91,7 @@ def _populate_context(context: RBContext) -> RBContext:
         ProjectRepo,
         WorkspaceRepo,
         WorkforceRepo,
+        StorageMethodRepo,
     )
 
     if context.config.debug:
@@ -103,6 +104,7 @@ def _populate_context(context: RBContext) -> RBContext:
     context.project = ProjectRepo(context.client)
     context.workspace = WorkspaceRepo(context.client)
     context.workforce = WorkforceRepo(context.client)
+    context.storage_method = StorageMethodRepo(context.client)
     return context
 
 

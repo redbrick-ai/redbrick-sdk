@@ -1,8 +1,8 @@
 """Interdace for getting information about storage methods."""
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, Union, Optional
+from typing import Dict, List, Union, Optional
 from redbrick.common.enums import StorageMethod
 
 
@@ -49,6 +49,47 @@ class StorageMethodDetails:
     ) -> "StorageMethodDetails":
         """Create a StorageMethodDetails object from a dictionary."""
         raise NotImplementedError
+
+
+class StorageMethodRepoInterface(ABC):
+    """Abstract interface to Storage Method APIs."""
+
+    @abstractmethod
+    def get_all(self, org_id: str) -> List[Dict]:
+        """Get storage methods."""
+
+    @abstractmethod
+    def get(self, org_id: str, storage_method_id: str) -> Dict:
+        """Get a storage method."""
+
+    @abstractmethod
+    def presign(self, org_id: str, storage_method_id: str, path: str) -> str:
+        """Verify a storage method."""
+
+    @abstractmethod
+    def create(
+        self,
+        org_id: str,
+        name: str,
+        provider_key: str,
+        provider_name: str,
+        details: Dict,
+    ) -> Dict[str, Union[bool, Dict]]:
+        """Create a storage method."""
+
+    @abstractmethod
+    def update(
+        self,
+        org_id: str,
+        storage_method_id: str,
+        provider_key: str,
+        details: Dict,
+    ) -> Dict[str, Union[bool, Dict]]:
+        """Update a storage method."""
+
+    @abstractmethod
+    def delete(self, org_id: str, storage_method_id: str) -> bool:
+        """Delete a storage method."""
 
 
 __all__ = ["StorageMethodDetails"]

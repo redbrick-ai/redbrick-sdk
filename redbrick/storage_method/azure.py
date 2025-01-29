@@ -2,6 +2,10 @@
 
 from dataclasses import dataclass, field
 from typing import Dict, Union, Optional
+from redbrick.common.constants import (
+    AZURE_BLOB_STORAGE_PROVIDER,
+    STORAGE_PROVIDER_KEY_MAP,
+)
 from redbrick.common.storage_method import StorageMethodDetails
 
 
@@ -10,10 +14,16 @@ class AzureBlobStorageMethodDetails(StorageMethodDetails):
     """Azure Blob Storage Method Type."""
 
     #: The name of the storage provider
-    _provider_name: str = field(default="AZURE_BLOB", init=False, repr=False)
+    _provider_name: str = field(
+        default=AZURE_BLOB_STORAGE_PROVIDER, init=False, repr=False
+    )
 
     #: Key required for the API
-    _provider_key: str = field(default="azureBucket", init=False, repr=False)
+    _provider_key: str = field(
+        default=STORAGE_PROVIDER_KEY_MAP[AZURE_BLOB_STORAGE_PROVIDER],
+        init=False,
+        repr=False,
+    )
 
     #: The connection string
     connection_string: Optional[str] = None

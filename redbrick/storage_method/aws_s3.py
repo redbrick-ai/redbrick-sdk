@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import Dict, Union, Optional
+from redbrick.common.constants import AWS_S3_STORAGE_PROVIDER, STORAGE_PROVIDER_KEY_MAP
 from redbrick.common.storage_method import StorageMethodDetails
 
 
@@ -13,10 +14,14 @@ class AWSS3StorageMethodDetails(StorageMethodDetails):
     """
 
     #: The name of the storage provider
-    _provider_name: str = field(default="AWS_S3", init=False, repr=False)
+    _provider_name: str = field(default=AWS_S3_STORAGE_PROVIDER, init=False, repr=False)
 
     #: Key required for the API
-    _provider_key: str = field(default="s3Bucket", init=False, repr=False)
+    _provider_key: str = field(
+        default=STORAGE_PROVIDER_KEY_MAP[AWS_S3_STORAGE_PROVIDER],
+        init=False,
+        repr=False,
+    )
 
     #: The details
     #: The name of the bucket

@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, Union, Optional
 from redbrick.common.storage_method import StorageMethodDetails
+from redbrick.common.constants import ALTADB_STORAGE_PROVIDER, STORAGE_PROVIDER_KEY_MAP
 
 
 @dataclass
@@ -10,10 +11,14 @@ class AltaDBStorageMethodDetails(StorageMethodDetails):
     """AltaDB Storage Method Type."""
 
     #: The name of the storage provider
-    _provider_name: str = field(default="ALTA_DB", init=False, repr=False)
+    _provider_name: str = field(default=ALTADB_STORAGE_PROVIDER, init=False, repr=False)
 
     #: Key required for the API
-    _provider_key: str = field(default="altaDb", init=False, repr=False)
+    _provider_key: str = field(
+        default=STORAGE_PROVIDER_KEY_MAP[ALTADB_STORAGE_PROVIDER],
+        init=False,
+        repr=False,
+    )
 
     #: The access key
     access: str
