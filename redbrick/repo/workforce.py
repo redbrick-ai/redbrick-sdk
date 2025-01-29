@@ -13,7 +13,7 @@ class WorkforceRepo(WorkforceControllerInterface):
         """Construct WorkforceRepo."""
         self.client = client
 
-    def org_members(self, org_id: str) -> List[Dict]:
+    def list_org_members(self, org_id: str) -> List[Dict]:
         """Get a list of all org members."""
         query_string = """
         query membersSDK(
@@ -42,7 +42,7 @@ class WorkforceRepo(WorkforceControllerInterface):
         members: List[Dict] = result["members"]
         return members
 
-    def list_members(self, org_id: str, project_id: str) -> List[Dict]:
+    def list_project_members(self, org_id: str, project_id: str) -> List[Dict]:
         """Get a list of all project members."""
         query_string = """
         query projectMembersSDK(
@@ -76,7 +76,7 @@ class WorkforceRepo(WorkforceControllerInterface):
         members: List[Dict] = result["projectMembers"]
         return members
 
-    def update_memberships(
+    def update_project_memberships(
         self, org_id: str, project_id: str, memberships: List[Dict]
     ) -> None:
         """Update project memberships."""
@@ -102,7 +102,9 @@ class WorkforceRepo(WorkforceControllerInterface):
         }
         self.client.execute_query(query_string, query_variables)
 
-    def remove_members(self, org_id: str, project_id: str, user_ids: List[str]) -> None:
+    def remove_project_members(
+        self, org_id: str, project_id: str, user_ids: List[str]
+    ) -> None:
         """Remove project members."""
         query_string = """
         mutation removeProjectMembersSDK(

@@ -71,7 +71,9 @@ class Workforce:
         -------------
         List[ProjectMember]
         """
-        members = self.context.workforce.list_members(self.org_id, self.project_id)
+        members = self.context.workforce.list_project_members(
+            self.org_id, self.project_id
+        )
         return [ProjectMember.from_entity(member) for member in members]
 
     def add_members(self, members: List[ProjectMemberInput]) -> List[ProjectMember]:
@@ -130,7 +132,7 @@ class Workforce:
         if len(member_ids) != len(members):
             raise ValueError("Duplicate member IDs found in member list")
 
-        org_members = self.context.workforce.org_members(self.org_id)
+        org_members = self.context.workforce.list_org_members(self.org_id)
         org_user_map: Dict[str, str] = {}
         for org_member in org_members:
             org_user_map[org_member["user"]["userId"]] = org_member["user"]["userId"]
@@ -175,7 +177,7 @@ class Workforce:
                     }
                 )
 
-        self.context.workforce.update_memberships(
+        self.context.workforce.update_project_memberships(
             self.org_id, self.project_id, memberships
         )
 
@@ -204,4 +206,6 @@ class Workforce:
             member = self._get_unique_member(member_id, prev_members)
             user_ids.append(member.user_id)
 
-        self.context.workforce.remove_members(self.org_id, self.project_id, user_ids)
+        self.context.workforce.remove_project_members(
+            self.org_id, self.project_id, user_ids
+        )
