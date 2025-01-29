@@ -1,4 +1,4 @@
-"""Public interface to workforce module."""
+"""Public interface to workforce controller."""
 
 from typing import Dict, List
 from redbrick.common.context import RBContext

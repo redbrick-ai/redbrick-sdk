@@ -36,7 +36,7 @@ class RBProject:
         from redbrick.labeling import Labeling
         from redbrick.export import Export
         from redbrick.settings import Settings
-        from redbrick.workforce import Workforce
+        from redbrick.member import Workforce
 
         self.context = context
 
