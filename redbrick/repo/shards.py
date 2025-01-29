@@ -382,3 +382,35 @@ def router_task_shard(with_labels: bool) -> str:
             }}
         }}
     """
+
+
+STORAGE_METHOD_SHARD = """
+orgId
+storageId
+name
+provider
+details{
+    ... on S3BucketStorageDetails {
+        bucket
+        region
+        duration
+        access
+        roleArn
+        endpoint
+        accelerate
+    }
+    ... on GCSBucketStorageDetails {
+        bucket
+    }
+    ... on AltaDBStorageDetails {
+        access
+        host
+    }
+}
+createdBy{
+    userType
+    userId
+}
+createdAt
+deleted
+"""

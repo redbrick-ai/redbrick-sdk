@@ -8,7 +8,7 @@ functions for programmatically manipulating data, importing annotations, assigni
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_org, get_workspace, get_project, get_org_from_profile, get_project_from_profile, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, OrgMemberRole, ProjectMemberRole, Stage, LabelStage, ReviewStage, ModelStage, ProjectMember, ProjectMemberInput
+   :members: get_org, get_workspace, get_project, get_org_from_profile, get_project_from_profile, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, OrgMemberRole, ProjectMemberRole, Stage, LabelStage, ReviewStage, ModelStage, ProjectMember, ProjectMemberInput, RedbrickStorageMethodDetails, PublicStorageMethodDetails, AWSS3StorageMethodDetails, GCSStorageMethodDetails, AzureBlobStorageMethodDetails, AltaDBStorageMethodDetails,
    :member-order: bysource
 
 .. _org:

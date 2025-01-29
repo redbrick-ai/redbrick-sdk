@@ -22,6 +22,15 @@ from redbrick.organization import RBOrganization
 from redbrick.workspace import RBWorkspace
 from redbrick.project import RBProject
 from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
+from redbrick.storage_method import (
+    StorageMethodDetails,
+    RedbrickStorageMethodDetails,
+    PublicStorageMethodDetails,
+    AWSS3StorageMethodDetails,
+    GCSStorageMethodDetails,
+    AzureBlobStorageMethodDetails,
+    AltaDBStorageMethodDetails,
+)
 from redbrick.common.workforce import ProjectMember, ProjectMemberInput
 
 from redbrick.utils.logging import logger
@@ -82,6 +91,7 @@ def _populate_context(context: RBContext) -> RBContext:
         ProjectRepo,
         WorkspaceRepo,
         WorkforceRepo,
+        StorageMethodRepo,
     )
 
     if context.config.debug:
@@ -94,6 +104,7 @@ def _populate_context(context: RBContext) -> RBContext:
     context.project = ProjectRepo(context.client)
     context.workspace = WorkspaceRepo(context.client)
     context.workforce = WorkforceRepo(context.client)
+    context.storage_method = StorageMethodRepo(context.client)
     return context
 
 
@@ -263,4 +274,11 @@ __all__ = [
     "get_project",
     "get_org_from_profile",
     "get_project_from_profile",
+    "StorageMethodDetails",
+    "RedbrickStorageMethodDetails",
+    "PublicStorageMethodDetails",
+    "AWSS3StorageMethodDetails",
+    "GCSStorageMethodDetails",
+    "AzureBlobStorageMethodDetails",
+    "AltaDBStorageMethodDetails",
 ]

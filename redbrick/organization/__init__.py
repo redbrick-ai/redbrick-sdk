@@ -12,6 +12,7 @@ from redbrick.common.enums import OrgMemberRole
 from redbrick.config import config
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
+from redbrick.storage_method import StorageMethodController
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
 from redbrick.workspace import RBWorkspace
 from redbrick.stage import Stage, get_project_stages, get_middle_stages
@@ -40,6 +41,7 @@ class RBOrganization:
 
         self._org_id = org_id
         self._name: str
+        self.storage_method = StorageMethodController(context, org_id)
 
         self._get_org()
 

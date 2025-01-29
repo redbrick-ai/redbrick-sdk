@@ -7,3 +7,4 @@ from .settings import SettingsRepo
 from .project import ProjectRepo
 from .workspace import WorkspaceRepo
 from .workforce import WorkforceRepo
+from .storage_method import StorageMethodRepo
