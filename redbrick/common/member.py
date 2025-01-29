@@ -116,7 +116,7 @@ class ProjectMember:
         )
 
 
-class WorkforceControllerInterface(ABC):
+class MemberControllerInterface(ABC):
     """Abstract interface to define methods for Member."""
 
     @abstractmethod

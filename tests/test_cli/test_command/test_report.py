@@ -88,7 +88,7 @@ def test_handle_report(
     mock_task_events = Mock(return_value=(mock_task_events, None))
     with (
         patch.object(
-            controller.project.project.context.workforce,
+            controller.project.project.context.member,
             "list_members",
             mock_list_members,
         ),

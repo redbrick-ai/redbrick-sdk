@@ -3,7 +3,7 @@
 from typing import Dict, List
 from redbrick.common.context import RBContext
 from redbrick.common.enums import ProjectMemberRole
-from redbrick.common.workforce import ProjectMember
+from redbrick.common.member import ProjectMember
 
 
 class Workforce:
@@ -74,9 +74,7 @@ class Workforce:
         -------------
         List[ProjectMember]
         """
-        members = self.context.workforce.list_project_members(
-            self.org_id, self.project_id
-        )
+        members = self.context.member.list_project_members(self.org_id, self.project_id)
         return [ProjectMember.from_entity(member) for member in members]
 
     def add_members(self, members: List[ProjectMember]) -> List[ProjectMember]:
@@ -135,7 +133,7 @@ class Workforce:
         if len(member_ids) != len(members):
             raise ValueError("Duplicate member IDs found in member list")
 
-        org_members = self.context.workforce.list_org_members(self.org_id)
+        org_members = self.context.member.list_org_members(self.org_id)
         org_user_map: Dict[str, str] = {}
         for org_member in org_members:
             org_user_map[org_member["user"]["userId"]] = org_member["user"]["userId"]
@@ -174,7 +172,7 @@ class Workforce:
                     }
                 )
 
-        self.context.workforce.update_project_memberships(
+        self.context.member.update_project_memberships(
             self.org_id, self.project_id, memberships
         )
 
@@ -202,6 +200,6 @@ class Workforce:
             member = self._get_unique_member(member_id, prev_members)
             user_ids.append(member.member_id)
 
-        self.context.workforce.remove_project_members(
+        self.context.member.remove_project_members(
             self.org_id, self.project_id, user_ids
         )

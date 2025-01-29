@@ -182,9 +182,7 @@ class RBProject:
         .. deprecated:: 2.21.0
             Please use :func:`project.workforce.list_members` instead.
         """
-        members = self.context.workforce.list_project_members(
-            self.org_id, self.project_id
-        )
+        members = self.context.member.list_project_members(self.org_id, self.project_id)
         project_members = []
         for member in members:
             member_obj = member.get("member", {})

@@ -22,7 +22,7 @@ from redbrick.organization import RBOrganization
 from redbrick.workspace import RBWorkspace
 from redbrick.project import RBProject
 from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
-from redbrick.common.workforce import OrgMember, ProjectMember
+from redbrick.common.member import OrgMember, ProjectMember
 
 from redbrick.utils.logging import logger
 from redbrick.utils.common_utils import config_migration
@@ -81,7 +81,7 @@ def _populate_context(context: RBContext) -> RBContext:
         SettingsRepo,
         ProjectRepo,
         WorkspaceRepo,
-        WorkforceRepo,
+        MemberRepo,
     )
 
     if context.config.debug:
@@ -93,7 +93,7 @@ def _populate_context(context: RBContext) -> RBContext:
     context.settings = SettingsRepo(context.client)
     context.project = ProjectRepo(context.client)
     context.workspace = WorkspaceRepo(context.client)
-    context.workforce = WorkforceRepo(context.client)
+    context.member = MemberRepo(context.client)
     return context
 
 

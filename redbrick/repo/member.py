@@ -1,17 +1,17 @@
-"""Handlers to access APIs for project workforce."""
+"""Handlers to access APIs for member."""
 
 from typing import Dict, List
 
 from redbrick.common.client import RBClient
-from redbrick.common.workforce import WorkforceControllerInterface
+from redbrick.common.member import MemberControllerInterface
 from redbrick.repo.shards import ORG_MEMBER_SHARD
 
 
-class WorkforceRepo(WorkforceControllerInterface):
-    """Class to manage interaction with project workforce APIs."""
+class MemberRepo(MemberControllerInterface):
+    """Class to manage interaction with member APIs."""
 
     def __init__(self, client: RBClient) -> None:
-        """Construct WorkforceRepo."""
+        """Construct MemberRepo."""
         self.client = client
 
     def list_org_members(self, org_id: str) -> List[Dict]:
