@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 import json
 from typing import Any, Dict, Optional, Union
 
-from redbrick.common.enums import ProjectMemberRole
+from redbrick.common.member import ProjectMember
 from redbrick.common.stage import Stage
 from redbrick.types.taxonomy import Taxonomy
 
@@ -47,7 +47,7 @@ class ReviewStage(Stage):
         auto_assignment_queue_size: Optional[int]
             Task auto-assignment queue size. (Default: 5)
 
-        read_only_labels_edit_access: Optional[ProjectMemberRole]
+        read_only_labels_edit_access: Optional[ProjectMember.Role]
             Access level to change the read only labels. (Default: None)
 
         is_pre_review: Optional[bool]
@@ -60,7 +60,7 @@ class ReviewStage(Stage):
         review_percentage: Optional[float] = None
         auto_assignment: Optional[bool] = None
         auto_assignment_queue_size: Optional[int] = None
-        read_only_labels_edit_access: Optional[ProjectMemberRole] = None
+        read_only_labels_edit_access: Optional[ProjectMember.Role] = None
         is_pre_review: Optional[bool] = None
         is_consensus_merge: Optional[bool] = None
 
@@ -76,7 +76,7 @@ class ReviewStage(Stage):
                 auto_assignment=entity.get("autoAssign"),
                 auto_assignment_queue_size=entity.get("queueSize"),
                 read_only_labels_edit_access=(
-                    ProjectMemberRole(
+                    ProjectMember.Role(
                         "MEMBER"
                         if entity["roLabelEditPerm"] == "LABELER"
                         else entity["roLabelEditPerm"]
@@ -106,7 +106,7 @@ class ReviewStage(Stage):
             if self.read_only_labels_edit_access:
                 entity["roLabelEditPerm"] = (
                     "LABELER"
-                    if self.read_only_labels_edit_access == ProjectMemberRole.MEMBER
+                    if self.read_only_labels_edit_access == ProjectMember.Role.MEMBER
                     else self.read_only_labels_edit_access.value
                 )
             if self.is_pre_review is not None:

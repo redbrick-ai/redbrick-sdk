@@ -4,7 +4,7 @@ from typing import Dict, List
 
 from redbrick.common.client import RBClient
 from redbrick.common.member import MemberControllerInterface
-from redbrick.repo.shards import ORG_MEMBER_SHARD
+from redbrick.repo.shards import ORG_INVITE_SHARD, ORG_MEMBER_SHARD
 
 
 class MemberRepo(MemberControllerInterface):
@@ -31,6 +31,100 @@ class MemberRepo(MemberControllerInterface):
         result = self.client.execute_query(query_string, query_variables)
         members: List[Dict] = result["members"]
         return members
+
+    def remove_org_member(self, org_id: str, user_id: str) -> None:
+        """Remove an org member."""
+        query_string = """
+        mutation removeMemberSDK(
+            $orgId: UUID!
+            $userId: CustomUUID!
+        ) {
+            removeMember(
+                orgId: $orgId
+                userId: $userId
+            ) {
+                ok
+            }
+        }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "userId": user_id,
+        }
+        self.client.execute_query(query_string, query_variables)
+
+    def list_org_invites(self, org_id: str) -> List[Dict]:
+        """Get a list of all org invites."""
+        query_string = f"""
+        query invitesSDK(
+            $orgId: UUID!
+        ) {{
+            invites(
+                orgId: $orgId
+            ) {{
+                {ORG_INVITE_SHARD}
+            }}
+        }}
+        """
+        query_variables = {"orgId": org_id}
+        result = self.client.execute_query(query_string, query_variables)
+        members: List[Dict] = result["members"]
+        return members
+
+    def invite_org_user(self, org_id: str, invitation: Dict) -> Dict:
+        """Invite an user to the organization."""
+        query_string = f"""
+        mutation createInviteSDK(
+            $orgId: UUID!
+            $email: String!
+            $role: ROLES!
+            $idProvider: IDProvider
+        ) {{
+            createInvite(
+                orgId: $orgId
+                email: $email
+                role: $role
+                idProvider: $idProvider
+            ) {{
+                ok
+                invite {{
+                    {ORG_INVITE_SHARD}
+                }}
+            }}
+        }}
+        """
+        query_variables = {
+            "orgId": org_id,
+            "email": invitation["email"],
+            "role": invitation["role"],
+            "idProvider": invitation["idProvider"],
+        }
+        result = self.client.execute_query(query_string, query_variables)
+        return result["createInvite"]["invite"]
+
+    def delete_org_invitation(self, org_id: str, invitation: Dict) -> None:
+        """Delete an org invitation."""
+        query_string = """
+        mutation removeInviteSDK(
+            $orgId: UUID!
+            $email: String!
+            $idProvider: IDProvider!
+        ) {
+            removeInvite(
+                orgId: $orgId
+                email: $email
+                idProvider: $idProvider
+            ) {
+                ok
+            }
+        }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "email": invitation["email"],
+            "idProvider": invitation["idProvider"] or "COGNITO",
+        }
+        self.client.execute_query(query_string, query_variables)
 
     def list_project_members(self, org_id: str, project_id: str) -> List[Dict]:
         """Get a list of all project members."""

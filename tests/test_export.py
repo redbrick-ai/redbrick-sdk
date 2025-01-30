@@ -256,7 +256,7 @@ def test_list_tasks(
     # Simulate a call to list_tasks with some parameters
     _tasks = repo_fixtures.task_search_resp("Label")["genericTasks"]["entries"]
     mock_export.context.export.task_search = MagicMock(return_value=(_tasks, None))
-    mock_export.context.member.list_members = MagicMock(return_value={})
+    mock_export.context.member.list_project_members = MagicMock(return_value={})
 
     search = kwargs.pop("search", "QUEUED")
 

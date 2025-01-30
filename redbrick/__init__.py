@@ -14,15 +14,13 @@ from redbrick.common.enums import (
     TaskEventTypes,
     TaskFilters,
     TaskStates,
-    OrgMemberRole,
-    ProjectMemberRole,
 )
 from redbrick.common.constants import DEFAULT_URL
 from redbrick.organization import RBOrganization
 from redbrick.workspace import RBWorkspace
 from redbrick.project import RBProject
 from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
-from redbrick.common.member import OrgMember, ProjectMember
+from redbrick.common.member import OrgMember, OrgInvite, ProjectMember
 
 from redbrick.utils.logging import logger
 from redbrick.utils.common_utils import config_migration
@@ -247,13 +245,12 @@ __all__ = [
     "TaskEventTypes",
     "TaskFilters",
     "TaskStates",
-    "OrgMemberRole",
-    "ProjectMemberRole",
     "Stage",
     "LabelStage",
     "ReviewStage",
     "ModelStage",
     "OrgMember",
+    "OrgInvite",
     "ProjectMember",
     "RBOrganization",
     "RBWorkspace",

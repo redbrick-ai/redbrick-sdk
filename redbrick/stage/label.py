@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 import json
 from typing import Any, Dict, Optional, Union
 
-from redbrick.common.enums import ProjectMemberRole
+from redbrick.common.member import ProjectMember
 from redbrick.common.stage import Stage
 from redbrick.types.taxonomy import Taxonomy
 
@@ -42,7 +42,7 @@ class LabelStage(Stage):
         show_uploaded_annotations: Optional[bool]
             Show uploaded annotations to users. (Default: True)
 
-        read_only_labels_edit_access: Optional[ProjectMemberRole]
+        read_only_labels_edit_access: Optional[ProjectMember.Role]
             Access level to change the read only labels. (Default: None)
 
         is_pre_label: Optional[bool]
@@ -55,7 +55,7 @@ class LabelStage(Stage):
         auto_assignment: Optional[bool] = None
         auto_assignment_queue_size: Optional[int] = None
         show_uploaded_annotations: Optional[bool] = None
-        read_only_labels_edit_access: Optional[ProjectMemberRole] = None
+        read_only_labels_edit_access: Optional[ProjectMember.Role] = None
         is_pre_label: Optional[bool] = None
         is_consensus_label: Optional[bool] = None
 
@@ -75,7 +75,7 @@ class LabelStage(Stage):
                     else not entity["blindedAnnotation"]
                 ),
                 read_only_labels_edit_access=(
-                    ProjectMemberRole(
+                    ProjectMember.Role(
                         "MEMBER"
                         if entity["roLabelEditPerm"] == "LABELER"
                         else entity["roLabelEditPerm"]
@@ -105,7 +105,7 @@ class LabelStage(Stage):
             if self.read_only_labels_edit_access:
                 entity["roLabelEditPerm"] = (
                     "LABELER"
-                    if self.read_only_labels_edit_access == ProjectMemberRole.MEMBER
+                    if self.read_only_labels_edit_access == ProjectMember.Role.MEMBER
                     else self.read_only_labels_edit_access.value
                 )
             if self.is_pre_label is not None:

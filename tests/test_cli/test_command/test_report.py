@@ -89,7 +89,7 @@ def test_handle_report(
     with (
         patch.object(
             controller.project.project.context.member,
-            "list_members",
+            "list_project_members",
             mock_list_members,
         ),
         patch.object(

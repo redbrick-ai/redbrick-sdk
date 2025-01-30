@@ -2,12 +2,11 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 from typing import Dict, List, Optional
 from abc import ABC, abstractmethod
 
 from dateutil import parser  # type: ignore
-
-from redbrick.common.enums import OrgMemberRole, ProjectMemberRole
 
 
 @dataclass
@@ -28,7 +27,7 @@ class OrgMember:
     family_name: str
         User family name
 
-    role: OrgMemberRole
+    role: OrgMember.Role
         User role in organization
 
     tags: List[str]
@@ -39,34 +38,117 @@ class OrgMember:
 
     last_active: datetime
         Last time the user was active
+
+    sso_provider: Optional[str] = None
+        User identity SSO provider
     """
+
+    class Role(str, Enum):
+        """Enumerate access levels for Organization.
+
+        - ``OWNER`` - Organization Owner
+        - ``ADMIN`` - Organization Admin
+        - ``MEMBER`` - Organization Member
+
+        """
+
+        OWNER = "OWNER"
+        ADMIN = "ADMIN"
+        MEMBER = "MEMBER"
 
     user_id: str
     email: str
     given_name: str
     family_name: str
-    role: OrgMemberRole
+    role: "OrgMember.Role"
     tags: List[str]
     is_2fa_enabled: bool
     last_active: datetime
+    sso_provider: Optional[str] = None
 
     @classmethod
     def from_entity(cls, member: Dict) -> "OrgMember":
+        """Get object from entity."""
         return cls(
             user_id=member["user"]["userId"],
             email=member["user"]["email"],
             given_name=member["user"]["givenName"],
             family_name=member["user"]["familyName"],
-            role=OrgMemberRole(member["role"]),
+            role=OrgMember.Role(member["role"]),
             tags=member["tags"],
             is_2fa_enabled=bool(member["user"]["mfaSetup"]),
             last_active=parser.parse(
-                member.get(
-                    "lastSeen",
-                    member["user"].get("lastSeen", member["user"]["updatedAt"]),
-                )
+                member.get("lastSeen")
+                or member["user"].get("lastSeen")
+                or member["user"]["updatedAt"],
+            ),
+            sso_provider=(
+                None
+                if member["user"]["idProvider"] in ("COGNITO", "Google")
+                else member["user"]["idProvider"].removeprefix("rb-")
             ),
         )
+
+
+@dataclass
+class OrgInvite:
+    """Organization Invite.
+
+    Parameters
+    --------------
+    email: str
+        User email
+
+    role: OrgMember.Role
+        User role in organization
+
+    sso_provider: Optional[str] = None
+        User identity SSO provider
+
+    status: OrgInvite.Status = OrgInvite.Status.PENDING
+        Invite status
+    """
+
+    class Status(str, Enum):
+        """Enumerate invite status.
+
+        - ``PENDING`` - Pending invitation
+        - ``ACCEPTED`` - Accepted invitation
+        - ``REJECTED`` - Rejected invitation
+
+        """
+
+        PENDING = "PENDING"
+        ACCEPTED = "ACCEPTED"
+        REJECTED = "REJECTED"
+
+    email: str
+    role: OrgMember.Role
+    sso_provider: Optional[str] = None
+    status: "OrgInvite.Status" = Status.PENDING
+
+    @classmethod
+    def from_entity(cls, invite: Dict) -> "OrgInvite":
+        """Get object from entity."""
+        return cls(
+            email=invite["email"],
+            role=OrgMember.Role(invite["role"]),
+            sso_provider=(
+                None
+                if invite["idProvider"] in ("COGNITO", "Google")
+                else invite["idProvider"].removeprefix("rb-")
+            ),
+            status=OrgInvite.Status(invite["state"]),
+        )
+
+    def to_entity(self) -> Dict:
+        """Get entity from object."""
+        return {
+            "email": self.email,
+            "role": self.role.value,
+            "idProvider": self.sso_provider,
+            "state": self.status.value,
+        }
 
 
 @dataclass
@@ -78,26 +160,39 @@ class ProjectMember:
     member_id: str
         Unique user ID or email
 
-    role: ProjectMemberRole
+    role: ProjectMember.Role
         User role in project
 
     stages: Optional[List[str]] = None
         Stages that the member has access to (Applicable for MEMBER role)
 
-    org_member: Optional[OrgMember] = None
-        Organization member
+    org_membership: Optional[OrgMember] = None
+        Organization memberhip
         This is not required when adding/updating a member.
     """
 
+    class Role(str, Enum):
+        """Enumerate access levels for Project.
+
+        - ``ADMIN`` - Project Admin
+        - ``MANAGER`` - Project Manager
+        - ``MEMBER`` - Project Member (Labeler/Reviewer)
+
+        """
+
+        ADMIN = "ADMIN"
+        MANAGER = "MANAGER"
+        MEMBER = "MEMBER"
+
     member_id: str
-    role: ProjectMemberRole
+    role: "ProjectMember.Role"
     stages: Optional[List[str]] = None
-    org_member: Optional[OrgMember] = None
+    org_membership: Optional[OrgMember] = None
 
     @classmethod
     def from_entity(cls, member: Dict) -> "ProjectMember":
         """Get object from entity."""
-        role = ProjectMemberRole(
+        role = ProjectMember.Role(
             "MEMBER" if member["role"] == "LABELER" else member["role"]
         )
         return cls(
@@ -109,10 +204,10 @@ class ProjectMember:
                     for stage in member["stageAccess"]
                     if stage["access"]
                 ]
-                if role == ProjectMemberRole.MEMBER
+                if role == ProjectMember.Role.MEMBER
                 else None
             ),
-            org_member=OrgMember.from_entity(member["member"]),
+            org_membership=OrgMember.from_entity(member["member"]),
         )
 
 
@@ -122,6 +217,22 @@ class MemberControllerInterface(ABC):
     @abstractmethod
     def list_org_members(self, org_id: str) -> List[Dict]:
         """Get a list of all org members."""
+
+    @abstractmethod
+    def remove_org_member(self, org_id: str, user_id: str) -> None:
+        """Remove an org member."""
+
+    @abstractmethod
+    def list_org_invites(self, org_id: str) -> List[Dict]:
+        """Get a list of all org invites."""
+
+    @abstractmethod
+    def invite_org_user(self, org_id: str, invitation: Dict) -> Dict:
+        """Invite an user to the organization."""
+
+    @abstractmethod
+    def delete_org_invitation(self, org_id: str, invitation: Dict) -> None:
+        """Delete an org invitation."""
 
     @abstractmethod
     def list_project_members(self, org_id: str, project_id: str) -> List[Dict]:

@@ -8,7 +8,7 @@ import platform
 from dateutil import parser  # type: ignore
 from tqdm import tqdm  # type: ignore
 
-from redbrick.common.enums import OrgMemberRole
+from redbrick.common.member import OrgMember
 from redbrick.config import config
 from redbrick.common.context import RBContext
 from redbrick.project import RBProject
@@ -102,11 +102,13 @@ class RBOrganization:
                     "email": user["email"],
                     "givenName": user["givenName"],
                     "familyName": user["familyName"],
-                    "role": OrgMemberRole(member["role"]),
+                    "role": OrgMember.Role(member["role"]),
                     "tags": member["tags"],
                     "is2FAEnabled": bool(user["mfaSetup"]),
                     "lastActive": parser.parse(
-                        member.get("lastSeen", user.get("lastSeen", user["updatedAt"]))
+                        member.get("lastSeen")
+                        or user.get("lastSeen")
+                        or user["updatedAt"]
                     ),
                 }
             )

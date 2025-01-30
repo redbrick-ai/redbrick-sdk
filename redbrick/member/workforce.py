@@ -2,7 +2,6 @@
 
 from typing import Dict, List
 from redbrick.common.context import RBContext
-from redbrick.common.enums import ProjectMemberRole
 from redbrick.common.member import ProjectMember
 
 
@@ -22,7 +21,7 @@ class Workforce:
             member
             for member in members
             if member_id == member.member_id
-            or (member.org_member and member_id == member.org_member.email)
+            or (member.org_membership and member_id == member.org_membership.email)
         ]
 
     def _get_unique_member(
@@ -150,7 +149,7 @@ class Workforce:
             user_id = org_user_map[member.member_id]
             user_ids.add(user_id)
 
-            if member.role == ProjectMemberRole.MEMBER:
+            if member.role == ProjectMember.Role.MEMBER:
                 memberships.append(
                     {
                         "userId": user_id,

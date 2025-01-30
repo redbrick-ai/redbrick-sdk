@@ -1,5 +1,12 @@
 """Partial queries to prevent duplication."""
 
+ORG_INVITE_SHARD = """
+email
+role
+state
+idProvider
+"""
+
 ORG_MEMBER_SHARD = """
 user {
     userId
@@ -9,6 +16,7 @@ user {
     mfaSetup
     lastSeen
     updatedAt
+    idProvider
 }
 role
 tags
