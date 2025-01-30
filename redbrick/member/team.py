@@ -129,13 +129,13 @@ class Team:
         )
         return OrgInvite.from_entity(invite)
 
-    def delete_invitation(self, invitation: OrgInvite) -> None:
-        """Invite a user to the organization.
+    def revoke_invitation(self, invitation: OrgInvite) -> None:
+        """Revoke org user invitation.
 
         .. code:: python
 
             org = redbrick.get_org(org_id, api_key)
-            org.team.delete_invitation(OrgInvite(email="..."))
+            org.team.revoke_invitation(OrgInvite(email="..."))
 
         Parameters
         --------------

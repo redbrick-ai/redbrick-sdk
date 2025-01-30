@@ -108,7 +108,7 @@ class MemberRepo(MemberControllerInterface):
         mutation removeInviteSDK(
             $orgId: UUID!
             $email: String!
-            $idProvider: IDProvider!
+            $idProvider: IDProvider
         ) {
             removeInvite(
                 orgId: $orgId
@@ -122,7 +122,7 @@ class MemberRepo(MemberControllerInterface):
         query_variables = {
             "orgId": org_id,
             "email": invitation["email"],
-            "idProvider": invitation["idProvider"] or "COGNITO",
+            "idProvider": invitation["idProvider"],
         }
         self.client.execute_query(query_string, query_variables)
 

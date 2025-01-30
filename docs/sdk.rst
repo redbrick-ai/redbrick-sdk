@@ -21,7 +21,7 @@ Organization
 Team
 ----------------------
 .. autoclass:: redbrick.member.Team
-   :members: get_member, list_members, remove_member, list_invites, invite_user, delete_invitation
+   :members: get_member, list_members, remove_member, list_invites, invite_user, revoke_invitation
    :show-inheritance:
 
 Workspace
