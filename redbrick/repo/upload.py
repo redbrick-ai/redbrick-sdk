@@ -29,7 +29,8 @@ class UploadRepo(UploadControllerInterface):
         heat_maps: Optional[List[Dict]],
         transforms: Optional[List[Dict]],
         centerlines: Optional[List[Dict]],
-        labels_data: Optional[str],
+        labels_data: Optional[str] = None,
+        labels_data_path: Optional[str] = None,
         labels_map: Optional[List[Dict]] = None,
         series_info: Optional[List[Dict]] = None,
         meta_data: Optional[Dict] = None,
@@ -56,6 +57,7 @@ class UploadRepo(UploadControllerInterface):
                 $name: String!
                 $storageId: UUID!
                 $labelsData: String
+                $labelsDataPath: String
                 $labelsMap: [LabelMapInput]
                 $seriesInfo: [SeriesInfoInput!]
                 $metaData: String
@@ -75,6 +77,7 @@ class UploadRepo(UploadControllerInterface):
                     name: $name
                     storageId: $storageId
                     labelsData: $labelsData
+                    labelsDataPath: $labelsDataPath
                     labelsMap: $labelsMap
                     seriesInfo: $seriesInfo
                     metaData: $metaData
@@ -108,6 +111,7 @@ class UploadRepo(UploadControllerInterface):
             "name": name,
             "storageId": storage_id,
             "labelsData": labels_data,
+            "labelsDataPath": labels_data_path,
             "labelsMap": labels_map,
             "seriesInfo": series_info,
             "metaData": (
@@ -485,7 +489,8 @@ class UploadRepo(UploadControllerInterface):
         org_id: str,
         project_id: str,
         task_id: str,
-        labels: str,
+        labels_data: Optional[str] = None,
+        labels_data_path: Optional[str] = None,
         labels_map: Optional[Sequence[Optional[Dict]]] = None,
         finalize: bool = False,
         time_spent_ms: Optional[int] = None,
@@ -498,6 +503,7 @@ class UploadRepo(UploadControllerInterface):
             $projectId: UUID!
             $taskId: UUID!
             $labelsData: String
+            $labelsDataPath: String
             $labelsMap: [LabelMapInput]
             $finalize: Boolean
             $timeSpentMs: Int
@@ -508,6 +514,7 @@ class UploadRepo(UploadControllerInterface):
                 projectId: $projectId
                 taskId: $taskId
                 labelsData: $labelsData
+                labelsDataPath: $labelsDataPath
                 labelsMap: $labelsMap
                 finalize: $finalize
                 timeSpentMs: $timeSpentMs
@@ -524,7 +531,8 @@ class UploadRepo(UploadControllerInterface):
             "orgId": org_id,
             "projectId": project_id,
             "taskId": task_id,
-            "labelsData": labels,
+            "labelsData": labels_data,
+            "labelsDataPath": labels_data_path,
             "labelsMap": labels_map,
             "finalize": finalize,
             "timeSpentMs": time_spent_ms,

@@ -203,5 +203,4 @@ class MemberRepo(MemberControllerInterface):
             "projectId": project_id,
             "userIds": user_ids,
         }
-        print(query_variables)
         self.client.execute_query(query_string, query_variables)

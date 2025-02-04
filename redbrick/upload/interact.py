@@ -119,7 +119,7 @@ async def create_task(
             heat_map["item"] = presigned_items[heatmap_start_idx + idx]["filePath"]
 
     try:
-        labels_map = (
+        labels_data_path, labels_map = (
             (
                 await process_segmentation_upload(
                     context,
@@ -134,7 +134,7 @@ async def create_task(
                 )
             )
             if project_id
-            else None
+            else (None, None)
         )
     except ValueError as err:
         logger.warning(
@@ -247,7 +247,12 @@ async def create_task(
                 point.get("heatMaps"),
                 point.get("transforms"),
                 point.get("centerline"),
-                json.dumps(point.get("labels", []), separators=(",", ":")),
+                (
+                    json.dumps(point.get("labels") or [], separators=(",", ":"))
+                    if "labels" in point
+                    else None
+                ),
+                labels_data_path,
                 labels_map,
                 (
                     [

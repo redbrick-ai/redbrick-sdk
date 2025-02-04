@@ -90,10 +90,17 @@ def task_event_format(
             if with_labels and task_event.get("taskData"):
                 updated_by = task_event["taskData"]["createdByEmail"]
                 updated_at = task_event["taskData"]["createdAt"]
-                labels = [
-                    clean_rb_label(label)
-                    for label in json.loads(task_event["taskData"]["labelsData"])
-                ]
+                if task_event["taskData"].get("labelsDataPath"):
+                    labels = None
+                    labels_data_path = task_event["taskData"]["labelsDataPath"]
+                else:
+                    labels = [
+                        clean_rb_label(label)
+                        for label in json.loads(
+                            task_event["taskData"].get("labelsData") or "[]"
+                        )
+                    ]
+                    labels_data_path = None
                 label_storage_id = task_event["taskData"]["labelsStorage"]["storageId"]
                 labels_map = task_event["taskData"].get("labelsMap", []) or []
                 task_datapoint_attributes: Optional[List[Dict]] = task["datapoint"].get(
@@ -101,6 +108,7 @@ def task_event_format(
                 )
                 event["labels"] = flat_rb_format(
                     labels,
+                    labels_data_path,
                     task["datapoint"]["items"],
                     [],
                     task["datapoint"]["name"],

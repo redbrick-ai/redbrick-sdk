@@ -203,6 +203,7 @@ TASK_DATA_SHARD = """
     createdAt
     createdByEmail
     labelsData(interpolate: true)
+    labelsDataPath(presigned: false)
     labelsStorage {
         storageId
     }

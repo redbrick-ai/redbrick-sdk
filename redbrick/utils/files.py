@@ -168,6 +168,7 @@ async def upload_files(
     files: List[Tuple[str, str, str]],
     progress_bar_name: Optional[str] = "Uploading files",
     segmentations_upload: bool = False,
+    zipped: bool = False,
 ) -> List[bool]:
     """Upload files from local path to url (file path, presigned url, file type)."""
     timeout = aiohttp.ClientTimeout(connect=60)
@@ -184,6 +185,17 @@ async def upload_files(
             "timeout": timeout,
             "headers": {"Content-Type": file_type},
         }
+
+        tmp_path: Optional[str] = None
+
+        if zipped:
+            tmp_path = uniquify_path(path + ".gz")
+            request_params["headers"]["Content-Encoding"] = "gzip"  # type: ignore
+            with open(path, "rb") as f_:
+                data = gzip.compress(f_.read())
+            with open(tmp_path, "wb") as f_:
+                f_.write(data)
+
         if segmentations_upload:
             request_params["headers"]["x-ms-blob-type"] = "BlockBlob"  # type: ignore
 
@@ -198,12 +210,17 @@ async def upload_files(
                 retry=retry_if_not_exception_type(KeyboardInterrupt),
             ):
                 with attempt:
-                    with open(path, "rb") as f_:
+                    with open(tmp_path or path, "rb") as f_:
                         request_params["data"] = f_
                         async with session.put(url, **request_params) as response:
                             status = response.status
         except RetryError as error:
+            if tmp_path:
+                os.remove(tmp_path)
             raise Exception("Unknown problem occurred") from error
+
+        if tmp_path:
+            os.remove(tmp_path)
 
         if status in (200, 201):
             return True

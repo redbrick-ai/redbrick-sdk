@@ -38,6 +38,7 @@ def test_from_rb_task_data():
         "labels": [{"label1": "value1"}, {"label2": "value2"}],
         "labelsMap": [{"label1": "map1"}, {"label2": "map2"}],
         "labelStorageId": "storage123",
+        "labelsDataPath": None,
     }
     result = rb_label_utils.from_rb_task_data(task_data)
     assert result == expected_result
@@ -63,6 +64,7 @@ def test_from_rb_sub_task():
         "labels": [{"label1": "value1"}, {"label2": "value2"}],
         "labelsMap": [{"label1": "map1"}, {"label2": "map2"}],
         "labelStorageId": "storage123",
+        "labelsDataPath": None,
     }
     result = rb_label_utils.from_rb_sub_task(sub_task)
     assert result == expected_result
@@ -114,6 +116,7 @@ def test_from_rb_consensus_info():
         ],
         "labelStorageId": "22222222-2222-2222-2222-222222222222",
         "scores": [],
+        "labelsDataPath": None,
     }
     result = rb_label_utils.from_rb_consensus_info(consensus_info)
     assert result == expected_result
@@ -153,6 +156,7 @@ def test_flat_rb_format():
                 "labelsMap": [],
                 "status": None,
                 "updatedAt": None,
+                "labelsDataPath": None,
             },
             {
                 "assignee": "user789@example.com",
@@ -161,6 +165,7 @@ def test_flat_rb_format():
                 "labelsMap": [],
                 "status": None,
                 "updatedAt": None,
+                "labelsDataPath": None,
             },
             {
                 "assignee": "user101@example.com",
@@ -169,6 +174,7 @@ def test_flat_rb_format():
                 "labelsMap": [],
                 "status": None,
                 "updatedAt": None,
+                "labelsDataPath": None,
             },
         ],
         "createdAt": "2023-10-26T12:34:56",
@@ -191,10 +197,12 @@ def test_flat_rb_format():
         "transforms": None,
         "centerline": None,
         "datapointClassification": None,
+        "labelsDataPath": None,
     }
 
     result = rb_label_utils.flat_rb_format(
         labels,
+        None,
         items,
         items,
         name,
@@ -291,6 +299,7 @@ def test_parse_entry_latest():
         "transforms": None,
         "centerline": None,
         "datapointClassification": None,
+        "labelsDataPath": None,
     }
     assert result == expected
 

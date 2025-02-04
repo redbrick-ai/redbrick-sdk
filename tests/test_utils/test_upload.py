@@ -83,10 +83,20 @@ async def test_process_segmentation_upload(
     mock_rb_context.export.presign_items = Mock()
     mock_rb_context.export.presign_items.return_value = ["presigned_path"]
     mock_rb_context.labeling.presign_labels_path = AsyncMock()
-    mock_rb_context.labeling.presign_labels_path.return_value = {
-        "presignedUrl": "presigned_url",
-        "filePath": "file_path",
-    }
+    mock_rb_context.labeling.presign_labels_path.return_value = (
+        [
+            {
+                "presignedUrl": "presigned_url",
+                "filePath": "file_path",
+            }
+        ],
+        [
+            {
+                "presignedUrl": "presigned_url",
+                "filePath": "file_path",
+            }
+        ],
+    )
 
     with patch.object(upload, "download_files", return_value=["downloaded_path"]):
         with (
@@ -96,7 +106,7 @@ async def test_process_segmentation_upload(
             mock_aiohttp_session = AsyncMock()
 
             # Execute the function
-            result = await upload.process_segmentation_upload(
+            _, result = await upload.process_segmentation_upload(
                 mock_rb_context,
                 mock_aiohttp_session,
                 org_id,

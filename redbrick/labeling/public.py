@@ -123,7 +123,7 @@ class Labeling:
                 )
             else:
                 try:
-                    labels_map = await process_segmentation_upload(
+                    labels_data_path, labels_map = await process_segmentation_upload(
                         self.context,
                         session,
                         self.org_id,
@@ -146,7 +146,12 @@ class Labeling:
                     self.project_id,
                     stage_name,
                     task_id,
-                    json.dumps(task["labels"], separators=(",", ":")),
+                    (
+                        json.dumps(task.get("labels") or [], separators=(",", ":"))
+                        if "labels" in task
+                        else None
+                    ),
+                    labels_data_path,
                     labels_map,
                     finalize,
                 )

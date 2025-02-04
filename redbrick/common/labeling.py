@@ -1,6 +1,6 @@
 """Abstract interface to exporting."""
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 from abc import ABC, abstractmethod
 import aiohttp
 
@@ -9,20 +9,16 @@ class LabelingControllerInterface(ABC):
     """Abstract interface to Labeling APIs."""
 
     @abstractmethod
-    def get_labeling_tasks(
-        self, org_id: str, project_id: str, stage_name: str, count: int = 5
-    ) -> List[Dict]:
-        """Get labeling tasks."""
-
-    @abstractmethod
     async def presign_labels_path(
         self,
         session: aiohttp.ClientSession,
         org_id: str,
         project_id: str,
         task_id: str,
-        file_type: str,
-    ) -> Dict:
+        version_id: str,
+        data_count: int,
+        seg_count: int,
+    ) -> Tuple[List[Dict], List[Dict]]:
         """Presign labels path."""
 
     @abstractmethod
@@ -33,7 +29,8 @@ class LabelingControllerInterface(ABC):
         project_id: str,
         stage_name: str,
         task_id: str,
-        labels_data: str,
+        labels_data: Optional[str] = None,
+        labels_data_path: Optional[str] = None,
         labels_map: Optional[List[Dict]] = None,
         finished: bool = True,
     ) -> None:

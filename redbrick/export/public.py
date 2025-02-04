@@ -9,6 +9,7 @@ import os
 import json
 import copy
 from datetime import datetime, timezone
+from uuid import uuid4
 
 import tqdm  # type: ignore
 
@@ -18,6 +19,7 @@ from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
 from redbrick.common.export import TaskFilterParams
 from redbrick.stage import LabelStage, ReviewStage
 from redbrick.types.taxonomy import Taxonomy
+from redbrick.utils.common_utils import config_path
 from redbrick.utils.files import (
     DICOM_FILE_TYPES,
     IMAGE_FILE_TYPES,
@@ -573,6 +575,10 @@ class Export:
         else:
             labels_map = task.get("labelsMap", []) or []
 
+        presign_label_paths: List[Optional[str]] = [
+            task["labelsDataPath"] if task.get("labelsDataPath") else None
+        ]
+
         presign_paths: List[Optional[str]] = [
             label_map.get("labelName") if label_map else None
             for label_map in labels_map
@@ -581,6 +587,11 @@ class Export:
 
         if task.get("consensusTasks"):
             for consensus_task in task["consensusTasks"]:
+                presign_label_paths.append(
+                    consensus_task["labelsDataPath"]
+                    if consensus_task.get("labelsDataPath")
+                    else None
+                )
                 presign_paths.extend(
                     [
                         (
@@ -595,6 +606,9 @@ class Export:
                         )
                     ]
                 )
+
+        if any(presign_label_path for presign_label_path in presign_label_paths):
+            await self.download_labels(task, presign_label_paths)
 
         if any(presign_path for presign_path in presign_paths):
             await self.download_and_process_segmentations(
@@ -622,6 +636,40 @@ class Export:
             self.review_stages,
             segmentation_dir is None,
         )
+
+    async def download_labels(
+        self, task: Dict, presign_paths: List[Optional[str]]
+    ) -> None:
+        """Download labels."""
+        if not presign_paths:
+            return
+
+        presigned_urls = self.context.export.presign_items(
+            self.org_id, task["labelStorageId"], presign_paths
+        )
+
+        dirname = os.path.join(config_path(), "temp", str(uuid4()))
+        os.makedirs(dirname, exist_ok=True)
+
+        to_download: List[Tuple[Optional[str], Optional[str]]] = [
+            (presign_path, uniquify_path(os.path.join(dirname, f"label-{idx}.nii.gz")))
+            for idx, presign_path in enumerate(presigned_urls)
+            if presign_path
+        ]
+        downloaded = await download_files(to_download, "Downloading labels", False)
+
+        if presigned_urls[0] and downloaded[0]:
+            with open(downloaded[0], "r", encoding="utf-8") as f_:
+                task["labels"] = json.load(f_)
+
+        if len(presigned_urls) > 1:
+            for idx in range(1, len(presigned_urls)):
+                fpath = downloaded[idx]
+                if presigned_urls[idx] and fpath:
+                    with open(fpath, "r", encoding="utf-8") as f_:
+                        task["consensusTasks"][idx]["labels"] = json.load(f_)
+
+        shutil.rmtree(dirname, ignore_errors=True)
 
     async def download_and_process_segmentations(
         self,

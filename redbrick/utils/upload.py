@@ -1,19 +1,26 @@
 """Upload implementations."""
 
+import json
 import os
 import shutil
 from uuid import uuid4
-from typing import List, Dict, TypeVar, Union, Optional, Sequence
+from typing import List, Dict, Tuple, TypeVar, Union, Optional, Sequence
 from urllib.parse import urlparse
 
 import aiohttp
 
+from redbrick.common.constants import LABELS_ARRAY_LIMIT
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
 from redbrick.types.taxonomy import Taxonomy
 from redbrick.types.task import InputTask, OutputTask
 from redbrick.utils.common_utils import config_path
-from redbrick.utils.files import NIFTI_FILE_TYPES, download_files, upload_files
+from redbrick.utils.files import (
+    NIFTI_FILE_TYPES,
+    download_files,
+    uniquify_path,
+    upload_files,
+)
 from redbrick.utils.logging import log_error, logger
 
 
@@ -297,7 +304,7 @@ async def process_segmentation_upload(
     project_label_storage_id: str,
     label_validate: bool = False,
     prune_segmentations: bool = False,
-) -> List[Dict]:
+) -> Tuple[Optional[str], List[Dict]]:
     """Process segmentation upload."""
     # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     # pylint: disable=import-outside-toplevel, too-many-nested-blocks
@@ -473,28 +480,24 @@ async def process_segmentation_upload(
 
             if output_labels_path and os.path.isfile(output_labels_path):
                 file_type = NIFTI_FILE_TYPES["nii"]
-                presigned = await context.labeling.presign_labels_path(
-                    session,
-                    org_id,
-                    project_id,
-                    str(uuid4()),
-                    file_type,
+                _, presigned = await context.labeling.presign_labels_path(
+                    session, org_id, project_id, str(uuid4()), str(uuid4()), 0, 1
                 )
                 if (
                     await upload_files(
                         [
                             (
                                 output_labels_path,
-                                presigned["presignedUrl"],
+                                presigned[0]["presignedUrl"],
                                 file_type,
                             )
                         ],
-                        "Uploading labels for "
+                        "Uploading segmentations for "
                         + f"{task['name'][:57]}{task['name'][57:] and '...'}",
                         True,
                     )
                 )[0]:
-                    label_map["labelName"] = presigned["filePath"]
+                    label_map["labelName"] = presigned[0]["filePath"]
             elif output_labels_path:
                 label_map["labelName"] = output_labels_path
             else:
@@ -502,4 +505,37 @@ async def process_segmentation_upload(
         else:
             raise ValueError("Invalid label files")
 
-    return labels_map or []
+    labels_data_path: Optional[str] = None
+
+    if len(task.get("labels") or []) > LABELS_ARRAY_LIMIT:
+        presigned, _ = await context.labeling.presign_labels_path(
+            session, org_id, project_id, str(uuid4()), str(uuid4()), 1, 0
+        )
+        dirname = os.path.join(config_path(), "temp", str(uuid4()))
+        os.makedirs(dirname, exist_ok=True)
+        tmp_labels_data = uniquify_path(os.path.join(dirname, "labels.json"))
+        with open(tmp_labels_data, "w", encoding="utf-8") as f:
+            json.dump(task["labels"], f)
+
+        if (
+            await upload_files(
+                [
+                    (
+                        tmp_labels_data,
+                        presigned[0]["presignedUrl"],
+                        "application/json",
+                    )
+                ],
+                "Uploading labels for "
+                + f"{task['name'][:57]}{task['name'][57:] and '...'}",
+                True,
+                True,
+            )
+        )[0]:
+            os.remove(tmp_labels_data)
+            labels_data_path = presigned[0]["filePath"]
+            task["labels"] = []
+        else:
+            raise ValueError("Error uploading labels")
+
+    return labels_data_path, labels_map or []

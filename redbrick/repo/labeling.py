@@ -1,6 +1,6 @@
 """Abstract interface to Labeling APIs."""
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 import aiohttp
 
 from redbrick.common.client import RBClient
@@ -14,105 +14,69 @@ class LabelingRepo(LabelingControllerInterface):
         """Construct ExportRepo."""
         self.client = client
 
-    def get_labeling_tasks(
-        self, org_id: str, project_id: str, stage_name: str, count: int = 5
-    ) -> List[Dict]:
-        """Get labeling tasks."""
-        query = """
-        mutation assignLabelingTasksSDK(
-            $orgId: UUID!
-            $projectId: UUID!
-            $stageName: String!
-            $count: Int!
-        )  {
-                assignLabelingTasks(
-                orgId: $orgId
-                projectId: $projectId
-                stageName: $stageName
-                count: $count
-                ) {
-                    orgId
-                    projectId
-                    stageName
-                    state
-                    taskId
-                    taskType
-                    completionTimeMs
-                    progressSavedAt
-                    assignedTo {
-                        userId
-                        loggedInUser
-                    }
-                    taxonomy {
-                        name
-                        version
-                    }
-                    datapoint {
-                        itemsPresigned: items(presigned: true)
-                        items(presigned: false)
-                        dataType
-                        name
-                    }
-                    taskData {
-                        subName
-                        taskType
-                        createdAt
-                        createdBy
-                        labelsData(interpolate: true)
-                }
-            }
-        }
-        """
-
-        response = self.client.execute_query(
-            query,
-            {
-                "orgId": org_id,
-                "projectId": project_id,
-                "stageName": stage_name,
-                "count": count,
-            },
-        )
-        tasks: List[Dict] = response["assignLabelingTasks"]
-        return tasks
-
     async def presign_labels_path(
         self,
         session: aiohttp.ClientSession,
         org_id: str,
         project_id: str,
         task_id: str,
-        file_type: str,
-    ) -> Dict:
+        version_id: str,
+        data_count: int,
+        seg_count: int,
+    ) -> Tuple[List[Dict], List[Dict]]:
         """Presign labels path."""
         query = """
-        query presignLabelsPathSDK(
+        query presignUploadsSDK(
             $orgId: UUID!
             $projectId: UUID!
-            $taskId: UUID!
-            $fileType: String!
+            $filesData: [String!]!
+            $fileTypeData: String!
+            $fileEncodingData: String
+            $filesSeg: [String!]!
+            $fileTypeSeg: String!
+            $fileEncodingSeg: String
         ) {
-            presignLabelsPath(
+            presignData: presignUploads(
                 orgId: $orgId
                 projectId: $projectId
-                taskId: $taskId
-                fileType: $fileType
+                files: $filesData
+                fileType: $fileTypeData
+                fileEncoding: $fileEncodingData
             ) {
-                fileName
-                filePath
                 presignedUrl
+                filePath
+                fileName
+            }
+            presignSeg: presignUploads(
+                orgId: $orgId
+                projectId: $projectId
+                files: $filesSeg
+                fileType: $fileTypeSeg
+                fileEncoding: $fileEncodingSeg
+            ) {
+                presignedUrl
+                filePath
+                fileName
             }
         }
         """
         variables = {
             "orgId": org_id,
             "projectId": project_id,
-            "taskId": task_id,
-            "fileType": file_type,
+            "filesData": (
+                [f"labels/{task_id}/{version_id}/data.json"] if data_count == 1 else []
+            ),
+            "fileTypeData": "application/json",
+            "fileEncodingData": "gzip",
+            "filesSeg": [
+                f"labels/{task_id}/{version_id}/{num}.nii.gz"
+                for num in range(0, seg_count)
+            ],
+            "fileTypeSeg": "application/octet-stream",
+            "fileEncodingSeg": None,
         }
         response = await self.client.execute_query_async(session, query, variables)
-        presigned: Dict = response["presignLabelsPath"]
-        return presigned
+        return (response["presignData"], response["presignSeg"])
 
     async def put_labeling_results(
         self,
@@ -121,7 +85,8 @@ class LabelingRepo(LabelingControllerInterface):
         project_id: str,
         stage_name: str,
         task_id: str,
-        labels_data: str,
+        labels_data: Optional[str] = None,
+        labels_data_path: Optional[str] = None,
         labels_map: Optional[List[Dict]] = None,
         finished: bool = True,
     ) -> None:
@@ -135,6 +100,7 @@ class LabelingRepo(LabelingControllerInterface):
             $elapsedTimeMs: Int!
             $finished: Boolean!
             $labelsData: String
+            $labelsDataPath: String
             $labelsMap: [LabelMapInput]
         ) {
             putManualLabelingTaskAndLabels(
@@ -145,6 +111,7 @@ class LabelingRepo(LabelingControllerInterface):
                 elapsedTimeMs: $elapsedTimeMs
                 finished: $finished
                 labelsData: $labelsData
+                labelsDataPath: $labelsDataPath
                 labelsMap: $labelsMap
             ) {
                 ok
@@ -158,6 +125,7 @@ class LabelingRepo(LabelingControllerInterface):
             "stageName": stage_name,
             "taskId": task_id,
             "labelsData": labels_data,
+            "labelsDataPath": labels_data_path,
             "labelsMap": labels_map,
             "finished": finished,
             "elapsedTimeMs": 0,

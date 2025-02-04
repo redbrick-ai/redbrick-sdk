@@ -75,12 +75,19 @@ def get_voxel_point(point: List[int]) -> TaskType.VoxelPoint:
 
 def from_rb_task_data(task_data: Dict) -> Dict:
     """Get object from task data."""
+    if task_data.get("labelsDataPath"):
+        labels = None
+        labels_data_path = task_data["labelsDataPath"]
+    else:
+        labels = [
+            clean_rb_label(label)
+            for label in json.loads(task_data.get("labelsData") or "[]")
+        ]
+        labels_data_path = None
     return {
         "updatedAt": task_data.get("createdAt"),
-        "labels": [
-            clean_rb_label(label)
-            for label in json.loads(task_data.get("labelsData", "[]") or "[]")
-        ],
+        "labels": labels,
+        "labelsDataPath": labels_data_path,
         "labelsMap": task_data.get("labelsMap", []) or [],
         "labelStorageId": (task_data.get("labelsStorage", {}) or {}).get("storageId"),
     }
@@ -159,7 +166,8 @@ def convert_datapoint_classifications(
 
 
 def flat_rb_format(
-    labels: List[Dict],
+    labels: Optional[List[Dict]],
+    labels_data_path: Optional[str],
     items: List[str],
     items_presigned: List[str],
     name: str,
@@ -194,6 +202,7 @@ def flat_rb_format(
         "updatedBy": updated_by,
         "updatedAt": updated_at,
         "labels": labels,
+        "labelsDataPath": labels_data_path,
         "labelsMap": labels_map,
         "seriesInfo": series_info,
         "metaData": meta_data,
@@ -280,10 +289,17 @@ def parse_entry_latest(item: Dict) -> Dict:
         created_at = datapoint["createdAt"]
         updated_by = task_data.get("createdByEmail")
         updated_at = task_data.get("createdAt")
-        labels = [
-            clean_rb_label(label)
-            for label in json.loads(task_data.get("labelsData") or "[]")
-        ]
+
+        if task_data.get("labelsDataPath"):
+            labels = None
+            labels_data_path = task_data["labelsDataPath"]
+        else:
+            labels = [
+                clean_rb_label(label)
+                for label in json.loads(task_data.get("labelsData") or "[]")
+            ]
+            labels_data_path = None
+
         storage_id = datapoint["storageMethod"]["storageId"]
         label_storage_id = (task_data.get("labelsStorage") or {}).get(
             "storageId"
@@ -298,6 +314,7 @@ def parse_entry_latest(item: Dict) -> Dict:
 
         return flat_rb_format(
             labels,
+            labels_data_path,
             items,
             items_presigned,
             name,
