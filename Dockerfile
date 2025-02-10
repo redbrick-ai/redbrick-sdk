@@ -10,4 +10,4 @@ RUN apt-get update && \
 COPY redbrick_sdk*.whl ./
 RUN pip install redbrick_sdk*.whl && rm redbrick_sdk*.whl
 
-CMD ["python", "-i", "-c", "import redbrick;print(f'RedBrick AI SDK! ({redbrick.__version__})')"]
+CMD ["python", "-i", "-c", "import redbrick;print(f'RedBrick AI SDK! ({redbrick.version()})')"]
