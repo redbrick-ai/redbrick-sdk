@@ -10,11 +10,12 @@ from unittest.mock import patch
 
 import pytest
 
-from redbrick import RBContext
+from redbrick.common.context import RBContext
+from redbrick.common.entities import RBOrganization, RBProject
 from redbrick.cli.entity import CLICache, CLIConfiguration, CLICredentials
 from redbrick.cli.project import CLIProject
-from redbrick.organization import RBOrganization
-from redbrick.project import RBProject
+from redbrick.organization import RBOrganizationImpl
+from redbrick.project import RBProjectImpl
 from tests.test_cli import _write_config, _write_creds, mock_method
 
 
@@ -134,7 +135,7 @@ def test_init_from_path(project_and_conf_dirs):
 
 
 @pytest.mark.unit
-def test_initialize_project(project_and_conf_dirs, rb_context_full):
+def test_initialize_project(project_and_conf_dirs, rb_context):
     """Test CLIProject.initialize_project"""
     project_path, config_path_ = project_and_conf_dirs
     org_id = str(uuid.uuid4())
@@ -167,21 +168,21 @@ def test_initialize_project(project_and_conf_dirs, rb_context_full):
     }
     with patch("redbrick.cli.entity.creds.config_path", return_value=config_path_):
         # mock repo methods
-        rb_context_full.project.get_org = functools.partial(
+        rb_context.project.get_org = functools.partial(
             mock_method, response=mock_org_resp
         )
-        rb_context_full.project.get_taxonomy = functools.partial(
+        rb_context.project.get_taxonomy = functools.partial(
             mock_method, response=mock_tax_resp
         )
-        rb_context_full.project.get_project = functools.partial(
+        rb_context.project.get_project = functools.partial(
             mock_method, response=mock_project_resp
         )
-        rb_context_full.project.get_stages = functools.partial(mock_method, response=[])
+        rb_context.project.get_stages = functools.partial(mock_method, response=[])
 
         # initialize project
         proj = CLIProject(path=project_path, required=False)
-        rb_org = RBOrganization(rb_context_full, org_id)
-        rb_project = RBProject(rb_context_full, org_id, project_id)
+        rb_org = RBOrganizationImpl(rb_context, org_id)
+        rb_project = RBProjectImpl(rb_context, org_id, project_id)
         proj.initialize_project(rb_org, rb_project)
 
         # assertions
@@ -200,7 +201,7 @@ def test_initialize_project(project_and_conf_dirs, rb_context_full):
 
 
 @pytest.mark.unit
-def test_project_properties(project_and_conf_dirs, rb_context_full):
+def test_project_properties(project_and_conf_dirs, rb_context):
     """Test CLIProject property attributes"""
     project_path, config_path_ = project_and_conf_dirs
     org_id = str(uuid.uuid4())
@@ -208,7 +209,7 @@ def test_project_properties(project_and_conf_dirs, rb_context_full):
 
     # prepare project config and creds
     _write_config(project_path, org_id, project_id=project_id)
-    _write_creds(config_path_, org_id, api_key=rb_context_full.client.api_key)
+    _write_creds(config_path_, org_id, api_key=rb_context.client.api_key)
 
     mock_org_resp = {"name": "Mock Org", "orgId": org_id}
     mock_tax_resp = {

@@ -16,31 +16,31 @@ class OrgMember:
     Parameters
     --------------
     user_id: str
-        User ID
+        User ID.
 
     email: str
-        User email
+        User email.
 
     given_name: str
-        User given name
+        User given name.
 
     family_name: str
-        User family name
+        User family name.
 
     role: OrgMember.Role
-        User role in organization
+        User role in organization.
 
     tags: List[str]
-        Tags associated with the user
+        Tags associated with the user.
 
     is_2fa_enabled: bool
-        Whether 2FA is enabled for the user
+        Whether 2FA is enabled for the user.
 
     last_active: datetime
-        Last time the user was active
+        Last time the user was active.
 
     sso_provider: Optional[str] = None
-        User identity SSO provider
+        User identity SSO provider.
     """
 
     class Role(str, Enum):
@@ -97,16 +97,16 @@ class OrgInvite:
     Parameters
     --------------
     email: str
-        User email
+        User email.
 
     role: OrgMember.Role
-        User role in organization
+        User role in organization.
 
     sso_provider: Optional[str] = None
-        User identity SSO provider
+        User identity SSO provider.
 
     status: OrgInvite.Status = OrgInvite.Status.PENDING
-        Invite status
+        Invite status.
     """
 
     class Status(str, Enum):
@@ -158,16 +158,16 @@ class ProjectMember:
     Parameters
     --------------
     member_id: str
-        Unique user ID or email
+        Unique user ID or email.
 
     role: ProjectMember.Role
-        User role in project
+        User role in project.
 
     stages: Optional[List[str]] = None
-        Stages that the member has access to (Applicable for MEMBER role)
+        Stages that the member has access to (Applicable for MEMBER role).
 
     org_membership: Optional[OrgMember] = None
-        Organization memberhip
+        Organization memberhip.
         This is not required when adding/updating a member.
     """
 
@@ -211,7 +211,7 @@ class ProjectMember:
         )
 
 
-class MemberControllerInterface(ABC):
+class MemberRepo(ABC):
     """Abstract interface to define methods for Member."""
 
     @abstractmethod
@@ -249,3 +249,195 @@ class MemberControllerInterface(ABC):
         self, org_id: str, project_id: str, user_ids: List[str]
     ) -> None:
         """Remove project members."""
+
+
+class Team(ABC):
+    """Abstract interface to Team module."""
+
+    @abstractmethod
+    def get_member(self, member_id: str) -> OrgMember:
+        """Get a team member.
+
+        .. code:: python
+
+            org = redbrick.get_org(org_id, api_key)
+            member = org.team.get_member(member_id)
+
+        Parameters
+        --------------
+        member_id: str
+            Unique member userId or email.
+
+        Returns
+        -------------
+        OrgMember
+        """
+
+    @abstractmethod
+    def list_members(self) -> List[OrgMember]:
+        """Get a list of all organization members.
+
+        .. code:: python
+
+            org = redbrick.get_org(org_id, api_key)
+            members = org.team.list_members()
+
+        Returns
+        -------------
+        List[OrgMember]
+        """
+
+    @abstractmethod
+    def remove_member(self, member_id: str) -> None:
+        """Remove a member from the organization.
+
+        .. code:: python
+
+            org = redbrick.get_org(org_id, api_key)
+            org.team.remove_member(member_id)
+
+        Parameters
+        --------------
+        member_id: str
+            Unique member userId or email.
+        """
+
+    @abstractmethod
+    def list_invites(self) -> List[OrgInvite]:
+        """Get a list of all pending or rejected invites.
+
+        .. code:: python
+
+            org = redbrick.get_org(org_id, api_key)
+            members = org.team.list_invites()
+
+        Returns
+        -------------
+        List[OrgInvite]
+        """
+
+    @abstractmethod
+    def invite_user(self, invitation: OrgInvite) -> OrgInvite:
+        """Invite a user to the organization.
+
+        .. code:: python
+
+            org = redbrick.get_org(org_id, api_key)
+            invitation = org.team.invite_user(OrgInvite(email="...", role=OrgMember.Role.MEMBER))
+
+        Parameters
+        --------------
+        invitation: OrgInvite
+            Organization invite
+
+        Returns
+        -------------
+        OrgInvite
+        """
+
+    @abstractmethod
+    def revoke_invitation(self, invitation: OrgInvite) -> None:
+        """Revoke org user invitation.
+
+        .. code:: python
+
+            org = redbrick.get_org(org_id, api_key)
+            org.team.revoke_invitation(OrgInvite(email="..."))
+
+        Parameters
+        --------------
+        invitation: OrgInvite
+            Organization invite
+        """
+
+
+class Workforce(ABC):
+    """Abstract interface to Workforce module."""
+
+    @abstractmethod
+    def get_member(self, member_id: str) -> ProjectMember:
+        """Get a project member.
+
+        .. code:: python
+
+            project = redbrick.get_project(org_id, project_id, api_key)
+            member = project.workforce.get_member(member_id)
+
+        Parameters
+        --------------
+        member_id: str
+            Unique member userId or email.
+
+        Returns
+        -------------
+        ProjectMember
+        """
+
+    @abstractmethod
+    def list_members(self) -> List[ProjectMember]:
+        """Get a list of all project members.
+
+        .. code:: python
+
+            project = redbrick.get_project(org_id, project_id, api_key)
+            members = project.workforce.list_members()
+
+        Returns
+        -------------
+        List[ProjectMember]
+        """
+
+    @abstractmethod
+    def add_members(self, members: List[ProjectMember]) -> List[ProjectMember]:
+        """Add project members.
+
+        .. code:: python
+
+            project = redbrick.get_project(org_id, project_id, api_key)
+            member = project.workforce.add_members([{"member_id": "...", "role": "...", "stages": ["..."]}, ...])
+
+        Parameters
+        --------------
+        members: List[ProjectMember]
+            List of members to add.
+
+        Returns
+        -------------
+        List[ProjectMember]
+            List of added project members.
+        """
+
+    @abstractmethod
+    def update_members(self, members: List[ProjectMember]) -> List[ProjectMember]:
+        """Update project members.
+
+        .. code:: python
+
+            project = redbrick.get_project(org_id, project_id, api_key)
+            member = project.workforce.update_members([{"member_id": "...", "role": "...", "stages": ["..."]}, ...])
+
+        Parameters
+        --------------
+        members: List[ProjectMember]
+            List of members to update.
+
+        Returns
+        -------------
+        List[ProjectMember]
+            List of updated project members.
+        """
+
+    @abstractmethod
+    def remove_members(self, member_ids: List[str]) -> None:
+        """Remove project members.
+
+        .. code:: python
+
+            project = redbrick.get_project(org_id, project_id, api_key)
+            member = project.workforce.remove_members([...])
+
+        Parameters
+        --------------
+        member_ids: List[str]
+            List of member ids (user_id/email) to remove from the project.
+        """

@@ -1,5 +1,6 @@
 """Graphql Client responsible for make API requests."""
 
+from abc import ABC, abstractmethod
 import time
 import json
 import base64
@@ -13,23 +14,43 @@ from tenacity.retry import retry_if_not_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_exponential
 
-from redbrick import __version__ as sdk_version  # pylint: disable=cyclic-import
-from redbrick.config import config
 from redbrick.common.constants import (
     DEFAULT_URL,
     MAX_RETRY_ATTEMPTS,
     REQUEST_TIMEOUT,
     PEERLESS_ERRORS,
 )
+from redbrick.config import config
 from redbrick.utils.logging import assert_validation, log_error, logger
 
 
-class RBClient:
+class RBClient(ABC):
+    """Client to communicate with RedBrick AI GraphQL Server."""
+
+    api_key: str
+
+    @abstractmethod
+    def execute_query(
+        self, query: str, variables: Dict, raise_for_error: bool = True
+    ) -> Dict:
+        """Execute a graphql query."""
+
+    @abstractmethod
+    async def execute_query_async(
+        self,
+        aio_session: aiohttp.ClientSession,
+        query: str,
+        variables: Dict,
+        raise_for_error: bool = True,
+    ) -> Dict:
+        """Execute a graphql query using asyncio."""
+
+
+class RBClientImpl(RBClient):
     """Client to communicate with RedBrick AI GraphQL Server."""
 
     def __init__(self, api_key: str, url: str) -> None:
         """Construct RBClient."""
-        self.config = config
         self.url = (url or DEFAULT_URL).lower().rstrip("/")
         if DEFAULT_URL in self.url:
             self.url = DEFAULT_URL
@@ -56,7 +77,7 @@ class RBClient:
     def headers(self) -> Dict:
         """Get request headers."""
         return {
-            "RB-SDK-Version": sdk_version,
+            "RB-SDK-Version": config.version,
             "ApiKey": self.api_key,
             "Content-Type": "application/json",
             "Accept": "application/json",

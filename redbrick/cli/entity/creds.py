@@ -4,7 +4,7 @@ import os
 from typing import Dict, List, Optional
 from configparser import ConfigParser
 
-from redbrick.common.context import RBContext
+from redbrick.common.context import RBContext, RBContextImpl
 from redbrick.utils.common_utils import config_path
 from redbrick.utils.logging import assert_validation
 
@@ -73,7 +73,7 @@ class CLICredentials:
     @property
     def context(self) -> RBContext:
         """Get SDK context."""
-        return RBContext(
+        return RBContextImpl(
             api_key=self.get_profile(self.selected_profile)["key"].strip(),
             url=self.get_profile(self.selected_profile)["url"].strip().rstrip("/"),
         )

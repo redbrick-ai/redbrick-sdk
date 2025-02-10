@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
-from redbrick import RBContext
+from redbrick.common.context import RBContext
 from redbrick.cli import public
 from redbrick.cli.command import (
     CLIExportController,
@@ -39,7 +39,7 @@ def project_and_conf_dirs(
 
 @pytest.fixture
 def prepare_project(
-    project_and_conf_dirs, rb_context_full  # pylint:disable=redefined-outer-name
+    project_and_conf_dirs, rb_context  # pylint:disable=redefined-outer-name
 ) -> t.Tuple[str, str, str, str]:
     """Fixture to prepare all dirs and config for a project"""
     project_path, config_path_ = project_and_conf_dirs
@@ -48,14 +48,14 @@ def prepare_project(
 
     # prepare project config and creds
     _write_config(project_path, org_id, project_id=project_id)
-    _write_creds(config_path_, org_id, api_key=rb_context_full.client.api_key)
+    _write_creds(config_path_, org_id, api_key=rb_context.client.api_key)
     return project_path, config_path_, org_id, project_id
 
 
 @pytest.fixture
 def mock_cli_rb_context(
     prepare_project,  # pylint: disable=redefined-outer-name
-    rb_context_full,
+    rb_context,
 ) -> t.Tuple[RBContext, t.Tuple[str, str, str, str]]:
     """Prepare a test RBContext object with patched query methods"""
     _, _, org_id, project_id = prepare_project
@@ -88,21 +88,19 @@ def mock_cli_rb_context(
             "consensusSettings": {"enabled": True},
         }
     ]
-    rb_context_full.project.get_org = functools.partial(
-        mock_method, response=mock_org_resp
-    )
-    rb_context_full.project.get_taxonomy = functools.partial(
+    rb_context.project.get_org = functools.partial(mock_method, response=mock_org_resp)
+    rb_context.project.get_taxonomy = functools.partial(
         mock_method, response=mock_tax_resp
     )
-    rb_context_full.project.get_project = functools.partial(
+    rb_context.project.get_project = functools.partial(
         mock_method, response=mock_projects_resp[0]
     )
-    rb_context_full.project.get_projects = functools.partial(
+    rb_context.project.get_projects = functools.partial(
         mock_method, response=mock_projects_resp
     )
-    rb_context_full.project.get_stages = functools.partial(mock_method, response=[])
+    rb_context.project.get_stages = functools.partial(mock_method, response=[])
     # pylint: enable=protected-access
-    return rb_context_full, prepare_project
+    return rb_context, prepare_project
 
 
 @pytest.fixture
@@ -113,19 +111,17 @@ def mock_upload_controller(
     """Prepare a test CLIUploadController object"""
     # attache project to cli controller
     # pylint: disable=redefined-outer-name
-    rb_context_full, prepare_project = mock_cli_rb_context
+    rb_context, prepare_project = mock_cli_rb_context
     project_path, config_path_, _, _ = prepare_project
     # pylint: enable=redefined-outer-name
     monkeypatch.chdir(project_path)
     _, cli = public.cli_parser(only_parser=False)
 
     handle_upload = cli.upload.handle_upload
-    with patch(
-        "redbrick.cli.entity.creds.config_path", return_value=config_path_
-    ), patch(
-        "redbrick.cli.command.clone.CLIProject._context", rb_context_full
-    ), patch.object(
-        cli.upload, "handle_upload"
+    with (
+        patch("redbrick.cli.entity.creds.config_path", return_value=config_path_),
+        patch("redbrick.cli.command.clone.CLIProject._context", rb_context),
+        patch.object(cli.upload, "handle_upload"),
     ):
         args = argparse.Namespace(command=cli.CLONE)
         cli.upload.handler(args)
@@ -144,19 +140,17 @@ def mock_export_controller(
     """Prepare a test CLIExportController object"""
     # attach project to cli controller
     # pylint: disable=redefined-outer-name
-    rb_context_full, prepare_project = mock_cli_rb_context
+    rb_context, prepare_project = mock_cli_rb_context
     project_path, config_path_, _, _ = prepare_project
     # pylint: enable=redefined-outer-name
     monkeypatch.chdir(project_path)
     _, cli = public.cli_parser(only_parser=False)
 
     handle_export = cli.export.handle_export
-    with patch(
-        "redbrick.cli.entity.creds.config_path", return_value=config_path_
-    ), patch(
-        "redbrick.cli.command.export.CLIProject._context", rb_context_full
-    ), patch.object(
-        cli.export, "handle_export"
+    with (
+        patch("redbrick.cli.entity.creds.config_path", return_value=config_path_),
+        patch("redbrick.cli.command.export.CLIProject._context", rb_context),
+        patch.object(cli.export, "handle_export"),
     ):
         args = argparse.Namespace(command=cli.CLONE)
         cli.export.handler(args)
@@ -175,19 +169,17 @@ def mock_info_controller(
     """Prepare a test CLIInfoController object"""
     # attach project to cli controller
     # pylint: disable=redefined-outer-name
-    rb_context_full, prepare_project = mock_cli_rb_context
+    rb_context, prepare_project = mock_cli_rb_context
     project_path, config_path_, _, _ = prepare_project
     # pylint: enable=redefined-outer-name
     monkeypatch.chdir(project_path)
     _, cli = public.cli_parser(only_parser=False)
 
     handle_info = cli.info.handle_info
-    with patch(
-        "redbrick.cli.entity.creds.config_path", return_value=config_path_
-    ), patch(
-        "redbrick.cli.command.info.CLIProject._context", rb_context_full
-    ), patch.object(
-        cli.info, "handle_info"
+    with (
+        patch("redbrick.cli.entity.creds.config_path", return_value=config_path_),
+        patch("redbrick.cli.command.info.CLIProject._context", rb_context),
+        patch.object(cli.info, "handle_info"),
     ):
         args = argparse.Namespace(command=cli.INFO, path=".", get=None, set=None)
         cli.info.handler(args)
@@ -207,19 +199,17 @@ def mock_report_controller(
     """Prepare a test CLIIReportController object"""
     # attach project to cli controller
     # pylint: disable=redefined-outer-name
-    rb_context_full, prepare_project = mock_cli_rb_context
+    rb_context, prepare_project = mock_cli_rb_context
     project_path, config_path_, _, _ = prepare_project
     # pylint: enable=redefined-outer-name
     monkeypatch.chdir(project_path)
     _, cli = public.cli_parser(only_parser=False)
 
     handle_report = cli.report.handle_report
-    with patch(
-        "redbrick.cli.entity.creds.config_path", return_value=config_path_
-    ), patch(
-        "redbrick.cli.command.report.CLIProject._context", rb_context_full
-    ), patch.object(
-        cli.report, "handle_report"
+    with (
+        patch("redbrick.cli.entity.creds.config_path", return_value=config_path_),
+        patch("redbrick.cli.command.report.CLIProject._context", rb_context),
+        patch.object(cli.report, "handle_report"),
     ):
         args = argparse.Namespace(command=cli.INFO, path=".", get=None, set=None)
         cli.report.handler(args)

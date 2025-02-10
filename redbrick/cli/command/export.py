@@ -152,7 +152,7 @@ class CLIExportController(CLIExportInterface):
         no_consensus = (
             self.args.no_consensus
             if self.args.no_consensus
-            else not self.project.project.consensus_enabled
+            else not self.project.project.is_consensus_enabled
         )
 
         cached_tasks: Set[str] = set()
@@ -178,7 +178,7 @@ class CLIExportController(CLIExportInterface):
         datapoint_count = self.project.project.context.export.datapoints_in_project(
             self.project.project.org_id, self.project.project.project_id, None
         )
-        datapoints = self.project.project.export._get_raw_data_latest(
+        datapoints = self.project.project.export.get_raw_data_latest(
             self.args.concurrency,
             None,
             cache_timestamp,

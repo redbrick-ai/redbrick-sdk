@@ -14,14 +14,14 @@ def get_middle_stages(
     consensus_settings: Optional[Dict[str, Any]] = None,
 ) -> List[Stage]:
     """Get label and review stages."""
-    consensus_enabled = bool((consensus_settings or {}).get("enabled"))
+    is_consensus_enabled = bool((consensus_settings or {}).get("enabled"))
     reviews = min(max(reviews, 0), 6)
     stages: List[Stage] = []
     stages.append(
         LabelStage(
-            stage_name="Consensus_Label" if consensus_enabled else "Label",
+            stage_name="Consensus_Label" if is_consensus_enabled else "Label",
             config=LabelStage.Config(
-                is_consensus_label=True if consensus_enabled else None
+                is_consensus_label=True if is_consensus_enabled else None
             ),
         )
     )
@@ -30,11 +30,11 @@ def get_middle_stages(
     for i in range(1, reviews + 1):
         stage = ReviewStage(
             stage_name=(
-                "Consensus_Best" if i == 1 and consensus_enabled else f"Review_{i}"
+                "Consensus_Best" if i == 1 and is_consensus_enabled else f"Review_{i}"
             ),
             on_reject=stages[0].stage_name,
             config=ReviewStage.Config(
-                is_consensus_merge=True if i == 1 and consensus_enabled else None
+                is_consensus_merge=True if i == 1 and is_consensus_enabled else None
             ),
         )
         stages.append(stage)

@@ -2,17 +2,16 @@
 
 from typing import List
 
-from redbrick.common.context import RBContext
-from redbrick.common.member import OrgInvite, OrgMember
+from redbrick.common.entities import RBOrganization
+from redbrick.common.member import OrgInvite, OrgMember, Team
 
 
-class Team:
+class TeamImpl(Team):
     """Primary interface to organization team."""
 
-    def __init__(self, context: RBContext, org_id: str) -> None:
+    def __init__(self, org: RBOrganization) -> None:
         """Construct Member object."""
-        self.context = context
-        self.org_id = org_id
+        self.org = org
 
     def _get_filtered_members(
         self, member_id: str, members: List[OrgMember]
@@ -66,7 +65,7 @@ class Team:
         -------------
         List[OrgMember]
         """
-        members = self.context.member.list_org_members(self.org_id)
+        members = self.org.context.member.list_org_members(self.org.org_id)
         return [OrgMember.from_entity(member) for member in members]
 
     def remove_member(self, member_id: str) -> None:
@@ -83,7 +82,7 @@ class Team:
             Unique member userId or email.
         """
         member = self.get_member(member_id)
-        self.context.member.remove_org_member(self.org_id, member.user_id)
+        self.org.context.member.remove_org_member(self.org.org_id, member.user_id)
 
     def list_invites(self) -> List[OrgInvite]:
         """Get a list of all pending or rejected invites.
@@ -97,7 +96,7 @@ class Team:
         -------------
         List[OrgInvite]
         """
-        invites = self.context.member.list_org_invites(self.org_id)
+        invites = self.org.context.member.list_org_invites(self.org.org_id)
         return [
             OrgInvite.from_entity(invite)
             for invite in invites
@@ -124,8 +123,8 @@ class Team:
         if invitation.status != OrgInvite.Status.PENDING:
             raise ValueError("New invitation must be in PENDING state")
 
-        invite = self.context.member.invite_org_user(
-            self.org_id, invitation.to_entity()
+        invite = self.org.context.member.invite_org_user(
+            self.org.org_id, invitation.to_entity()
         )
         return OrgInvite.from_entity(invite)
 
@@ -145,4 +144,6 @@ class Team:
         if invitation.status == OrgInvite.Status.ACCEPTED:
             raise ValueError("ACCEPTED invitations cannot be deleted")
 
-        self.context.member.delete_org_invitation(self.org_id, invitation.to_entity())
+        self.org.context.member.delete_org_invitation(
+            self.org.org_id, invitation.to_entity()
+        )

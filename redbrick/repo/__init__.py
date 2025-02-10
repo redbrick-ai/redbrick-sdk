@@ -1,9 +1,9 @@
 """Initialize repo module."""
 
-from .export import ExportRepo
-from .labeling import LabelingRepo
-from .upload import UploadRepo
-from .settings import SettingsRepo
-from .project import ProjectRepo
-from .workspace import WorkspaceRepo
-from .member import MemberRepo
+from .export import ExportRepoImpl
+from .labeling import LabelingRepoImpl
+from .upload import UploadRepoImpl
+from .settings import SettingsRepoImpl
+from .project import ProjectRepoImpl
+from .workspace import WorkspaceRepoImpl
+from .member import MemberRepoImpl

@@ -4,14 +4,14 @@ from typing import Optional, List, Dict, Tuple
 import aiohttp
 
 from redbrick.common.client import RBClient
-from redbrick.common.labeling import LabelingControllerInterface
+from redbrick.common.labeling import LabelingRepo
 
 
-class LabelingRepo(LabelingControllerInterface):
+class LabelingRepoImpl(LabelingRepo):
     """Implementation of manual labeling apis."""
 
     def __init__(self, client: RBClient) -> None:
-        """Construct ExportRepo."""
+        """Construct ExportRepoImpl."""
         self.client = client
 
     async def presign_labels_path(

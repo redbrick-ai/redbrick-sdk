@@ -7,7 +7,7 @@ from typing import Optional
 
 import nest_asyncio  # type: ignore
 
-from redbrick.common.context import RBContext
+from redbrick.common.context import RBContextImpl
 from redbrick.common.enums import (
     StorageMethod,
     ImportTypes,
@@ -16,11 +16,12 @@ from redbrick.common.enums import (
     TaskStates,
 )
 from redbrick.common.constants import DEFAULT_URL
-from redbrick.organization import RBOrganization
-from redbrick.workspace import RBWorkspace
-from redbrick.project import RBProject
-from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
+from redbrick.common.entities import RBOrganization, RBWorkspace, RBProject
 from redbrick.common.member import OrgMember, OrgInvite, ProjectMember
+from redbrick.organization import RBOrganizationImpl
+from redbrick.workspace import RBWorkspaceImpl
+from redbrick.project import RBProjectImpl
+from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
 
 from redbrick.utils.logging import logger
 from redbrick.utils.common_utils import config_migration
@@ -31,7 +32,7 @@ from .config import config
 from .version_check import version_check
 
 
-__version__ = "2.20.5"
+__version__ = "2.21.0"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -70,31 +71,6 @@ def version() -> str:
     return f"v{__version__}"
 
 
-def _populate_context(context: RBContext) -> RBContext:
-    # pylint: disable=import-outside-toplevel
-    from redbrick.repo import (
-        ExportRepo,
-        LabelingRepo,
-        UploadRepo,
-        SettingsRepo,
-        ProjectRepo,
-        WorkspaceRepo,
-        MemberRepo,
-    )
-
-    if context.config.debug:
-        logger.debug(f"Using: redbrick-sdk=={__version__}")
-
-    context.export = ExportRepo(context.client)
-    context.labeling = LabelingRepo(context.client)
-    context.upload = UploadRepo(context.client)
-    context.settings = SettingsRepo(context.client)
-    context.project = ProjectRepo(context.client)
-    context.workspace = WorkspaceRepo(context.client)
-    context.member = MemberRepo(context.client)
-    return context
-
-
 def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization:
     """
     Get an existing redbrick organization object.
@@ -115,8 +91,7 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
     url: str = DEFAULT_URL
         Should default to https://api.redbrickai.com
     """
-    context = _populate_context(RBContext(api_key=api_key, url=url))
-    return RBOrganization(context, org_id)
+    return RBOrganizationImpl(RBContextImpl(api_key=api_key, url=url), org_id)
 
 
 def get_workspace(
@@ -144,8 +119,9 @@ def get_workspace(
     url: str = DEFAULT_URL
         Should default to https://api.redbrickai.com
     """
-    context = _populate_context(RBContext(api_key=api_key, url=url))
-    return RBWorkspace(context, org_id, workspace_id)
+    return RBWorkspaceImpl(
+        RBContextImpl(api_key=api_key, url=url), org_id, workspace_id
+    )
 
 
 def get_project(
@@ -173,8 +149,7 @@ def get_project(
     url: str = DEFAULT_URL
         Should default to https://api.redbrickai.com
     """
-    context = _populate_context(RBContext(api_key=api_key, url=url))
-    return RBProject(context, org_id, project_id)
+    return RBProjectImpl(RBContextImpl(api_key=api_key, url=url), org_id, project_id)
 
 
 def get_org_from_profile(
@@ -194,7 +169,7 @@ def get_org_from_profile(
     from redbrick.cli.entity import CLICredentials
 
     creds = CLICredentials(profile=profile_name)
-    return RBOrganization(_populate_context(context=creds.context), creds.org_id)
+    return RBOrganizationImpl(creds.context, creds.org_id)
 
 
 def get_project_from_profile(
@@ -209,6 +184,7 @@ def get_project_from_profile(
     project_id: Optional[str] = None
         project id which has to be fetched.
         `None` is valid only when called within project directory.
+
     profile_name: str
         Name of the profile stored in the credentials file
     """
@@ -218,13 +194,11 @@ def get_project_from_profile(
 
     if project_id:
         creds = CLICredentials(profile=profile_name)
-        return RBProject(
-            _populate_context(context=creds.context), creds.org_id, project_id
-        )
+        return RBProjectImpl(creds.context, creds.org_id, project_id)
 
     cli_project = CLIProject.from_path(required=False, profile=profile_name)
     if cli_project:
-        return RBProject(
+        return RBProjectImpl(
             cli_project.context, cli_project.org_id, cli_project.project_id
         )
     raise ValueError(
@@ -237,7 +211,6 @@ __all__ = [
     "__version__",
     "config",
     "version",
-    "RBContext",
     "StorageMethod",
     "ImportTypes",
     "TaxonomyTypes",

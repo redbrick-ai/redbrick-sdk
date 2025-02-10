@@ -5,16 +5,16 @@ from typing import Any, List, Dict, Tuple, Optional
 from datetime import datetime
 
 from redbrick.common.client import RBClient
-from redbrick.common.project import ProjectRepoInterface
+from redbrick.common.project import ProjectRepo
 from redbrick.repo.shards import PROJECT_SHARD, STAGE_SHARD, TAXONOMY_SHARD
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
 
 
-class ProjectRepo(ProjectRepoInterface):
+class ProjectRepoImpl(ProjectRepo):
     """Class to manage interaction with project APIs."""
 
     def __init__(self, client: RBClient) -> None:
-        """Construct ProjectRepo."""
+        """Construct ProjectRepoImpl."""
         self.client = client
 
     def get_project(self, org_id: str, project_id: str) -> Dict:

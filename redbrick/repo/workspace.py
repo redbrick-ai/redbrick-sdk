@@ -4,15 +4,15 @@ import json
 from typing import Dict, List, Optional, Tuple
 
 from redbrick.common.client import RBClient
-from redbrick.common.workspace import WorkspaceRepoInterface
+from redbrick.common.workspace import WorkspaceRepo
 from redbrick.repo.shards import WORKSPACE_SHARD, datapoint_shard
 
 
-class WorkspaceRepo(WorkspaceRepoInterface):
+class WorkspaceRepoImpl(WorkspaceRepo):
     """Class to manage interaction with workspace APIs."""
 
     def __init__(self, client: RBClient) -> None:
-        """Construct WorkspaceRepo."""
+        """Construct WorkspaceRepoImpl."""
         self.client = client
 
     def get_workspaces(self, org_id: str) -> List[Dict]:

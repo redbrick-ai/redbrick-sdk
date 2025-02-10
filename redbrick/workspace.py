@@ -12,6 +12,7 @@ from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_exponential
 from redbrick.common.constants import PEERLESS_ERRORS
 
+from redbrick.common.entities import RBWorkspace
 from redbrick.common.context import RBContext
 from redbrick.types.task import InputTask
 from redbrick.upload.interact import upload_datapoints
@@ -21,13 +22,11 @@ from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_dicom_utils import dicom_dp_format
 
 
-class RBWorkspace:
+class RBWorkspaceImpl(RBWorkspace):
     """Interface for interacting with your RedBrick AI Workspaces."""
 
     def __init__(self, context: RBContext, org_id: str, workspace_id: str) -> None:
         """Construct RBWorkspace."""
-        # pylint: disable=import-outside-toplevel
-
         self.context = context
 
         self._org_id = org_id

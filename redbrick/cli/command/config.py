@@ -8,7 +8,6 @@ from rich.console import Console
 from rich.table import Table
 from rich.box import ROUNDED
 
-from redbrick import _populate_context
 from redbrick.config import config
 from redbrick.cli.input import (
     CLIInputAPIKey,
@@ -19,8 +18,8 @@ from redbrick.cli.input import (
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIConfigInterface
 from redbrick.common.constants import DEFAULT_URL
-from redbrick.common.context import RBContext
-from redbrick.organization import RBOrganization
+from redbrick.common.context import RBContextImpl
+from redbrick.organization import RBOrganizationImpl
 from redbrick.utils.logging import assert_validation
 
 
@@ -224,17 +223,15 @@ class CLIConfigController(CLIConfigInterface):
             ).get()
 
         profile_details = self.project.creds.get_profile(profile)
-        context = _populate_context(
-            RBContext(
-                api_key=profile_details["key"].strip(),
-                url=profile_details["url"].strip().rstrip("/"),
-            )
+        context = RBContextImpl(
+            api_key=profile_details["key"].strip(),
+            url=profile_details["url"].strip().rstrip("/"),
         )
 
         console = Console()
         with console.status("Fetching organization") as status:
             try:
-                org = RBOrganization(context, profile_details["org"])
+                org = RBOrganizationImpl(context, profile_details["org"])
             except Exception as error:
                 status.stop()
                 raise error

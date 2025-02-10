@@ -1,22 +1,17 @@
 """Public interface to settings module."""
 
 from typing import Optional
-from redbrick.common.context import RBContext
-from redbrick.common.settings import LabelValidation, HangingProtocol, Webhook
-from redbrick.types.taxonomy import Taxonomy
+
+from redbrick.common.entities import RBProject
+from redbrick.common.settings import Settings, LabelValidation, HangingProtocol, Webhook
 
 
-class Settings:
+class SettingsImpl(Settings):
     """Primary interface to project settings."""
 
-    def __init__(
-        self, context: RBContext, org_id: str, project_id: str, taxonomy: Taxonomy
-    ) -> None:
+    def __init__(self, project: RBProject) -> None:
         """Construct Settings object."""
-        self.context = context
-        self.org_id = org_id
-        self.project_id = project_id
-        self.taxonomy = taxonomy
+        self.project = project
 
     @property
     def label_validation(self) -> LabelValidation:
@@ -44,13 +39,15 @@ class Settings:
                 project.settings.label_validation = label_validation
 
         """
-        return self.context.settings.get_label_validation(self.org_id, self.project_id)
+        return self.project.context.settings.get_label_validation(
+            self.project.org_id, self.project.project_id
+        )
 
     @label_validation.setter
     def label_validation(self, label_validation: LabelValidation) -> None:
         """Label Validation."""
-        self.context.settings.set_label_validation(
-            self.org_id, self.project_id, label_validation
+        self.project.context.settings.set_label_validation(
+            self.project.org_id, self.project.project_id, label_validation
         )
 
     @property
@@ -80,13 +77,15 @@ class Settings:
                 project.settings.hanging_protocol = hanging_protocol
 
         """
-        return self.context.settings.get_hanging_protocol(self.org_id, self.project_id)
+        return self.project.context.settings.get_hanging_protocol(
+            self.project.org_id, self.project.project_id
+        )
 
     @hanging_protocol.setter
     def hanging_protocol(self, hanging_protocol: HangingProtocol) -> None:
         """Hanging Protocol."""
-        self.context.settings.set_hanging_protocol(
-            self.org_id, self.project_id, hanging_protocol
+        self.project.context.settings.set_hanging_protocol(
+            self.project.org_id, self.project.project_id, hanging_protocol
         )
 
     @property
@@ -114,7 +113,9 @@ class Settings:
                 project.settings.webhook = webhook
 
         """
-        return self.context.settings.get_webhook_settings(self.org_id, self.project_id)
+        return self.project.context.settings.get_webhook_settings(
+            self.project.org_id, self.project.project_id
+        )
 
     @webhook.setter
     def webhook(self, webhook: Webhook) -> None:
@@ -124,14 +125,14 @@ class Settings:
         else:
             webhook["url"] = None
 
-        self.context.settings.set_webhook_settings(
-            self.org_id, self.project_id, webhook
+        self.project.context.settings.set_webhook_settings(
+            self.project.org_id, self.project.project_id, webhook
         )
 
     def toggle_reference_standard_task(self, task_id: str, enable: bool) -> None:
         """Toggle reference standard task."""
-        self.context.settings.toggle_reference_standard_task(
-            self.org_id, self.project_id, task_id, enable
+        self.project.context.settings.toggle_reference_standard_task(
+            self.project.org_id, self.project.project_id, task_id, enable
         )
 
     @property
@@ -161,8 +162,8 @@ class Settings:
                 project.settings.task_duplication = count
 
         """
-        return self.context.settings.get_sibling_tasks_count(
-            self.org_id, self.project_id
+        return self.project.context.settings.get_sibling_tasks_count(
+            self.project.org_id, self.project.project_id
         )
 
     @task_duplication.setter
@@ -170,6 +171,6 @@ class Settings:
         """Hanging Protocol."""
         if not count or count <= 1:
             count = None
-        self.context.settings.set_sibling_tasks_count(
-            self.org_id, self.project_id, count
+        self.project.context.settings.set_sibling_tasks_count(
+            self.project.org_id, self.project.project_id, count
         )

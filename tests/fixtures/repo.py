@@ -19,7 +19,7 @@ datapoints_in_project_resp = {"tasksPaged": {"count": 7}}
 
 
 def get_datapoint_latest_resp(task_id):  # noqa: D103
-    """Mock response for `ExportRepo.get_datapoint_latest`"""
+    """Mock response for `ExportRepoImpl.get_datapoint_latest`"""
     resp = {
         "task": {
             "currentStageName": "Label",
@@ -493,7 +493,7 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
 
 
 def task_search_resp(mock_stage_name):  # noqa: D103
-    """Mock response for `ExportRepo.task_search`"""
+    """Mock response for `ExportRepoImpl.task_search`"""
     resp = {
         "genericTasks": {
             "entries": [
@@ -559,7 +559,7 @@ def task_search_resp(mock_stage_name):  # noqa: D103
 
 
 def presign_items_resp(items: t.Optional[t.List[str]] = None):
-    """Mock response for `ExportRepo.presign_items`"""
+    """Mock response for `ExportRepoImpl.presign_items`"""
     items = items or ["mock_item"]
     return {"presignItems": items}
 
@@ -837,7 +837,7 @@ task_events_resp = {
 
 
 def active_time_resp(mock_task_id: str):
-    """Mock response for `ExportRepo.active_time`"""
+    """Mock response for `ExportRepoImpl.active_time`"""
     resp = {
         "taskActiveTime": {
             "cursor": None,
