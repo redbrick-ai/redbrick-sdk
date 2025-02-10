@@ -50,9 +50,7 @@ def test_handler(tmpdir):
 
 @pytest.mark.unit
 @pytest.mark.parametrize("select_by_id", [True, False])
-def test_handle_clone(
-    project_and_conf_dirs, rb_context_full, monkeypatch, select_by_id
-):
+def test_handle_clone(project_and_conf_dirs, rb_context, monkeypatch, select_by_id):
     """Test `CLICloneController.handle_clone`"""
     project_path, config_path_ = project_and_conf_dirs
     monkeypatch.chdir(project_path)
@@ -62,7 +60,7 @@ def test_handle_clone(
 
     # prepare project config and creds
     _write_config(project_path, org_id, project_id=project_id)
-    _write_creds(config_path_, org_id, api_key=rb_context_full.client.api_key)
+    _write_creds(config_path_, org_id, api_key=rb_context.client.api_key)
 
     _, cli = public.cli_parser(only_parser=False)
 
@@ -93,24 +91,23 @@ def test_handle_clone(
             "consensusSettings": {"enabled": True},
         }
     ]
-    rb_context_full.project.get_org = functools.partial(
-        mock_method, response=mock_org_resp
-    )
-    rb_context_full.project.get_taxonomy = functools.partial(
+    rb_context.project.get_org = functools.partial(mock_method, response=mock_org_resp)
+    rb_context.project.get_taxonomy = functools.partial(
         mock_method, response=mock_tax_resp
     )
-    rb_context_full.project.get_project = functools.partial(
+    rb_context.project.get_project = functools.partial(
         mock_method, response=mock_projects_resp[0]
     )
-    rb_context_full.project.get_projects = functools.partial(
+    rb_context.project.get_projects = functools.partial(
         mock_method, response=mock_projects_resp
     )
-    rb_context_full.project.get_stages = functools.partial(mock_method, response=[])
+    rb_context.project.get_stages = functools.partial(mock_method, response=[])
     # pylint: enable=protected-access
 
-    with patch(
-        "redbrick.cli.entity.creds.config_path", return_value=config_path_
-    ), patch("redbrick.cli.command.clone.CLIProject._context", rb_context_full):
+    with (
+        patch("redbrick.cli.entity.creds.config_path", return_value=config_path_),
+        patch("redbrick.cli.command.clone.CLIProject._context", rb_context),
+    ):
         _project_desc = project_id if select_by_id else project_name
         cli.clone.args = argparse.Namespace(
             command=cli.CLONE, path=None, project=_project_desc

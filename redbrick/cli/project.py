@@ -5,11 +5,11 @@ from typing import Optional, cast
 
 from rich.console import Console
 
-from redbrick import _populate_context
-from redbrick.config import config
 from redbrick.common.context import RBContext
-from redbrick.organization import RBOrganization
-from redbrick.project import RBProject
+from redbrick.common.entities import RBOrganization, RBProject
+from redbrick.config import config
+from redbrick.organization import RBOrganizationImpl
+from redbrick.project import RBProjectImpl
 from redbrick.cli.entity import CLICache, CLIConfiguration, CLICredentials
 from redbrick.utils.logging import assert_validation, logger
 
@@ -79,7 +79,7 @@ class CLIProject:
     def context(self) -> RBContext:
         """Get RedBrick context."""
         if not self._context:
-            self._context = _populate_context(self.creds.context)
+            self._context = self.creds.context
         return self._context
 
     @property
@@ -103,7 +103,7 @@ class CLIProject:
             console = Console()
             with console.status("Fetching organization") as status:
                 try:
-                    self._org = RBOrganization(self.context, self.org_id)
+                    self._org = RBOrganizationImpl(self.context, self.org_id)
                 except Exception as error:
                     status.stop()
                     raise error
@@ -118,7 +118,7 @@ class CLIProject:
             console = Console()
             with console.status("Fetching project") as status:
                 try:
-                    self._project = RBProject(
+                    self._project = RBProjectImpl(
                         self.context, self.org_id, self.project_id
                     )
                 except Exception as error:

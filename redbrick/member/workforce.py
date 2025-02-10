@@ -1,18 +1,17 @@
 """Public interface to workforce controller."""
 
 from typing import Dict, List
-from redbrick.common.context import RBContext
-from redbrick.common.member import ProjectMember
+
+from redbrick.common.entities import RBProject
+from redbrick.common.member import ProjectMember, Workforce
 
 
-class Workforce:
+class WorkforceImpl(Workforce):
     """Primary interface to project workforce."""
 
-    def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
+    def __init__(self, project: RBProject) -> None:
         """Construct Member object."""
-        self.context = context
-        self.org_id = org_id
-        self.project_id = project_id
+        self.project = project
 
     def _get_filtered_members(
         self, member_id: str, members: List[ProjectMember]
@@ -31,7 +30,7 @@ class Workforce:
 
         if not filtered_members:
             raise ValueError(
-                f"Member {member_id} not found in project {self.project_id}"
+                f"Member {member_id} not found in project {self.project.project_id}"
             )
 
         if len(filtered_members) > 1:
@@ -73,7 +72,9 @@ class Workforce:
         -------------
         List[ProjectMember]
         """
-        members = self.context.member.list_project_members(self.org_id, self.project_id)
+        members = self.project.context.member.list_project_members(
+            self.project.org_id, self.project.project_id
+        )
         return [ProjectMember.from_entity(member) for member in members]
 
     def add_members(self, members: List[ProjectMember]) -> List[ProjectMember]:
@@ -105,7 +106,7 @@ class Workforce:
             )
             if filtered_members:
                 raise ValueError(
-                    f"Member {member.member_id} already exists in project {self.project_id}"
+                    f"Member {member.member_id} already exists in project {self.project.project_id}"
                 )
 
         return self.update_members(members)
@@ -132,7 +133,7 @@ class Workforce:
         if len(member_ids) != len(members):
             raise ValueError("Duplicate member IDs found in member list")
 
-        org_members = self.context.member.list_org_members(self.org_id)
+        org_members = self.project.context.member.list_org_members(self.project.org_id)
         org_user_map: Dict[str, str] = {}
         for org_member in org_members:
             org_user_map[org_member["user"]["userId"]] = org_member["user"]["userId"]
@@ -171,8 +172,8 @@ class Workforce:
                     }
                 )
 
-        self.context.member.update_project_memberships(
-            self.org_id, self.project_id, memberships
+        self.project.context.member.update_project_memberships(
+            self.project.org_id, self.project.project_id, memberships
         )
 
         new_members = self.list_members()
@@ -199,6 +200,6 @@ class Workforce:
             member = self._get_unique_member(member_id, prev_members)
             user_ids.append(member.member_id)
 
-        self.context.member.remove_project_members(
-            self.org_id, self.project_id, user_ids
+        self.project.context.member.remove_project_members(
+            self.project.org_id, self.project.project_id, user_ids
         )

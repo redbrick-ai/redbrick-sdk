@@ -4,16 +4,18 @@ import functools
 from inspect import signature
 import json
 import asyncio
-from typing import Callable, List, Dict, Optional, Any, Sequence, TypeVar, cast
+from typing import Callable, List, Dict, Optional, Any, TypeVar, cast
 from copy import deepcopy
 
 import aiohttp
 
+from redbrick.common.entities import RBProject
 from redbrick.common.constants import DUMMY_FILE_PATH
-from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
+from redbrick.common.labeling import Labeling
 from redbrick.stage import Stage
-from redbrick.types.taxonomy import Taxonomy
+from redbrick.stage.label import LabelStage
+from redbrick.stage.review import ReviewStage
 from redbrick.upload.interact import validate_json
 from redbrick.utils.upload import (
     convert_mhd_to_nii_labels,
@@ -33,7 +35,7 @@ def check_stage(func: TFun) -> TFun:
 
     @functools.wraps(func)
     def wrapper(
-        self: "Labeling", *args: Any, **kwargs: Any
+        self: "LabelingImpl", *args: Any, **kwargs: Any
     ) -> Optional[Callable[..., Any]]:
         func_args = dict(zip(list(signature(func).parameters.keys())[1:], args))
         func_args.update(kwargs)
@@ -50,8 +52,8 @@ def check_stage(func: TFun) -> TFun:
     return cast(TFun, wrapper)
 
 
-class Labeling:
-    r"""
+class LabelingImpl(Labeling):
+    """
     Perform programmatic labeling and review tasks.
 
     The Labeling class allows you to programmatically submit tasks.
@@ -67,26 +69,18 @@ class Labeling:
       - :obj:`assign_tasks`.
         Use this method when you already have
         the ``task_ids`` you want to assign to a particular user. If you don't have the
-        ``task_ids``, you can query the tasks using :obj:`~redbrick.export.Export.list_tasks`.
-
+        ``task_ids``, you can query the tasks using :obj:`~redbrick.common.export.Export.list_tasks`.
     """
 
-    def __init__(
-        self,
-        context: RBContext,
-        org_id: str,
-        project_id: str,
-        taxonomy: Taxonomy,
-        stages: Sequence[Stage],
-        review: bool = False,
-    ) -> None:
+    def __init__(self, project: RBProject, review: bool = False) -> None:
         """Construct Labeling."""
-        self.context = context
-        self.org_id = org_id
-        self.project_id = project_id
-        self.taxonomy = taxonomy
-        self.stages = stages
+        self.project = project
         self.review = review
+        self.stages: List[Stage] = [
+            stage
+            for stage in self.project.stages
+            if isinstance(stage, ReviewStage if review else LabelStage)
+        ]
 
     async def _put_task(
         self,
@@ -105,29 +99,29 @@ class Labeling:
         task_id = task["taskId"]
         try:
             if self.review and review_result is not None:
-                await self.context.labeling.put_review_task_result(
+                await self.project.context.labeling.put_review_task_result(
                     session,
-                    self.org_id,
-                    self.project_id,
+                    self.project.org_id,
+                    self.project.project_id,
                     stage_name,
                     task_id,
                     review_result,
                 )
             elif not self.review and existing_labels:
-                await self.context.labeling.put_labeling_task_result(
+                await self.project.context.labeling.put_labeling_task_result(
                     session,
-                    self.org_id,
-                    self.project_id,
+                    self.project.org_id,
+                    self.project.project_id,
                     stage_name,
                     task_id,
                 )
             else:
                 try:
                     labels_data_path, labels_map = await process_segmentation_upload(
-                        self.context,
+                        self.project.context,
                         session,
-                        self.org_id,
-                        self.project_id,
+                        self.project.org_id,
+                        self.project.project_id,
                         task,
                         label_storage_id,
                         project_label_storage_id,
@@ -140,10 +134,10 @@ class Labeling:
                     )
                     return {"error": err}
 
-                await self.context.labeling.put_labeling_results(
+                await self.project.context.labeling.put_labeling_results(
                     session,
-                    self.org_id,
-                    self.project_id,
+                    self.project.org_id,
+                    self.project.project_id,
                     stage_name,
                     task_id,
                     (
@@ -218,7 +212,7 @@ class Labeling:
 
         Use this method to programmatically submit tasks with labels in `Label stage`, or to
         programmatically accept/reject/correct tasks in a `Review stage`. If you don't already
-        have a list of ``task_id``, you can use :obj:`~redbrick.export.Export.list_tasks` to
+        have a list of ``task_id``, you can use :obj:`~redbrick.common.export.Export.list_tasks` to
         get a filtered list of tasks in your project, that you want to work upon.
 
         .. tab:: Label
@@ -353,8 +347,8 @@ class Labeling:
                 logger.warning(f"Invalid task format {point}")
                 failed_tasks.append(point)  # type: ignore
 
-        project_label_storage_id, _ = self.context.project.get_label_storage(
-            self.org_id, self.project_id
+        project_label_storage_id, _ = self.project.context.project.get_label_storage(
+            self.project.org_id, self.project.project_id
         )
         if with_labels:
             if rt_struct:
@@ -363,9 +357,9 @@ class Labeling:
                         concurrency,
                         *[
                             convert_rt_struct_to_nii_labels(
-                                self.context,
-                                self.org_id,
-                                self.taxonomy,
+                                self.project.context,
+                                self.project.org_id,
+                                self.project.taxonomy,
                                 [task],
                                 StorageMethod.REDBRICK,
                                 label_storage_id or project_label_storage_id,
@@ -383,8 +377,8 @@ class Labeling:
                         concurrency,
                         *[
                             convert_mhd_to_nii_labels(
-                                self.context,
-                                self.org_id,
+                                self.project.context,
+                                self.project.org_id,
                                 [task],
                                 StorageMethod.REDBRICK,
                             )
@@ -396,7 +390,7 @@ class Labeling:
 
             validated = asyncio.run(
                 validate_json(
-                    self.context,
+                    self.project.context,
                     with_labels,  # type: ignore
                     StorageMethod.REDBRICK,
                     concurrency,
@@ -482,9 +476,9 @@ class Labeling:
             List of affected tasks.
                 >>> [{"taskId", "name", "stageName"}]
         """
-        return self.context.labeling.assign_tasks(
-            self.org_id,
-            self.project_id,
+        return self.project.context.labeling.assign_tasks(
+            self.project.org_id,
+            self.project.project_id,
             task_ids,
             [email] if email else None,
             False,
@@ -494,8 +488,8 @@ class Labeling:
     async def _tasks_to_start(self, task_ids: List[str]) -> None:
         async with get_session() as session:
             coros = [
-                self.context.labeling.move_task_to_start(
-                    session, self.org_id, self.project_id, task_id
+                self.project.context.labeling.move_task_to_start(
+                    session, self.project.org_id, self.project.project_id, task_id
                 )
                 for task_id in task_ids
             ]

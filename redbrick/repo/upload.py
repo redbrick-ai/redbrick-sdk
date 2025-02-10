@@ -6,15 +6,15 @@ from typing import List, Dict, Optional, Any, Sequence
 import aiohttp
 
 from redbrick.common.client import RBClient
-from redbrick.common.upload import UploadControllerInterface
+from redbrick.common.upload import UploadRepo
 from redbrick.types.task import InputTask
 
 
-class UploadRepo(UploadControllerInterface):
+class UploadRepoImpl(UploadRepo):
     """Handle communication with backend relating to uploads."""
 
     def __init__(self, client: RBClient) -> None:
-        """Construct ExportRepo."""
+        """Construct ExportRepoImpl."""
         self.client = client
 
     async def create_datapoint_async(

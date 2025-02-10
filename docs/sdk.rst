@@ -15,18 +15,21 @@ RedBrick
 
 Organization
 ----------------------
-.. autoclass:: redbrick.organization.RBOrganization
-   :members: name, org_id, create_workspace, create_project, create_project_advanced, get_project, projects_raw, projects, members, delete_project, taxonomies, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy, delete_taxonomy
+.. autoclass:: redbrick.RBOrganization
+   :members: name, org_id, create_workspace, create_project, create_project_advanced, get_project, workspaces_raw, projects_raw, projects, delete_project, taxonomies, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy, delete_taxonomy
+   :show-inheritance:
 
 Team
 ----------------------
-.. autoclass:: redbrick.member.Team
+.. autoclass:: redbrick.common.member.Team
    :members: get_member, list_members, remove_member, list_invites, invite_user, revoke_invitation
    :show-inheritance:
 
+.. _workspace:
+
 Workspace
 ----------------------
-.. autoclass:: redbrick.workspace.RBWorkspace
+.. autoclass:: redbrick.RBWorkspace
    :members: name, org_id, workspace_id, metadata_schema, classification_schema, cohorts, update_schema, update_cohorts, get_datapoints, create_datapoints, archive_datapoints, unarchive_datapoints, delete_datapoints, add_datapoints_to_cohort, add_datapoints_to_projects, remove_datapoints_from_cohort, update_datapoint_attributes, update_datapoints_metadata
    :show-inheritance:
 
@@ -34,36 +37,36 @@ Workspace
 
 Project
 ----------------------
-.. autoclass:: redbrick.project.RBProject
-   :members: name, org_id, project_id, url, taxonomy_name, taxonomy, workspace_id, label_storage, stages, members, set_label_storage, update_stage
+.. autoclass:: redbrick.RBProject
+   :members: name, org_id, project_id, url, taxonomy_name, taxonomy, workspace_id, label_storage, stages, set_label_storage, update_stage
    :show-inheritance:
 
 Export
 ----------------------
-.. autoclass:: redbrick.export.Export
+.. autoclass:: redbrick.common.export.Export
    :members: export_tasks, list_tasks, get_task_events, get_active_time
    :show-inheritance:
 
 Upload
 ----------------------
-.. autoclass:: redbrick.upload.Upload
+.. autoclass:: redbrick.common.upload.Upload
    :members: create_datapoints, delete_tasks, delete_tasks_by_name, update_task_items, import_tasks_from_workspace, update_tasks_priority, update_tasks_labels, send_tasks_to_stage
    :show-inheritance:
 
 Labeling
 ----------------------
-.. autoclass:: redbrick.labeling.Labeling
+.. autoclass:: redbrick.common.labeling.Labeling
    :members: put_tasks, assign_tasks, move_tasks_to_start
    :show-inheritance:
 
 Settings
 ----------------------
-.. autoclass:: redbrick.settings.Settings
+.. autoclass:: redbrick.common.settings.Settings
    :members: label_validation, hanging_protocol, webhook, toggle_reference_standard_task, task_duplication
    :show-inheritance:
 
 Workforce
 ----------------------
-.. autoclass:: redbrick.member.Workforce
+.. autoclass:: redbrick.common.member.Workforce
    :members: get_member, list_members, add_members, update_members, remove_members
    :show-inheritance:

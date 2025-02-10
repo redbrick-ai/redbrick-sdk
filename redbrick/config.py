@@ -6,7 +6,7 @@ import os
 from typing_extensions import Required  # type: ignore
 
 
-class Config:
+class RBConfig:
     """Basic redbrick config."""
 
     class ConfigOptions(TypedDict):
@@ -28,7 +28,7 @@ class Config:
 
     def __init__(self) -> None:
         """Define configs."""
-        self._options: Config.ConfigOptions = {
+        self._options: RBConfig.ConfigOptions = {
             "check_version": lambda: not bool(
                 os.environ.get("REDBRICK_DISABLE_VERSION_CHECK")
             ),
@@ -44,11 +44,19 @@ class Config:
         logger.setLevel(
             logging.DEBUG if self._options["debug"]() else self._options["log_level"]()
         )
-        self._state: Config.ConfigState = {"logger": logger}
+        self._state: RBConfig.ConfigState = {"logger": logger}
 
     def __repr__(self) -> str:
         """Class repr."""
         return str({option: self.__getattribute__(option) for option in self._options})
+
+    @property
+    def version(self) -> str:
+        """Get redbrick sdk version."""
+        # pylint: disable=import-outside-toplevel, cyclic-import
+        from redbrick import __version__ as sdk_version
+
+        return sdk_version
 
     @property
     def check_version(self) -> bool:
@@ -139,6 +147,6 @@ class Config:
         return self.log_level <= logging.INFO
 
 
-config = Config()
+config = RBConfig()
 
 __all__ = ["config"]

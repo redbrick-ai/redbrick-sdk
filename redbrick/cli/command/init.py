@@ -10,7 +10,7 @@ from redbrick.config import config
 from redbrick.cli.input import CLIInputNumber, CLIInputSelect, CLIInputText
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIInitInterface
-from redbrick.organization import RBOrganization
+from redbrick.organization import RBOrganizationImpl
 from redbrick.utils.logging import assert_validation
 
 
@@ -69,7 +69,9 @@ class CLIInitController(CLIInitInterface):
         console = Console()
         with console.status("Fetching organization") as status:
             try:
-                org = RBOrganization(self.project.context, self.project.creds.org_id)
+                org = RBOrganizationImpl(
+                    self.project.context, self.project.creds.org_id
+                )
             except Exception as error:
                 status.stop()
                 raise error

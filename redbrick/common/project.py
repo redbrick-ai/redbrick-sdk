@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
 
 
-class ProjectRepoInterface(ABC):
+class ProjectRepo(ABC):
     """Abstract interface to Project APIs."""
 
     @abstractmethod

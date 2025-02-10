@@ -12,8 +12,8 @@ import tenacity
 from tenacity.stop import stop_after_attempt
 import tqdm  # type: ignore
 
-from redbrick.common.constants import DUMMY_FILE_PATH, MAX_CONCURRENCY
 from redbrick.config import config
+from redbrick.common.constants import DUMMY_FILE_PATH, MAX_CONCURRENCY
 from redbrick.common.context import RBContext
 from redbrick.common.enums import StorageMethod
 from redbrick.types.task import InputTask

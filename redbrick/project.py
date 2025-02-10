@@ -8,20 +8,21 @@ import tenacity
 from tenacity.retry import retry_if_not_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_exponential
-from redbrick.common.constants import PEERLESS_ERRORS
 
+from redbrick.common.constants import PEERLESS_ERRORS
 from redbrick.common.context import RBContext
+from redbrick.common.entities import RBProject
 from redbrick.common.enums import StorageMethod
-from redbrick.stage import Stage, LabelStage, ReviewStage, get_stage_objects
+from redbrick.stage import Stage, get_stage_objects
 from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.logging import logger
 
 
-class RBProject:
+class RBProjectImpl(RBProject):
     """
     Representation of RedBrick project.
 
-    The :attr:`redbrick.project.RBProject` object allows you to programmatically interact with
+    The :attr:`redbrick.RBProject` object allows you to programmatically interact with
     your RedBrick project. You can upload data, assign tasks, and query your data with this object. Retrieve the project object in the following way:
 
     .. code:: python
@@ -31,12 +32,12 @@ class RBProject:
 
     def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
         """Construct RBProject."""
-        # pylint: disable=import-outside-toplevel
-        from redbrick.upload import Upload
-        from redbrick.labeling import Labeling
-        from redbrick.export import Export
-        from redbrick.settings import Settings
-        from redbrick.member import Workforce
+        # pylint: disable=import-outside-toplevel, cyclic-import
+        from redbrick.upload import UploadImpl
+        from redbrick.labeling import LabelingImpl
+        from redbrick.export import ExportImpl
+        from redbrick.settings import SettingsImpl
+        from redbrick.member import WorkforceImpl
 
         self.context = context
 
@@ -50,7 +51,7 @@ class RBProject:
         self._created_at: datetime
         self._workspace_id: Optional[str]
 
-        self.consensus_enabled: bool = False
+        self.is_consensus_enabled: bool = False
         self._label_storage: Optional[Tuple[str, str]] = None
 
         self._taxonomy: Optional[Taxonomy] = None
@@ -59,40 +60,19 @@ class RBProject:
         self._get_project()
 
         # check if project taxonomy is valid
-        taxonomy = self.taxonomy
-
-        self.upload = Upload(context, org_id, project_id, taxonomy)
+        _ = self.taxonomy
 
         self.output_stage_name: str = "Output"
         for stage in self._stages:
             if stage["brickName"] == "labelset-output":
                 self.output_stage_name = stage["stageName"]
 
-        label_stages: List[LabelStage] = []
-        review_stages: List[ReviewStage] = []
-        stages = self.stages
-        for stg in stages:
-            if isinstance(stg, LabelStage):
-                label_stages.append(stg)
-            elif isinstance(stg, ReviewStage):
-                review_stages.append(stg)
-
-        self.labeling = Labeling(context, org_id, project_id, taxonomy, label_stages)
-        self.review = Labeling(
-            context, org_id, project_id, taxonomy, review_stages, review=True
-        )
-        self.export = Export(
-            context,
-            org_id,
-            project_id,
-            taxonomy,
-            self.output_stage_name,
-            self.consensus_enabled,
-            label_stages,
-            review_stages,
-        )
-        self.settings = Settings(context, org_id, project_id, taxonomy)
-        self.workforce = Workforce(context, org_id, project_id)
+        self.upload = UploadImpl(self)
+        self.labeling = LabelingImpl(self)
+        self.review = LabelingImpl(self, review=True)
+        self.export = ExportImpl(self)
+        self.settings = SettingsImpl(self)
+        self.workforce = WorkforceImpl(self)
 
     @property
     def org_id(self) -> str:
@@ -242,7 +222,7 @@ class RBProject:
         self._stages = self.context.project.get_stages(self.org_id, self.project_id)
         self._project_url = project["projectUrl"]
         self._created_at = parser.parse(project["createdAt"])
-        self.consensus_enabled = project["consensusSettings"]["enabled"]
+        self.is_consensus_enabled = project["consensusSettings"]["enabled"]
 
     def __str__(self) -> str:
         """Get string representation of RBProject object."""

@@ -4,18 +4,18 @@ from typing import Dict, Optional
 
 from redbrick.common.client import RBClient
 from redbrick.common.settings import (
-    SettingsControllerInterface,
+    SettingsRepo,
     LabelValidation,
     HangingProtocol,
     Webhook,
 )
 
 
-class SettingsRepo(SettingsControllerInterface):
+class SettingsRepoImpl(SettingsRepo):
     """Class to manage interaction with project settings APIs."""
 
     def __init__(self, client: RBClient) -> None:
-        """Construct SettingsRepo."""
+        """Construct SettingsRepoImpl."""
         self.client = client
 
     def get_label_validation(self, org_id: str, project_id: str) -> LabelValidation:

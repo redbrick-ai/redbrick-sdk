@@ -3,15 +3,15 @@
 from typing import Dict, List
 
 from redbrick.common.client import RBClient
-from redbrick.common.member import MemberControllerInterface
+from redbrick.common.member import MemberRepo
 from redbrick.repo.shards import ORG_INVITE_SHARD, ORG_MEMBER_SHARD
 
 
-class MemberRepo(MemberControllerInterface):
+class MemberRepoImpl(MemberRepo):
     """Class to manage interaction with member APIs."""
 
     def __init__(self, client: RBClient) -> None:
-        """Construct MemberRepo."""
+        """Construct MemberRepoImpl."""
         self.client = client
 
     def list_org_members(self, org_id: str) -> List[Dict]:

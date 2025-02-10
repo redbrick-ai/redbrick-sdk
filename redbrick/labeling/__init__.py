@@ -1,3 +1,3 @@
 """Module for interacting with labeling stages."""
 
-from .public import Labeling
+from .public import LabelingImpl

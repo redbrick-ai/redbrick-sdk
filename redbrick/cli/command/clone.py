@@ -10,8 +10,8 @@ from redbrick.config import config
 from redbrick.cli.input.select import CLIInputSelect
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLICloneInterface
-from redbrick.organization import RBOrganization
-from redbrick.project import RBProject
+from redbrick.organization import RBOrganizationImpl
+from redbrick.project import RBProjectImpl
 from redbrick.utils.logging import assert_validation
 
 
@@ -55,7 +55,7 @@ class CLICloneController(CLICloneInterface):
         console = Console()
         with console.status("Fetching organization") as status:
             try:
-                org = RBOrganization(temp.context, temp.creds.org_id)
+                org = RBOrganizationImpl(temp.context, temp.creds.org_id)
             except Exception as error:
                 status.stop()
                 raise error
@@ -106,5 +106,5 @@ class CLICloneController(CLICloneInterface):
 
         project = CLIProject(path=path, required=False)
         project.initialize_project(
-            org, RBProject(org.context, org.org_id, project_ids[selected_index])
+            org, RBProjectImpl(org.context, org.org_id, project_ids[selected_index])
         )

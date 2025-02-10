@@ -14,9 +14,9 @@ from uuid import uuid4
 import tqdm  # type: ignore
 
 from redbrick.config import config
-from redbrick.common.context import RBContext
+from redbrick.common.entities import RBProject
 from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
-from redbrick.common.export import TaskFilterParams
+from redbrick.common.export import Export, TaskFilterParams
 from redbrick.stage import LabelStage, ReviewStage
 from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.common_utils import config_path
@@ -40,17 +40,17 @@ from redbrick.utils.rb_label_utils import (
     assignee_format,
 )
 from redbrick.utils.rb_event_utils import task_event_format
-from redbrick.types.task import OutputTask as TypeTask, Series as TypeTaskSeries
+from redbrick.types.task import OutputTask, Series
 
 
 # pylint: disable=too-many-lines
 
 
-class Export:
+class ExportImpl(Export):
     """
     Primary interface for various export methods.
 
-    The export module has many functions for exporting annotations and meta-data from projects. The export module is available from the :attr:`redbrick.project.RBProject` module.
+    The export module has many functions for exporting annotations and meta-data from projects. The export module is available from the :attr:`redbrick.RBProject` module.
 
     .. code:: python
 
@@ -58,28 +58,11 @@ class Export:
         >>> project.export # Export
     """
 
-    def __init__(
-        self,
-        context: RBContext,
-        org_id: str,
-        project_id: str,
-        taxonomy: Taxonomy,
-        output_stage_name: str,
-        consensus_enabled: bool,
-        label_stages: List[LabelStage],
-        review_stages: List[ReviewStage],
-    ) -> None:
+    def __init__(self, project: RBProject) -> None:
         """Construct Export object."""
-        self.context = context
-        self.org_id = org_id
-        self.project_id = project_id
-        self.taxonomy = taxonomy
-        self.output_stage_name = output_stage_name
-        self.consensus_enabled = consensus_enabled
-        self.label_stages = label_stages
-        self.review_stages = review_stages
+        self.project = project
 
-    def _get_raw_data_latest(
+    def get_raw_data_latest(
         self,
         concurrency: int,
         stage_name: Optional[str] = None,
@@ -88,11 +71,16 @@ class Export:
         with_consensus: bool = False,
         task_id: Optional[str] = None,
     ) -> Iterator[Dict]:
+        """Get raw task data."""
         # pylint: disable=too-many-locals
         if task_id:
             logger.info(f"Fetching task: {task_id}")
-            val = self.context.export.get_datapoint_latest(
-                self.org_id, self.project_id, task_id, presign_items, with_consensus
+            val = self.project.context.export.get_datapoint_latest(
+                self.project.org_id,
+                self.project.project_id,
+                task_id,
+                presign_items,
+                with_consensus,
             )
             task = parse_entry_latest(val)
             yield task
@@ -100,9 +88,9 @@ class Export:
 
         my_iter = PaginationIterator(
             partial(  # type: ignore
-                self.context.export.get_datapoints_latest,
-                self.org_id,
-                self.project_id,
+                self.project.context.export.get_datapoints_latest,
+                self.project.org_id,
+                self.project.project_id,
                 stage_name,
                 (
                     datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
@@ -156,7 +144,7 @@ class Export:
             trail = parent + [category["name"]]
             key = "::".join(trail[1:])
             class_id[key] = category["classId"] + 1
-            color_map[key] = Export._get_color(
+            color_map[key] = ExportImpl._get_color(
                 category["classId"],
                 (
                     next(
@@ -172,12 +160,12 @@ class Export:
                     else None
                 ),
             )
-            Export.tax_class_id_mapping(
+            ExportImpl.tax_class_id_mapping(
                 trail, category["children"], class_id, color_map, taxonomy_color
             )
 
     @staticmethod
-    def _get_task_series(task: TypeTask) -> List[TypeTaskSeries]:
+    def _get_task_series(task: OutputTask) -> List[Series]:
         return (
             (  # type: ignore
                 task.get("series")
@@ -194,14 +182,14 @@ class Export:
 
     async def _download_task(
         self,
-        original_task: TypeTask,
+        original_task: OutputTask,
         storage_id: str,
         taxonomy: Taxonomy,
         image_dir: str,
         dcm_to_nii: bool,
         rt_struct: bool,
         semantic_mask: bool,
-    ) -> TypeTask:
+    ) -> OutputTask:
         # pylint: disable=too-many-locals, import-outside-toplevel, too-many-nested-blocks
         task, series_dirs = await self._download_task_items(
             original_task, storage_id, image_dir, taxonomy, rt_struct, semantic_mask
@@ -231,7 +219,7 @@ class Export:
             + r")(\.gz)?$"
         )
 
-        task_series = Export._get_task_series(task)
+        task_series = ExportImpl._get_task_series(task)
         if not task_series or len(task_series) != len(series_dirs):
             return task
 
@@ -300,13 +288,13 @@ class Export:
 
     async def _download_task_items(
         self,
-        task: TypeTask,
+        task: OutputTask,
         storage_id: str,
         parent_dir: str,
         taxonomy: Taxonomy,
         rt_struct: bool,
         semantic_mask: bool,
-    ) -> Tuple[TypeTask, List[str]]:
+    ) -> Tuple[OutputTask, List[str]]:
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         path_pattern = re.compile(r"[^\w.]+")
         task_name = re.sub(path_pattern, "-", task.get("name", "")) or task.get(
@@ -323,7 +311,7 @@ class Export:
         items_lists: List[List[str]] = []
 
         try:  # pylint: disable=too-many-nested-blocks
-            task_series = Export._get_task_series(task)
+            task_series = ExportImpl._get_task_series(task)
             if task_series:
                 for series_idx, series in enumerate(task_series):
                     series_dir = os.path.join(
@@ -389,8 +377,8 @@ class Export:
                         )
                     )
 
-            presigned = self.context.export.presign_items(
-                self.org_id, storage_id, to_presign
+            presigned = self.project.context.export.presign_items(
+                self.project.org_id, storage_id, to_presign
             )
 
             if any(not presigned_path for presigned_path in presigned):
@@ -531,7 +519,7 @@ class Export:
         png_mask: bool,
         mhd_mask: bool,
         taxonomy: Taxonomy,
-    ) -> TypeTask:
+    ) -> OutputTask:
         """Process labels."""
         # pylint: disable=too-many-locals
         task = copy.deepcopy(datapoint)
@@ -633,7 +621,7 @@ class Export:
             taxonomy,
             old_format,
             no_consensus,
-            self.review_stages,
+            [stage for stage in self.project.stages if isinstance(stage, ReviewStage)],
             segmentation_dir is None,
         )
 
@@ -644,8 +632,8 @@ class Export:
         if not presign_paths:
             return
 
-        presigned_urls = self.context.export.presign_items(
-            self.org_id, task["labelStorageId"], presign_paths
+        presigned_urls = self.project.context.export.presign_items(
+            self.project.org_id, task["labelStorageId"], presign_paths
         )
 
         dirname = os.path.join(config_path(), "temp", str(uuid4()))
@@ -693,8 +681,8 @@ class Export:
         # pylint: disable=too-many-branches, too-many-statements
         from redbrick.utils.dicom import process_download
 
-        presigned = self.context.export.presign_items(
-            self.org_id, task["labelStorageId"], presign_paths
+        presigned = self.project.context.export.presign_items(
+            self.project.org_id, task["labelStorageId"], presign_paths
         )
 
         path_pattern = re.compile(r"[^\w.]+")
@@ -816,7 +804,7 @@ class Export:
                 object_types = taxonomy.get("objectTypes", []) or []
                 for object_type in object_types:
                     if object_type["labelType"] == "SEGMENTATION":
-                        color = Export._get_color(0, object_type["color"])  # type: ignore
+                        color = ExportImpl._get_color(0, object_type["color"])  # type: ignore
                         color_map[object_type["classId"]] = color
 
                         category: str = object_type["category"]
@@ -824,7 +812,7 @@ class Export:
                             category += f' ({object_type["classId"]})'
                         class_map[category] = color
             else:
-                Export.tax_class_id_mapping(
+                ExportImpl.tax_class_id_mapping(
                     [taxonomy["categories"][0]["name"]],  # type: ignore
                     taxonomy["categories"][0]["children"],  # type: ignore
                     {},
@@ -852,7 +840,7 @@ class Export:
         rt_struct: bool,
         mhd_mask: bool,
         get_task: bool,
-    ) -> Optional[TypeTask]:
+    ) -> Optional[OutputTask]:
         """Export nifti label maps."""
         # pylint: disable=too-many-locals
         task = await self.process_labels(
@@ -918,7 +906,7 @@ class Export:
         rt_struct: bool = False,
         mhd: bool = False,
         destination: Optional[str] = None,
-    ) -> Iterator[TypeTask]:
+    ) -> Iterator[OutputTask]:
         """Export annotation data.
 
         Meta-data and category information returned as an Object. Segmentations are written to
@@ -1010,11 +998,13 @@ class Export:
         # pylint: disable=too-many-locals
 
         no_consensus = (
-            no_consensus if no_consensus is not None else not self.consensus_enabled
+            no_consensus
+            if no_consensus is not None
+            else not self.project.is_consensus_enabled
         )
 
         # Create output directory
-        destination = destination or self.project_id
+        destination = destination or self.project.project_id
 
         image_dir: Optional[str] = None
         if with_files or rt_struct:
@@ -1034,7 +1024,9 @@ class Export:
                 os.makedirs(destination, exist_ok=True)
 
         coloured_png = png and not binary_mask
-        class_map, color_map = self.preprocess_export(self.taxonomy, coloured_png)
+        class_map, color_map = self.preprocess_export(
+            self.project.taxonomy, coloured_png
+        )
 
         if coloured_png:
             with open(
@@ -1042,7 +1034,7 @@ class Export:
             ) as classes_file:
                 json.dump(class_map, classes_file, indent=2)
 
-        datapoints = self._get_raw_data_latest(
+        datapoints = self.get_raw_data_latest(
             concurrency,
             "END" if only_ground_truth else stage_name,
             None if task_id else from_timestamp,
@@ -1055,10 +1047,10 @@ class Export:
             os.remove(task_file)
 
         for datapoint in datapoints:
-            task: TypeTask = asyncio.run(
+            task: OutputTask = asyncio.run(
                 self.export_nifti_label_data(  # type: ignore
                     datapoint,
-                    self.taxonomy,
+                    self.project.taxonomy,
                     task_file,
                     image_dir,
                     segmentation_dir,
@@ -1161,9 +1153,16 @@ class Export:
             }]
         """
         # pylint: disable=too-many-branches, too-many-locals, too-many-statements
-        label_stages: List[str] = [stage.stage_name for stage in self.label_stages]
-        review_stages: List[str] = [stage.stage_name for stage in self.review_stages]
-        all_stages: List[str] = label_stages + review_stages + [self.output_stage_name]
+        stages = self.project.stages
+        label_stages: List[str] = [
+            stage.stage_name for stage in stages if isinstance(stage, LabelStage)
+        ]
+        review_stages: List[str] = [
+            stage.stage_name for stage in stages if isinstance(stage, ReviewStage)
+        ]
+        all_stages: List[str] = (
+            label_stages + review_stages + [self.project.output_stage_name]
+        )
 
         filters: TaskFilterParams = TaskFilterParams()
 
@@ -1181,7 +1180,7 @@ class Export:
             stage_name = None
             filters.pop("userId", None)
         elif search == TaskFilters.GROUNDTRUTH:
-            stage_name = self.output_stage_name
+            stage_name = self.project.output_stage_name
             filters.pop("userId", None)
         elif search == TaskFilters.UNASSIGNED:
             stage_name = stage_name or all_stages[0]
@@ -1221,7 +1220,9 @@ class Export:
         else:
             raise ValueError(f"Invalid task filter: {search}")
 
-        members = self.context.member.list_project_members(self.org_id, self.project_id)
+        members = self.project.context.member.list_project_members(
+            self.project.org_id, self.project.project_id
+        )
         users = {}
         for member in members:
             user = member.get("member", {}).get("user", {})
@@ -1230,9 +1231,9 @@ class Export:
 
         my_iter = PaginationIterator(
             partial(  # type: ignore
-                self.context.export.task_search,
-                self.org_id,
-                self.project_id,
+                self.project.context.export.task_search,
+                self.project.org_id,
+                self.project.project_id,
                 stage_name,
                 task_name,
                 filters,
@@ -1339,7 +1340,9 @@ class Export:
             }]
         """
         # pylint: disable=too-many-locals
-        members = self.context.member.list_project_members(self.org_id, self.project_id)
+        members = self.project.context.member.list_project_members(
+            self.project.org_id, self.project.project_id
+        )
         users = {}
         for member in members:
             user = member.get("member", {}).get("user", {})
@@ -1348,9 +1351,9 @@ class Export:
 
         my_iter = PaginationIterator(
             partial(  # type: ignore
-                self.context.export.task_events,
-                self.org_id,
-                self.project_id,
+                self.project.context.export.task_events,
+                self.project.org_id,
+                self.project.project_id,
                 task_id,
                 "END" if only_ground_truth else None,
                 (
@@ -1371,10 +1374,14 @@ class Export:
                         continue
                     labels = dicom_rb_format(
                         event["labels"],
-                        self.taxonomy,
+                        self.project.taxonomy,
                         False,
                         True,
-                        self.review_stages,
+                        [
+                            stage
+                            for stage in self.project.stages
+                            if isinstance(stage, ReviewStage)
+                        ],
                         True,
                     )
                     event["labels"] = {"series": labels.get("series") or []}
@@ -1419,7 +1426,9 @@ class Export:
                 "cycle": number  # Task cycle
             }]
         """
-        members = self.context.member.list_project_members(self.org_id, self.project_id)
+        members = self.project.context.member.list_project_members(
+            self.project.org_id, self.project.project_id
+        )
         users = {}
         for member in members:
             user = member.get("member", {}).get("user", {})
@@ -1428,9 +1437,9 @@ class Export:
 
         my_iter = PaginationIterator(
             partial(  # type: ignore
-                self.context.export.active_time,
-                self.org_id,
-                self.project_id,
+                self.project.context.export.active_time,
+                self.project.org_id,
+                self.project.project_id,
                 stage_name,
                 task_id,
             ),
@@ -1440,8 +1449,8 @@ class Export:
         with tqdm.tqdm(my_iter, unit=" datapoints", leave=config.log_info) as progress:
             for task in progress:
                 yield {
-                    "orgId": self.org_id,
-                    "projectId": self.project_id,
+                    "orgId": self.project.org_id,
+                    "projectId": self.project.project_id,
                     "stageName": stage_name,
                     "taskId": task["taskId"],
                     "completedBy": user_format(task["user"]["userId"], users),

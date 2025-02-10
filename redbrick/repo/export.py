@@ -4,16 +4,16 @@ from typing import Any, Optional, List, Dict, Sequence, Tuple
 from datetime import datetime
 from dateutil import parser  # type: ignore
 
-from redbrick.common.export import ExportControllerInterface, TaskFilterParams
+from redbrick.common.export import ExportRepo, TaskFilterParams
 from redbrick.common.client import RBClient
 from redbrick.repo.shards import datapoint_shard, task_shard, router_task_shard
 
 
-class ExportRepo(ExportControllerInterface):
+class ExportRepoImpl(ExportRepo):
     """Handle API requests to get export data."""
 
     def __init__(self, client: RBClient) -> None:
-        """Construct ExportRepo."""
+        """Construct ExportRepoImpl."""
         self.client = client
 
     def datapoints_in_project(

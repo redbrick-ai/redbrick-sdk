@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Tuple
 from abc import ABC, abstractmethod
 
 
-class WorkspaceRepoInterface(ABC):
+class WorkspaceRepo(ABC):
     """Abstract interface to Workspace APIs."""
 
     @abstractmethod

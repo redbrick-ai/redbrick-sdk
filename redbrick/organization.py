@@ -8,12 +8,13 @@ import platform
 from dateutil import parser  # type: ignore
 from tqdm import tqdm  # type: ignore
 
+from redbrick.common.entities import RBOrganization, RBWorkspace, RBProject
 from redbrick.common.member import OrgMember
-from redbrick.config import config
 from redbrick.common.context import RBContext
-from redbrick.project import RBProject
+from redbrick.config import config
+from redbrick.workspace import RBWorkspaceImpl
+from redbrick.project import RBProjectImpl
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
-from redbrick.workspace import RBWorkspace
 from redbrick.stage import Stage, get_project_stages, get_middle_stages
 
 from redbrick.utils.logging import logger
@@ -21,11 +22,11 @@ from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_tax_utils import format_taxonomy, validate_taxonomy
 
 
-class RBOrganization:
+class RBOrganizationImpl(RBOrganization):
     """
     Representation of RedBrick organization.
 
-    The :attr:`redbrick.organization.RBOrganization` object allows you to programmatically interact with
+    The :attr:`redbrick.RBOrganization` object allows you to programmatically interact with
     your RedBrick organization. This class provides methods for querying your
     organization and doing other high level actions. Retrieve the organization object in the following way:
 
@@ -36,8 +37,8 @@ class RBOrganization:
 
     def __init__(self, context: RBContext, org_id: str) -> None:
         """Construct RBOrganization."""
-        # pylint: disable=import-outside-toplevel
-        from redbrick.member import Team
+        # pylint: disable=import-outside-toplevel, cyclic-import
+        from redbrick.member import TeamImpl
 
         self.context = context
 
@@ -45,7 +46,8 @@ class RBOrganization:
         self._name: str
 
         self._get_org()
-        self.team = Team(self.context, self.org_id)
+
+        self.team = TeamImpl(self)
 
     def _get_org(self) -> None:
         org = self.context.project.get_org(self._org_id)
@@ -78,7 +80,7 @@ class RBOrganization:
         """Get a list of active projects in the organization."""
         projects = self.projects_raw()
         return [
-            RBProject(self.context, self._org_id, proj["projectId"])
+            RBProjectImpl(self.context, self._org_id, proj["projectId"])
             for proj in tqdm(projects, leave=config.log_info)
         ]
 
@@ -151,7 +153,7 @@ class RBOrganization:
 
         Returns
         --------------
-        redbrick.workspace.RBWorkspace
+        redbrick.RBWorkspace
             A RedBrick Workspace object.
         """
         try:
@@ -164,7 +166,9 @@ class RBOrganization:
                 + " return this workspace instead of creating a new one"
             ) from error
 
-        return RBWorkspace(self.context, self._org_id, workspace_data["workspaceId"])
+        return RBWorkspaceImpl(
+            self.context, self._org_id, workspace_data["workspaceId"]
+        )
 
     def create_project_advanced(
         self,
@@ -212,7 +216,7 @@ class RBOrganization:
 
         Returns
         --------------
-        redbrick.project.RBProject
+        redbrick.RBProject
             A RedBrick Project object.
 
         Raises
@@ -226,7 +230,9 @@ class RBOrganization:
             all_projects = self.projects_raw()
             same_name = list(filter(lambda x: x["name"] == name, all_projects))
             if same_name:
-                temp = RBProject(self.context, self.org_id, same_name[0]["projectId"])
+                temp = RBProjectImpl(
+                    self.context, self.org_id, same_name[0]["projectId"]
+                )
                 if temp.td_type != "DICOM_SEGMENTATION":
                     raise ValueError(
                         "Project with matching name exists, but it has a different type"
@@ -264,7 +270,7 @@ class RBOrganization:
                 + " return this project instead of creating a new one"
             ) from error
 
-        return RBProject(self.context, self.org_id, project_data["projectId"])
+        return RBProjectImpl(self.context, self.org_id, project_data["projectId"])
 
     def create_project(
         self,
@@ -313,7 +319,7 @@ class RBOrganization:
 
         Returns
         --------------
-        redbrick.project.RBProject
+        redbrick.RBProject
             A RedBrick Project object.
 
         Raises
@@ -349,7 +355,7 @@ class RBOrganization:
         if not projects:
             raise Exception("No project found")
 
-        return RBProject(self.context, self._org_id, projects[0]["projectId"])
+        return RBProjectImpl(self.context, self._org_id, projects[0]["projectId"])
 
     def delete_project(self, project_id: str) -> bool:
         """Delete a project by ID."""
