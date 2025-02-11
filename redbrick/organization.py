@@ -107,10 +107,10 @@ class RBOrganizationImpl(RBOrganization):
                     "role": OrgMember.Role(member["role"]),
                     "tags": member["tags"],
                     "is2FAEnabled": bool(user["mfaSetup"]),
-                    "lastActive": parser.parse(
-                        member.get("lastSeen")
-                        or user.get("lastSeen")
-                        or user["updatedAt"]
+                    "lastActive": (
+                        parser.parse(member["lastSeen"])
+                        if member.get("lastSeen")
+                        else None
                     ),
                 }
             )
