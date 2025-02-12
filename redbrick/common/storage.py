@@ -7,7 +7,17 @@ from typing import Any, Dict, List, Optional, Type
 
 @dataclass
 class StorageProvider:
-    """Base storage provider."""
+    """Base storage provider.
+
+    Sub-classes:
+    -------------
+    - redbrick.StorageMethod.Public (:obj:`~redbrick.StorageMethod.Public`)
+    - redbrick.StorageMethod.RedBrick (:obj:`~redbrick.StorageMethod.RedBrick`)
+    - redbrick.StorageMethod.AWSS3 (:obj:`~redbrick.StorageMethod.AWSS3`)
+    - redbrick.StorageMethod.GoogleCloud (:obj:`~redbrick.StorageMethod.GoogleCloud`)
+    - redbrick.StorageMethod.AzureBlob (:obj:`~redbrick.StorageMethod.AzureBlob`)
+    - redbrick.StorageMethod.AltaDB (:obj:`~redbrick.StorageMethod.AltaDB`)
+    """
 
     @dataclass
     class Details:
