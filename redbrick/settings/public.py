@@ -12,6 +12,7 @@ class SettingsImpl(Settings):
     def __init__(self, project: RBProject) -> None:
         """Construct Settings object."""
         self.project = project
+        self.context = self.project.context
 
     @property
     def label_validation(self) -> LabelValidation:
@@ -39,14 +40,14 @@ class SettingsImpl(Settings):
                 project.settings.label_validation = label_validation
 
         """
-        return self.project.context.settings.get_label_validation(
+        return self.context.settings.get_label_validation(
             self.project.org_id, self.project.project_id
         )
 
     @label_validation.setter
     def label_validation(self, label_validation: LabelValidation) -> None:
         """Label Validation."""
-        self.project.context.settings.set_label_validation(
+        self.context.settings.set_label_validation(
             self.project.org_id, self.project.project_id, label_validation
         )
 
@@ -77,14 +78,14 @@ class SettingsImpl(Settings):
                 project.settings.hanging_protocol = hanging_protocol
 
         """
-        return self.project.context.settings.get_hanging_protocol(
+        return self.context.settings.get_hanging_protocol(
             self.project.org_id, self.project.project_id
         )
 
     @hanging_protocol.setter
     def hanging_protocol(self, hanging_protocol: HangingProtocol) -> None:
         """Hanging Protocol."""
-        self.project.context.settings.set_hanging_protocol(
+        self.context.settings.set_hanging_protocol(
             self.project.org_id, self.project.project_id, hanging_protocol
         )
 
@@ -113,7 +114,7 @@ class SettingsImpl(Settings):
                 project.settings.webhook = webhook
 
         """
-        return self.project.context.settings.get_webhook_settings(
+        return self.context.settings.get_webhook_settings(
             self.project.org_id, self.project.project_id
         )
 
@@ -125,13 +126,13 @@ class SettingsImpl(Settings):
         else:
             webhook["url"] = None
 
-        self.project.context.settings.set_webhook_settings(
+        self.context.settings.set_webhook_settings(
             self.project.org_id, self.project.project_id, webhook
         )
 
     def toggle_reference_standard_task(self, task_id: str, enable: bool) -> None:
         """Toggle reference standard task."""
-        self.project.context.settings.toggle_reference_standard_task(
+        self.context.settings.toggle_reference_standard_task(
             self.project.org_id, self.project.project_id, task_id, enable
         )
 
@@ -162,7 +163,7 @@ class SettingsImpl(Settings):
                 project.settings.task_duplication = count
 
         """
-        return self.project.context.settings.get_sibling_tasks_count(
+        return self.context.settings.get_sibling_tasks_count(
             self.project.org_id, self.project.project_id
         )
 
@@ -171,6 +172,6 @@ class SettingsImpl(Settings):
         """Hanging Protocol."""
         if not count or count <= 1:
             count = None
-        self.project.context.settings.set_sibling_tasks_count(
+        self.context.settings.set_sibling_tasks_count(
             self.project.org_id, self.project.project_id, count
         )

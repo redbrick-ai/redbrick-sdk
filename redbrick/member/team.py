@@ -12,6 +12,7 @@ class TeamImpl(Team):
     def __init__(self, org: RBOrganization) -> None:
         """Construct Member object."""
         self.org = org
+        self.context = self.org.context
 
     def _get_filtered_members(
         self, member_id: str, members: List[OrgMember]
@@ -65,7 +66,7 @@ class TeamImpl(Team):
         -------------
         List[OrgMember]
         """
-        members = self.org.context.member.list_org_members(self.org.org_id)
+        members = self.context.member.list_org_members(self.org.org_id)
         return [OrgMember.from_entity(member) for member in members]
 
     def remove_member(self, member_id: str) -> None:
@@ -82,7 +83,7 @@ class TeamImpl(Team):
             Unique member userId or email.
         """
         member = self.get_member(member_id)
-        self.org.context.member.remove_org_member(self.org.org_id, member.user_id)
+        self.context.member.remove_org_member(self.org.org_id, member.user_id)
 
     def list_invites(self) -> List[OrgInvite]:
         """Get a list of all pending or rejected invites.
@@ -96,7 +97,7 @@ class TeamImpl(Team):
         -------------
         List[OrgInvite]
         """
-        invites = self.org.context.member.list_org_invites(self.org.org_id)
+        invites = self.context.member.list_org_invites(self.org.org_id)
         return [
             OrgInvite.from_entity(invite)
             for invite in invites
@@ -123,7 +124,7 @@ class TeamImpl(Team):
         if invitation.status != OrgInvite.Status.PENDING:
             raise ValueError("New invitation must be in PENDING state")
 
-        invite = self.org.context.member.invite_org_user(
+        invite = self.context.member.invite_org_user(
             self.org.org_id, invitation.to_entity()
         )
         return OrgInvite.from_entity(invite)
@@ -144,6 +145,6 @@ class TeamImpl(Team):
         if invitation.status == OrgInvite.Status.ACCEPTED:
             raise ValueError("ACCEPTED invitations cannot be deleted")
 
-        self.org.context.member.delete_org_invitation(
+        self.context.member.delete_org_invitation(
             self.org.org_id, invitation.to_entity()
         )

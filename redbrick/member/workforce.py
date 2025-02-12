@@ -12,6 +12,7 @@ class WorkforceImpl(Workforce):
     def __init__(self, project: RBProject) -> None:
         """Construct Member object."""
         self.project = project
+        self.context = self.project.context
 
     def _get_filtered_members(
         self, member_id: str, members: List[ProjectMember]
@@ -72,7 +73,7 @@ class WorkforceImpl(Workforce):
         -------------
         List[ProjectMember]
         """
-        members = self.project.context.member.list_project_members(
+        members = self.context.member.list_project_members(
             self.project.org_id, self.project.project_id
         )
         return [ProjectMember.from_entity(member) for member in members]
@@ -133,7 +134,7 @@ class WorkforceImpl(Workforce):
         if len(member_ids) != len(members):
             raise ValueError("Duplicate member IDs found in member list")
 
-        org_members = self.project.context.member.list_org_members(self.project.org_id)
+        org_members = self.context.member.list_org_members(self.project.org_id)
         org_user_map: Dict[str, str] = {}
         for org_member in org_members:
             org_user_map[org_member["user"]["userId"]] = org_member["user"]["userId"]
@@ -172,7 +173,7 @@ class WorkforceImpl(Workforce):
                     }
                 )
 
-        self.project.context.member.update_project_memberships(
+        self.context.member.update_project_memberships(
             self.project.org_id, self.project.project_id, memberships
         )
 
@@ -200,6 +201,6 @@ class WorkforceImpl(Workforce):
             member = self._get_unique_member(member_id, prev_members)
             user_ids.append(member.member_id)
 
-        self.project.context.member.remove_project_members(
+        self.context.member.remove_project_members(
             self.project.org_id, self.project.project_id, user_ids
         )

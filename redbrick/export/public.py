@@ -61,6 +61,7 @@ class ExportImpl(Export):
     def __init__(self, project: RBProject) -> None:
         """Construct Export object."""
         self.project = project
+        self.context = self.project.context
 
     def get_raw_data_latest(
         self,
@@ -75,7 +76,7 @@ class ExportImpl(Export):
         # pylint: disable=too-many-locals
         if task_id:
             logger.info(f"Fetching task: {task_id}")
-            val = self.project.context.export.get_datapoint_latest(
+            val = self.context.export.get_datapoint_latest(
                 self.project.org_id,
                 self.project.project_id,
                 task_id,
@@ -88,7 +89,7 @@ class ExportImpl(Export):
 
         my_iter = PaginationIterator(
             partial(  # type: ignore
-                self.project.context.export.get_datapoints_latest,
+                self.context.export.get_datapoints_latest,
                 self.project.org_id,
                 self.project.project_id,
                 stage_name,
@@ -377,7 +378,7 @@ class ExportImpl(Export):
                         )
                     )
 
-            presigned = self.project.context.export.presign_items(
+            presigned = self.context.export.presign_items(
                 self.project.org_id, storage_id, to_presign
             )
 
@@ -632,7 +633,7 @@ class ExportImpl(Export):
         if not presign_paths:
             return
 
-        presigned_urls = self.project.context.export.presign_items(
+        presigned_urls = self.context.export.presign_items(
             self.project.org_id, task["labelStorageId"], presign_paths
         )
 
@@ -681,7 +682,7 @@ class ExportImpl(Export):
         # pylint: disable=too-many-branches, too-many-statements
         from redbrick.utils.dicom import process_download
 
-        presigned = self.project.context.export.presign_items(
+        presigned = self.context.export.presign_items(
             self.project.org_id, task["labelStorageId"], presign_paths
         )
 
@@ -1220,7 +1221,7 @@ class ExportImpl(Export):
         else:
             raise ValueError(f"Invalid task filter: {search}")
 
-        members = self.project.context.member.list_project_members(
+        members = self.context.member.list_project_members(
             self.project.org_id, self.project.project_id
         )
         users = {}
@@ -1231,7 +1232,7 @@ class ExportImpl(Export):
 
         my_iter = PaginationIterator(
             partial(  # type: ignore
-                self.project.context.export.task_search,
+                self.context.export.task_search,
                 self.project.org_id,
                 self.project.project_id,
                 stage_name,
@@ -1340,7 +1341,7 @@ class ExportImpl(Export):
             }]
         """
         # pylint: disable=too-many-locals
-        members = self.project.context.member.list_project_members(
+        members = self.context.member.list_project_members(
             self.project.org_id, self.project.project_id
         )
         users = {}
@@ -1351,7 +1352,7 @@ class ExportImpl(Export):
 
         my_iter = PaginationIterator(
             partial(  # type: ignore
-                self.project.context.export.task_events,
+                self.context.export.task_events,
                 self.project.org_id,
                 self.project.project_id,
                 task_id,
@@ -1426,7 +1427,7 @@ class ExportImpl(Export):
                 "cycle": number  # Task cycle
             }]
         """
-        members = self.project.context.member.list_project_members(
+        members = self.context.member.list_project_members(
             self.project.org_id, self.project.project_id
         )
         users = {}
@@ -1437,7 +1438,7 @@ class ExportImpl(Export):
 
         my_iter = PaginationIterator(
             partial(  # type: ignore
-                self.project.context.export.active_time,
+                self.context.export.active_time,
                 self.project.org_id,
                 self.project.project_id,
                 stage_name,

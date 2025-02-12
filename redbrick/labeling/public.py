@@ -75,6 +75,7 @@ class LabelingImpl(Labeling):
     def __init__(self, project: RBProject, review: bool = False) -> None:
         """Construct Labeling."""
         self.project = project
+        self.context = self.project.context
         self.review = review
         self.stages: List[Stage] = [
             stage
@@ -99,7 +100,7 @@ class LabelingImpl(Labeling):
         task_id = task["taskId"]
         try:
             if self.review and review_result is not None:
-                await self.project.context.labeling.put_review_task_result(
+                await self.context.labeling.put_review_task_result(
                     session,
                     self.project.org_id,
                     self.project.project_id,
@@ -108,7 +109,7 @@ class LabelingImpl(Labeling):
                     review_result,
                 )
             elif not self.review and existing_labels:
-                await self.project.context.labeling.put_labeling_task_result(
+                await self.context.labeling.put_labeling_task_result(
                     session,
                     self.project.org_id,
                     self.project.project_id,
@@ -118,7 +119,7 @@ class LabelingImpl(Labeling):
             else:
                 try:
                     labels_data_path, labels_map = await process_segmentation_upload(
-                        self.project.context,
+                        self.context,
                         session,
                         self.project.org_id,
                         self.project.project_id,
@@ -134,7 +135,7 @@ class LabelingImpl(Labeling):
                     )
                     return {"error": err}
 
-                await self.project.context.labeling.put_labeling_results(
+                await self.context.labeling.put_labeling_results(
                     session,
                     self.project.org_id,
                     self.project.project_id,
@@ -347,7 +348,7 @@ class LabelingImpl(Labeling):
                 logger.warning(f"Invalid task format {point}")
                 failed_tasks.append(point)  # type: ignore
 
-        project_label_storage_id, _ = self.project.context.project.get_label_storage(
+        project_label_storage_id, _ = self.context.project.get_label_storage(
             self.project.org_id, self.project.project_id
         )
         if with_labels:
@@ -357,7 +358,7 @@ class LabelingImpl(Labeling):
                         concurrency,
                         *[
                             convert_rt_struct_to_nii_labels(
-                                self.project.context,
+                                self.context,
                                 self.project.org_id,
                                 self.project.taxonomy,
                                 [task],
@@ -377,7 +378,7 @@ class LabelingImpl(Labeling):
                         concurrency,
                         *[
                             convert_mhd_to_nii_labels(
-                                self.project.context,
+                                self.context,
                                 self.project.org_id,
                                 [task],
                                 StorageMethod.REDBRICK,
@@ -390,7 +391,7 @@ class LabelingImpl(Labeling):
 
             validated = asyncio.run(
                 validate_json(
-                    self.project.context,
+                    self.context,
                     with_labels,  # type: ignore
                     StorageMethod.REDBRICK,
                     concurrency,
@@ -476,7 +477,7 @@ class LabelingImpl(Labeling):
             List of affected tasks.
                 >>> [{"taskId", "name", "stageName"}]
         """
-        return self.project.context.labeling.assign_tasks(
+        return self.context.labeling.assign_tasks(
             self.project.org_id,
             self.project.project_id,
             task_ids,
@@ -488,7 +489,7 @@ class LabelingImpl(Labeling):
     async def _tasks_to_start(self, task_ids: List[str]) -> None:
         async with get_session() as session:
             coros = [
-                self.project.context.labeling.move_task_to_start(
+                self.context.labeling.move_task_to_start(
                     session, self.project.org_id, self.project.project_id, task_id
                 )
                 for task_id in task_ids

@@ -43,6 +43,7 @@ class UploadImpl(Upload):
     def __init__(self, project: RBProject) -> None:
         """Construct Upload object."""
         self.project = project
+        self.context = self.project.context
 
     def create_datapoints(
         self,
@@ -137,7 +138,7 @@ class UploadImpl(Upload):
             we will assign the "items" path to it.
         """
         return upload_datapoints(
-            context=self.project.context,
+            context=self.context,
             org_id=self.project.org_id,
             workspace_id=None,
             project_id=self.project.project_id,
@@ -157,7 +158,7 @@ class UploadImpl(Upload):
     async def _delete_tasks(self, task_ids: List[str], concurrency: int) -> bool:
         async with get_session() as session:
             coros = [
-                self.project.context.upload.delete_tasks(
+                self.context.upload.delete_tasks(
                     session,
                     self.project.org_id,
                     self.project.project_id,
@@ -199,7 +200,7 @@ class UploadImpl(Upload):
     ) -> bool:
         async with get_session() as session:
             coros = [
-                self.project.context.upload.delete_tasks_by_name(
+                self.context.upload.delete_tasks_by_name(
                     session,
                     self.project.org_id,
                     self.project.project_id,
@@ -279,7 +280,7 @@ class UploadImpl(Upload):
         is_win = sys.platform.startswith("win")
         async with get_session() as session:
             coros = [
-                self.project.context.upload.generate_items_list(
+                self.context.upload.generate_items_list(
                     session,
                     [
                         item
@@ -362,7 +363,7 @@ class UploadImpl(Upload):
                     series["items"] = DUMMY_FILE_PATH
 
         converted_points = prepare_json_files(
-            context=self.project.context,
+            context=self.context,
             org_id=self.project.org_id,
             taxonomy=self.project.taxonomy,
             files_data=[local_points],  # type: ignore
@@ -383,7 +384,7 @@ class UploadImpl(Upload):
 
         return asyncio.run(
             create_tasks(
-                context=self.project.context,
+                context=self.context,
                 org_id=self.project.org_id,
                 workspace_id=None,
                 project_id=self.project.project_id,
@@ -424,7 +425,7 @@ class UploadImpl(Upload):
         -------------
         None
         """
-        self.project.context.upload.import_tasks_from_workspace(
+        self.context.upload.import_tasks_from_workspace(
             self.project.org_id,
             self.project.project_id,
             source_project_id,
@@ -437,7 +438,7 @@ class UploadImpl(Upload):
     ) -> List[str]:
         async with get_session() as session:
             coros = [
-                self.project.context.upload.update_priority(
+                self.context.upload.update_priority(
                     session,
                     self.project.org_id,
                     self.project.project_id,
@@ -491,7 +492,7 @@ class UploadImpl(Upload):
         task_id = task["taskId"]
         try:
             labels_data_path, labels_map = await process_segmentation_upload(
-                self.project.context,
+                self.context,
                 session,
                 self.project.org_id,
                 self.project.project_id,
@@ -508,7 +509,7 @@ class UploadImpl(Upload):
             return {"error": err}
 
         try:
-            await self.project.context.upload.update_labels(
+            await self.context.upload.update_labels(
                 session,
                 self.project.org_id,
                 self.project.project_id,
@@ -632,7 +633,7 @@ class UploadImpl(Upload):
         if not tasks:
             return
 
-        project_label_storage_id, _ = self.project.context.project.get_label_storage(
+        project_label_storage_id, _ = self.context.project.get_label_storage(
             self.project.org_id, self.project.project_id
         )
 
@@ -643,7 +644,7 @@ class UploadImpl(Upload):
                     concurrency,
                     *[
                         convert_rt_struct_to_nii_labels(
-                            self.project.context,
+                            self.context,
                             self.project.org_id,
                             self.project.taxonomy,
                             [task],
@@ -663,7 +664,7 @@ class UploadImpl(Upload):
                     concurrency,
                     *[
                         convert_mhd_to_nii_labels(
-                            self.project.context,
+                            self.context,
                             self.project.org_id,
                             [task],
                             StorageMethod.REDBRICK,
@@ -700,7 +701,7 @@ class UploadImpl(Upload):
 
         validated = asyncio.run(
             validate_json(
-                self.project.context,
+                self.context,
                 points,  # type: ignore
                 StorageMethod.REDBRICK,
                 concurrency,
@@ -726,7 +727,7 @@ class UploadImpl(Upload):
     ) -> List[str]:
         async with get_session() as session:
             coros = [
-                self.project.context.upload.send_tasks_to_stage(
+                self.context.upload.send_tasks_to_stage(
                     session,
                     self.project.org_id,
                     self.project.project_id,
