@@ -11,7 +11,8 @@ import aiohttp
 
 from redbrick.common.entities import RBProject
 from redbrick.common.constants import DUMMY_FILE_PATH, MAX_CONCURRENCY
-from redbrick.common.enums import ImportTypes, StorageMethod
+from redbrick.common.enums import ImportTypes
+from redbrick.common.storage import StorageMethod
 from redbrick.common.upload import Upload
 from redbrick.upload.interact import (
     create_tasks,

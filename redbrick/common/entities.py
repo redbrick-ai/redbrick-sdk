@@ -13,6 +13,7 @@ from redbrick.common.labeling import Labeling
 from redbrick.common.export import Export
 from redbrick.common.settings import Settings
 from redbrick.common.member import Team, Workforce
+from redbrick.common.storage import Storage
 
 
 class RBOrganization(ABC):
@@ -24,6 +25,7 @@ class RBOrganization(ABC):
     organization and doing other high level actions. Retrieve the organization object in the following way:
 
     :ivar `redbrick.common.member.Team` team: Organization team management.
+    :ivar `redbrick.common.storage.Storage` storage: Organization storage methods integration.
 
     .. code:: python
 
@@ -33,6 +35,7 @@ class RBOrganization(ABC):
     context: RBContext
 
     team: Team
+    storage: Storage
 
     @property
     @abstractmethod

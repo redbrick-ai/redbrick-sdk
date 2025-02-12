@@ -8,8 +8,8 @@ from typing import Optional
 import nest_asyncio  # type: ignore
 
 from redbrick.common.context import RBContextImpl
+from redbrick.common.storage import StorageMethod, StorageProvider
 from redbrick.common.enums import (
-    StorageMethod,
     ImportTypes,
     TaskEventTypes,
     TaskFilters,
@@ -212,6 +212,7 @@ __all__ = [
     "config",
     "version",
     "StorageMethod",
+    "StorageProvider",
     "ImportTypes",
     "TaxonomyTypes",
     "TaskTypes",

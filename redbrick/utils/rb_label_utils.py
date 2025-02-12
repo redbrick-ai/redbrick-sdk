@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 import json
 from copy import deepcopy
 
-from redbrick.common.enums import StorageMethod
+from redbrick.common.storage import StorageMethod
 from redbrick.stage import ReviewStage
 from redbrick.types import task as TaskType
 from redbrick.types.taxonomy import Taxonomy

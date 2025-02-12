@@ -23,6 +23,37 @@ tags
 lastSeen
 """
 
+
+STORAGE_METHOD_SHARD = """
+orgId
+storageId
+name
+provider
+details {
+    ... on S3BucketStorageDetails {
+        bucket
+        region
+        duration
+        access
+        roleArn
+        endpoint
+        accelerate
+    }
+    ... on GCSBucketStorageDetails {
+        bucket
+    }
+    ... on AltaDBStorageDetails {
+        access
+        host
+    }
+}
+createdBy {
+    userId
+}
+createdAt
+deleted
+"""
+
 ATTRIBUTE_SHARD = """
 name
 attrType

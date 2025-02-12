@@ -11,7 +11,7 @@ import aiohttp
 
 from redbrick.common.constants import LABELS_ARRAY_LIMIT
 from redbrick.common.context import RBContext
-from redbrick.common.enums import StorageMethod
+from redbrick.common.storage import StorageMethod
 from redbrick.types.taxonomy import Taxonomy
 from redbrick.types.task import InputTask, OutputTask
 from redbrick.utils.common_utils import config_path

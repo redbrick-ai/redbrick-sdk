@@ -8,9 +8,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from redbrick import ImportTypes
+from redbrick import ImportTypes, StorageMethod
 from redbrick.cli import public, CLIProject
-from redbrick.common.enums import StorageMethod
 
 
 @pytest.mark.unit

@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 import aiohttp
 
-from redbrick.common.enums import StorageMethod
+from redbrick.common.storage import StorageMethod
 from redbrick.types.task import InputTask, OutputTask
 
 

@@ -352,3 +352,17 @@ def is_altadb_item(item: str) -> bool:
 def contains_altadb_item(items_list: List[str]) -> bool:
     """Filter out altadb items."""
     return any(is_altadb_item(item) for item in items_list)
+
+
+async def is_valid_file_url(url: str) -> bool:
+    """Check if the file url is valid."""
+    result = False
+    url = url.replace("altadb://", "https://")
+    async with get_session() as session:
+        try:
+            async with session.get(url) as response:
+                result = response.status == 200
+        except Exception as error:  # pylint: disable=broad-except
+            log_error(error)
+
+    return result

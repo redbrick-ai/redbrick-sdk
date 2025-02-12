@@ -15,7 +15,7 @@ import tqdm  # type: ignore
 from redbrick.config import config
 from redbrick.common.constants import DUMMY_FILE_PATH, MAX_CONCURRENCY
 from redbrick.common.context import RBContext
-from redbrick.common.enums import StorageMethod
+from redbrick.common.storage import StorageMethod
 from redbrick.types.task import InputTask
 from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.async_utils import gather_with_concurrency, get_session
