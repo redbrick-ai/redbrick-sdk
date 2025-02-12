@@ -11,7 +11,7 @@ import aiohttp
 
 from redbrick.common.entities import RBProject
 from redbrick.common.constants import DUMMY_FILE_PATH
-from redbrick.common.enums import StorageMethod
+from redbrick.common.storage import StorageMethod
 from redbrick.common.labeling import Labeling
 from redbrick.stage import Stage
 from redbrick.stage.label import LabelStage

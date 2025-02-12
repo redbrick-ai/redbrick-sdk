@@ -10,7 +10,8 @@ from typing import List, Dict, Optional, Union, cast
 from redbrick.cli.input.select import CLIInputSelect
 from redbrick.cli.project import CLIProject
 from redbrick.cli.cli_base import CLIUploadInterface
-from redbrick.common.enums import StorageMethod, ImportTypes
+from redbrick.common.enums import ImportTypes
+from redbrick.common.storage import StorageMethod
 from redbrick.upload.interact import create_tasks, prepare_json_files
 from redbrick.utils.logging import assert_validation, logger
 from redbrick.utils.files import find_files_recursive

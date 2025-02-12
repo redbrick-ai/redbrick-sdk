@@ -8,7 +8,7 @@ functions for programmatically manipulating data, importing annotations, assigni
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_org, get_workspace, get_project, get_org_from_profile, get_project_from_profile, OrgMember, OrgInvite, ProjectMember, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, Stage, LabelStage, ReviewStage, ModelStage
+   :members: get_org, get_workspace, get_project, get_org_from_profile, get_project_from_profile, OrgMember, OrgInvite, ProjectMember, StorageProvider, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, Stage, LabelStage, ReviewStage, ModelStage
    :member-order: bysource
 
 .. _org:
@@ -23,6 +23,12 @@ Team
 ----------------------
 .. autoclass:: redbrick.common.member.Team
    :members: get_member, list_members, remove_member, list_invites, invite_user, revoke_invitation
+   :show-inheritance:
+
+Storage
+----------------------
+.. autoclass:: redbrick.common.storage.Storage
+   :members: get_storage, list_storages, create_storage, update_storage, delete_storage, verify_storage
    :show-inheritance:
 
 .. _workspace:

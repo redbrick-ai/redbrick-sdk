@@ -12,7 +12,7 @@ from tenacity.wait import wait_exponential
 from redbrick.common.constants import PEERLESS_ERRORS
 from redbrick.common.context import RBContext
 from redbrick.common.entities import RBProject
-from redbrick.common.enums import StorageMethod
+from redbrick.common.storage import StorageMethod
 from redbrick.stage import Stage, get_stage_objects
 from redbrick.types.taxonomy import Taxonomy
 from redbrick.utils.logging import logger

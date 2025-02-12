@@ -39,6 +39,7 @@ class RBOrganizationImpl(RBOrganization):
         """Construct RBOrganization."""
         # pylint: disable=import-outside-toplevel, cyclic-import
         from redbrick.member import TeamImpl
+        from redbrick.storage import StorageImpl
 
         self.context = context
 
@@ -48,6 +49,7 @@ class RBOrganizationImpl(RBOrganization):
         self._get_org()
 
         self.team = TeamImpl(self)
+        self.storage = StorageImpl(self)
 
     def _get_org(self) -> None:
         org = self.context.project.get_org(self._org_id)
