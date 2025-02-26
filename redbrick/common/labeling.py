@@ -226,7 +226,7 @@ class Labeling(ABC):
         Unassigns all users from the task if neither of the ``email`` or ``current_user`` are set.
 
         >>> project = redbrick.get_project(org_id, project_id, api_key)
-        >>> project.labeling.assign_tasks([task_id], email)
+        >>> project.labeling.assign_tasks([task_id], email=email)
 
         Parameters
         ------------------
