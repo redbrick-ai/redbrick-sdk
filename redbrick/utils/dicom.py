@@ -356,7 +356,7 @@ def convert_mhd_to_nii(masks: List[str]) -> List[str]:
 
     new_masks: List[str] = []
     for mask in masks:
-        if mask.endswith(".raw") or mask.endswith(".zraw"):
+        if mask.endswith(".raw") or mask.endswith(".zraw") or mask.endswith(".img"):
             continue
 
         new_mask = mask.removesuffix(".mhd") + ".nii.gz"
