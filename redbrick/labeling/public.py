@@ -447,7 +447,9 @@ class LabelingImpl(Labeling):
     def assign_tasks(
         self,
         task_ids: List[str],
+        *,
         email: Optional[str] = None,
+        emails: Optional[List[str]] = None,
         refresh: bool = True,
     ) -> List[Dict]:
         """
@@ -467,6 +469,11 @@ class LabelingImpl(Labeling):
             The email of the user you want to assign this task to. Make sure the
             user has adequate permissions to be assigned this task in the project.
 
+        emails: Optional[str] = None
+            Used for projects with Consensus activated.
+            The emails of the users you want to assign this task to. Make sure the
+            users have adequate permissions to be assigned this task in the project.
+
         refresh: bool = True
             Used for projects with Consensus activated.
             If `True`, will `overwrite` the assignment to the current users.
@@ -481,7 +488,7 @@ class LabelingImpl(Labeling):
             self.project.org_id,
             self.project.project_id,
             task_ids,
-            [email] if email else None,
+            [email] if email else emails,
             False,
             refresh,
         )
