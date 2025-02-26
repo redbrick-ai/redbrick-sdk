@@ -469,7 +469,7 @@ class LabelingImpl(Labeling):
             The email of the user you want to assign this task to. Make sure the
             user has adequate permissions to be assigned this task in the project.
 
-        emails: Optional[str] = None
+        emails: Optional[List[str]] = None
             Used for projects with Consensus activated.
             The emails of the users you want to assign this task to. Make sure the
             users have adequate permissions to be assigned this task in the project.
