@@ -112,13 +112,13 @@ class OrgInvite:
 
         - ``PENDING`` - Pending invitation
         - ``ACCEPTED`` - Accepted invitation
-        - ``REJECTED`` - Rejected invitation
+        - ``DECLINED`` - Declined invitation
 
         """
 
         PENDING = "PENDING"
         ACCEPTED = "ACCEPTED"
-        REJECTED = "REJECTED"
+        DECLINED = "DECLINED"
 
     email: str
     role: OrgMember.Role
@@ -302,7 +302,7 @@ class Team(ABC):
 
     @abstractmethod
     def list_invites(self) -> List[OrgInvite]:
-        """Get a list of all pending or rejected invites.
+        """Get a list of all pending or declined invites.
 
         .. code:: python
 

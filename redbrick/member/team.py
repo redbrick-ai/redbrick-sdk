@@ -101,7 +101,7 @@ class TeamImpl(Team):
         return [
             OrgInvite.from_entity(invite)
             for invite in invites
-            if invite["state"] in ("PENDING", "REJECTED")
+            if invite["state"] in ("PENDING", "DECLINED")
         ]
 
     def invite_user(self, invitation: OrgInvite) -> OrgInvite:
