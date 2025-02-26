@@ -68,8 +68,8 @@ class MemberRepoImpl(MemberRepo):
         """
         query_variables = {"orgId": org_id}
         result = self.client.execute_query(query_string, query_variables)
-        members: List[Dict] = result["members"]
-        return members
+        invites: List[Dict] = result["invites"]
+        return invites
 
     def invite_org_user(self, org_id: str, invitation: Dict) -> Dict:
         """Invite an user to the organization."""
