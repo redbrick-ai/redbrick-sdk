@@ -86,7 +86,7 @@ class TeamImpl(Team):
         self.context.member.remove_org_member(self.org.org_id, member.user_id)
 
     def list_invites(self) -> List[OrgInvite]:
-        """Get a list of all pending or rejected invites.
+        """Get a list of all pending or declined invites.
 
         .. code:: python
 
