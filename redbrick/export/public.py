@@ -31,6 +31,7 @@ from redbrick.utils.files import (
     is_altadb_item,
     uniquify_path,
 )
+from redbrick.utils.labels import process_labels
 from redbrick.utils.logging import log_error, logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_label_utils import (
@@ -597,7 +598,7 @@ class ExportImpl(Export):
                 )
 
         if any(presign_label_path for presign_label_path in presign_label_paths):
-            await self.download_labels(task, presign_label_paths)
+            await self.download_labels(task, taxonomy, presign_label_paths)
 
         if any(presign_path for presign_path in presign_paths):
             await self.download_and_process_segmentations(
@@ -627,7 +628,7 @@ class ExportImpl(Export):
         )
 
     async def download_labels(
-        self, task: Dict, presign_paths: List[Optional[str]]
+        self, task: Dict, taxonomy: Taxonomy, presign_paths: List[Optional[str]]
     ) -> None:
         """Download labels."""
         if not presign_paths:
@@ -649,14 +650,16 @@ class ExportImpl(Export):
 
         if presigned_urls[0] and downloaded[0]:
             with open(downloaded[0], "r", encoding="utf-8") as f_:
-                task["labels"] = json.load(f_)
+                task["labels"] = process_labels(json.load(f_), taxonomy)
 
         if len(presigned_urls) > 1:
             for idx in range(1, len(presigned_urls)):
                 fpath = downloaded[idx]
                 if presigned_urls[idx] and fpath:
                     with open(fpath, "r", encoding="utf-8") as f_:
-                        task["consensusTasks"][idx]["labels"] = json.load(f_)
+                        task["consensusTasks"][idx]["labels"] = process_labels(
+                            json.load(f_), taxonomy
+                        )
 
         shutil.rmtree(dirname, ignore_errors=True)
 
