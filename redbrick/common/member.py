@@ -292,7 +292,7 @@ class Team(ABC):
         .. code:: python
 
             org = redbrick.get_org(org_id, api_key)
-            org.team.remove_members(member_id)
+            org.team.remove_members(member_ids)
 
         Parameters
         --------------
