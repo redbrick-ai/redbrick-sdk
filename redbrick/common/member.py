@@ -217,8 +217,8 @@ class MemberRepo(ABC):
         """Get a list of all org members."""
 
     @abstractmethod
-    def remove_org_member(self, org_id: str, user_id: str) -> None:
-        """Remove an org member."""
+    def remove_org_members(self, org_id: str, user_ids: List[str]) -> None:
+        """Remove org members."""
 
     @abstractmethod
     def list_org_invites(self, org_id: str) -> List[Dict]:
@@ -286,18 +286,18 @@ class Team(ABC):
         """
 
     @abstractmethod
-    def remove_member(self, member_id: str) -> None:
-        """Remove a member from the organization.
+    def remove_members(self, member_ids: List[str]) -> None:
+        """Remove members from the organization.
 
         .. code:: python
 
             org = redbrick.get_org(org_id, api_key)
-            org.team.remove_member(member_id)
+            org.team.remove_members(member_id)
 
         Parameters
         --------------
-        member_id: str
-            Unique member userId or email.
+        member_ids: List[str]
+            Unique member ids (userId or email).
         """
 
     @abstractmethod

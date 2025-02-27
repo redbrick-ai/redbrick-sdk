@@ -32,16 +32,16 @@ class MemberRepoImpl(MemberRepo):
         members: List[Dict] = result["members"]
         return members
 
-    def remove_org_member(self, org_id: str, user_id: str) -> None:
-        """Remove an org member."""
+    def remove_org_members(self, org_id: str, user_ids: List[str]) -> None:
+        """Remove org members."""
         query_string = """
-        mutation removeMemberSDK(
+        mutation removeMembersSDK(
             $orgId: UUID!
-            $userId: CustomUUID!
+            $userIds: [CustomUUID!]!
         ) {
-            removeMember(
+            removeMembers(
                 orgId: $orgId
-                userId: $userId
+                userIds: $userIds
             ) {
                 ok
             }
@@ -49,7 +49,7 @@ class MemberRepoImpl(MemberRepo):
         """
         query_variables = {
             "orgId": org_id,
-            "userId": user_id,
+            "userIds": user_ids,
         }
         self.client.execute_query(query_string, query_variables)
 

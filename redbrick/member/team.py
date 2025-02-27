@@ -69,21 +69,27 @@ class TeamImpl(Team):
         members = self.context.member.list_org_members(self.org.org_id)
         return [OrgMember.from_entity(member) for member in members]
 
-    def remove_member(self, member_id: str) -> None:
-        """Remove a member from the organization.
+    def remove_members(self, member_ids: List[str]) -> None:
+        """Remove members from the organization.
 
         .. code:: python
 
             org = redbrick.get_org(org_id, api_key)
-            org.team.remove_member(member_id)
+            org.team.remove_members(member_ids)
 
         Parameters
         --------------
-        member_id: str
-            Unique member userId or email.
+        member_ids: List[str]
+            Unique member ids (userId or email).
         """
-        member = self.get_member(member_id)
-        self.context.member.remove_org_member(self.org.org_id, member.user_id)
+        members = self.list_members()
+        self.context.member.remove_org_members(
+            self.org.org_id,
+            [
+                self._get_unique_member(member_id, members).user_id
+                for member_id in member_ids
+            ],
+        )
 
     def list_invites(self) -> List[OrgInvite]:
         """Get a list of all pending or declined invites.
