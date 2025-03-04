@@ -366,7 +366,7 @@ class RBWorkspaceImpl(RBWorkspace):
 
         concurrency: int = 50
             The number of datapoints to delete at a time.
-            We recommend keeping this <= 50.
+            We recommend keeping this less than or equal to 50.
 
         Returns
         -------------

@@ -274,7 +274,7 @@ class MeasureAngle(TypedDict):
     """
     Angle measurement label.
 
-    An angle measurement is defined by three points, where `vertex` is the middle point between `point1` and `point2`. The angle between the two vectors <point1, vertex> and <point2, vertex> defines the angle measurement.
+    An angle measurement is defined by three points, where `vertex` is the middle point between `point1` and `point2`. The angle between the two vectors (point1, vertex) and (point2, vertex) defines the angle measurement.
 
     .. hint:: See `this angle diagram <https://share.redbrickai.com/rqW3sZtf>`_ to understand the coordinate system.
     """

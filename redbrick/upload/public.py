@@ -186,7 +186,7 @@ class UploadImpl(Upload):
 
         concurrency: int = 50
             The number of tasks to delete at a time.
-            We recommend keeping this <= 50.
+            We recommend keeping this less than or equal to 50.
 
         Returns
         -------------
@@ -230,7 +230,7 @@ class UploadImpl(Upload):
 
         concurrency: int = 50
             The number of tasks to delete at a time.
-            We recommend keeping this <= 50.
+            We recommend keeping this less than or equal to 50.
 
         Returns
         -------------
@@ -469,7 +469,7 @@ class UploadImpl(Upload):
 
         concurrency: int = 50
             The number of tasks to update at a time.
-            We recommend keeping this <= 50.
+            We recommend keeping this less than or equal to 50.
         """
         concurrency = min(concurrency, 50)
         errors = asyncio.run(self._update_tasks_priorities(tasks, concurrency))

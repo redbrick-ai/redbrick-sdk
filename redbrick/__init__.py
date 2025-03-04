@@ -32,7 +32,7 @@ from .config import config
 from .version_check import version_check
 
 
-__version__ = "2.21.5"
+__version__ = "2.21.6"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -83,7 +83,7 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
     Parameters
     ---------------
     org_id: str
-        Your organizations unique id https://app.redbrickai.com/<org_id>/.
+        Your organizations unique id https://app.redbrickai.com/[org_id]/.
 
     api_key: str
         Your secret api_key, can be created from the RedBrick AI platform.
@@ -108,7 +108,7 @@ def get_workspace(
     Parameters
     ---------------
     org_id: str
-        Your organizations unique id https://app.redbrickai.com/<org_id>/
+        Your organizations unique id https://app.redbrickai.com/[org_id]/
 
     workspace_id: str
         Your workspaces unique id.
@@ -138,10 +138,10 @@ def get_project(
     Parameters
     ---------------
     org_id: str
-        Your organizations unique id https://app.redbrickai.com/<org_id>/
+        Your organizations unique id https://app.redbrickai.com/[org_id]/
 
     project_id: str
-        Your projects unique id https://app.redbrickai.com/<org_id>/<project_id>/
+        Your projects unique id https://app.redbrickai.com/[org_id]/projects/[project_id]/
 
     api_key: str
         Your secret api_key, can be created from the RedBrick AI platform.

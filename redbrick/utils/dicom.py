@@ -985,11 +985,17 @@ async def convert_rtstruct_to_nii(
         for idx, name in enumerate(segment_map.keys()):
             if name not in roi_names:
                 continue
+
+            try:
+                roi_mask = rt_struct.get_roi_mask_by_name(name)
+            except Exception as error:  # pylint: disable=broad-except
+                logger.warning(f"Error processing mask for ROI: {name} - {error}")
+                continue
+
             new_segment_map[str(idx + 1)] = segment_map[name]
-            roi_mask = rt_struct.get_roi_mask_by_name(name)
             nii_mask[roi_mask] = idx + 1
 
         return (
-            Nifti1Image(nii_mask.swapaxes(0, 1), numpy.diag([1, 2, 3, 1])),
+            Nifti1Image(nii_mask.swapaxes(0, 1), numpy.diag([-1, -1, 1, 1])),
             new_segment_map,
         )
