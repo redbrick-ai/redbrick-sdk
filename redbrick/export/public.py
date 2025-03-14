@@ -319,11 +319,7 @@ class ExportImpl(Export):
                     series_dir = os.path.join(
                         task_dir,
                         re.sub(path_pattern, "-", series.get("name", "") or "")
-                        or (
-                            task_name
-                            if len(task_series) == 1
-                            else chr(series_idx + ord("A"))
-                        ),
+                        or chr(series_idx + ord("A")),
                     )
 
                     if os.path.exists(series_dir) and not os.path.isdir(series_dir):
@@ -341,7 +337,7 @@ class ExportImpl(Export):
                         else []
                     )
             else:
-                series_dir = os.path.join(task_dir, task_name)
+                series_dir = os.path.join(task_dir, "A")
                 os.makedirs(series_dir, exist_ok=True)
                 series_dirs.append(series_dir)
                 items_lists.append(task.get("items", []) or [])  # type: ignore
@@ -703,21 +699,18 @@ class ExportImpl(Export):
 
         if has_series_info and (len(series_info) > 1 or series_info[0].get("name")):
             for series_idx, series in enumerate(series_info):
-                series_name = os.path.join(
-                    task_dir,
-                    re.sub(path_pattern, "-", series.get("name", "") or "")
-                    or chr(series_idx + ord("A")),
+                series_names.append(
+                    os.path.join(
+                        task_dir,
+                        re.sub(path_pattern, "-", series.get("name", "") or "")
+                        or chr(series_idx + ord("A")),
+                    )
                 )
-                series_names.append(series_name)
         else:
-            total_volumes = len(labels_map) or 1
-            if total_volumes == 1:
-                series_names = [os.path.join(task_dir, task_name)]
-            else:
-                series_names = [
-                    os.path.join(task_dir, chr(series_idx + ord("A")))
-                    for series_idx in range(total_volumes)
-                ]
+            series_names = [
+                os.path.join(task_dir, chr(series_idx + ord("A")))
+                for series_idx in range(len(labels_map) or 1)
+            ]
 
         if len(presigned) > len(series_names):
             series_names *= (len(presigned) // len(series_names)) + 1
