@@ -631,6 +631,9 @@ class OutputTask(TypedDict, total=False):
     #: Timestamp of when this task was uploaded.
     createdAt: str
 
+    #: Storage method where the task items are hosted.
+    storageId: str
+
     #: E-mail of the user who last edited this task.
     updatedBy: str
 

@@ -247,6 +247,7 @@ async def download_files(
     zipped: bool = False,
 ) -> List[Optional[str]]:
     """Download files from url to local path (presigned url, file path)."""
+    # pylint: disable=too-many-statements
 
     async def _download_file(
         session: aiohttp.ClientSession, url: Optional[str], path: Optional[str]
@@ -325,7 +326,15 @@ async def download_files(
         )
         await session.close()
 
-    return [(path if isinstance(path, str) else None) for path in paths]
+    output: List[Optional[str]] = []
+    for path in paths:
+        if path is None or isinstance(path, str):
+            output.append(path)
+        else:
+            log_error(path)
+            output.append(None)
+
+    return output
 
 
 async def download_files_altadb(
@@ -341,7 +350,16 @@ async def download_files_altadb(
         keep_progress_bar=keep_progress_bar,
         return_exceptions=True,
     )
-    return [(path if isinstance(path, list) and path else None) for path in paths]
+
+    output: List[Optional[List[str]]] = []
+    for path in paths:
+        if path is None or isinstance(path, list):
+            output.append(path or None)
+        else:
+            log_error(path)
+            output.append(None)
+
+    return output
 
 
 def is_altadb_item(item: str) -> bool:

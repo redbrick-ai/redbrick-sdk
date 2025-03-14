@@ -1140,6 +1140,7 @@ class ExportImpl(Export):
                 "taskId": str,
                 "name": str,
                 "createdAt": str,
+                "storageId": str,
                 "updatedAt": str,
                 "currentStageName": str,
                 "createdBy"?: {"userId": str, "email": str},
@@ -1256,6 +1257,9 @@ class ExportImpl(Export):
                 "currentStageName": task["currentStageName"],
             }
 
+            if datapoint.get("storageMethod"):
+                task_obj["storageId"] = datapoint["storageMethod"].get("storageId")
+
             if task["updatedAt"]:
                 task_obj["updatedAt"] = task["updatedAt"]
 
@@ -1338,8 +1342,8 @@ class ExportImpl(Export):
         -----------
         Iterator[Dict]
             >>> [{
-                "taskId": string,
-                "currentStageName": string,
+                "taskId": str,
+                "currentStageName": str,
                 "events": List[Dict]
             }]
         """

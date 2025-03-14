@@ -329,6 +329,7 @@ class Export(ABC):
                 "taskId": str,
                 "name": str,
                 "createdAt": str,
+                "storageId": str,
                 "updatedAt": str,
                 "currentStageName": str,
                 "createdBy"?: {"userId": str, "email": str},
@@ -393,8 +394,8 @@ class Export(ABC):
         -----------
         Iterator[Dict]
             >>> [{
-                "taskId": string,
-                "currentStageName": string,
+                "taskId": str,
+                "currentStageName": str,
                 "events": List[Dict]
             }]
         """

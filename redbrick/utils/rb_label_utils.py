@@ -771,6 +771,9 @@ def dicom_rb_format(
     if task.get("createdAt"):
         output["createdAt"] = task["createdAt"]
 
+    if task.get("storageId"):
+        output["storageId"] = task["storageId"]
+
     if task.get("updatedBy"):
         output["updatedBy"] = task["updatedBy"]
 
