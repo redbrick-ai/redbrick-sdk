@@ -70,6 +70,7 @@ class StorageMethod:
 
     PUBLIC = "11111111-1111-1111-1111-111111111111"
     REDBRICK = "22222222-2222-2222-2222-222222222222"
+    ALTA_DB = "33333333-3333-3333-3333-333333333333"
 
     @dataclass
     class Public(StorageProvider):
@@ -454,79 +455,56 @@ class StorageMethod:
     class AltaDB(StorageProvider):
         """AltaDB storage provider (Sub class of :obj:`~redbrick.StorageProvider`).
 
-        :ivar str storage_id: AltaDB storage id.
-        :ivar str name: AltaDB storage name.
-        :ivar `redbrick.StorageMethod.AltaDB.Details` details: AltaDB storage method details.
+        :cvar str storage_id: ``redbrick.StorageMethod.ALTA_DB``
+        :cvar str name: ``"Alta DB"``
+        :cvar `redbrick.StorageMethod.AltaDB.Details` details: AltaDB storage method details.
         """
 
         @dataclass
         class Details(StorageProvider.Details):
-            """AltaDB storage provider details.
-
-            :ivar str access_key_id: AltaDB access key id.
-            :ivar str secret_access_key: AltaDB secret access key. (Will be None in output for security reasons)
-            :ivar str endpoint: Custom endpoint.
-            """
-
-            access_key_id: str
-            endpoint: Optional[str] = None
-
-            secret_access_key: Optional[str] = None
+            """AltaDB storage provider details."""
 
             @property
             def key(self) -> str:
                 """AltaDB storage proivder details key."""
-                return "altaDb"
+                raise TypeError("You cannot create/update AltaDB storage")
 
             @classmethod
             def from_entity(
                 cls, entity: Optional[Dict[str, Any]] = None
             ) -> "StorageMethod.AltaDB.Details":
                 """Get object from entity"""
-                if entity is None:
-                    raise ValueError("Invalid details for AltaDB storage")
-
-                details = cls(
-                    access_key_id=entity["access"],
-                    endpoint=entity.get("host"),
-                    secret_access_key=entity.get("secret"),
-                )
-                details.validate()
-                return details
+                return cls()
 
             @abstractmethod
             def to_entity(self) -> Dict[str, Any]:
                 """Get entity from object."""
-                self.validate(True)
-                return {
-                    "access": self.access_key_id,
-                    "host": self.endpoint,
-                    "secret": self.secret_access_key,
-                }
+                raise TypeError("You cannot create/update AltaDB storage")
 
             def validate(self, check_secrets: bool = False) -> None:
                 """Validate AltaDB storage provider details."""
-                if not self.access_key_id:
-                    raise ValueError("access_key_id is required in AltaDB storage")
-
-                if check_secrets:
-                    if not self.secret_access_key:
-                        raise ValueError(
-                            "secret_access_key is required in AltaDB storage"
-                        )
-
-            def __post_init__(self) -> None:
-                """Post init validation."""
-                self.validate()
 
         PROVIDER: str = field(default="ALTA_DB", init=False)
 
+        storage_id: str = field(
+            default="33333333-3333-3333-3333-333333333333", init=False
+        )
+        name: str = field(default="Alta DB", init=False)
+        details: StorageProvider.Details = field(
+            default_factory=Details.from_entity, init=False
+        )
+
         def __setattr__(self, key: str, value: Any) -> None:
             """Set attribute."""
-            if key in ("PROVIDER",):
+            if key in ("PROVIDER", "storage_id", "name"):
                 raise AttributeError(f"Cannot modify {key} for AltaDB storage")
 
             super().__setattr__(key, value)
+
+        @classmethod
+        def from_entity(cls, entity: Dict) -> "StorageMethod.AltaDB":
+            """Get object from entity"""
+            return cls()
 
 
 STORAGE_PROVIDERS: Dict[str, Type[StorageProvider]] = {

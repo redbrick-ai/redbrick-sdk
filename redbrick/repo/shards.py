@@ -42,10 +42,6 @@ details {
     ... on GCSBucketStorageDetails {
         bucket
     }
-    ... on AltaDBStorageDetails {
-        access
-        host
-    }
 }
 createdBy {
     userId
