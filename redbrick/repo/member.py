@@ -14,43 +14,46 @@ class MemberRepoImpl(MemberRepo):
         """Construct MemberRepoImpl."""
         self.client = client
 
-    def list_org_members(self, org_id: str) -> List[Dict]:
+    def list_org_members(self, org_id: str, active: bool = True) -> List[Dict]:
         """Get a list of all org members."""
         query_string = f"""
         query membersSDK(
             $orgId: UUID!
+            $onlyActive: Boolean
         ) {{
             members(
                 orgId: $orgId
+                onlyActive: $onlyActive
             ) {{
                 {ORG_MEMBER_SHARD}
             }}
         }}
         """
-        query_variables = {"orgId": org_id}
+        query_variables = {"orgId": org_id, "onlyActive": active}
         result = self.client.execute_query(query_string, query_variables)
         members: List[Dict] = result["members"]
         return members
 
-    def remove_org_members(self, org_id: str, user_ids: List[str]) -> None:
-        """Remove org members."""
+    def toggle_org_members_status(
+        self, org_id: str, user_ids: List[str], active: bool
+    ) -> None:
+        """Toggle org members status."""
         query_string = """
-        mutation removeMembersSDK(
+        mutation toggleMembersStatusSDK(
             $orgId: UUID!
             $userIds: [CustomUUID!]!
+            $active: Boolean!
         ) {
-            removeMembers(
+            toggleMembersStatus(
                 orgId: $orgId
                 userIds: $userIds
+                active: $active
             ) {
                 ok
             }
         }
         """
-        query_variables = {
-            "orgId": org_id,
-            "userIds": user_ids,
-        }
+        query_variables = {"orgId": org_id, "userIds": user_ids, "active": active}
         self.client.execute_query(query_string, query_variables)
 
     def list_org_invites(self, org_id: str) -> List[Dict]:

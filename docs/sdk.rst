@@ -22,7 +22,7 @@ Organization
 Team
 ----------------------
 .. autoclass:: redbrick.common.member.Team
-   :members: get_member, list_members, remove_members, list_invites, invite_user, revoke_invitation
+   :members: get_member, list_members, disable_members, enable_members, list_invites, invite_user, revoke_invitation
    :show-inheritance:
 
 Storage

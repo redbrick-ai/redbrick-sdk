@@ -213,12 +213,14 @@ class MemberRepo(ABC):
     """Abstract interface to define methods for Member."""
 
     @abstractmethod
-    def list_org_members(self, org_id: str) -> List[Dict]:
+    def list_org_members(self, org_id: str, active: bool = True) -> List[Dict]:
         """Get a list of all org members."""
 
     @abstractmethod
-    def remove_org_members(self, org_id: str, user_ids: List[str]) -> None:
-        """Remove org members."""
+    def toggle_org_members_status(
+        self, org_id: str, user_ids: List[str], active: bool
+    ) -> None:
+        """Toggle org members status."""
 
     @abstractmethod
     def list_org_invites(self, org_id: str) -> List[Dict]:
@@ -272,7 +274,7 @@ class Team(ABC):
         """
 
     @abstractmethod
-    def list_members(self) -> List[OrgMember]:
+    def list_members(self, active: bool = True) -> List[OrgMember]:
         """Get a list of all organization members.
 
         .. code:: python
@@ -280,19 +282,39 @@ class Team(ABC):
             org = redbrick.get_org(org_id, api_key)
             members = org.team.list_members()
 
+        Parameters
+        --------------
+        active: bool
+            Only return active members if True, else return all members.
+
         Returns
         -------------
         List[OrgMember]
         """
 
     @abstractmethod
-    def remove_members(self, member_ids: List[str]) -> None:
-        """Remove members from the organization.
+    def disable_members(self, member_ids: List[str]) -> None:
+        """Disable organization members.
 
         .. code:: python
 
             org = redbrick.get_org(org_id, api_key)
-            org.team.remove_members(member_ids)
+            org.team.disable_members(member_ids)
+
+        Parameters
+        --------------
+        member_ids: List[str]
+            Unique member ids (userId or email).
+        """
+
+    @abstractmethod
+    def enable_members(self, member_ids: List[str]) -> None:
+        """Enable organization members.
+
+        .. code:: python
+
+            org = redbrick.get_org(org_id, api_key)
+            org.team.enable_members(member_ids)
 
         Parameters
         --------------

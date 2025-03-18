@@ -54,7 +54,7 @@ class TeamImpl(Team):
         members = self.list_members()
         return self._get_unique_member(member_id, members)
 
-    def list_members(self) -> List[OrgMember]:
+    def list_members(self, active: bool = True) -> List[OrgMember]:
         """Get a list of all organization members.
 
         .. code:: python
@@ -62,20 +62,25 @@ class TeamImpl(Team):
             org = redbrick.get_org(org_id, api_key)
             members = org.team.list_members()
 
+        Parameters
+        --------------
+        active: bool
+            Only return active members if True, else return all members.
+
         Returns
         -------------
         List[OrgMember]
         """
-        members = self.context.member.list_org_members(self.org.org_id)
+        members = self.context.member.list_org_members(self.org.org_id, active)
         return [OrgMember.from_entity(member) for member in members]
 
-    def remove_members(self, member_ids: List[str]) -> None:
-        """Remove members from the organization.
+    def disable_members(self, member_ids: List[str]) -> None:
+        """Disable organization members.
 
         .. code:: python
 
             org = redbrick.get_org(org_id, api_key)
-            org.team.remove_members(member_ids)
+            org.team.disable_members(member_ids)
 
         Parameters
         --------------
@@ -83,12 +88,36 @@ class TeamImpl(Team):
             Unique member ids (userId or email).
         """
         members = self.list_members()
-        self.context.member.remove_org_members(
+        self.context.member.toggle_org_members_status(
             self.org.org_id,
             [
                 self._get_unique_member(member_id, members).user_id
                 for member_id in member_ids
             ],
+            False,
+        )
+
+    def enable_members(self, member_ids: List[str]) -> None:
+        """Enable organization members.
+
+        .. code:: python
+
+            org = redbrick.get_org(org_id, api_key)
+            org.team.enable_members(member_ids)
+
+        Parameters
+        --------------
+        member_ids: List[str]
+            Unique member ids (userId or email).
+        """
+        members = self.list_members(False)
+        self.context.member.toggle_org_members_status(
+            self.org.org_id,
+            [
+                self._get_unique_member(member_id, members).user_id
+                for member_id in member_ids
+            ],
+            True,
         )
 
     def list_invites(self) -> List[OrgInvite]:
