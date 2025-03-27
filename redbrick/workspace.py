@@ -190,9 +190,23 @@ class RBWorkspaceImpl(RBWorkspace):
 
     def update_datapoint_attributes(self, dp_id: str, attributes: Dict) -> None:
         """Update datapoint attributes."""
-        self.context.workspace.update_datapoint_attributes(
-            self.org_id, dp_id, attributes
-        )
+        attrs: List[Dict] = []
+        for key, value in attributes.items():
+            attr: Dict = {}
+            if isinstance(key, int):
+                attr["attrid"] = key
+            else:
+                attr["name"] = key
+
+            if (not isinstance(value, bool) and isinstance(value, int)) or (
+                isinstance(value, list) and all(isinstance(val, int) for val in value)
+            ):
+                attr["optionid"] = value
+            else:
+                attr["value"] = value
+            attrs.append(attr)
+
+        self.context.workspace.update_datapoint_attributes(self.org_id, dp_id, attrs)
 
     def add_datapoints_to_projects(
         self, project_ids: List[str], dp_ids: List[str], is_ground_truth: bool = False

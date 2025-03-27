@@ -223,11 +223,11 @@ class WorkspaceRepoImpl(WorkspaceRepo):
         self.client.execute_query(query, variables)
 
     def update_datapoint_attributes(
-        self, org_id: str, dp_id: str, attributes: Dict
+        self, org_id: str, dp_id: str, attributes: List[Dict]
     ) -> None:
         """Update datapoint attributes."""
         query = """
-        mutation updateDatapointAttributesSDK($orgId: UUID!, $dpId: UUID!, $attributes: JSON!) {
+        mutation updateDatapointAttributesSDK($orgId: UUID!, $dpId: UUID!, $attributes: JSONString!) {
             updateDatapointAttributes(orgId: $orgId, dpId: $dpId, attributes: $attributes) {
                 ok
                 message

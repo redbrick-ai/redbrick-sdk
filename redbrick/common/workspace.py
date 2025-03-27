@@ -74,7 +74,7 @@ class WorkspaceRepo(ABC):
 
     @abstractmethod
     def update_datapoint_attributes(
-        self, org_id: str, dp_id: str, attributes: Dict
+        self, org_id: str, dp_id: str, attributes: List[Dict]
     ) -> None:
         """Update datapoint attributes."""
 
