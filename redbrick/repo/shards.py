@@ -20,6 +20,7 @@ user {
 }
 role
 tags
+active
 lastSeen
 """
 

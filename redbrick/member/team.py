@@ -111,6 +111,7 @@ class TeamImpl(Team):
             Unique member ids (userId or email).
         """
         members = self.list_members(False)
+        members = [member for member in members if not member.is_active]
         self.context.member.toggle_org_members_status(
             self.org.org_id,
             [

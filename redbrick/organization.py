@@ -96,7 +96,7 @@ class RBOrganizationImpl(RBOrganization):
         logger.warning(
             "org.members is deprecated. Please use `org.team.list_members()` instead"
         )
-        members = self.context.member.list_org_members(self.org_id)
+        members = self.context.member.list_org_members(self.org_id, False)
         org_members = []
         for member in members:
             user = member["user"]
@@ -109,6 +109,7 @@ class RBOrganizationImpl(RBOrganization):
                     "role": OrgMember.Role(member["role"]),
                     "tags": member["tags"],
                     "is2FAEnabled": bool(user["mfaSetup"]),
+                    "isActive": bool(member["active"]),
                     "lastActive": (
                         parser.parse(member["lastSeen"])
                         if member.get("lastSeen")

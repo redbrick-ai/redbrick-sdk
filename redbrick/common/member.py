@@ -36,6 +36,9 @@ class OrgMember:
     is_2fa_enabled: bool
         Whether 2FA is enabled for the user.
 
+    is_active: bool
+        Whether the user is active.
+
     last_active: Optional[datetime] = None
         Last time the user was active.
 
@@ -63,6 +66,7 @@ class OrgMember:
     role: "OrgMember.Role"
     tags: List[str]
     is_2fa_enabled: bool
+    is_active: bool
     last_active: Optional[datetime] = None
     sso_provider: Optional[str] = None
 
@@ -77,6 +81,7 @@ class OrgMember:
             role=OrgMember.Role(member["role"]),
             tags=member["tags"],
             is_2fa_enabled=bool(member["user"]["mfaSetup"]),
+            is_active=bool(member["active"]),
             last_active=(
                 parser.parse(member["lastSeen"]) if member.get("lastSeen") else None
             ),
