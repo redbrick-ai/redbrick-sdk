@@ -64,8 +64,19 @@ class StorageMethod:
 
     - ``PUBLIC`` - Access files from a public cloud storage service using their absolute URLs.
                         (i.e. files available publicly)
-    - ``REDBRICK`` - Access files stored on RedBrick AI's servers
+    - ``REDBRICK`` - Access files stored on RedBrick AI's servers.
                         (i.e. files uploaded directly to RBAI from a local machine)
+    - ``ALTA_DB`` - Access files stored on AltaDB.
+
+
+    Storage methods:
+    ----------------
+    - redbrick.StorageMethod.Public (:obj:`~redbrick.StorageMethod.Public`)
+    - redbrick.StorageMethod.RedBrick (:obj:`~redbrick.StorageMethod.RedBrick`)
+    - redbrick.StorageMethod.AWSS3 (:obj:`~redbrick.StorageMethod.AWSS3`)
+    - redbrick.StorageMethod.GoogleCloud (:obj:`~redbrick.StorageMethod.GoogleCloud`)
+    - redbrick.StorageMethod.AzureBlob (:obj:`~redbrick.StorageMethod.AzureBlob`)
+    - redbrick.StorageMethod.AltaDB (:obj:`~redbrick.StorageMethod.AltaDB`)
     """
 
     PUBLIC = "11111111-1111-1111-1111-111111111111"

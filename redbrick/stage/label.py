@@ -11,20 +11,13 @@ from redbrick.types.taxonomy import Taxonomy
 
 @dataclass
 class LabelStage(Stage):
-    """Label Stage.
+    """Label Stage (Sub class of :obj:`~redbrick.Stage`).
 
-    Parameters
-    --------------
-    stage_name: str
-        Stage name.
-
-    on_submit: Union[bool, str] = True
-        The next stage for the task when submitted in current stage.
-        If True, the task will go to ground truth.
+    :ivar str stage_name: Label stage name.
+    :ivar Union[bool, str] on_submit: The next stage for the task when submitted in current stage.
+        If True (default), the task will go to ground truth.
         If False, the task will be archived.
-
-    config: Config = Config()
-        Stage config.
+    :ivar `redbrick.LabelStage.Config` config: Label stage config.
     """
 
     @dataclass

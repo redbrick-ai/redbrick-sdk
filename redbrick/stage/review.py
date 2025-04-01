@@ -11,25 +11,16 @@ from redbrick.types.taxonomy import Taxonomy
 
 @dataclass
 class ReviewStage(Stage):
-    """Review Stage.
+    """Review Stage (Sub class of :obj:`~redbrick.Stage`).
 
-    Parameters
-    --------------
-    stage_name: str
-        Stage name.
-
-    on_accept: Union[bool, str] = True
-        The next stage for the task when accepted in current stage.
-        If True, the task will go to ground truth.
+    :ivar str stage_name: Review stage name.
+    :ivar Union[bool, str] on_accept: The next stage for the task when accepted in current stage.
+        If True (default), the task will go to ground truth.
         If False, the task will be archived.
-
-    on_reject: Union[bool, str] = False
-        The next stage for the task when rejected in current stage.
+    :ivar Union[bool, str] on_reject: The next stage for the task when rejected in current stage.
         If True, the task will go to ground truth.
-        If False, the task will be archived.
-
-    config: Config = Config()
-        Stage config.
+        If False(default), the task will be archived.
+    :ivar `redbrick.ReviewStage.Config` config: Review stage config.
     """
 
     @dataclass

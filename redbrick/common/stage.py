@@ -10,7 +10,14 @@ from redbrick.types.taxonomy import Taxonomy
 
 @dataclass
 class Stage:
-    """Base stage."""
+    """Base stage.
+
+    Sub-classes:
+    -------------
+    - redbrick.LabelStage (:obj:`~redbrick.LabelStage`)
+    - redbrick.ReviewStage (:obj:`~redbrick.ReviewStage`)
+    - redbrick.ModelStage (:obj:`~redbrick.ModelStage`)
+    """
 
     @dataclass
     class Config:

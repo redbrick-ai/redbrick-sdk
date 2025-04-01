@@ -328,20 +328,13 @@ CT_SEGMENTATOR_CATEGORIES: Dict[CT_SEGMENTATOR_SUB_TYPE, Dict[int, str]] = {
 
 @dataclass
 class ModelStage(Stage):
-    """Model Stage.
+    """Model Stage (Sub class of :obj:`~redbrick.Stage`).
 
-    Parameters
-    --------------
-    stage_name: str
-        Stage name.
-
-    on_submit: Union[bool, str] = True
-        The next stage for the task when submitted in current stage.
-        If True, the task will go to ground truth.
+    :ivar str stage_name: Model stage name.
+    :ivar Union[bool, str] on_submit: The next stage for the task when submitted in current stage.
+        If True (default), the task will go to ground truth.
         If False, the task will be archived.
-
-    config: Config = Config()
-        Stage config.
+    :ivar `redbrick.ModelStage.Config` config: Model stage config.
     """
 
     class ModelTaxonomyMap(TypedDict):
