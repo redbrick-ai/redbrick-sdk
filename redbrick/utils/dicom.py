@@ -150,7 +150,7 @@ def convert_to_semantic(
             nii = NiftiIO(
                 os.path.join(
                     dirname,
-                    f"instance-{labels[start_pos]["dicom"]["instanceid"]}.nii.gz",
+                    f"instance-{labels[start_pos]['dicom']['instanceid']}.nii.gz",
                 ),
                 False,
             )
@@ -163,7 +163,7 @@ def convert_to_semantic(
                     NiftiIO(
                         os.path.join(
                             dirname,
-                            f"instance-{labels[pos]["dicom"]["instanceid"]}.nii.gz",
+                            f"instance-{labels[pos]['dicom']['instanceid']}.nii.gz",
                         ),
                     ).data,
                     data,
@@ -171,7 +171,7 @@ def convert_to_semantic(
                 )
                 pos += 1
             filename = os.path.join(
-                dirname, f"category-{labels[start_pos]["classid"] + 1}.nii.gz"
+                dirname, f"category-{labels[start_pos]['classid'] + 1}.nii.gz"
             )
             files.add(filename)
             if os.path.isfile(filename):
