@@ -7,24 +7,21 @@ from unittest.mock import patch
 import numpy as np
 import nibabel as nib
 import pytest
-from nibabel.filebasedimages import ImageFileError
-from rt_utils import RTStruct  # type: ignore
+
 
 from redbrick.utils import dicom
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    ("equals", "pass_output", "expected"),
+    ("pass_output", "expected"),
     [
-        (True, True, np.array([[2, 2], [0, 0]])),
-        (False, True, np.array([[2, 2], [2, 2]])),
-        (True, False, np.array([[2, 2], [0, 0]])),
-        (False, False, np.array([[0, 0], [2, 2]])),
+        (True, np.array([[2, 2], [0, 0]])),
+        (False, np.array([[2, 2], [0, 0]])),
     ],
 )
 def test_merge_segmentations_success(
-    input_nifti_file, output_nifti_file, equals, pass_output, expected
+    input_nifti_file, output_nifti_file, pass_output, expected
 ):
     """Test successful merge"""
     input_instance = 1
@@ -35,7 +32,6 @@ def test_merge_segmentations_success(
         input_nifti_file,
         output_nifti_file,
         {(input_instance,): output_instance},
-        not equals,
     )
     assert resp is True
     # Load the output NIfTI file and check the data
@@ -48,7 +44,6 @@ def test_merge_segmentations_success(
 def test_merge_segmentations_nonexistent_input_file(output_nifti_file):
     """Test when the input file does not exist"""
     input_instance = 1
-    equals = True
     output_instance = 2
     invalid_file = "nonexistent.nii.gz"
     with pytest.raises(Exception), patch.object(dicom, "log_error") as mock_logger:
@@ -56,7 +51,6 @@ def test_merge_segmentations_nonexistent_input_file(output_nifti_file):
             invalid_file,
             output_nifti_file,
             {(input_instance,): output_instance},
-            not equals,
         )
         exception = mock_logger.call_args[0][0]
         raise exception
@@ -65,17 +59,20 @@ def test_merge_segmentations_nonexistent_input_file(output_nifti_file):
 @pytest.mark.unit
 def test_merge_segmentations_invalid_nifti_file(input_nifti_file, output_nifti_file):
     """Test when the input file is not a valid NIfTI file"""
+    from nibabel.wrapstruct import WrapStructError  # type: ignore
+
     input_instance = 1
-    equals = True
     output_instance = 2
     with open(input_nifti_file, "w", encoding="utf-8") as file:
         file.write("This is not a NIfTI file.")
-    with pytest.raises(ImageFileError), patch.object(dicom, "log_error") as mock_logger:
+    with (
+        pytest.raises(WrapStructError),
+        patch.object(dicom, "log_error") as mock_logger,
+    ):
         dicom.merge_segmentations(
             input_nifti_file,
             output_nifti_file,
             {(input_instance,): output_instance},
-            not equals,
         )
         exception = mock_logger.call_args[0][0]
         raise exception
@@ -214,7 +211,7 @@ def test_convert_to_binary_with_high_values(tmpdir, mock_labels):
     assert success
     assert len(new_files) == 3
     assert os.path.isfile(new_files[2])
-    assert nib.loadsave.load(new_files[2]).dataobj.dtype == np.uint16
+    assert nib.loadsave.load(new_files[2]).dataobj.dtype == np.uint8
 
 
 @pytest.mark.unit
@@ -547,6 +544,8 @@ async def test_convert_nii_to_rtstruct(
     dicom_file_and_image, nifti_instance_files_png, semantic_mask, expected_segment_map
 ):
     """Test dicom.convert_nii_to_rtstruct"""
+    from rt_utils import RTStruct  # type: ignore
+
     dicom_file, image_data = dicom_file_and_image
     dicom_series_path = os.path.dirname(dicom_file)
     categories = [

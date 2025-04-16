@@ -32,19 +32,18 @@ def merge_instances(
     input_data: Any,
     output_data: Any,
     instances: Dict[Tuple[int, ...], int],
-    invert: bool = False,
 ) -> None:
     """Merge instances."""
     import numpy as np  # type: ignore
 
-    if invert == any(0 in input_instances for input_instances in instances.keys()):
+    if not any(0 in input_instances for input_instances in instances.keys()):
         all_indices = np.nonzero(input_data)
         for input_instances, output_instance in instances.items():
             if not input_instances:
                 continue
 
             instances_arr = np.array(list(set(input_instances)), dtype=np.uint16)
-            indices = np.isin(input_data[all_indices], instances_arr, invert=invert)
+            indices = np.isin(input_data[all_indices], instances_arr)
 
             output_data[
                 tuple(all_indices[i][indices] for i in range(output_data.ndim))
@@ -55,61 +54,24 @@ def merge_instances(
                 continue
 
             instances_arr = np.array(list(set(input_instances)), dtype=np.uint16)
-            indices = np.isin(input_data, instances_arr, invert=invert)
+            indices = np.isin(input_data, instances_arr)
             output_data[indices] = output_instance
 
 
 def merge_segmentations(
-    input_file: str,
-    output_file: str,
-    instances: Dict[Tuple[int, ...], int],
-    invert: bool = False,
+    input_file: str, output_file: str, instances: Dict[Tuple[int, ...], int]
 ) -> bool:
     """Merge segmentations from input to output."""
     import numpy as np  # type: ignore
-    from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
-    from nibabel.nifti1 import Nifti1Image  # type: ignore
+    from redbrick.utils.nifti_io import NiftiIO  # type: ignore
 
     try:
-        input_img = nib_load(input_file)
-        if not isinstance(input_img, Nifti1Image):
-            log_error(f"{input_file} is not a valid NIfTI1 file.")
-            return False
-
-        input_dtype = input_img.get_data_dtype()
-        if input_dtype in (np.uint8, np.uint16):
-            input_data = np.asanyarray(input_img.dataobj, dtype=input_dtype)
-        else:
-            input_data = np.round(input_img.get_fdata(caching="unchanged")).astype(
-                np.uint16
-            )
-
-        if os.path.isfile(output_file):
-            output_img = nib_load(output_file)
-            if not isinstance(output_img, Nifti1Image):
-                log_error(f"{output_img} is not a valid NIfTI1 file.")
-                return False
-
-            output_affine = output_img.affine
-            output_header = output_img.header
-
-            output_dtype = output_img.get_data_dtype()
-            if output_dtype in (np.uint8, np.uint16):
-                output_data = np.asanyarray(output_img.dataobj, dtype=output_dtype)
-            else:
-                output_data = np.round(
-                    output_img.get_fdata(caching="unchanged")
-                ).astype(np.uint16)
-        else:
-            output_affine = input_img.affine
-            output_header = input_img.header
-            output_data = np.zeros(input_data.shape, dtype=np.uint16)
-
-        merge_instances(input_data, output_data, instances, invert)
-
-        new_img = Nifti1Image(output_data, output_affine, output_header)
-        new_img.set_data_dtype(output_data.dtype)
-        nib_save(new_img, output_file)
+        nii = NiftiIO(input_file, False)
+        data = np.zeros(
+            (nii.size,), dtype=np.uint8 if max(instances.values()) < 256 else np.uint16
+        )
+        merge_instances(NiftiIO(input_file).data, data, instances)
+        nii.save(output_file, data)
         return True
     except Exception as err:
         log_error(err)
@@ -121,49 +83,37 @@ def convert_to_binary(
 ) -> Tuple[bool, List[str]]:
     """Convert segmentation to binary."""
     import numpy as np  # type: ignore
-    from nibabel.loadsave import load as nib_load, save as nib_save  # type: ignore
-    from nibabel.nifti1 import Nifti1Image  # type: ignore
+    from redbrick.utils.nifti_io import NiftiIO  # type: ignore
 
-    img = nib_load(mask)
-
-    if not isinstance(img, Nifti1Image):
-        log_error(f"{mask} is not a valid NIfTI1 file.")
-        return False, [mask]
-
-    affine = img.affine
-    header = img.header
-
-    dtype = img.get_data_dtype()
-    if dtype in (np.uint8, np.uint16):
-        data = np.asanyarray(img.dataobj, dtype=dtype)
-    else:
-        data = np.round(img.get_fdata(caching="unchanged")).astype(np.uint16)
-
+    nii = NiftiIO(mask)
+    data = nii.data
+    assert data is not None
     files: List[str] = []
 
     non_zero = np.nonzero(data)
-    for label in labels:
+    new_data = np.zeros(data.shape, dtype=np.uint8)
+    for idx, label in enumerate(labels):
         instance_id: int = label["dicom"]["instanceid"]
         group_ids: List[int] = label["dicom"].get("groupids") or []
         instances = np.array(list({instance_id} | set(group_ids)), dtype=np.uint16)
 
-        new_data = np.zeros(data.shape, dtype=np.uint8)
         indices = np.isin(data[non_zero], instances)
 
         if not indices.any():
             continue
 
-        new_data[tuple(non_zero[i][indices] for i in range(new_data.ndim))] = 1
-
         filename = os.path.join(
             dirname, f"instance-{label['dicom']['instanceid']}.nii.gz"
         )
+        files.append(filename)
         if os.path.isfile(filename):
             os.remove(filename)
 
-        new_img = Nifti1Image(new_data, affine, header)
-        nib_save(new_img, filename)
-        files.append(filename)
+        coords = tuple(non_zero[i][indices] for i in range(new_data.ndim))
+        new_data[coords] = 1
+        nii.save(filename, new_data)
+        if idx < (len(labels) - 1):
+            new_data[coords] = 0
 
     return True, files
 
@@ -176,6 +126,12 @@ def convert_to_semantic(
     is_tax_v2: bool = True,
 ) -> Tuple[bool, List[str]]:
     """Convert segmentation to semantic."""
+    import numpy as np  # type: ignore
+    from redbrick.utils.nifti_io import NiftiIO  # type: ignore
+
+    if not labels:
+        return True, []
+
     if not is_tax_v2:
         log_error("Taxonomy V1 is not supported")
         return False, masks
@@ -184,41 +140,64 @@ def convert_to_semantic(
         log_error(f"Cannot process labels: {labels}")
         return False, masks
 
-    input_filename = output_filename = masks[0]
-    if not binary_mask:
-        input_filename = f"{output_filename}.old.nii.gz"
-        os.rename(output_filename, input_filename)
-
-    visited: Set[int] = set()
+    labels.sort(key=lambda label: label["classid"])
     files: Set[str] = set()
-    to_merge: Dict[Tuple[int, ...], int] = {}
-    for label in labels:
-        instance = label["dicom"]["instanceid"]
-        category = label["classid"] + 1
-        if binary_mask:
-            input_filename = os.path.join(dirname, f"instance-{instance}.nii.gz")
-            output_filename = os.path.join(dirname, f"category-{category}.nii.gz")
-            if merge_segmentations(input_filename, output_filename, {(1,): 1}):
-                files.add(output_filename)
-            else:
-                log_error(f"Error processing semantic mask for: {label}")
-        else:
+
+    if binary_mask:
+        pos = 0
+        while pos < len(labels):
+            start_pos = pos
+            nii = NiftiIO(
+                os.path.join(
+                    dirname,
+                    f"instance-{labels[start_pos]["dicom"]["instanceid"]}.nii.gz",
+                ),
+                False,
+            )
+            data = np.zeros((nii.size,), dtype=np.uint8)
+            while (
+                pos < len(labels)
+                and labels[pos]["classid"] == labels[start_pos]["classid"]
+            ):
+                merge_instances(
+                    NiftiIO(
+                        os.path.join(
+                            dirname,
+                            f"instance-{labels[pos]["dicom"]["instanceid"]}.nii.gz",
+                        ),
+                    ).data,
+                    data,
+                    {(1,): 1},
+                )
+                pos += 1
+            filename = os.path.join(
+                dirname, f"category-{labels[start_pos]["classid"] + 1}.nii.gz"
+            )
+            files.add(filename)
+            if os.path.isfile(filename):
+                os.remove(filename)
+            nii.save(filename, data)
+    else:
+        visited: Set[int] = set()
+        instances_to_merge: Dict[Tuple[int, ...], int] = {}
+        for label in labels:
             instances = (
-                {instance} | set(label["dicom"].get("groupids") or [])
+                {label["dicom"]["instanceid"]}
+                | set(label["dicom"].get("groupids") or [])
             ) - visited
 
             if instances:
-                to_merge[tuple(sorted(instances))] = category
+                instances_to_merge[tuple(sorted(instances))] = label["classid"] + 1
                 visited.update(instances)
 
-    if to_merge:
-        if merge_segmentations(input_filename, output_filename, to_merge):
-            files.add(output_filename)
-        else:
-            log_error("Error processing semantic mask")
-
-    if not binary_mask:
-        os.remove(input_filename)
+        if instances_to_merge:
+            input_filename, output_filename = f"{masks[0]}.old.nii.gz", masks[0]
+            os.rename(output_filename, input_filename)
+            if merge_segmentations(input_filename, output_filename, instances_to_merge):
+                files.add(output_filename)
+                os.remove(input_filename)
+            else:
+                log_error("Error processing semantic mask")
 
     return True, list(files)
 
