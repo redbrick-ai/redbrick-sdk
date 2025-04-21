@@ -12,6 +12,7 @@ from redbrick.common.settings import SettingsRepo
 from redbrick.common.upload import UploadRepo
 from redbrick.common.workspace import WorkspaceRepo
 from redbrick.common.storage import StorageRepo
+from redbrick.common.dataset import DatasetRepo
 from redbrick.config import config
 from redbrick.utils.logging import logger
 
@@ -29,6 +30,7 @@ class RBContext(ABC):
     workspace: WorkspaceRepo
     member: MemberRepo
     storage: StorageRepo
+    dataset: DatasetRepo
 
     @property
     @abstractmethod
@@ -51,6 +53,7 @@ class RBContextImpl(RBContext):
             WorkspaceRepoImpl,
             MemberRepoImpl,
             StorageRepoImpl,
+            DatasetRepoImpl,
         )
 
         if config.debug:
@@ -66,6 +69,7 @@ class RBContextImpl(RBContext):
         self.workspace = WorkspaceRepoImpl(self.client)
         self.member = MemberRepoImpl(self.client)
         self.storage = StorageRepoImpl(self.client)
+        self.dataset = DatasetRepoImpl(self.client)
 
         self._key_id: Optional[str] = None
 

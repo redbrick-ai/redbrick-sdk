@@ -8,7 +8,6 @@ requires-python = ">=3.9,<3.14"
 keywords = ["redbrick"]
 dependencies = [
     "aiohttp<4,>=3.10.5",
-    "altadb>=0.0.5",
     "dicom2nifti<3",
     "inquirerpy<1",
     "natsort<9,>=8.0.2",
@@ -17,6 +16,7 @@ dependencies = [
     "numpy<3,>=1.15",
     "packaging<25",
     "Pillow<11,>=9.0.1",
+    "pydicom<4,>=2.4",
     "python-dateutil<3",
     "requests<3,>=2.23.0",
     "Rich<14",

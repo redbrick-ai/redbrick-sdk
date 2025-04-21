@@ -28,6 +28,12 @@ class RBClient(ABC):
     """Client to communicate with RedBrick AI GraphQL Server."""
 
     api_key: str
+    url: str
+
+    @property
+    @abstractmethod
+    def headers(self) -> Dict:
+        """Get request headers."""
 
     @abstractmethod
     def execute_query(

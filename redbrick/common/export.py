@@ -4,6 +4,7 @@ from typing import Iterator, Optional, List, Dict, Sequence, Tuple, TypedDict
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
 from redbrick.types.task import OutputTask
 from redbrick.types.taxonomy import Taxonomy
@@ -23,6 +24,23 @@ class TaskFilterParams(TypedDict, total=False):
 
 class ExportRepo(ABC):
     """Abstract interface to define methods for Export."""
+
+    @abstractmethod
+    def get_dataset_imports(
+        self, org_id: str, data_store: str
+    ) -> Tuple[List[Dict], str]:
+        """Get data store imports."""
+
+    @abstractmethod
+    def get_dataset_import_series(
+        self,
+        org_id: str,
+        data_store: str,
+        search: Optional[str] = None,
+        first: int = 20,
+        cursor: Optional[str] = None,
+    ) -> Tuple[List[Dict[str, str]], str]:
+        """Get data store imports."""
 
     @abstractmethod
     def datapoints_in_project(
@@ -100,6 +118,49 @@ class ExportRepo(ABC):
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get task active time."""
+
+
+class DatasetExport(ABC):
+    """
+    Primary interface for various export methods.
+
+    The export module has many functions for exporting annotations and meta-data from datasets. The export module is available from the :attr:`redbrick.RBProject` module.
+
+    .. code:: python
+
+        >>> dataset = redbrick.get_dataset(api_key="", org_id="", dataset_name="")
+        >>> dataset.export # Export
+    """
+
+    @abstractmethod
+    def get_data_store_series(
+        self, *, search: Optional[str] = None, page_size: int = MAX_CONCURRENCY
+    ) -> Iterator[Dict[str, str]]:
+        """Get data store series."""
+
+    @abstractmethod
+    def export_to_files(
+        self,
+        path: str,
+        page_size: int = MAX_CONCURRENCY,
+        number: Optional[int] = None,
+        search: Optional[str] = None,  # pylint: disable=unused-argument
+    ) -> None:
+        """Export dataset to folder.
+
+        Args
+        ----
+        dataset_name: str
+            Name of the dataset.
+        path: str
+            Path to the folder where the dataset will be saved.
+        page_size: int
+            Number of series to export in parallel.
+        number: int
+            Number of series to export in total.
+        search: str
+            Search string to filter the series to export.
+        """
 
 
 class Export(ABC):

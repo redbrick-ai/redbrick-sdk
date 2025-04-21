@@ -1,16 +1,38 @@
 """Abstract interface to upload."""
 
-from typing import List, Dict, Optional, Any, Sequence
+from typing import List, Dict, Optional, Any, Sequence, Tuple
 from abc import ABC, abstractmethod
 
 import aiohttp
 
+from redbrick.common.constants import MAX_FILE_BATCH_SIZE
 from redbrick.common.storage import StorageMethod
 from redbrick.types.task import InputTask, OutputTask
 
 
 class UploadRepo(ABC):
     """Abstract interface to define methods for Upload."""
+
+    @abstractmethod
+    def import_dataset_files(
+        self,
+        org_id: str,
+        data_store: str,
+        import_name: Optional[str] = None,
+        import_id: Optional[str] = None,
+        files: Optional[List[Dict[str, str]]] = None,
+    ) -> Tuple[str, List[str]]:
+        """Import files into a dataset."""
+
+    @abstractmethod
+    def process_dataset_import(
+        self,
+        org_id: str,
+        data_store: str,
+        import_id: str,
+        total_files: int,
+    ) -> bool:
+        """Process import."""
 
     @abstractmethod
     async def create_datapoint_async(  # pylint: disable=too-many-locals
@@ -159,6 +181,26 @@ class UploadRepo(ABC):
         stage_name: str,
     ) -> Optional[str]:
         """Send tasks to different stage."""
+
+
+class DatasetUpload(ABC):
+    """
+    Primary interface for uploading to a dataset.
+
+    .. code:: python
+
+        >>> dataset = redbrick.get_dataset(api_key="", org_id="", dataset_name="")
+        >>> dataset.upload
+    """
+
+    @abstractmethod
+    def upload_files(
+        self,
+        path: str,
+        import_name: Optional[str] = None,
+        concurrency: int = MAX_FILE_BATCH_SIZE,
+    ) -> None:
+        """Upload files."""
 
 
 class Upload(ABC):

@@ -1,7 +1,7 @@
 """Abstract interface to upload."""
 
 import json
-from typing import List, Dict, Optional, Any, Sequence
+from typing import List, Dict, Optional, Any, Sequence, Tuple
 
 import aiohttp
 
@@ -16,6 +16,67 @@ class UploadRepoImpl(UploadRepo):
     def __init__(self, client: RBClient) -> None:
         """Construct ExportRepoImpl."""
         self.client = client
+
+    def import_dataset_files(
+        self,
+        org_id: str,
+        data_store: str,
+        import_name: Optional[str] = None,
+        import_id: Optional[str] = None,
+        files: Optional[List[Dict[str, str]]] = None,
+    ) -> Tuple[str, List[str]]:
+        """Import files into a dataset."""
+        files = files or []
+        if not any([import_id, import_name]):
+            raise ValueError("Either import_id or import_name must be provided")
+
+        query_string = """
+            mutation importFiles($orgId: UUID!, $dataStore: String!, $files: [ImportJobFileInput!]!, $importName: String, $importId: UUID) {
+                importFiles(orgId: $orgId, dataStore: $dataStore, files: $files, importName: $importName, importId: $importId) {
+                    dataStoreImport {
+                       importId
+                    }
+                    urls
+                }
+            }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "dataStore": data_store,
+            "files": files,
+            "importName": import_name,
+            "importId": import_id,
+        }
+        result: Dict = self.client.execute_query(query_string, query_variables)
+        return (
+            result["importFiles"]["dataStoreImport"]["importId"],
+            result["importFiles"]["urls"],
+        )
+
+    def process_dataset_import(
+        self,
+        org_id: str,
+        data_store: str,
+        import_id: str,
+        total_files: int,
+    ) -> bool:
+        """Process import."""
+        query_string = """
+            mutation processImport($orgId: UUID!, $dataStore: String!, $importId: UUID!, $totalFiles: Int) {
+                processImport(orgId: $orgId, dataStore: $dataStore, importId: $importId, totalFiles: $totalFiles) {
+                    ok
+                    message
+                }
+            }
+            """
+        query_variables = {
+            "orgId": org_id,
+            "dataStore": data_store,
+            "importId": import_id,
+            "totalFiles": total_files,
+        }
+        result = self.client.execute_query(query_string, query_variables)
+        return bool(result["processImport"]["ok"])
 
     async def create_datapoint_async(
         self,

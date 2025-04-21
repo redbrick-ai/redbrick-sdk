@@ -137,6 +137,22 @@ class RBOrganizationImpl(RBOrganization):
         """Representation of object."""
         return str(self)
 
+    def create_dataset(self, dataset_name: str) -> Dict:
+        """Create a new dataset."""
+        return self.context.dataset.create_dataset(self.org_id, dataset_name)
+
+    def get_dataset(self, dataset_name: str) -> Dict:
+        """
+        Get dataset name and status.
+
+        Raise an exception if dataset does not exist.
+        """
+        return self.context.dataset.get_dataset(self.org_id, dataset_name)
+
+    def delete_dataset(self, dataset_name: str) -> bool:
+        """Delete a dataset."""
+        return self.context.dataset.delete_dataset(self.org_id, dataset_name)
+
     def create_workspace(self, name: str, exists_okay: bool = False) -> RBWorkspace:
         """
         Create a workspace within the organization.

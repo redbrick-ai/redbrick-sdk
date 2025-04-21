@@ -2,7 +2,7 @@
 
 import os
 import gzip
-from typing import Any, Dict, List, Optional, Tuple, Set
+from typing import Any, Callable, Dict, List, Optional, Tuple, Set
 
 import aiohttp
 from yarl import URL
@@ -11,7 +11,6 @@ from tenacity.retry import retry_if_not_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random_exponential
 from natsort import natsorted, ns
-from altadb.utils.files import save_dicom_series
 
 from redbrick.common.constants import (
     MAX_FILE_BATCH_SIZE,
@@ -169,6 +168,8 @@ async def upload_files(
     progress_bar_name: Optional[str] = "Uploading files",
     segmentations_upload: bool = False,
     zipped: bool = False,
+    keep_progress_bar: bool = False,
+    upload_callback: Optional[Callable] = None,
 ) -> List[bool]:
     """Upload files from local path to url (file path, presigned url, file type)."""
     timeout = aiohttp.ClientTimeout(connect=60)
@@ -223,6 +224,8 @@ async def upload_files(
             os.remove(tmp_path)
 
         if status in (200, 201):
+            if upload_callback:
+                upload_callback()
             return True
 
         raise ConnectionError(f"Error in uploading {path} to RedBrick")
@@ -233,7 +236,10 @@ async def upload_files(
             for path, url, file_type in files
         ]
         uploaded = await gather_with_concurrency(
-            MAX_FILE_BATCH_SIZE, *coros, progress_bar_name=progress_bar_name
+            MAX_FILE_BATCH_SIZE,
+            *coros,
+            progress_bar_name=progress_bar_name,
+            keep_progress_bar=keep_progress_bar,
         )
 
     return uploaded
@@ -343,6 +349,9 @@ async def download_files_altadb(
     keep_progress_bar: bool = True,
 ) -> List[Optional[List[str]]]:
     """Download files from altadb (presigned url, file path)."""
+    # pylint: disable=import-outside-toplevel, cyclic-import
+    from redbrick.utils.dicom import save_dicom_series
+
     paths = await gather_with_concurrency(
         MAX_FILE_BATCH_SIZE,
         *[save_dicom_series(url, path) for url, path in files],

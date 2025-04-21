@@ -8,9 +8,9 @@ from redbrick.types.task import InputTask
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
 from redbrick.common.context import RBContext
 from redbrick.common.stage import Stage
-from redbrick.common.upload import Upload
+from redbrick.common.upload import Upload, DatasetUpload
 from redbrick.common.labeling import Labeling
-from redbrick.common.export import Export
+from redbrick.common.export import Export, DatasetExport
 from redbrick.common.settings import Settings
 from redbrick.common.member import Team, Workforce
 from redbrick.common.storage import Storage
@@ -62,6 +62,22 @@ class RBOrganization(ABC):
     @abstractmethod
     def projects(self) -> List["RBProject"]:
         """Get a list of active projects in the organization."""
+
+    @abstractmethod
+    def create_dataset(self, dataset_name: str) -> Dict:
+        """Create a new dataset."""
+
+    @abstractmethod
+    def get_dataset(self, dataset_name: str) -> Dict:
+        """
+        Get dataset name and status.
+
+        Raise an exception if dataset does not exist.
+        """
+
+    @abstractmethod
+    def delete_dataset(self, dataset_name: str) -> bool:
+        """Delete a dataset."""
 
     @abstractmethod
     def create_workspace(self, name: str, exists_okay: bool = False) -> "RBWorkspace":
@@ -288,6 +304,41 @@ class RBOrganization(ABC):
         self, name: Optional[str] = None, tax_id: Optional[str] = None
     ) -> bool:
         """Delete a taxonomy by name or ID."""
+
+
+class RBDataset(ABC):
+    """Abstract interface to RBDataset.
+
+    :ivar `redbrick.common.upload.DatasetUpload` upload: Upload data to dataset.
+    :ivar `redbrick.common.export.DatasetExport` export: Dataset data export.
+
+    .. code:: python
+
+        >>> dataset = redbrick.get_dataset(org_id="", dataset_name="", api_key="")
+    """
+
+    context: RBContext
+
+    upload: DatasetUpload
+    export: DatasetExport
+
+    @property
+    @abstractmethod
+    def org_id(self) -> str:
+        """
+        Read only property.
+
+        Retrieves the unique Organization UUID that this dataset belongs to
+        """
+
+    @property
+    @abstractmethod
+    def dataset_name(self) -> str:
+        """
+        Read only name property.
+
+        Retrieves the dataset name.
+        """
 
 
 class RBWorkspace(ABC):

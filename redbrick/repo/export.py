@@ -16,6 +16,84 @@ class ExportRepoImpl(ExportRepo):
         """Construct ExportRepoImpl."""
         self.client = client
 
+    def get_dataset_imports(
+        self, org_id: str, data_store: str
+    ) -> Tuple[List[Dict], str]:
+        """Get data store import."""
+        query_string = """
+            query dataStoreImports($orgId: UUID!, $dataStore: String!, $first: Int, $after: String, $createdBy: CustomUUID, $createdAfter: DateTime, $createdBefore: DateTime){
+                dataStoreImports(orgId: $orgId, dataStore: $dataStore, first: $first, after: $after, createdBy: $createdBy, createdAfter: $createdAfter, createdBefore: $createdBefore){
+                    entries{
+                        orgId
+                        datastore
+                        name
+                        importId
+                        createdAt
+                        createdBy
+                        status
+                        updatedAt
+                        taskCount
+                        failureLogs
+                    }
+                    cursor
+                }
+            }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "dataStore": data_store,
+            "first": 20,
+            "after": None,
+        }
+        result = self.client.execute_query(query_string, query_variables)
+        return (
+            result["dataStoreImports"]["entries"],
+            result["dataStoreImports"]["cursor"],
+        )
+
+    def get_dataset_import_series(
+        self,
+        org_id: str,
+        data_store: str,
+        search: Optional[str] = None,
+        first: int = 20,
+        cursor: Optional[str] = None,
+    ) -> Tuple[List[Dict[str, str]], str]:
+        """Get data store imports."""
+        query_string = """
+            query DataStoreImportSeries($orgId: UUID!, $dataStore: String!, $first: Int, $after: String, $search: String) {
+                dataStoreImportSeries(orgId: $orgId, dataStore: $dataStore, first: $first, after: $after, search: $search) {
+                    entries {
+                        orgId
+                        datastore
+                        importId
+                        seriesId
+                        createdAt
+                        createdBy
+                        totalSize
+                        numFiles
+                        patientHeaders
+                        studyHeaders
+                        seriesHeaders
+                        url
+                    }
+                    cursor
+                }
+            }
+        """
+        query_variables = {
+            "orgId": org_id,
+            "dataStore": data_store,
+            "first": first,
+            "after": cursor,
+            "search": search,
+        }
+        result = self.client.execute_query(query_string, query_variables)
+        return (
+            result["dataStoreImportSeries"]["entries"],
+            result["dataStoreImportSeries"]["cursor"],
+        )
+
     def datapoints_in_project(
         self, org_id: str, project_id: str, stage_name: Optional[str] = None
     ) -> int:

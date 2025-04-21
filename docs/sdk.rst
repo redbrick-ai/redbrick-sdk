@@ -8,7 +8,7 @@ functions for programmatically manipulating data, importing annotations, assigni
 RedBrick
 ----------------------
 .. automodule:: redbrick
-   :members: get_org, get_workspace, get_project, get_org_from_profile, get_project_from_profile, OrgMember, OrgInvite, ProjectMember, StorageProvider, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, Stage, LabelStage, ReviewStage, ModelStage
+   :members: get_org, get_dataset, get_workspace, get_project, get_org_from_profile, get_dataset_from_profile, get_workspace_from_profile, get_project_from_profile, OrgMember, OrgInvite, ProjectMember, StorageProvider, StorageMethod, ImportTypes, TaskEventTypes, TaskFilters, TaskStates, Stage, LabelStage, ReviewStage, ModelStage
    :member-order: bysource
 
 .. _org:
@@ -16,7 +16,7 @@ RedBrick
 Organization
 ----------------------
 .. autoclass:: redbrick.RBOrganization
-   :members: name, org_id, create_workspace, create_project, create_project_advanced, get_project, workspaces_raw, projects_raw, projects, delete_project, taxonomies, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy, delete_taxonomy
+   :members: name, org_id, create_dataset, create_workspace, create_project, create_project_advanced, get_dataset, get_project, workspaces_raw, projects_raw, projects, delete_dataset, delete_project, taxonomies, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy, delete_taxonomy
    :show-inheritance:
 
 Team
@@ -29,6 +29,26 @@ Storage
 ----------------------
 .. autoclass:: redbrick.common.storage.Storage
    :members: get_storage, list_storages, create_storage, update_storage, delete_storage, verify_storage
+   :show-inheritance:
+
+.. _dataset:
+
+Dataset
+----------------------
+.. autoclass:: redbrick.RBDataset
+   :members: dataset_name, org_id
+   :show-inheritance:
+
+DatasetUpload
+----------------------
+.. autoclass:: redbrick.common.upload.DatasetUpload
+   :members: upload_files
+   :show-inheritance:
+
+DatasetExport
+----------------------
+.. autoclass:: redbrick.common.export.DatasetExport
+   :members: get_data_store_series, export_to_files
    :show-inheritance:
 
 .. _workspace:

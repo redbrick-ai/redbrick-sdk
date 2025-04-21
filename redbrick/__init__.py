@@ -16,9 +16,10 @@ from redbrick.common.enums import (
     TaskStates,
 )
 from redbrick.common.constants import DEFAULT_URL
-from redbrick.common.entities import RBOrganization, RBWorkspace, RBProject
+from redbrick.common.entities import RBOrganization, RBWorkspace, RBProject, RBDataset
 from redbrick.common.member import OrgMember, OrgInvite, ProjectMember
 from redbrick.organization import RBOrganizationImpl
+from redbrick.dataset import RBDatasetImpl
 from redbrick.workspace import RBWorkspaceImpl
 from redbrick.project import RBProjectImpl
 from redbrick.stage import Stage, LabelStage, ReviewStage, ModelStage
@@ -32,7 +33,7 @@ from .config import config
 from .version_check import version_check
 
 
-__version__ = "2.23.0"
+__version__ = "2.24.0"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:
@@ -83,7 +84,7 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
     Parameters
     ---------------
     org_id: str
-        Your organizations unique id https://app.redbrickai.com/[org_id]/.
+        Your organizations unique id https://app.redbrickai.com/[org_id]
 
     api_key: str
         Your secret api_key, can be created from the RedBrick AI platform.
@@ -92,6 +93,33 @@ def get_org(org_id: str, api_key: str, url: str = DEFAULT_URL) -> RBOrganization
         Should default to https://api.redbrickai.com
     """
     return RBOrganizationImpl(RBContextImpl(api_key=api_key, url=url), org_id)
+
+
+def get_dataset(
+    org_id: str, dataset_name: str, api_key: str, url: str = DEFAULT_URL
+) -> RBDataset:
+    """Get an existing RedBrick dataset object.
+
+    Dataset objects allow you to interact with your RedBrick AI datasets,
+    and perform actions like importing data, exporting data etc.
+
+    >>> dataset = redbrick.get_dataset(org_id, dataset_name, api_key)
+
+    Parameters
+    ---------------
+    org_id: str
+        Your organizations unique id https://app.redbrickai.com/[org_id]
+
+    dataset_name: str
+        Your datasets unique name https://app.redbrickai.com/[org_id]/datasets/[dataset_name]
+
+    api_key: str
+        Your secret api_key, can be created from the RedBrick AI platform.
+
+    url: str = DEFAULT_URL
+        Should default to https://api.redbrickai.com
+    """
+    return RBDatasetImpl(RBContextImpl(api_key=api_key, url=url), org_id, dataset_name)
 
 
 def get_workspace(
@@ -108,10 +136,10 @@ def get_workspace(
     Parameters
     ---------------
     org_id: str
-        Your organizations unique id https://app.redbrickai.com/[org_id]/
+        Your organizations unique id https://app.redbrickai.com/[org_id]
 
     workspace_id: str
-        Your workspaces unique id.
+        Your workspaces unique id https://app.redbrickai.com/[org_id]/workspaces/[workspace_id]
 
     api_key: str
         Your secret api_key, can be created from the RedBrick AI platform.
@@ -138,10 +166,10 @@ def get_project(
     Parameters
     ---------------
     org_id: str
-        Your organizations unique id https://app.redbrickai.com/[org_id]/
+        Your organizations unique id https://app.redbrickai.com/[org_id]
 
     project_id: str
-        Your projects unique id https://app.redbrickai.com/[org_id]/projects/[project_id]/
+        Your projects unique id https://app.redbrickai.com/[org_id]/projects/[project_id]
 
     api_key: str
         Your secret api_key, can be created from the RedBrick AI platform.
@@ -170,6 +198,50 @@ def get_org_from_profile(
 
     creds = CLICredentials(profile=profile_name)
     return RBOrganizationImpl(creds.context, creds.org_id)
+
+
+def get_dataset_from_profile(
+    dataset_name: str, profile_name: Optional[str] = None
+) -> RBDataset:
+    """Get the RBDataset object using the credentials file
+
+    dataset = get_dataset_from_profile()
+
+    Parameters
+    ---------------
+    dataset_name: str
+        dataset name which has to be fetched.
+
+    profile_name: str
+        Name of the profile stored in the credentials file
+    """
+    # pylint: disable=import-outside-toplevel, cyclic-import
+    from redbrick.cli.entity import CLICredentials
+
+    creds = CLICredentials(profile=profile_name)
+    return RBDatasetImpl(creds.context, creds.org_id, dataset_name)
+
+
+def get_workspace_from_profile(
+    workspace_id: str, profile_name: Optional[str] = None
+) -> RBWorkspace:
+    """Get the RBWorkspace object using the credentials file
+
+    workspace = get_workspace_from_profile()
+
+    Parameters
+    ---------------
+    workspace_id: str
+        workspace id which has to be fetched.
+
+    profile_name: str
+        Name of the profile stored in the credentials file
+    """
+    # pylint: disable=import-outside-toplevel, cyclic-import
+    from redbrick.cli.entity import CLICredentials
+
+    creds = CLICredentials(profile=profile_name)
+    return RBWorkspaceImpl(creds.context, creds.org_id, workspace_id)
 
 
 def get_project_from_profile(
