@@ -769,3 +769,44 @@ class UploadImpl(Upload):
         )
         if errors:
             log_error(errors[0])
+
+    def import_from_dataset(
+        self,
+        dataset_name: str,
+        *,
+        import_id: Optional[str] = None,
+        series_ids: Optional[List[str]] = None,
+        group_by_study: bool = False,
+        is_ground_truth: bool = False,
+    ) -> None:
+        """Import tasks from a dataset for a given import_id or list of series_ids.
+
+        Parameters
+        --------------
+        dataset_name: str
+            The name of the dataset to import from.
+
+        import_id: Optional[str] = None
+            The import id of the dataset to import from.
+
+        series_ids: Optional[List[str]] = None
+            The series ids to import from the dataset.
+
+        group_by_study: bool = False
+            Whether to group the tasks by study.
+
+        is_ground_truth: bool = False
+            Whether to import the tasks as ground truth.
+        """
+        error = self.context.upload.import_from_dataset(
+            self.project.org_id,
+            dataset_name,
+            None,
+            self.project.project_id,
+            import_id,
+            series_ids,
+            group_by_study,
+            is_ground_truth,
+        )
+        if error:
+            log_error(error)

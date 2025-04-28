@@ -640,3 +640,55 @@ class UploadRepoImpl(UploadRepo):
             session, query, variables
         )
         return (response.get("moveTasks") or {}).get("message")
+
+    def import_from_dataset(
+        self,
+        org_id: str,
+        dataset_name: str,
+        workspace_id: Optional[str],
+        project_id: Optional[str],
+        import_id: Optional[str],
+        series_ids: Optional[List[str]],
+        group_by_study: bool,
+        is_ground_truth: bool,
+    ) -> Optional[str]:
+        """Import from dataset."""
+        query_string = """
+            mutation importDatapointsFromAltaDbSDK(
+                $orgId: UUID!
+                $dataStore: String!
+                $workspaceId: UUID
+                $projectId: UUID
+                $importId: UUID
+                $seriesIds: [UUID!]
+                $groupByStudy: Boolean
+                $isGroundTruth: Boolean
+            ) {
+                importDatapointsFromAltaDb(
+                    orgId: $orgId
+                    dataStore: $dataStore
+                    workspaceId: $workspaceId
+                    projectId: $projectId
+                    importId: $importId
+                    seriesIds: $seriesIds
+                    groupByStudy: $groupByStudy
+                    isGroundTruth: $isGroundTruth
+                ) {
+                    ok
+                    message
+                }
+            }
+        """
+
+        query_variables = {
+            "orgId": org_id,
+            "dataStore": dataset_name,
+            "workspaceId": workspace_id,
+            "projectId": project_id,
+            "importId": import_id,
+            "seriesIds": series_ids,
+            "groupByStudy": group_by_study,
+            "isGroundTruth": is_ground_truth,
+        }
+        result = self.client.execute_query(query_string, query_variables)
+        return (result.get("importDatapointsFromAltaDb") or {}).get("message")

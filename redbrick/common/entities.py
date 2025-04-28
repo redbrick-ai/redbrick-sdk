@@ -557,6 +557,32 @@ class RBWorkspace(ABC):
             True if successful, else False.
         """
 
+    @abstractmethod
+    def import_from_dataset(
+        self,
+        dataset_name: str,
+        *,
+        import_id: Optional[str] = None,
+        series_ids: Optional[List[str]] = None,
+        group_by_study: bool = False,
+    ) -> None:
+        """Import tasks from a dataset for a given import_id or list of series_ids.
+
+        Parameters
+        --------------
+        dataset_name: str
+            The name of the dataset to import from.
+
+        import_id: Optional[str] = None
+            The import id of the dataset to import from.
+
+        series_ids: Optional[List[str]] = None
+            The series ids to import from the dataset.
+
+        group_by_study: bool = False
+            Whether to group the tasks by study.
+        """
+
 
 class RBProject(ABC):
     """Abstract interface to RBProject.

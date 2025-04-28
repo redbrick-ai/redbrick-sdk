@@ -17,7 +17,7 @@ from redbrick.common.context import RBContext
 from redbrick.types.task import InputTask
 from redbrick.upload.interact import upload_datapoints
 from redbrick.utils.async_utils import gather_with_concurrency, get_session
-from redbrick.utils.logging import logger
+from redbrick.utils.logging import log_error, logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_dicom_utils import dicom_dp_format
 
@@ -389,3 +389,40 @@ class RBWorkspaceImpl(RBWorkspace):
         """
         concurrency = min(concurrency, 50)
         return asyncio.run(self._delete_datapoints(dp_ids, concurrency))
+
+    def import_from_dataset(
+        self,
+        dataset_name: str,
+        *,
+        import_id: Optional[str] = None,
+        series_ids: Optional[List[str]] = None,
+        group_by_study: bool = False,
+    ) -> None:
+        """Import tasks from a dataset for a given import_id or list of series_ids.
+
+        Parameters
+        --------------
+        dataset_name: str
+            The name of the dataset to import from.
+
+        import_id: Optional[str] = None
+            The import id of the dataset to import from.
+
+        series_ids: Optional[List[str]] = None
+            The series ids to import from the dataset.
+
+        group_by_study: bool = False
+            Whether to group the tasks by study.
+        """
+        error = self.context.upload.import_from_dataset(
+            self.org_id,
+            dataset_name,
+            self.workspace_id,
+            None,
+            import_id,
+            series_ids,
+            group_by_study,
+            False,
+        )
+        if error:
+            log_error(error)

@@ -182,6 +182,20 @@ class UploadRepo(ABC):
     ) -> Optional[str]:
         """Send tasks to different stage."""
 
+    @abstractmethod
+    def import_from_dataset(
+        self,
+        org_id: str,
+        dataset_name: str,
+        workspace_id: Optional[str],
+        project_id: Optional[str],
+        import_id: Optional[str],
+        series_ids: Optional[List[str]],
+        group_by_study: bool,
+        is_ground_truth: bool,
+    ) -> Optional[str]:
+        """Import from dataset."""
+
 
 class DatasetUpload(ABC):
     """
@@ -543,4 +557,34 @@ class Upload(ABC):
 
         concurrency: int = 50
             Batch size per request.
+        """
+
+    @abstractmethod
+    def import_from_dataset(
+        self,
+        dataset_name: str,
+        *,
+        import_id: Optional[str] = None,
+        series_ids: Optional[List[str]] = None,
+        group_by_study: bool = False,
+        is_ground_truth: bool = False,
+    ) -> None:
+        """Import tasks from a dataset for a given import_id or list of series_ids.
+
+        Parameters
+        --------------
+        dataset_name: str
+            The name of the dataset to import from.
+
+        import_id: Optional[str] = None
+            The import id of the dataset to import from.
+
+        series_ids: Optional[List[str]] = None
+            The series ids to import from the dataset.
+
+        group_by_study: bool = False
+            Whether to group the tasks by study.
+
+        is_ground_truth: bool = False
+            Whether to import the tasks as ground truth.
         """

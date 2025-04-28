@@ -56,7 +56,7 @@ DatasetExport
 Workspace
 ----------------------
 .. autoclass:: redbrick.RBWorkspace
-   :members: name, org_id, workspace_id, metadata_schema, classification_schema, cohorts, update_schema, update_cohorts, get_datapoints, create_datapoints, archive_datapoints, unarchive_datapoints, delete_datapoints, add_datapoints_to_cohort, add_datapoints_to_projects, remove_datapoints_from_cohort, update_datapoint_attributes, update_datapoints_metadata
+   :members: name, org_id, workspace_id, metadata_schema, classification_schema, cohorts, update_schema, update_cohorts, get_datapoints, create_datapoints, archive_datapoints, unarchive_datapoints, delete_datapoints, add_datapoints_to_cohort, add_datapoints_to_projects, remove_datapoints_from_cohort, update_datapoint_attributes, update_datapoints_metadata, import_from_dataset
    :show-inheritance:
 
 .. _project:
@@ -76,7 +76,7 @@ Export
 Upload
 ----------------------
 .. autoclass:: redbrick.common.upload.Upload
-   :members: create_datapoints, delete_tasks, delete_tasks_by_name, update_task_items, import_tasks_from_workspace, update_tasks_priority, update_tasks_labels, send_tasks_to_stage
+   :members: create_datapoints, delete_tasks, delete_tasks_by_name, update_task_items, import_tasks_from_workspace, update_tasks_priority, update_tasks_labels, send_tasks_to_stage, import_from_dataset
    :show-inheritance:
 
 Labeling
