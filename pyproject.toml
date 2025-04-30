@@ -3,6 +3,7 @@
 name = "redbrick-sdk"
 description = "RedBrick platform Python SDK!"
 readme = "README.md"
+license.file = "LICENSE"
 dynamic = ["version"]
 requires-python = ">=3.9,<3.14"
 keywords = ["redbrick"]
