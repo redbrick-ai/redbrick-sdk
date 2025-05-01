@@ -3,6 +3,7 @@
 import os
 import gzip
 from typing import Any, Callable, Dict, List, Optional, Tuple, Set
+import urllib.parse
 
 import aiohttp
 from yarl import URL
@@ -263,6 +264,7 @@ async def download_files(
             logger.debug(f"Downloading empty '{url}' to '{path}'")
             return None
 
+        path = urllib.parse.unquote(path)
         if not overwrite and os.path.isfile(path):
             return path
 
