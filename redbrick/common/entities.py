@@ -225,6 +225,14 @@ class RBOrganization(ABC):
         """Get project by id/name."""
 
     @abstractmethod
+    def archive_project(self, project_id: str) -> bool:
+        """Archive a project by ID."""
+
+    @abstractmethod
+    def unarchive_project(self, project_id: str) -> bool:
+        """Unarchive a project by ID."""
+
+    @abstractmethod
     def delete_project(self, project_id: str) -> bool:
         """Delete a project by ID."""
 
@@ -678,6 +686,11 @@ class RBProject(ABC):
 
         Retrieves the label storage id and path.
         """
+
+    @property
+    @abstractmethod
+    def archived(self) -> bool:
+        """Get if project is archived."""
 
     @property
     @abstractmethod

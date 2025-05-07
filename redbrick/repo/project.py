@@ -128,17 +128,17 @@ class ProjectRepoImpl(ProjectRepo):
         response: Dict[str, Dict] = self.client.execute_query(query, {"orgId": org_id})
         return response["organization"]
 
-    def get_projects(self, org_id: str) -> List[Dict]:
+    def get_projects(self, org_id: str, include_archived: bool = False) -> List[Dict]:
         """Get all projects in organization."""
         query = f"""
-            query getProjectsSDK($orgId: UUID!) {{
-                projects(orgId: $orgId) {{
+            query getProjectsSDK($orgId: UUID!, $active: Boolean) {{
+                projects(orgId: $orgId, active: $active) {{
                     {PROJECT_SHARD}
                 }}
             }}
         """
         response: Dict[str, List[Dict]] = self.client.execute_query(
-            query, {"orgId": org_id}
+            query, {"orgId": org_id, "active": not include_archived}
         )
         return response["projects"]
 
@@ -171,6 +171,34 @@ class ProjectRepoImpl(ProjectRepo):
             query, {"orgId": org_id, "taxId": tax_id, "name": name}
         )
         return (response.get("removeTaxonomy") or {}).get("ok") or False
+
+    def archive_project(self, org_id: str, project_id: str) -> bool:
+        """Archive Project."""
+        query = """
+            mutation archiveProjectSDK($orgId: UUID!, $projectId: UUID!) {
+                archiveProject(orgId: $orgId, projectId: $projectId) {
+                    ok
+                }
+            }
+        """
+        response = self.client.execute_query(
+            query, {"orgId": org_id, "projectId": project_id}
+        )
+        return (response.get("archiveProject") or {}).get("ok") or False
+
+    def unarchive_project(self, org_id: str, project_id: str) -> bool:
+        """Unarchive Project."""
+        query = """
+            mutation restoreProjectSDK($orgId: UUID!, $projectId: UUID!) {
+                restoreProject(orgId: $orgId, projectId: $projectId) {
+                    ok
+                }
+            }
+        """
+        response = self.client.execute_query(
+            query, {"orgId": org_id, "projectId": project_id}
+        )
+        return (response.get("restoreProject") or {}).get("ok") or False
 
     def delete_project(self, org_id: str, project_id: str) -> bool:
         """Delete Project."""

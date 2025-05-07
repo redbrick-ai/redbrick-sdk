@@ -41,7 +41,7 @@ class ProjectRepo(ABC):
         """Get organization."""
 
     @abstractmethod
-    def get_projects(self, org_id: str) -> List[Dict]:
+    def get_projects(self, org_id: str, include_archived: bool = False) -> List[Dict]:
         """Get all projects in organization."""
 
     @abstractmethod
@@ -53,6 +53,14 @@ class ProjectRepo(ABC):
         self, org_id: str, tax_id: Optional[str], name: Optional[str]
     ) -> bool:
         """Delete Taxonomy."""
+
+    @abstractmethod
+    def archive_project(self, org_id: str, project_id: str) -> bool:
+        """Archive Project."""
+
+    @abstractmethod
+    def unarchive_project(self, org_id: str, project_id: str) -> bool:
+        """Unarchive Project."""
 
     @abstractmethod
     def delete_project(self, org_id: str, project_id: str) -> bool:

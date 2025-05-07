@@ -30,7 +30,13 @@ class RBProjectImpl(RBProject):
         >>> project = redbrick.get_project(api_key="", org_id="", project_id="")
     """
 
-    def __init__(self, context: RBContext, org_id: str, project_id: str) -> None:
+    def __init__(
+        self,
+        context: RBContext,
+        org_id: str,
+        project_id: str,
+        include_archived: bool = False,
+    ) -> None:
         """Construct RBProject."""
         # pylint: disable=import-outside-toplevel, cyclic-import
         from redbrick.upload import UploadImpl
@@ -40,6 +46,7 @@ class RBProjectImpl(RBProject):
         from redbrick.member import WorkforceImpl
 
         self.context = context
+        self.include_archived = include_archived
 
         self._org_id = org_id
         self._project_id = project_id
@@ -50,6 +57,7 @@ class RBProjectImpl(RBProject):
         self._project_url: str
         self._created_at: datetime
         self._workspace_id: Optional[str]
+        self._archived: bool
 
         self.is_consensus_enabled: bool = False
         self._label_storage: Optional[Tuple[str, str]] = None
@@ -151,6 +159,11 @@ class RBProjectImpl(RBProject):
         return self._label_storage
 
     @property
+    def archived(self) -> bool:
+        """Get if project is archived."""
+        return self._archived
+
+    @property
     def stages(self) -> List[Stage]:
         """Get list of stages."""
         return get_stage_objects(self._stages, self.taxonomy)
@@ -204,11 +217,16 @@ class RBProjectImpl(RBProject):
             raise Exception("Unknown problem occurred") from error
 
         if project["status"] == "REMOVING":
-            raise Exception("Project has been deleted")
+            if self.include_archived:
+                return project
+            raise Exception("Project has been archived")
+
         if project["status"] == "CREATION_FAILURE":
             raise Exception("Project failed to be created")
+
         if project["status"] == "CREATION_SUCCESS":
             return project
+
         raise Exception("Unknown problem occurred")
 
     def _get_project(self) -> None:
@@ -223,6 +241,7 @@ class RBProjectImpl(RBProject):
         self._project_url = project["projectUrl"]
         self._created_at = parser.parse(project["createdAt"])
         self.is_consensus_enabled = project["consensusSettings"]["enabled"]
+        self._archived = project["status"] == "REMOVING"
 
     def __str__(self) -> str:
         """Get string representation of RBProject object."""

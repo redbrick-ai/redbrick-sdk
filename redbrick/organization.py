@@ -17,7 +17,7 @@ from redbrick.project import RBProjectImpl
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
 from redbrick.stage import Stage, get_project_stages, get_middle_stages
 
-from redbrick.utils.logging import logger
+from redbrick.utils.logging import log_error, logger
 from redbrick.utils.pagination import PaginationIterator
 from redbrick.utils.rb_tax_utils import format_taxonomy, validate_taxonomy
 
@@ -71,18 +71,26 @@ class RBOrganizationImpl(RBOrganization):
 
         return workspaces
 
-    def projects_raw(self) -> List[Dict]:
+    def projects_raw(self, include_archived: bool = False) -> List[Dict]:
         """Get a list of active projects as raw objects in the organization."""
-        projects = self.context.project.get_projects(self._org_id)
-        projects = list(filter(lambda x: x["status"] == "CREATION_SUCCESS", projects))
+        projects = self.context.project.get_projects(self._org_id, include_archived)
+        projects = list(
+            filter(
+                lambda x: x["status"] == "CREATION_SUCCESS"
+                or (include_archived and x["status"] == "REMOVING"),
+                projects,
+            )
+        )
 
         return projects
 
-    def projects(self) -> List[RBProject]:
+    def projects(self, include_archived: bool = False) -> List[RBProject]:
         """Get a list of active projects in the organization."""
-        projects = self.projects_raw()
+        projects = self.projects_raw(include_archived)
         return [
-            RBProjectImpl(self.context, self._org_id, proj["projectId"])
+            RBProjectImpl(
+                self.context, self._org_id, proj["projectId"], include_archived
+            )
             for proj in tqdm(projects, leave=config.log_info)
         ]
 
@@ -358,10 +366,13 @@ class RBOrganizationImpl(RBOrganization):
         )
 
     def get_project(
-        self, project_id: Optional[str] = None, name: Optional[str] = None
+        self,
+        project_id: Optional[str] = None,
+        name: Optional[str] = None,
+        include_archived: bool = False,
     ) -> RBProject:
         """Get project by id/name."""
-        projects = self.projects_raw()
+        projects = self.projects_raw(include_archived)
         if project_id:
             projects = [
                 project for project in projects if project["projectId"] == project_id
@@ -374,10 +385,32 @@ class RBOrganizationImpl(RBOrganization):
         if not projects:
             raise Exception("No project found")
 
-        return RBProjectImpl(self.context, self._org_id, projects[0]["projectId"])
+        return RBProjectImpl(
+            self.context, self._org_id, projects[0]["projectId"], include_archived
+        )
+
+    def archive_project(self, project_id: str) -> bool:
+        """Archive a project by ID."""
+        project = self.get_project(project_id, include_archived=True)
+        if project.archived:
+            log_error(f"Project {project_id} is already archived")
+            return False
+        return self.context.project.archive_project(self._org_id, project_id)
+
+    def unarchive_project(self, project_id: str) -> bool:
+        """Unarchive a project by ID."""
+        project = self.get_project(project_id, include_archived=True)
+        if not project.archived:
+            log_error(f"Project {project_id} is not archived")
+            return False
+        return self.context.project.unarchive_project(self._org_id, project_id)
 
     def delete_project(self, project_id: str) -> bool:
         """Delete a project by ID."""
+        project = self.get_project(project_id, include_archived=True)
+        if not project.archived:
+            log_error("Please archive the project before deleting it")
+            return False
         return self.context.project.delete_project(self._org_id, project_id)
 
     def labeling_time(
