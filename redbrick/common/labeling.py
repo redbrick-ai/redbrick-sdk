@@ -1,6 +1,6 @@
 """Abstract interface to exporting."""
 
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Sequence, Tuple
 from abc import ABC, abstractmethod
 import aiohttp
 
@@ -34,7 +34,7 @@ class LabelingRepo(ABC):
         task_id: str,
         labels_data: Optional[str] = None,
         labels_data_path: Optional[str] = None,
-        labels_map: Optional[List[Dict]] = None,
+        labels_map: Optional[Sequence[Optional[Dict]]] = None,
         finished: bool = True,
     ) -> None:
         """Put Labeling results."""

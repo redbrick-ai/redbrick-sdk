@@ -306,7 +306,7 @@ async def test_process_upload(
         patch.object(dicom, "config_path", return_value=tmpdir),
         get_nifti_files(tmpdir, params["data"]) as (files, masks),
     ):
-        rfile, rmap = await dicom.process_upload(
+        rfile, rmap, error_msg = await dicom.process_upload(
             files=files,
             instances=params["segment_map"],
             binary_mask=params["binary_mask"],

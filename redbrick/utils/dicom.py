@@ -482,7 +482,7 @@ async def process_upload(
     masks: Dict[str, str],
     label_validate: bool = False,
     prune_segmentations: bool = False,
-) -> Tuple[Optional[str], Dict[int, Optional[List[int]]]]:
+) -> Tuple[Optional[str], Dict[int, Optional[List[int]]], Optional[str]]:
     """Process nifti upload files."""
     async with semaphore:
         import numpy as np  # type: ignore
@@ -492,10 +492,11 @@ async def process_upload(
 
         if isinstance(files, str):
             files = [files]
+
         if not files or any(
             not isinstance(file_, str) or not os.path.isfile(file_) for file_ in files
         ):
-            return None, {}
+            return None, {}, "Files do not exist"
 
         reverse_masks: Dict[str, Tuple[int, ...]] = {}
         for inst_id, mask in masks.items():
@@ -505,15 +506,15 @@ async def process_upload(
 
         if binary_mask or png_mask:
             if not binary_mask:
-                log_error("PNG mask upload only supports binary masks")
-                return None, {}
+                return None, {}, "PNG mask upload only supports binary masks"
 
             for mask, inst_ids in reverse_masks.items():
                 if len(inst_ids) > 1:
-                    log_error(
-                        f"Binary mask upload only supports single instance per file: '{mask}'"
+                    return (
+                        None,
+                        {},
+                        f"Binary mask upload only supports single instance per file: '{mask}'",
                     )
-                    return None, {}
 
             if png_mask:
                 convert_png_to_nii(reverse_masks)
@@ -523,7 +524,7 @@ async def process_upload(
             base_img = nib_load(files[0])
 
             if not isinstance(base_img, (Nifti1Image, Nifti2Image)):
-                return None, {}
+                return None, {}, "Invalid base mask type"
 
             base_img_dtype = base_img.get_data_dtype()
             if base_img_dtype in (np.uint8, np.uint16):
@@ -535,7 +536,7 @@ async def process_upload(
                 base_img.set_data_dtype(np.uint16)
 
             if base_data.ndim != 3:
-                return None, {}
+                return None, {}, "Invalid base mask shape"
 
             group_map: Dict[int, Set[int]] = {}
             map_instances: Set[int] = set()
@@ -572,7 +573,7 @@ async def process_upload(
             for file_ in files[1:]:
                 img = nib_load(file_)
                 if not isinstance(img, (Nifti1Image, Nifti2Image)):
-                    return None, {}
+                    return None, {}, "Invalid mask type"
 
                 if (img_dtype := img.get_data_dtype()) in (np.uint8, np.uint16):
                     data = np.asanyarray(img.dataobj, dtype=img_dtype)
@@ -582,7 +583,7 @@ async def process_upload(
                     )
 
                 if data.ndim != 3:
-                    return None, {}
+                    return None, {}, "Invalid mask shape"
 
                 # Take the non-zero indices of the mask. These are the indices
                 # that we want to merge from the current mask into the base mask.
@@ -698,7 +699,7 @@ async def process_upload(
                 }
 
             if not final_instances:  # no segmentations
-                return None, {}
+                return None, {}, None
 
             if max(final_instances) < 256:
                 base_img.set_data_dtype(np.uint8)
@@ -733,11 +734,10 @@ async def process_upload(
                 elif instance not in segment_map:
                     segment_map[instance] = None
 
-            return (filename, segment_map)
+            return (filename, segment_map, None)
 
         except Exception as error:
-            log_error(error)
-            return None, {}
+            return None, {}, str(error)
 
 
 async def convert_nii_to_rtstruct(

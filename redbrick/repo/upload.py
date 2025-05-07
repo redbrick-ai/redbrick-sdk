@@ -92,7 +92,7 @@ class UploadRepoImpl(UploadRepo):
         centerlines: Optional[List[Dict]],
         labels_data: Optional[str] = None,
         labels_data_path: Optional[str] = None,
-        labels_map: Optional[List[Dict]] = None,
+        labels_map: Optional[Sequence[Optional[Dict]]] = None,
         series_info: Optional[List[Dict]] = None,
         meta_data: Optional[Dict] = None,
         is_ground_truth: bool = False,

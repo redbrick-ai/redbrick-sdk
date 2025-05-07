@@ -487,7 +487,7 @@ async def test_utils_process_upload(tmpdir, mock_labels, nifti_instance_files_pn
     with patch.object(
         dicom, "config_path", return_value=str(tmpdir)
     ) as mock_config_path:
-        result, segment_map = await dicom.process_upload(
+        result, segment_map, error_msg = await dicom.process_upload(
             files,
             instances,
             binary_mask,

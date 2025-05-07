@@ -1,7 +1,7 @@
 """Utilities for working with label objects."""
 
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 import json
 from copy import deepcopy
 
@@ -178,7 +178,7 @@ def flat_rb_format(
     task_id: str,
     current_stage_name: str,
     priority: Optional[float],
-    labels_map: List[Optional[Dict]],
+    labels_map: Sequence[Optional[Dict]],
     series_info: Optional[List[Dict]],
     meta_data: Optional[Dict],
     storage_id: str,
@@ -350,7 +350,7 @@ def dicom_rb_series(
     """Get standard rb flat format, same as import format."""
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     labels: List[Dict] = input_task.get("labels", []) or []
-    labels_map: List[Optional[Dict]] = input_task.get("labelsMap", []) or []
+    labels_map: Sequence[Optional[Dict]] = input_task.get("labelsMap", []) or []
     series = output_task["series"]
 
     segmentation_mapping: Dict[int, Dict[Optional[str], Union[str, List[str]]]] = {}

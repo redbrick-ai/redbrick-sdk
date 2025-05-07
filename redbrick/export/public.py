@@ -3,7 +3,7 @@
 import asyncio
 import re
 import shutil
-from typing import Iterator, List, Dict, Optional, Set, Tuple, Any
+from typing import Iterator, List, Dict, Optional, Sequence, Set, Tuple, Any
 from functools import partial
 import os
 import json
@@ -522,7 +522,7 @@ class ExportImpl(Export):
         # pylint: disable=too-many-locals
         task = copy.deepcopy(datapoint)
         files: List[Tuple[Optional[str], Optional[str]]] = []
-        labels_map: List[Optional[Dict]] = []
+        labels_map: Sequence[Optional[Dict]] = []
 
         series_info: List[Dict] = task.get("seriesInfo", []) or []
         has_series_info = sum(
@@ -667,7 +667,7 @@ class ExportImpl(Export):
         segmentation_dir: Optional[str],
         has_series_info: bool,
         series_info: List[Dict],
-        labels_map: List[Optional[Dict]],
+        labels_map: Sequence[Optional[Dict]],
         image_index_map: Dict[int, int],
         color_map: Dict,
         semantic_mask: bool,

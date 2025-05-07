@@ -304,7 +304,7 @@ async def process_segmentation_upload(
     project_label_storage_id: str,
     label_validate: bool = False,
     prune_segmentations: bool = False,
-) -> Tuple[Optional[str], List[Dict]]:
+) -> Tuple[Optional[str], Sequence[Optional[Dict]]]:
     """Process segmentation upload."""
     # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     # pylint: disable=import-outside-toplevel, too-many-nested-blocks
@@ -334,7 +334,7 @@ async def process_segmentation_upload(
     for volume_index, label_map in enumerate(labels_map):
         logger.debug(f"Processing label map: {label_map} for volume {volume_index}")
         if not isinstance(label_map, dict) or not label_map.get("labelName"):
-            logger.debug(f"Skipping labelMap: {label_map} for volume {volume_index}")
+            logger.debug(f"Skipping label map: {label_map} for volume {volume_index}")
             continue
 
         input_labels_path: Optional[Union[str, List[str]]] = label_map["labelName"]
@@ -408,7 +408,7 @@ async def process_segmentation_upload(
                 if len(all_series_info) > volume_index
                 else {}
             )
-            output_labels_path, instances = await process_upload(
+            output_labels_path, instances, labels_error = await process_upload(
                 input_labels_path,
                 {
                     label["dicom"]["instanceid"]: label["dicom"].get("groupids")
@@ -501,7 +501,14 @@ async def process_segmentation_upload(
             elif output_labels_path:
                 label_map["labelName"] = output_labels_path
             else:
-                raise ValueError("Empty label path")
+                task_name = task.get("name") or task["items"][0]
+                if labels_error:
+                    raise ValueError(
+                        f"Error processing labels for {task_name}: {labels_error}"
+                    )
+
+                logger.warning(f"Skipping empty labels for {task_name}")
+                label_map["labelName"] = None
         else:
             raise ValueError("Invalid label files")
 
@@ -538,4 +545,7 @@ async def process_segmentation_upload(
         else:
             raise ValueError("Error uploading labels")
 
-    return labels_data_path, labels_map or []
+    return labels_data_path, [
+        label_map if label_map and label_map.get("labelName") else None
+        for label_map in (labels_map or [])
+    ]
