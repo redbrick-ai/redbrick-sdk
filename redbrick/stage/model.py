@@ -361,20 +361,32 @@ class ModelStage(Stage):
         name: str
             Model name.
 
-        sub_type: str
-            Model sub type.
+        version: Optional[str]
+            Model version.
+
+        active_learning: bool = False
+            Whether active learning is enabled.
+
+        app: Optional[str]
+            App name.
 
         url: Optional[str]
             URL for self-hosted model.
 
         taxonomy_objects: Optional[List[ModelStage.ModelTaxonomyMap]]
             Mapping of model classes to project's taxonomy objects.
+
+        batch: Optional[int] = None
+            Number of in-progress tasks.
         """
 
         name: str
-        sub_type: Optional[str] = None
+        version: Optional[str] = None
+        active_learning: bool = False
+        app: Optional[str] = None
         url: Optional[str] = None
         taxonomy_objects: Optional[List["ModelStage.ModelTaxonomyMap"]] = None
+        batch: Optional[int] = None
 
         CT_SEGMENTATOR = "TOTAL_SEGMENTATOR"  # Boost
 
@@ -387,22 +399,32 @@ class ModelStage(Stage):
                 raise ValueError("Model name is required")
             return cls(
                 name=entity["name"],
-                sub_type=entity.get("subType"),
+                version=entity.get("version"),
+                active_learning=entity.get("activeLearning") or False,
+                app=entity.get("subType"),
                 url=entity.get("url"),
                 taxonomy_objects=ModelStage.Config._get_external_taxonomy_map(
                     entity.get("taxonomyObjects"), taxonomy
                 ),
+                batch=entity.get("batchCount"),
             )
 
         def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
             """Get entity from object."""
-            entity: Dict[str, Any] = {"name": self.name}
-            if self.sub_type is not None:
-                entity["subType"] = self.sub_type
+            entity: Dict[str, Any] = {
+                "name": self.name,
+                "activeLearning": self.active_learning,
+            }
+            if self.version is not None:
+                entity["version"] = self.version
+            if self.app is not None:
+                entity["subType"] = self.app
             if self.url is not None:
                 entity["url"] = self.url
             if self.taxonomy_objects is not None:
                 entity["taxonomyObjects"] = self._get_internal_taxonomy_map(taxonomy)
+            if self.active_learning:
+                entity["batchCount"] = max(self.batch or 1, 1)
             return entity
 
         @staticmethod
@@ -448,18 +470,18 @@ class ModelStage(Stage):
             assert taxonomy, "Taxonomy is required"
 
             if self.name == self.CT_SEGMENTATOR:
-                sub_type: CT_SEGMENTATOR_SUB_TYPE = (
-                    "total" if self.sub_type is None else self.sub_type  # type: ignore
+                app: CT_SEGMENTATOR_SUB_TYPE = (
+                    "total" if self.app is None else self.app  # type: ignore
                 )
-                assert sub_type in CT_SEGMENTATOR_CATEGORIES, (
-                    f"'{self.sub_type}' is not a valid CT Segmentator sub type."
+                assert app in CT_SEGMENTATOR_CATEGORIES, (
+                    f"'{self.app}' is not a valid CT Segmentator sub type."
                     + f" Please choose from {CT_SEGMENTATOR_SUB_TYPE}"
                 )
-                ts_cats = set(CT_SEGMENTATOR_CATEGORIES[sub_type].values())
+                ts_cats = set(CT_SEGMENTATOR_CATEGORIES[app].values())
                 for obj in self.taxonomy_objects:
                     assert obj["modelCategory"] in ts_cats, (
                         f"'{obj['modelCategory']}' is not a valid "
-                        + f"CT Segmentator ('{sub_type}') category"
+                        + f"CT Segmentator ('{app}') category"
                     )
 
             category_map = {
