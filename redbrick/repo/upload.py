@@ -23,7 +23,7 @@ class UploadRepoImpl(UploadRepo):
         data_store: str,
         import_name: Optional[str] = None,
         import_id: Optional[str] = None,
-        files: Optional[List[Dict[str, str]]] = None,
+        files: Optional[List[Dict]] = None,
     ) -> Tuple[str, List[str]]:
         """Import files into a dataset."""
         files = files or []

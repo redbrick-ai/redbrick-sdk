@@ -43,7 +43,7 @@ class DatasetUploadImpl(DatasetUpload):
         self,
         import_id: str,
         import_name: Optional[str] = None,
-        files_paths: Optional[List[Dict[str, str]]] = None,
+        files_paths: Optional[List[Dict]] = None,
         upload_callback: Optional[Callable] = None,
     ) -> bool:
         """Upload files to presigned URLs."""
@@ -56,10 +56,11 @@ class DatasetUploadImpl(DatasetUpload):
             import_id=import_id,
             files=[
                 {
-                    "filePath": file["filePath"],
-                    "fileType": file["fileType"],
+                    "filePath": file_path["filePath"],
+                    "fileType": file_path["fileType"],
+                    "fileSize": file_path["fileSize"],
                 }
-                for file in files_paths
+                for file_path in files_paths
             ],
         )
 
@@ -116,13 +117,14 @@ class DatasetUploadImpl(DatasetUpload):
             return
 
         # Now that we have the files list, let us generate the presigned URLs
-        files_list: List[Dict[str, str]] = []
+        files_list: List[Dict] = []
         for file_ in files:
             files_list.append(
                 {
                     "filePath": os.path.basename(file_),
                     "abs_file_path": file_,
                     "fileType": "application/dicom",
+                    "fileSize": os.path.getsize(file_),
                 }
             )
 
