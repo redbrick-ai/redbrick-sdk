@@ -117,6 +117,7 @@ class Labeling(ABC):
         rt_struct: bool = False,
         mhd: bool = False,
         review_result: Optional[bool] = None,
+        review_comment: Optional[str] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = False,
         prune_segmentations: bool = False,
@@ -192,6 +193,10 @@ class Labeling(ABC):
 
         review_result: Optional[bool] = None
             Accepts or rejects the task based on the boolean value.
+            Applies only to Review stage.
+
+        review_comment: Optional[str] = None
+            Comment for the review result.
             Applies only to Review stage.
 
         label_storage_id: Optional[str] = None
