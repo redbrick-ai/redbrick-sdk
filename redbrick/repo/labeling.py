@@ -175,6 +175,7 @@ class LabelingRepoImpl(LabelingRepo):
         stage_name: str,
         task_id: str,
         review_val: bool,
+        review_comment: Optional[str] = None,
     ) -> None:
         """Put review result for task."""
         query = """
@@ -183,18 +184,20 @@ class LabelingRepoImpl(LabelingRepo):
             $projectId: UUID!
             $stageName: String!
             $reviewVal: Boolean!
+            $comment: String
             $taskId: UUID!
             $elapsedTimeMs: Int!
         ) {
             putExpertReviewTask(
-            orgId: $orgId
-            projectId: $projectId
-            stageName: $stageName
-            reviewVal: $reviewVal
-            taskId: $taskId
-            elapsedTimeMs: $elapsedTimeMs
+                orgId: $orgId
+                projectId: $projectId
+                stageName: $stageName
+                reviewVal: $reviewVal
+                comment: $comment
+                taskId: $taskId
+                elapsedTimeMs: $elapsedTimeMs
             ) {
-            ok
+                ok
             }
         }
         """
@@ -205,6 +208,7 @@ class LabelingRepoImpl(LabelingRepo):
             "stageName": stage_name,
             "taskId": task_id,
             "reviewVal": review_val,
+            "comment": review_comment,
             "elapsedTimeMs": 0,
         }
 

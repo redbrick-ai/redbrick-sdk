@@ -59,6 +59,7 @@ class LabelingRepo(ABC):
         stage_name: str,
         task_id: str,
         review_val: bool,
+        review_comment: Optional[str] = None,
     ) -> None:
         """Put review result for task."""
 

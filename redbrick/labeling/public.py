@@ -90,6 +90,7 @@ class LabelingImpl(Labeling):
         task: Dict,
         finalize: bool,
         review_result: Optional[bool],
+        review_comment: Optional[str],
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
@@ -107,6 +108,7 @@ class LabelingImpl(Labeling):
                     stage_name,
                     task_id,
                     review_result,
+                    review_comment,
                 )
             elif not self.review and existing_labels:
                 await self.context.labeling.put_labeling_task_result(
@@ -164,6 +166,7 @@ class LabelingImpl(Labeling):
         tasks: List[Dict],
         finalize: bool,
         review_result: Optional[bool],
+        review_comment: Optional[str],
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
@@ -178,6 +181,7 @@ class LabelingImpl(Labeling):
                     task,
                     finalize,
                     review_result,
+                    review_comment,
                     label_storage_id,
                     project_label_storage_id,
                     label_validate,
@@ -203,6 +207,7 @@ class LabelingImpl(Labeling):
         rt_struct: bool = False,
         mhd: bool = False,
         review_result: Optional[bool] = None,
+        review_comment: Optional[str] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = False,
         prune_segmentations: bool = False,
@@ -278,6 +283,10 @@ class LabelingImpl(Labeling):
 
         review_result: Optional[bool] = None
             Accepts or rejects the task based on the boolean value.
+            Applies only to Review stage.
+
+        review_comment: Optional[str] = None
+            Comment for the review result.
             Applies only to Review stage.
 
         label_storage_id: Optional[str] = None
@@ -412,6 +421,7 @@ class LabelingImpl(Labeling):
                         with_labels_converted,
                         finalize,
                         None,
+                        review_comment,
                         label_storage_id or project_label_storage_id,
                         project_label_storage_id,
                         label_validate,
@@ -429,6 +439,7 @@ class LabelingImpl(Labeling):
                         without_labels,  # type: ignore
                         True,
                         review_result,
+                        review_comment,
                         label_storage_id or project_label_storage_id,
                         project_label_storage_id,
                         label_validate,
