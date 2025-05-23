@@ -292,6 +292,29 @@ CONSENSUS_TASK_SHARD = f"""
     }}
 """
 
+TASK_COMMENT_SHARD = """
+    commentId
+    createdBy {
+        userId
+    }
+    textVal
+    createdAt
+    stageName
+    issueComment
+    issueResolved
+    replies {
+        commentId
+        createdBy {
+            userId
+        }
+        textVal
+        createdAt
+        stageName
+        issueComment
+        issueResolved
+    }
+"""
+
 
 def datapoint_shard(raw_items: bool, presigned_items: bool) -> str:
     """Return the datapoint shard."""
@@ -396,26 +419,7 @@ def router_task_shard(with_labels: bool) -> str:
                 }}
             }}
             ... on Comment {{
-                commentId
-                createdBy {{
-                    userId
-                }}
-                textVal
-                createdAt
-                stageName
-                issueComment
-                issueResolved
-                replies {{
-                    commentId
-                    createdBy {{
-                        userId
-                    }}
-                    textVal
-                    createdAt
-                    stageName
-                    issueComment
-                    issueResolved
-                }}
+                {TASK_COMMENT_SHARD}
             }}
             ... on TaskStateChanges {{
                 stageNameAfter: stageName

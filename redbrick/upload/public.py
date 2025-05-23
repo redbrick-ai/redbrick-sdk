@@ -20,6 +20,7 @@ from redbrick.upload.interact import (
     upload_datapoints,
     validate_json,
 )
+from redbrick.utils.rb_event_utils import comment_format
 from redbrick.utils.upload import (
     convert_mhd_to_nii_labels,
     convert_rt_struct_to_nii_labels,
@@ -810,3 +811,44 @@ class UploadImpl(Upload):
         )
         if error:
             log_error(error)
+
+    def create_comment(
+        self,
+        task_id: str,
+        text_comment: str,
+        reply_to_comment_id: Optional[str] = None,
+    ) -> Dict:
+        """Create a task comment.
+
+        Parameters
+        --------------
+        task_id: str
+            The task id.
+
+        text_comment: str
+            The comment to create.
+
+        reply_to_comment_id: Optional[str] = None
+            The comment id to reply to.
+
+        Returns
+        -------------
+        Dict
+            The comment object.
+        """
+        task = next(self.project.export.list_tasks(task_id=task_id), None)
+        if not task:
+            raise ValueError("Task not found")
+
+        comment = self.context.upload.create_comment(
+            self.project.org_id,
+            self.project.project_id,
+            task_id,
+            task["currentStageName"],
+            text_comment,
+            reply_to_comment_id,
+        )
+        if not comment:
+            raise ValueError("Failed to create comment")
+
+        return comment_format(comment, {})

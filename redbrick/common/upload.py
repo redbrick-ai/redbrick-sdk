@@ -196,6 +196,18 @@ class UploadRepo(ABC):
     ) -> Optional[str]:
         """Import from dataset."""
 
+    @abstractmethod
+    def create_comment(
+        self,
+        org_id: str,
+        project_id: str,
+        task_id: str,
+        stage_name: str,
+        text_comment: str,
+        reply_to_comment_id: Optional[str] = None,
+    ) -> Optional[Dict]:
+        """Create a task comment."""
+
 
 class DatasetUpload(ABC):
     """
@@ -587,4 +599,30 @@ class Upload(ABC):
 
         is_ground_truth: bool = False
             Whether to import the tasks as ground truth.
+        """
+
+    @abstractmethod
+    def create_comment(
+        self,
+        task_id: str,
+        text_comment: str,
+        reply_to_comment_id: Optional[str] = None,
+    ) -> Dict:
+        """Create a task comment.
+
+        Parameters
+        --------------
+        task_id: str
+            The task id.
+
+        text_comment: str
+            The comment to create.
+
+        reply_to_comment_id: Optional[str] = None
+            The comment id to reply to.
+
+        Returns
+        -------------
+        Dict
+            The comment object.
         """

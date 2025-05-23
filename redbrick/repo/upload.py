@@ -7,6 +7,7 @@ import aiohttp
 
 from redbrick.common.client import RBClient
 from redbrick.common.upload import UploadRepo
+from redbrick.repo.shards import TASK_COMMENT_SHARD
 from redbrick.types.task import InputTask
 
 
@@ -692,3 +693,48 @@ class UploadRepoImpl(UploadRepo):
         }
         result = self.client.execute_query(query_string, query_variables)
         return (result.get("importDatapointsFromAltaDb") or {}).get("message")
+
+    def create_comment(
+        self,
+        org_id: str,
+        project_id: str,
+        task_id: str,
+        stage_name: str,
+        text_comment: str,
+        reply_to_comment_id: Optional[str] = None,
+    ) -> Optional[Dict]:
+        """Create a task comment."""
+        query_string = f"""
+            mutation createCommentSDK(
+                $orgId: UUID!
+                $projectId: UUID!
+                $taskId: UUID!
+                $stageName: String
+                $textVal: String!
+                $replyTo: UUID
+                $issueComment: Boolean
+            ) {{
+                createComment(
+                    orgId: $orgId
+                    projectId: $projectId
+                    taskId: $taskId
+                    stageName: $stageName
+                    textVal: $textVal
+                    replyTo: $replyTo
+                    issueComment: $issueComment
+                ) {{
+                    {TASK_COMMENT_SHARD}
+                }}
+            }}
+        """
+        variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "taskId": task_id,
+            "stageName": stage_name,
+            "textVal": text_comment,
+            "replyTo": reply_to_comment_id,
+            "issueComment": True,
+        }
+        result = self.client.execute_query(query_string, variables)
+        return result.get("createComment")
