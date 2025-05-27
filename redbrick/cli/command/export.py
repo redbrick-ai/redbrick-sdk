@@ -95,6 +95,11 @@ class CLIExportController(CLIExportInterface):
             help="Export labels as DICOM RT-Struct. (Only for DICOM images)",
         )
         parser.add_argument(
+            "--dicom-seg",
+            action="store_true",
+            help="Export labels as DICOM SEG. (Only for DICOM images)",
+        )
+        parser.add_argument(
             "--mhd",
             action="store_true",
             help="Export segmentation masks in MHD format.",
@@ -232,13 +237,14 @@ class CLIExportController(CLIExportInterface):
         without_masks = bool(self.args.without_masks)
         png_mask = bool(self.args.png)
         rt_struct = bool(self.args.rt_struct)
+        dicom_seg = bool(self.args.dicom_seg)
         mhd_mask = bool(self.args.mhd)
         dicom_to_nifti = bool(self.args.dicom_to_nifti)
 
         task_file = os.path.join(export_dir, "tasks.json")
 
         image_dir: Optional[str] = None
-        if with_files or rt_struct:
+        if with_files or rt_struct or dicom_seg:
             image_dir = os.path.join(export_dir, "images")
             os.makedirs(image_dir, exist_ok=True)
 
@@ -274,6 +280,7 @@ class CLIExportController(CLIExportInterface):
                         dicom_to_nifti,
                         png_mask,
                         rt_struct,
+                        dicom_seg,
                         mhd_mask,
                     )
                     for cached_task in cached_tasks
@@ -314,6 +321,7 @@ class CLIExportController(CLIExportInterface):
         dicom_to_nifti: bool,
         png_mask: bool,
         rt_struct: bool,
+        dicom_seg: bool,
         mhd_mask: bool,
     ) -> None:
         # pylint: disable=too-many-locals, too-many-boolean-expressions
@@ -351,6 +359,7 @@ class CLIExportController(CLIExportInterface):
             dicom_to_nifti,
             png_mask,
             rt_struct,
+            dicom_seg,
             mhd_mask,
             False,
         )

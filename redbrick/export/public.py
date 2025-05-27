@@ -3,7 +3,7 @@
 import asyncio
 import re
 import shutil
-from typing import Iterator, List, Dict, Optional, Sequence, Set, Tuple, Any
+from typing import Iterator, List, Dict, Optional, Sequence, Set, Tuple
 from functools import partial
 import os
 import json
@@ -19,7 +19,7 @@ from redbrick.common.enums import ReviewStates, TaskFilters, TaskStates
 from redbrick.common.export import Export, TaskFilterParams
 from redbrick.stage import LabelStage, ReviewStage
 from redbrick.types.taxonomy import Taxonomy
-from redbrick.utils.common_utils import config_path
+from redbrick.utils.common_utils import config_path, get_color
 from redbrick.utils.files import (
     DICOM_FILE_TYPES,
     IMAGE_FILE_TYPES,
@@ -120,20 +120,6 @@ class ExportImpl(Export):
                 yield task
 
     @staticmethod
-    def _get_color(class_id: int, color_hex: Optional[str] = None) -> Any:
-        """Get a color from class id."""
-        if color_hex:
-            color_hex = color_hex.lstrip("#")
-            if len(color_hex) == 3:
-                color_hex = f"{color_hex[0]}{color_hex[0]}{color_hex[1]}{color_hex[1]}{color_hex[2]}{color_hex[2]}"
-            return [int(color_hex[i : i + 2], 16) for i in (0, 2, 4)]
-        num = (374761397 + int(class_id) * 3266489917) & 0xFFFFFFFF
-        num = ((num ^ num >> 15) * 2246822519) & 0xFFFFFFFF
-        num = ((num ^ num >> 13) * 3266489917) & 0xFFFFFFFF
-        num = (num ^ num >> 16) >> 8
-        return list(num.to_bytes(3, "big"))
-
-    @staticmethod
     def tax_class_id_mapping(
         parent: List,
         children: Dict,
@@ -146,8 +132,7 @@ class ExportImpl(Export):
             trail = parent + [category["name"]]
             key = "::".join(trail[1:])
             class_id[key] = category["classId"] + 1
-            color_map[key] = ExportImpl._get_color(
-                category["classId"],
+            color_map[key] = get_color(
                 (
                     next(
                         (
@@ -161,6 +146,7 @@ class ExportImpl(Export):
                     if taxonomy_color
                     else None
                 ),
+                category["classId"],
             )
             ExportImpl.tax_class_id_mapping(
                 trail, category["children"], class_id, color_map, taxonomy_color
@@ -190,11 +176,18 @@ class ExportImpl(Export):
         image_dir: str,
         dcm_to_nii: bool,
         rt_struct: bool,
+        dicom_seg: bool,
         semantic_mask: bool,
     ) -> OutputTask:
         # pylint: disable=too-many-locals, import-outside-toplevel, too-many-nested-blocks
         task, series_dirs = await self._download_task_items(
-            original_task, storage_id, image_dir, taxonomy, rt_struct, semantic_mask
+            original_task,
+            storage_id,
+            image_dir,
+            taxonomy,
+            rt_struct,
+            dicom_seg,
+            semantic_mask,
         )
 
         if not dcm_to_nii:
@@ -295,9 +288,11 @@ class ExportImpl(Export):
         parent_dir: str,
         taxonomy: Taxonomy,
         rt_struct: bool,
+        dicom_seg: bool,
         semantic_mask: bool,
     ) -> Tuple[OutputTask, List[str]]:
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+        # pylint: disable=import-outside-toplevel
         path_pattern = re.compile(r"[^\w.]+")
         task_name = re.sub(path_pattern, "-", task.get("name", "")) or task.get(
             "taskId", ""
@@ -437,10 +432,7 @@ class ExportImpl(Export):
                     for idx, series in enumerate(sub_task.get("series", []) or []):
                         series["items"] = series_items[idx]  # type: ignore
 
-                if taxonomy.get("isNew") and rt_struct:
-                    # pylint: disable=import-outside-toplevel
-                    from redbrick.utils.dicom import convert_nii_to_rtstruct
-
+                if taxonomy.get("isNew") and (rt_struct or dicom_seg):
                     for idx, (series_dir, series) in enumerate(
                         zip(series_dirs, task_series)
                     ):
@@ -462,32 +454,78 @@ class ExportImpl(Export):
                         if isinstance(segmentations, str):
                             segmentations = [segmentations]
 
-                        rtstruct, new_segment_map = await convert_nii_to_rtstruct(
-                            segmentations,
-                            series_dir,
-                            taxonomy.get("objectTypes", []) or [],
-                            series.get("segmentMap", {}) or {},
-                            series.get("semanticMask", semantic_mask),
-                            series.get("binaryMask", False),
-                        )
+                        if dicom_seg:
+                            from redbrick.utils.dicom_seg import (
+                                convert_nii_to_dicom_seg,
+                            )
 
-                        if not rtstruct:
-                            continue
+                            for idx, segmentation in enumerate(segmentations):
+                                seg = convert_nii_to_dicom_seg(
+                                    segmentation,
+                                    series_dir,
+                                    taxonomy.get("objectTypes", []) or [],
+                                    series.get("segmentMap", {}) or {},
+                                    series.get("binaryMask", False),
+                                )
+                                for inst in (series.get("segmentMap") or {}).keys():
+                                    if isinstance(
+                                        series["segmentMap"][inst], dict  # type: ignore
+                                    ) and (
+                                        series["segmentMap"][inst].get("mask")  # type: ignore
+                                        == segmentation
+                                    ):
+                                        if seg:
+                                            series["segmentMap"][inst]["mask"] = seg  # type: ignore
+                                        else:
+                                            del series["segmentMap"][inst]["mask"]  # type: ignore
 
-                        name, ext = os.path.splitext(
-                            segmentations[0]
-                            if len(segmentations) == 1
-                            else os.path.dirname(segmentations[0])
-                        )
-                        if ext == ".gz":
-                            name, ext = os.path.splitext(name)
+                                if idx == 0 and isinstance(
+                                    series.get("segmentations"), str
+                                ):
+                                    if seg:
+                                        series["segmentations"] = seg
+                                    else:
+                                        del series["segmentations"]
+                                else:
+                                    series["segmentations"][idx] = seg  # type: ignore
 
-                        series["segmentations"] = name + ".dcm"
-                        series["segmentMap"] = new_segment_map
-                        for roi_name in series["segmentMap"].keys():
-                            if "mask" in series["segmentMap"][roi_name]:  # type: ignore
-                                del series["segmentMap"][roi_name]["mask"]  # type: ignore
-                        rtstruct.save(series["segmentations"])
+                            if isinstance(series.get("segmentations"), list):
+                                series["segmentations"] = [
+                                    seg for seg in series["segmentations"] if seg  # type: ignore
+                                ]
+                                if not series["segmentations"]:
+                                    del series["segmentations"]
+                        else:
+                            from redbrick.utils.rt_struct import (
+                                convert_nii_to_rt_struct,
+                            )
+
+                            rtstruct, new_segment_map = await convert_nii_to_rt_struct(
+                                segmentations,
+                                series_dir,
+                                taxonomy.get("objectTypes", []) or [],
+                                series.get("segmentMap", {}) or {},
+                                series.get("semanticMask", semantic_mask),
+                                series.get("binaryMask", False),
+                            )
+
+                            if not rtstruct:
+                                continue
+
+                            name, ext = os.path.splitext(
+                                segmentations[0]
+                                if len(segmentations) == 1
+                                else os.path.dirname(segmentations[0])
+                            )
+                            if ext == ".gz":
+                                name, ext = os.path.splitext(name)
+
+                            series["segmentations"] = name + ".dcm"
+                            series["segmentMap"] = new_segment_map
+                            for roi_name in series["segmentMap"].keys():
+                                if "mask" in series["segmentMap"][roi_name]:  # type: ignore
+                                    del series["segmentMap"][roi_name]["mask"]  # type: ignore
+                            rtstruct.save(series["segmentations"])
 
             else:
                 task["items"] = [  # type: ignore
@@ -679,7 +717,7 @@ class ExportImpl(Export):
         """Download and process segmentations."""
         # pylint: disable=import-outside-toplevel, too-many-locals
         # pylint: disable=too-many-branches, too-many-statements
-        from redbrick.utils.dicom import process_download
+        from redbrick.utils.nifti import process_download
 
         presigned = self.context.export.presign_items(
             self.project.org_id, task["labelStorageId"], presign_paths
@@ -801,7 +839,7 @@ class ExportImpl(Export):
                 object_types = taxonomy.get("objectTypes", []) or []
                 for object_type in object_types:
                     if object_type["labelType"] == "SEGMENTATION":
-                        color = ExportImpl._get_color(0, object_type["color"])  # type: ignore
+                        color = get_color(object_type["color"])  # type: ignore
                         color_map[object_type["classId"]] = color
 
                         category: str = object_type["category"]
@@ -835,6 +873,7 @@ class ExportImpl(Export):
         dicom_to_nifti: bool,
         png_mask: bool,
         rt_struct: bool,
+        dicom_seg: bool,
         mhd_mask: bool,
         get_task: bool,
     ) -> Optional[OutputTask]:
@@ -861,6 +900,7 @@ class ExportImpl(Export):
                     image_dir,
                     dicom_to_nifti,
                     rt_struct,
+                    dicom_seg,
                     semantic_mask,
                 )
             except Exception as err:  # pylint: disable=broad-except
@@ -901,6 +941,7 @@ class ExportImpl(Export):
         dicom_to_nifti: bool = False,
         png: bool = False,
         rt_struct: bool = False,
+        dicom_seg: bool = False,
         mhd: bool = False,
         destination: Optional[str] = None,
     ) -> Iterator[OutputTask]:
@@ -976,6 +1017,9 @@ class ExportImpl(Export):
         rt_struct: bool = False
             Export labels as DICOM RT-Struct. (Only for DICOM images)
 
+        dicom_seg: bool = False
+            Export labels as DICOM Segmentation. (Only for DICOM images)
+
         mhd: bool = False
             Export segmentation masks in MHD format.
 
@@ -1004,7 +1048,7 @@ class ExportImpl(Export):
         destination = destination or self.project.project_id
 
         image_dir: Optional[str] = None
-        if with_files or rt_struct:
+        if with_files or rt_struct or dicom_seg:
             image_dir = os.path.join(destination, "images")
             os.makedirs(image_dir, exist_ok=True)
 
@@ -1059,6 +1103,7 @@ class ExportImpl(Export):
                     dicom_to_nifti,
                     png,
                     rt_struct,
+                    dicom_seg,
                     mhd,
                     True,
                 )

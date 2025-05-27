@@ -135,6 +135,7 @@ def test_handle_export(
             no_consensus=False,
             png=True,
             rt_struct=True,
+            dicom_seg=False,
             mhd=False,
             clear_cache=False,
             concurrency=10,

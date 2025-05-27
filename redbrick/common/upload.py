@@ -248,6 +248,7 @@ class Upload(ABC):
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
         rt_struct: bool = False,
+        dicom_seg: bool = False,
         mhd: bool = False,
         label_storage_id: Optional[str] = None,
         label_validate: bool = False,
@@ -302,6 +303,9 @@ class Upload(ABC):
 
         rt_struct: bool = False
             Upload segmentations from DICOM RT-Struct files.
+
+        dicom_seg: bool = False
+            Upload segmentations from DICOM Segmentation files.
 
         mhd: bool = False
             Upload segmentations from MHD files.
@@ -491,6 +495,7 @@ class Upload(ABC):
         tasks: List[OutputTask],
         *,
         rt_struct: bool = False,
+        dicom_seg: bool = False,
         mhd: bool = False,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = False,
@@ -525,6 +530,9 @@ class Upload(ABC):
 
         rt_struct: bool = False
             Upload segmentations from DICOM RT-Struct files.
+
+        dicom_seg: bool = False
+            Upload segmentations from DICOM Segmentation files.
 
         mhd: bool = False
             Upload segmentations from MHD files.

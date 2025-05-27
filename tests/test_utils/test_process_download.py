@@ -13,7 +13,7 @@ from nibabel.nifti1 import Nifti1Image
 from nibabel.loadsave import load as nib_load, save as nib_save
 
 from redbrick.types.taxonomy import Taxonomy
-from redbrick.utils import dicom
+from redbrick.utils import nifti
 
 
 @contextmanager
@@ -127,10 +127,10 @@ async def test_process_download(
     """Test dicom.process_download"""
     result = params["expected"](semantic_mask, binary_mask)
     with (
-        patch.object(dicom, "config_path", return_value=tmpdir),
+        patch.object(nifti, "config_path", return_value=tmpdir),
         get_nifti_file(tmpdir, params["data"]) as file_,
     ):
-        rdata = await dicom.process_download(
+        rdata = await nifti.process_download(
             labels=params["labels"],  # type: ignore
             labels_path=file_,
             png_mask=False,

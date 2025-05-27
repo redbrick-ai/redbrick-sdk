@@ -24,6 +24,7 @@ from redbrick.utils.rb_event_utils import comment_format
 from redbrick.utils.upload import (
     convert_mhd_to_nii_labels,
     convert_rt_struct_to_nii_labels,
+    convert_dicom_seg_to_nii_labels,
     process_segmentation_upload,
 )
 from redbrick.utils.async_utils import gather_with_concurrency, get_session
@@ -55,6 +56,7 @@ class UploadImpl(Upload):
         is_ground_truth: bool = False,
         segmentation_mapping: Optional[Dict] = None,
         rt_struct: bool = False,
+        dicom_seg: bool = False,
         mhd: bool = False,
         label_storage_id: Optional[str] = None,
         label_validate: bool = False,
@@ -110,6 +112,9 @@ class UploadImpl(Upload):
         rt_struct: bool = False
             Upload segmentations from DICOM RT-Struct files.
 
+        dicom_seg: bool = False
+            Upload segmentations from DICOM Segmentation files.
+
         mhd: bool = False
             Upload segmentations from MHD files.
 
@@ -150,6 +155,7 @@ class UploadImpl(Upload):
             is_ground_truth=is_ground_truth,
             segmentation_mapping=segmentation_mapping,
             rt_struct=rt_struct,
+            dicom_seg=dicom_seg,
             mhd=mhd,
             label_storage_id=label_storage_id,
             label_validate=label_validate,
@@ -572,6 +578,7 @@ class UploadImpl(Upload):
         tasks: List[OutputTask],
         *,
         rt_struct: bool = False,
+        dicom_seg: bool = False,
         mhd: bool = False,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = False,
@@ -606,6 +613,9 @@ class UploadImpl(Upload):
 
         rt_struct: bool = False
             Upload segmentations from DICOM RT-Struct files.
+
+        dicom_seg: bool = False
+            Upload segmentations from DICOM Segmentation files.
 
         mhd: bool = False
             Upload segmentations from MHD files.
@@ -660,7 +670,25 @@ class UploadImpl(Upload):
             )
             converted_tasks = [task[0] for task in converted]
 
-        if mhd:
+        elif dicom_seg:
+            converted = asyncio.run(
+                gather_with_concurrency(
+                    concurrency,
+                    *[
+                        convert_dicom_seg_to_nii_labels(
+                            self.context,
+                            self.project.org_id,
+                            [task],
+                            StorageMethod.REDBRICK,
+                            label_storage_id or project_label_storage_id,
+                        )
+                        for task in tasks
+                    ],
+                )
+            )
+            converted_tasks = [task[0] for task in converted]
+
+        elif mhd:
             converted = asyncio.run(
                 gather_with_concurrency(
                     concurrency,

@@ -1,4 +1,4 @@
-"""Tests for `redbrick.utils.dicom`."""
+"""Tests for `redbrick.utils.nifti`."""
 
 import os
 from typing import Dict, List, Optional
@@ -9,7 +9,7 @@ import nibabel as nib
 import pytest
 
 
-from redbrick.utils import dicom
+from redbrick.utils import nifti, png, rt_struct
 
 
 @pytest.mark.unit
@@ -28,7 +28,7 @@ def test_merge_segmentations_success(
     output_instance = 2
     if pass_output is False:
         output_nifti_file = output_nifti_file.replace(".nii.gz", ".new.nii.gz")
-    resp = dicom.merge_segmentations(
+    resp = nifti.merge_segmentations(
         input_nifti_file,
         output_nifti_file,
         {(input_instance,): output_instance},
@@ -46,8 +46,8 @@ def test_merge_segmentations_nonexistent_input_file(output_nifti_file):
     input_instance = 1
     output_instance = 2
     invalid_file = "nonexistent.nii.gz"
-    with pytest.raises(Exception), patch.object(dicom, "log_error") as mock_logger:
-        dicom.merge_segmentations(
+    with pytest.raises(Exception), patch.object(nifti, "log_error") as mock_logger:
+        nifti.merge_segmentations(
             invalid_file,
             output_nifti_file,
             {(input_instance,): output_instance},
@@ -67,9 +67,9 @@ def test_merge_segmentations_invalid_nifti_file(input_nifti_file, output_nifti_f
         file.write("This is not a NIfTI file.")
     with (
         pytest.raises(WrapStructError),
-        patch.object(dicom, "log_error") as mock_logger,
+        patch.object(nifti, "log_error") as mock_logger,
     ):
-        dicom.merge_segmentations(
+        nifti.merge_segmentations(
             input_nifti_file,
             output_nifti_file,
             {(input_instance,): output_instance},
@@ -87,7 +87,7 @@ def test_convert_to_binary_valid_input(tmpdir, mock_nifti_data, mock_labels):
     img = nib.Nifti1Image(mock_data, np.eye(4), dtype=np.uint8)
     img.to_filename(nifti_file)
 
-    success, new_files = dicom.convert_to_binary(nifti_file, mock_labels, tmpdir_path)
+    success, new_files = nifti.convert_to_binary(nifti_file, mock_labels, tmpdir_path)
     assert success
     assert len(new_files) == 2
 
@@ -111,7 +111,7 @@ def test_convert_to_binary_invalid_nifti_file(tmpdir, mock_labels):
     """Exception raised on conversion with non existent file"""
     nifti_file = "non_existent_file.nii.gz"
     with pytest.raises(FileNotFoundError):
-        dicom.convert_to_binary(nifti_file, mock_labels, str(tmpdir))
+        nifti.convert_to_binary(nifti_file, mock_labels, str(tmpdir))
 
 
 @pytest.mark.unit
@@ -125,7 +125,7 @@ def test_convert_to_binary_no_labels(tmpdir, mock_nifti_data):
     img.to_filename(nifti_file)
 
     # No labels provided
-    success, new_files = dicom.convert_to_binary(nifti_file, [], tmpdir_path)
+    success, new_files = nifti.convert_to_binary(nifti_file, [], tmpdir_path)
     assert success
     assert not new_files  # No new files should be created
 
@@ -142,7 +142,7 @@ def test_convert_to_binary_no_matching_labels(tmpdir, mock_nifti_data):
 
     # Labels without matching instances
     invalid_labels = [{"dicom": {"instanceid": 99}}]
-    success, new_files = dicom.convert_to_binary(
+    success, new_files = nifti.convert_to_binary(
         nifti_file, invalid_labels, tmpdir_path
     )
     assert success
@@ -165,7 +165,7 @@ def test_convert_to_binary_with_existing_files(tmpdir, mock_nifti_data, mock_lab
         filename = os.path.join(tmpdir_path, f"instance-{instance_id}.nii.gz")
         img.to_filename(filename)
 
-    success, new_files = dicom.convert_to_binary(nifti_file, mock_labels, tmpdir_path)
+    success, new_files = nifti.convert_to_binary(nifti_file, mock_labels, tmpdir_path)
     assert success
     assert len(new_files) == 2
 
@@ -191,7 +191,7 @@ def test_convert_to_binary_with_failed_saving(
             ctx.setattr(
                 os.path, "join", lambda *args: "/non_existent_directory/file.nii.gz"
             )
-            _ = dicom.convert_to_binary(
+            _ = nifti.convert_to_binary(
                 nifti_file, mock_labels, "/non_existent_directory"
             )
 
@@ -207,7 +207,7 @@ def test_convert_to_binary_with_high_values(tmpdir, mock_labels):
     img = nib.Nifti1Image(mock_data, np.eye(4), dtype=np.uint16)
     img.to_filename(nifti_file)
 
-    success, new_files = dicom.convert_to_binary(nifti_file, _labels, tmpdir_path)
+    success, new_files = nifti.convert_to_binary(nifti_file, _labels, tmpdir_path)
     assert success
     assert len(new_files) == 3
     assert os.path.isfile(new_files[2])
@@ -221,7 +221,7 @@ def test_convert_to_semantic_with_binary_mask(nifti_instance_files, mock_labels)
     dirname = os.path.dirname(nifti_instance_files[0])
     binary_mask = True
 
-    result, files = dicom.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
+    result, files = nifti.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
     assert result is True
     assert len(files) == 3  # Should have 3 output files
     assert files != masks
@@ -233,7 +233,7 @@ def test_convert_to_semantic_without_binary_mask(nifti_instance_files, mock_labe
     masks = nifti_instance_files[:1]
     dirname = os.path.dirname(nifti_instance_files[0])
     binary_mask = False
-    result, files = dicom.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
+    result, files = nifti.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
     assert result is True
     assert len(files) == 1  # Should have 1 output file
     assert files == masks  # files unchanged
@@ -246,7 +246,7 @@ def test_convert_to_semantic_unsupported_taxonomy(nifti_instance_files, mock_lab
     dirname = os.path.dirname(nifti_instance_files[0])
     binary_mask = True
 
-    result, files = dicom.convert_to_semantic(
+    result, files = nifti.convert_to_semantic(
         masks, mock_labels, dirname, binary_mask, False
     )
     assert result is False
@@ -261,7 +261,7 @@ def test_convert_to_semantic_invalid_files(nifti_instance_files, mock_labels):
     binary_mask = False
 
     with pytest.raises(FileNotFoundError):
-        dicom.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
+        nifti.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
 
 
 @pytest.mark.unit
@@ -272,7 +272,7 @@ def test_convert_to_semantic_no_labels(nifti_instance_files):
     labels = []
     binary_mask = True
 
-    result, files = dicom.convert_to_semantic(masks, labels, dirname, binary_mask)
+    result, files = nifti.convert_to_semantic(masks, labels, dirname, binary_mask)
     assert result is True
     assert not files  # Should not have any output files
 
@@ -287,7 +287,7 @@ def test_convert_to_semantic_invalid_input_masks(nifti_instance_files, mock_labe
             file_.write(b"invalid append data")
     binary_mask = False
 
-    result, files = dicom.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
+    result, files = nifti.convert_to_semantic(masks, mock_labels, dirname, binary_mask)
     assert result is True
     assert not files  # Should not have any output files
 
@@ -302,7 +302,7 @@ def test_convert_nii_to_png_binary_success(nifti_instance_files_png, mock_labels
     semantic_mask = False
     is_tax_v2 = True
 
-    result, files = dicom.convert_nii_to_png(
+    result, files = png.convert_nii_to_png(
         masks, color_map, mock_labels, dirname, binary_mask, semantic_mask, is_tax_v2
     )
     assert result is True
@@ -326,7 +326,7 @@ def test_convert_nii_to_png_binary_semantic_success(
     semantic_mask = True
     is_tax_v2 = True
 
-    result, files = dicom.convert_nii_to_png(
+    result, files = png.convert_nii_to_png(
         masks, color_map, mock_labels, dirname, binary_mask, semantic_mask, is_tax_v2
     )
     assert result is True
@@ -348,7 +348,7 @@ def test_convert_nii_to_png_non_binary_success(nifti_instance_files_png, mock_la
     semantic_mask = False
     is_tax_v2 = False
 
-    result, files = dicom.convert_nii_to_png(
+    result, files = png.convert_nii_to_png(
         masks, color_map, mock_labels, dirname, binary_mask, semantic_mask, is_tax_v2
     )
     assert result is True
@@ -372,7 +372,7 @@ def test_convert_nii_to_png_invalid_mask_file(nifti_instance_files_png, mock_lab
     is_tax_v2 = False
 
     with pytest.raises(FileNotFoundError):
-        dicom.convert_nii_to_png(
+        png.convert_nii_to_png(
             masks,
             color_map,
             mock_labels,
@@ -394,7 +394,7 @@ def test_convert_nii_to_png_invalid_array_shape(nifti_instance_files, mock_label
     is_tax_v2 = True
 
     with pytest.raises(IndexError, match="tuple index out of range"):
-        dicom.convert_nii_to_png(
+        png.convert_nii_to_png(
             masks,
             color_map,
             mock_labels,
@@ -433,7 +433,7 @@ async def test_utils_process_download(
     color_map = {"red": (255, 0, 0)}
     volume_index = 1
 
-    result = await dicom.process_download(
+    result = await nifti.process_download(
         mock_labels[:2],
         labels_path,
         png_mask=png_mask,
@@ -485,9 +485,9 @@ async def test_utils_process_upload(tmpdir, mock_labels, nifti_instance_files_pn
     prune_segmentations = False
 
     with patch.object(
-        dicom, "config_path", return_value=str(tmpdir)
+        nifti, "config_path", return_value=str(tmpdir)
     ) as mock_config_path:
-        result, segment_map, error_msg = await dicom.process_upload(
+        result, segment_map, error_msg = await nifti.process_upload(
             files,
             instances,
             binary_mask,
@@ -540,10 +540,10 @@ async def test_utils_process_upload(tmpdir, mock_labels, nifti_instance_files_pn
         (True, {"Category2": {"category": "Category2"}}),
     ],
 )
-async def test_convert_nii_to_rtstruct(
+async def test_convert_nii_to_rt_struct(
     dicom_file_and_image, nifti_instance_files_png, semantic_mask, expected_segment_map
 ):
-    """Test dicom.convert_nii_to_rtstruct"""
+    """Test rt_struct.convert_nii_to_rt_struct"""
     from rt_utils import RTStruct  # type: ignore
 
     dicom_file, image_data = dicom_file_and_image
@@ -557,7 +557,7 @@ async def test_convert_nii_to_rtstruct(
         "2": {"category": "Category2"},
         "3": {"category": "Category2"},
     }
-    result, new_segment_map = await dicom.convert_nii_to_rtstruct(
+    result, new_segment_map = await rt_struct.convert_nii_to_rt_struct(
         nifti_instance_files_png[1:],
         dicom_series_path,
         categories,
@@ -573,7 +573,7 @@ async def test_convert_nii_to_rtstruct(
 
 @pytest.mark.unit
 def test_merge_rtstructs(create_rtstructs):
-    """Test for `dicom.merge_rtstructs`"""
+    """Test for `rt_struct.merge_rtstructs`"""
     rtstruct1, rtstruct2 = create_rtstructs
     # Add ROIs to the RTStructs
     mask1 = np.zeros((512, 512, 2), dtype=bool)
@@ -598,7 +598,7 @@ def test_merge_rtstructs(create_rtstructs):
     rtstruct2.add_roi(mask4, name="ROI4")
 
     # Merge the RTStructs
-    merged_rtstruct = dicom.merge_rtstructs(rtstruct1, rtstruct2)
+    merged_rtstruct = rt_struct.merge_rtstructs(rtstruct1, rtstruct2)
 
     # Check if the merged RTStruct contains all ROIs
     roi_names = merged_rtstruct.get_roi_names()

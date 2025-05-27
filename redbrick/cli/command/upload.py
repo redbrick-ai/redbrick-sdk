@@ -97,6 +97,11 @@ but may increase the upload time.""",
             help="Upload segmentations from DICOM RT-Struct files.",
         )
         parser.add_argument(
+            "--dicom-seg",
+            action="store_true",
+            help="Upload segmentations from DICOM SEG files.",
+        )
+        parser.add_argument(
             "--mhd",
             action="store_true",
             help="Upload segmentations from MHD files.",
@@ -227,6 +232,7 @@ but may increase the upload time.""",
                 task_dirs=task_dirs,
                 uploaded=upload_cache,
                 rt_struct=self.args.rt_struct,
+                dicom_seg=self.args.dicom_seg,
                 mhd_mask=self.args.mhd,
                 label_validate=self.args.label_validate,
                 concurrency=self.args.concurrency,

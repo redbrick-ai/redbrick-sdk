@@ -23,6 +23,7 @@ from redbrick.utils.common_utils import config_path
 from redbrick.utils.upload import (
     convert_mhd_to_nii_labels,
     convert_rt_struct_to_nii_labels,
+    convert_dicom_seg_to_nii_labels,
     process_segmentation_upload,
 )
 from redbrick.utils.logging import assert_validation, log_error, logger
@@ -508,6 +509,7 @@ def prepare_json_files(
     task_dirs: Optional[List[str]] = None,
     uploaded: Optional[Set[str]] = None,
     rt_struct: bool = False,
+    dicom_seg: bool = False,
     mhd_mask: bool = False,
     label_validate: bool = False,
     concurrency: int = 50,
@@ -550,29 +552,50 @@ def prepare_json_files(
             for item in file_data:
                 item["segmentMap"] = item.get("segmentMap", task_segment_map)  # type: ignore
 
-        if rt_struct and taxonomy:
+        if rt_struct:
+            if taxonomy:
+                converted = asyncio.run(
+                    gather_with_concurrency(
+                        concurrency,
+                        *[
+                            convert_rt_struct_to_nii_labels(
+                                context,
+                                org_id,
+                                taxonomy,
+                                [fdata],
+                                storage_id,
+                                label_storage_id,
+                                label_validate,
+                                task_dir,
+                            )
+                            for fdata in file_data
+                        ],
+                        progress_bar_name="Converting RTSTRUCT files to NIfTI",
+                    )
+                )
+                file_data = [items[0] for items in converted]
+
+        elif dicom_seg:
             converted = asyncio.run(
                 gather_with_concurrency(
                     concurrency,
                     *[
-                        convert_rt_struct_to_nii_labels(
+                        convert_dicom_seg_to_nii_labels(
                             context,
                             org_id,
-                            taxonomy,
                             [fdata],
                             storage_id,
                             label_storage_id,
-                            label_validate,
                             task_dir,
                         )
                         for fdata in file_data
                     ],
-                    progress_bar_name="Converting RTSTRUCT files to NIfTI",
+                    progress_bar_name="Converting DICOM Seg files to NIfTI",
                 )
             )
             file_data = [items[0] for items in converted]
 
-        if mhd_mask:
+        elif mhd_mask:
             converted = asyncio.run(
                 gather_with_concurrency(
                     concurrency,
@@ -720,6 +743,7 @@ def upload_datapoints(
     is_ground_truth: bool = False,
     segmentation_mapping: Optional[Dict] = None,
     rt_struct: bool = False,
+    dicom_seg: bool = False,
     mhd: bool = False,
     label_storage_id: Optional[str] = None,
     label_validate: bool = False,
@@ -737,6 +761,7 @@ def upload_datapoints(
         label_storage_id=label_storage_id or storage_id,
         task_segment_map=segmentation_mapping,
         rt_struct=rt_struct,
+        dicom_seg=dicom_seg,
         mhd_mask=mhd,
         label_validate=label_validate,
         concurrency=concurrency,

@@ -352,7 +352,7 @@ async def download_files_altadb(
 ) -> List[Optional[List[str]]]:
     """Download files from altadb (presigned url, file path)."""
     # pylint: disable=import-outside-toplevel, cyclic-import
-    from redbrick.utils.dicom import save_dicom_series
+    from redbrick.utils.altadb import save_dicom_series
 
     paths = await gather_with_concurrency(
         MAX_FILE_BATCH_SIZE,

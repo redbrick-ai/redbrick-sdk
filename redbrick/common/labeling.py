@@ -115,6 +115,7 @@ class Labeling(ABC):
         finalize: bool = True,
         existing_labels: bool = False,
         rt_struct: bool = False,
+        dicom_seg: bool = False,
         mhd: bool = False,
         review_result: Optional[bool] = None,
         review_comment: Optional[str] = None,
@@ -187,6 +188,9 @@ class Labeling(ABC):
 
         rt_struct: bool = False
             Upload segmentations from DICOM RT-Struct files.
+
+        dicom_seg: bool = False
+            Upload segmentations from DICOM Segmentation files.
 
         mhd: bool = False
             Upload segmentations from MHD files.

@@ -40,7 +40,7 @@ async def convert_rt_struct_to_nii_labels(
     """Convert rt struct labels to nifti."""
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements, import-outside-toplevel
     from nibabel.loadsave import save as nib_save  # type: ignore
-    from redbrick.utils.dicom import convert_rtstruct_to_nii
+    from redbrick.utils.rt_struct import convert_rt_struct_to_nii
 
     if not task_dir:
         task_dir = os.getcwd()
@@ -150,7 +150,7 @@ async def convert_rt_struct_to_nii_labels(
                     f"Downloading segmentations into: {temp_seg_dir}",
                 )
 
-            mask, segment_map = await convert_rtstruct_to_nii(
+            mask, segment_map = await convert_rt_struct_to_nii(
                 [os.path.join(temp_seg_dir, seg) for seg in os.listdir(temp_seg_dir)],
                 temp_img_dir,
                 segment_map,
@@ -190,6 +190,155 @@ async def convert_rt_struct_to_nii_labels(
     return tasks
 
 
+async def convert_dicom_seg_to_nii_labels(
+    context: RBContext,
+    org_id: str,
+    tasks: List[T],
+    storage_id: str,
+    label_storage_id: str,
+    task_dir: Optional[str] = None,
+) -> List[T]:
+    """Convert rt struct labels to nifti."""
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements, import-outside-toplevel
+    from redbrick.utils.dicom_seg import convert_dicom_seg_to_nii
+
+    if not task_dir:
+        task_dir = os.getcwd()
+
+    for task_idx, task in enumerate(tasks):
+        for series_idx, series in enumerate(task.get("series", []) or []):
+            if "segmentations" not in series and "segmentations" in task:
+                series["segmentations"] = task["segmentations"]  # type: ignore
+            if "segmentMap" not in series and "segmentMap" in task:
+                series["segmentMap"] = task["segmentMap"]  # type: ignore
+
+            if (
+                not series.get("items")
+                or not series.get("segmentations")
+                or not series.get("segmentMap")
+            ):
+                logger.info(
+                    "Skipping dicom-seg processing for "
+                    + f"task->{task_idx}->series->{series_idx}"
+                )
+                continue
+
+            series_items = series.get("items", [])
+            items: List[str] = (
+                [series_items] if isinstance(series_items, str) else series_items
+            )
+            series_segmentations = series.get("segmentations", [])
+            segmentations: List[str] = (
+                [series_segmentations]
+                if isinstance(series_segmentations, str)
+                else series_segmentations
+            )
+            segment_map = series.get("segmentMap", {})
+            if segment_map.get("binaryMask"):
+                del segment_map["binaryMask"]
+            if segment_map.get("semanticMask"):
+                del segment_map["semanticMask"]
+            if segment_map.get("pngMask"):
+                del segment_map["pngMask"]
+
+            temp_dir = os.path.join(config_path(), "temp", str(uuid4()))
+            temp_img_dir = os.path.join(temp_dir, "images")
+            temp_seg_dir = os.path.join(temp_dir, "segmentations")
+            os.makedirs(temp_dir, exist_ok=True)
+            os.makedirs(temp_img_dir, exist_ok=True)
+            os.makedirs(temp_seg_dir, exist_ok=True)
+
+            if storage_id == StorageMethod.REDBRICK:
+                logger.info(
+                    f"Copying items into: {temp_img_dir}",
+                )
+                for item in items:
+                    shutil.copy(
+                        (
+                            item
+                            if os.path.isabs(item)
+                            or not os.path.exists(os.path.join(task_dir, item))
+                            else os.path.abspath(os.path.join(task_dir, item))
+                        ),
+                        os.path.join(temp_img_dir, os.path.basename(item)),
+                    )
+            else:
+                presigned_items = context.export.presign_items(
+                    org_id, storage_id, items
+                )
+                await download_files(
+                    list(
+                        zip(
+                            presigned_items,
+                            [
+                                os.path.join(temp_img_dir, f"{idx + 1}.dcm")
+                                for idx in range(len(items))
+                            ],
+                        )
+                    ),
+                    f"Downloading items into: {temp_img_dir}",
+                )
+
+            if label_storage_id == StorageMethod.REDBRICK:
+                logger.info(
+                    f"Copying segmentations into: {temp_seg_dir}",
+                )
+                for seg in segmentations:
+                    shutil.copy(
+                        (
+                            seg
+                            if os.path.isabs(seg)
+                            or not os.path.exists(os.path.join(task_dir, seg))
+                            else os.path.abspath(os.path.join(task_dir, seg))
+                        ),
+                        os.path.join(temp_seg_dir, os.path.basename(seg)),
+                    )
+            else:
+                presigned_segs = context.export.presign_items(
+                    org_id, label_storage_id, segmentations
+                )
+                await download_files(
+                    list(
+                        zip(
+                            presigned_segs,
+                            [
+                                os.path.join(temp_seg_dir, f"{idx + 1}.dcm")
+                                for idx in range(len(presigned_segs))
+                            ],
+                        )
+                    ),
+                    f"Downloading segmentations into: {temp_seg_dir}",
+                )
+
+            nii_mask = convert_dicom_seg_to_nii(
+                [os.path.join(temp_seg_dir, seg) for seg in os.listdir(temp_seg_dir)],
+            )
+
+            if not nii_mask:
+                shutil.rmtree(temp_dir)
+                log_error(
+                    "Failed dicom-seg processing for "
+                    + f"task->{task_idx}->series->{series_idx}",
+                    True,
+                )
+
+            assert nii_mask
+            series["segmentations"] = nii_mask
+
+        if "segmentations" in task and all(
+            "segmentations" in series
+            for series in task.get("series", []) or []  # type: ignore
+        ):
+            del task["segmentations"]  # type: ignore
+        if "segmentMap" in task and all(
+            "segmentMap" in series
+            for series in task.get("series", []) or []  # type: ignore
+        ):
+            del task["segmentMap"]  # type: ignore
+
+    return tasks
+
+
 async def convert_mhd_to_nii_labels(
     context: RBContext,
     org_id: str,
@@ -199,7 +348,7 @@ async def convert_mhd_to_nii_labels(
 ) -> List[T]:
     """Convert mhd labels to nifti."""
     # pylint: disable=too-many-locals, import-outside-toplevel
-    from redbrick.utils.dicom import convert_mhd_to_nii
+    from redbrick.utils.mhd import convert_mhd_to_nii
 
     if not task_dir:
         task_dir = os.getcwd()
@@ -308,7 +457,7 @@ async def process_segmentation_upload(
     """Process segmentation upload."""
     # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     # pylint: disable=import-outside-toplevel, too-many-nested-blocks
-    from redbrick.utils.dicom import process_upload
+    from redbrick.utils.nifti import process_upload
 
     labels_map: List[Dict] = []
 

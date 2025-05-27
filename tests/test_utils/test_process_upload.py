@@ -11,7 +11,7 @@ import numpy as np
 from nibabel.nifti1 import Nifti1Image
 from nibabel.loadsave import load as nib_load, save as nib_save
 
-from redbrick.utils import dicom
+from redbrick.utils import nifti
 
 
 @contextmanager
@@ -303,10 +303,10 @@ async def test_process_upload(
     result = params["expected"](label_validate, prune_segmentations)
     expected = result["instances"]
     with (
-        patch.object(dicom, "config_path", return_value=tmpdir),
+        patch.object(nifti, "config_path", return_value=tmpdir),
         get_nifti_files(tmpdir, params["data"]) as (files, masks),
     ):
-        rfile, rmap, error_msg = await dicom.process_upload(
+        rfile, rmap, error_msg = await nifti.process_upload(
             files=files,
             instances=params["segment_map"],
             binary_mask=params["binary_mask"],

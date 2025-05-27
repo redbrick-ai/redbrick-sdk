@@ -209,6 +209,7 @@ class Export(ABC):
         dicom_to_nifti: bool,
         png_mask: bool,
         rt_struct: bool,
+        dicom_seg: bool,
         mhd_mask: bool,
         get_task: bool,
     ) -> Optional[OutputTask]:
@@ -233,6 +234,7 @@ class Export(ABC):
         dicom_to_nifti: bool = False,
         png: bool = False,
         rt_struct: bool = False,
+        dicom_seg: bool = False,
         mhd: bool = False,
         destination: Optional[str] = None,
     ) -> Iterator[OutputTask]:
@@ -307,6 +309,9 @@ class Export(ABC):
 
         rt_struct: bool = False
             Export labels as DICOM RT-Struct. (Only for DICOM images)
+
+        dicom_seg: bool = False
+            Export labels as DICOM Segmentation. (Only for DICOM images)
 
         mhd: bool = False
             Export segmentation masks in MHD format.

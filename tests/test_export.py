@@ -53,12 +53,12 @@ async def test_download_task_items(
     mock_convert = AsyncMock(return_value=None)
     export.project.context.export.presign_items = lambda a, b, items: items
     with patch("redbrick.export.public.download_files", mock_download):
-        with patch("redbrick.utils.dicom.convert_nii_to_rtstruct", mock_convert):
+        with patch("redbrick.utils.rt_struct.convert_nii_to_rt_struct", mock_convert):
             (
                 _,
                 series_dirs,
             ) = await export._download_task_items(  # pylint: disable=protected-access
-                task, storage_id, parent_dir, taxonomy, rt_struct, False
+                task, storage_id, parent_dir, taxonomy, rt_struct, False, False
             )
     if check_convert_called:
         mock_convert.assert_called_once()
@@ -143,6 +143,7 @@ async def test_export_nifti_label_data(export, task_file, get_task, returns_task
             None,
             False,
             None,
+            False,
             False,
             False,
             False,

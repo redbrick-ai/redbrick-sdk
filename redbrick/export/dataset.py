@@ -136,7 +136,7 @@ class DatasetExportImpl(DatasetExport):
 
         """
         # pylint: disable=import-outside-toplevel
-        from redbrick.utils.dicom import save_dicom_series
+        from redbrick.utils.altadb import save_dicom_series
 
         base_url = self.context.client.url.strip()
         if base_url.endswith("/graphql/"):

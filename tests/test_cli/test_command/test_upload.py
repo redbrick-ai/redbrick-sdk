@@ -135,6 +135,7 @@ def test_handle_upload(
             clear_cache=False,
             concurrency=10,
             rt_struct=False,
+            dicom_seg=False,
             mhd=False,
         )
         controller.handle_upload()
