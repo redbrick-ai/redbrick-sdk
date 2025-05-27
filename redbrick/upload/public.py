@@ -793,6 +793,13 @@ class UploadImpl(Upload):
         concurrency: int = 50
             Batch size per request.
         """
+        stage_names = [stage.stage_name for stage in self.project.stages] + [
+            "ARCHIVED",
+            "END",
+        ]
+        if stage_name not in stage_names:
+            raise ValueError(f"Stage {stage_name} not found in project")
+
         errors = asyncio.run(
             self._send_to_stage(task_ids, stage_name, min(concurrency, 50))
         )
