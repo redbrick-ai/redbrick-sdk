@@ -7,7 +7,7 @@ import pathlib
 import numpy as np
 import nibabel as nib
 import pydicom
-import pydicom_seg  # type: ignore
+import pydicom_seg_rb  # type: ignore
 from pydicom.filereader import dcmread
 import SimpleITK
 
@@ -95,8 +95,8 @@ def convert_nii_to_dicom_seg(
     mask = SimpleITK.ReadImage(label)
     mask = SimpleITK.Cast(mask, SimpleITK.sitkUInt16)
 
-    writer = pydicom_seg.MultiClassWriter(
-        template=pydicom_seg.template.from_dcmqi_metainfo(
+    writer = pydicom_seg_rb.MultiClassWriter(
+        template=pydicom_seg_rb.template.from_dcmqi_metainfo(
             {
                 "ContentCreatorName": "redbrick-sdk",
                 "ClinicalTrialSeriesID": "1",
@@ -125,7 +125,7 @@ def convert_dicom_seg_to_nii(masks: List[str]) -> List[str]:
         new_masks.append(new_mask)
 
         dcm = pydicom.dcmread(mask)
-        reader = pydicom_seg.MultiClassReader()
+        reader = pydicom_seg_rb.MultiClassReader()
         result = reader.read(dcm)
 
         SimpleITK.WriteImage(result.image, new_mask, True)
