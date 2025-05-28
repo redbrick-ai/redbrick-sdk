@@ -18,7 +18,7 @@ dependencies = [
     "packaging<25",
     "Pillow<11,>=9.0.1",
     "pydicom<4,>=2.4",
-    "pydicom-seg @ git+https://github.com/pritamrungta/pydicom-seg.git@master",
+    "pydicom-seg-rb>=1,<2",
     "python-dateutil<3",
     "requests<3,>=2.23.0",
     "Rich<14",
