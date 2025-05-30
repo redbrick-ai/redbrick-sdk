@@ -68,12 +68,8 @@ class RBOrganization(ABC):
         """Create a new dataset."""
 
     @abstractmethod
-    def get_dataset(self, dataset_name: str) -> Dict:
-        """
-        Get dataset name and status.
-
-        Raise an exception if dataset does not exist.
-        """
+    def get_dataset(self, dataset_name: str) -> "RBDataset":
+        """Get a dataset by name."""
 
     @abstractmethod
     def delete_dataset(self, dataset_name: str) -> bool:

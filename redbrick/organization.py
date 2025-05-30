@@ -8,10 +8,11 @@ import platform
 from dateutil import parser  # type: ignore
 from tqdm import tqdm  # type: ignore
 
-from redbrick.common.entities import RBOrganization, RBWorkspace, RBProject
+from redbrick.common.entities import RBOrganization, RBDataset, RBWorkspace, RBProject
 from redbrick.common.member import OrgMember
 from redbrick.common.context import RBContext
 from redbrick.config import config
+from redbrick.dataset import RBDatasetImpl
 from redbrick.workspace import RBWorkspaceImpl
 from redbrick.project import RBProjectImpl
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
@@ -149,13 +150,9 @@ class RBOrganizationImpl(RBOrganization):
         """Create a new dataset."""
         return self.context.dataset.create_dataset(self.org_id, dataset_name)
 
-    def get_dataset(self, dataset_name: str) -> Dict:
-        """
-        Get dataset name and status.
-
-        Raise an exception if dataset does not exist.
-        """
-        return self.context.dataset.get_dataset(self.org_id, dataset_name)
+    def get_dataset(self, dataset_name: str) -> RBDataset:
+        """Get a dataset by name."""
+        return RBDatasetImpl(self.context, self.org_id, dataset_name)
 
     def delete_dataset(self, dataset_name: str) -> bool:
         """Delete a dataset."""
