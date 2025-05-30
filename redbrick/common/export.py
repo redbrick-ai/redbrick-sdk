@@ -333,10 +333,10 @@ class Export(ABC):
     @abstractmethod
     def list_tasks(
         self,
-        search: TaskFilters = TaskFilters.ALL,
+        *,
         concurrency: int = 10,
         limit: Optional[int] = 50,
-        *,
+        search: Optional[TaskFilters] = None,
         stage_name: Optional[str] = None,
         user_id: Optional[str] = None,
         task_id: Optional[str] = None,
@@ -353,15 +353,15 @@ class Export(ABC):
 
         Parameters
         -----------
-        search: :obj:`~redbrick.common.enums.TaskFilters` = TaskFilters.ALL
-            Task filter type.
-
         concurrency: int = 10
             The number of requests that will be made in parallel.
 
         limit: Optional[int] = 50
             The number of tasks to return.
             Use None to return all tasks matching the search query.
+
+        search: Optional[:obj:`~redbrick.common.enums.TaskFilters`] = None
+            Task filter type. (Default: TaskFilters.ALL)
 
         stage_name: Optional[str] = None
             If present, will return tasks that are:

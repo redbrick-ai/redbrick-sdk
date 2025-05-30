@@ -1116,10 +1116,10 @@ class ExportImpl(Export):
 
     def list_tasks(
         self,
-        search: TaskFilters = TaskFilters.ALL,
+        *,
         concurrency: int = 10,
         limit: Optional[int] = 50,
-        *,
+        search: Optional[TaskFilters] = None,
         stage_name: Optional[str] = None,
         user_id: Optional[str] = None,
         task_id: Optional[str] = None,
@@ -1136,15 +1136,15 @@ class ExportImpl(Export):
 
         Parameters
         -----------
-        search: :obj:`~redbrick.common.enums.TaskFilters` = TaskFilters.ALL
-            Task filter type.
-
         concurrency: int = 10
             The number of requests that will be made in parallel.
 
         limit: Optional[int] = 50
             The number of tasks to return.
             Use None to return all tasks matching the search query.
+
+        search: Optional[:obj:`~redbrick.common.enums.TaskFilters`] = None
+            Task filter type. (Default: TaskFilters.ALL)
 
         stage_name: Optional[str] = None
             If present, will return tasks that are:
@@ -1196,6 +1196,12 @@ class ExportImpl(Export):
             }]
         """
         # pylint: disable=too-many-branches, too-many-locals, too-many-statements
+        search = search or (
+            TaskFilters.ALL
+            if stage_name is None
+            else (TaskFilters.QUEUED if completed_at is None else TaskFilters.COMPLETED)
+        )
+
         stages = self.project.stages
         label_stages: List[str] = [
             stage.stage_name for stage in stages if isinstance(stage, LabelStage)
