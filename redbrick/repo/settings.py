@@ -156,18 +156,15 @@ class SettingsRepoImpl(SettingsRepo):
                     projectId: $projectId
                     url: $url
                 ) {
-                    url
+                    ok
                 }
             }
         """
         variables = {
             "orgId": org_id,
             "projectId": project_id,
-            "url": None,
+            "url": webhook["url"] if webhook["enabled"] else None,
         }
-        if webhook["enabled"]:
-            variables["url"] = webhook["url"]
-
         self.client.execute_query(query, variables)
 
     def toggle_reference_standard_task(
