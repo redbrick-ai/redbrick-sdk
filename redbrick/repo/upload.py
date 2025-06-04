@@ -209,7 +209,7 @@ class UploadRepoImpl(UploadRepo):
     ) -> Dict:
         """Update items in a datapoint."""
         # pylint: disable=too-many-locals
-        query_string = """
+        query_string = f"""
             mutation updateTaskItemsSDK(
                 $orgId: UUID!
                 $dpId: UUID
@@ -222,8 +222,8 @@ class UploadRepoImpl(UploadRepo):
                 $transforms: [TransformInput!]
                 $centerline: [CenterlineInput!]
                 $metaData: String
-                $append: Boolean
-            ) {
+                {"$append: Boolean" if append else ""}
+            ) {{
                 updateTaskItems(
                     orgId: $orgId
                     dpId: $dpId
@@ -236,15 +236,15 @@ class UploadRepoImpl(UploadRepo):
                     transforms: $transforms
                     centerline: $centerline
                     metaData: $metaData
-                    append: $append
-                ) {
+                    {"append: $append" if append else ""}
+                ) {{
                     ok
                     message
-                }
-            }
+                }}
+            }}
         """
 
-        query_variables = {
+        query_variables: Dict[str, Any] = {
             "orgId": org_id,
             "dpId": dp_id,
             "projectId": project_id,
@@ -265,8 +265,10 @@ class UploadRepoImpl(UploadRepo):
             "metaData": (
                 json.dumps(meta_data, separators=(",", ":")) if meta_data else None
             ),
-            "append": append,
         }
+        if append:
+            query_variables["append"] = True
+
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables
         )
