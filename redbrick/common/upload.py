@@ -78,6 +78,7 @@ class UploadRepo(ABC):
         transforms: Optional[List[Dict]] = None,
         centerlines: Optional[List[Dict]] = None,
         meta_data: Optional[Dict] = None,
+        append: bool = False,
     ) -> Dict:
         """Update items in a datapoint."""
 
@@ -399,6 +400,7 @@ class Upload(ABC):
         storage_id: str,
         points: List[OutputTask],
         concurrency: int = 50,
+        append: bool = False,
     ) -> List[Dict]:
         """
         Update task items, meta data, heat maps, transforms, etc. for the mentioned task ids.
@@ -431,6 +433,10 @@ class Upload(ABC):
             a list of `items` paths to be updated for the task.
 
         concurrency: int = 50
+
+        append: bool = False
+            If True, the series will be appended to the existing series.
+            If False, the series will replace the existing series.
 
         Returns
         -------------

@@ -205,6 +205,7 @@ class UploadRepoImpl(UploadRepo):
         transforms: Optional[List[Dict]] = None,
         centerlines: Optional[List[Dict]] = None,
         meta_data: Optional[Dict] = None,
+        append: bool = False,
     ) -> Dict:
         """Update items in a datapoint."""
         # pylint: disable=too-many-locals
@@ -221,6 +222,7 @@ class UploadRepoImpl(UploadRepo):
                 $transforms: [TransformInput!]
                 $centerline: [CenterlineInput!]
                 $metaData: String
+                $append: Boolean
             ) {
                 updateTaskItems(
                     orgId: $orgId
@@ -234,6 +236,7 @@ class UploadRepoImpl(UploadRepo):
                     transforms: $transforms
                     centerline: $centerline
                     metaData: $metaData
+                    append: $append
                 ) {
                     ok
                     message
@@ -262,6 +265,7 @@ class UploadRepoImpl(UploadRepo):
             "metaData": (
                 json.dumps(meta_data, separators=(",", ":")) if meta_data else None
             ),
+            "append": append,
         }
         response = await self.client.execute_query_async(
             aio_client, query_string, query_variables

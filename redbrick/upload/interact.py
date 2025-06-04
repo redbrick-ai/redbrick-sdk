@@ -49,6 +49,7 @@ async def create_task(
     label_validate: bool,
     prune_segmentations: bool,
     update_items: bool,
+    append: bool,
 ) -> Dict:
     """Create task interact function."""
     # pylint:disable=too-many-locals
@@ -231,6 +232,7 @@ async def create_task(
                 point.get("transforms"),
                 point.get("centerline"),
                 point.get("metaData"),
+                append,
             )
             assert_validation(
                 response.get("ok"),
@@ -383,6 +385,7 @@ async def create_tasks(
     prune_segmentations: bool = False,
     concurrency: int = 50,
     update_items: bool = False,
+    append: bool = False,
 ) -> List[Dict]:
     """Create tasks interact function."""
     # pylint: disable=too-many-locals
@@ -430,6 +433,7 @@ async def create_tasks(
                 label_validate=label_validate,
                 prune_segmentations=prune_segmentations,
                 update_items=update_items,
+                append=append,
             )
             for point in points
         ]
