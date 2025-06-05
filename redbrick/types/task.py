@@ -121,6 +121,9 @@ class CommonLabelProps(TypedDict, total=False):
     #: Read only status
     readOnly: NotRequired[bool]
 
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
+
 
 SegmentMap = Dict[Union[str, int], Union[str, int, List[str], CommonLabelProps]]
 
@@ -143,6 +146,9 @@ class InstanceClassification(TypedDict):
     #: Read only status
     readOnly: NotRequired[bool]
 
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
+
 
 class Classification(TypedDict):
     """Study or series classification."""
@@ -154,6 +160,9 @@ class Classification(TypedDict):
 
     #: Read only status
     readOnly: NotRequired[bool]
+
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
 
 
 class Polyline(TypedDict):
@@ -170,6 +179,9 @@ class Polyline(TypedDict):
     #: Read only status
     readOnly: NotRequired[bool]
 
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
+
 
 class Polygon(TypedDict):
     """Closed polygons, not supported in 3D images."""
@@ -185,6 +197,9 @@ class Polygon(TypedDict):
 
     #: Read only status
     readOnly: NotRequired[bool]
+
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
 
 
 class Cuboid(TypedDict):
@@ -206,6 +221,9 @@ class Cuboid(TypedDict):
 
     #: Read only status
     readOnly: NotRequired[bool]
+
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
 
 
 class BoundingBox(TypedDict):
@@ -235,6 +253,9 @@ class BoundingBox(TypedDict):
 
     #: Read only status
     readOnly: NotRequired[bool]
+
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
 
 
 class Ellipse(TypedDict):
@@ -268,6 +289,9 @@ class Ellipse(TypedDict):
 
     #: Read only status
     readOnly: NotRequired[bool]
+
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
 
 
 class MeasureAngle(TypedDict):
@@ -303,6 +327,9 @@ class MeasureAngle(TypedDict):
     #: Read only status
     readOnly: NotRequired[bool]
 
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
+
 
 class MeasureLength(TypedDict):
     """
@@ -333,6 +360,9 @@ class MeasureLength(TypedDict):
     #: Read only status
     readOnly: NotRequired[bool]
 
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
+
 
 class Landmark3D(TypedDict):
     """3D landmark for 3D data."""
@@ -346,6 +376,9 @@ class Landmark3D(TypedDict):
 
     #: Read only status
     readOnly: NotRequired[bool]
+
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
 
 
 class Landmark(TypedDict):
@@ -361,6 +394,9 @@ class Landmark(TypedDict):
 
     #: Read only status
     readOnly: NotRequired[bool]
+
+    #: Comment to add for the label entity
+    comment: NotRequired[str]
 
 
 class ConsensusScore(TypedDict, total=False):
