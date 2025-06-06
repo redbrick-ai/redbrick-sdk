@@ -121,9 +121,10 @@ class SettingsRepoImpl(SettingsRepo):
     def get_webhook_settings(self, org_id: str, project_id: str) -> Webhook:
         """Get webhook setting."""
         query = """
-            query getWebhookSettingsSDK($orgId: UUID!, $projectId: UUID) {
+            query getWebhookSettingsSDK($orgId: UUID!, $projectId: UUID!) {
                 project(orgId: $orgId, projectId: $projectId) {
                     webhookSettings {
+                        enabled
                         url
                     }
                 }
@@ -134,8 +135,8 @@ class SettingsRepoImpl(SettingsRepo):
         if response.get("project"):
             if response["project"]["webhookSettings"]:
                 return {
-                    "enabled": True,
-                    "url": response["project"]["webhookSettings"][0]["url"],
+                    "enabled": response["project"]["webhookSettings"]["enabled"],
+                    "url": response["project"]["webhookSettings"]["url"],
                 }
             return {"enabled": False, "url": None}
 
@@ -149,11 +150,13 @@ class SettingsRepoImpl(SettingsRepo):
             mutation updateWebhookSettingsSDK(
                 $orgId: UUID!
                 $projectId: UUID
+                $enabled: Boolean
                 $url: String
             ) {
                 updateWebhookSettings(
                     orgId: $orgId
                     projectId: $projectId
+                    enabled: $enabled
                     url: $url
                 ) {
                     ok
@@ -163,6 +166,7 @@ class SettingsRepoImpl(SettingsRepo):
         variables = {
             "orgId": org_id,
             "projectId": project_id,
+            "enabled": webhook["enabled"],
             "url": webhook["url"] if webhook["enabled"] else None,
         }
         self.client.execute_query(query, variables)
