@@ -353,6 +353,80 @@ class ModelStage(Stage):
         rbCategory: str
 
     @dataclass
+    class MONAIConfig:
+        """MONAI config.
+
+        Parameters
+        --------------
+        batch_count: Optional[int]
+            Number of in-progress tasks.
+
+        target_spacing: List[float]
+            Target spacing of images.
+
+        roi_size: List[int]
+            ROI size.
+
+        max_epochs: int
+            Maximum number of epochs.
+
+        early_stop_patience: int
+            Early stop patience.
+
+        training_threshold_count: int
+            Training threshold count.
+        """
+
+        batch_count: Optional[int] = None
+        target_spacing: Optional[List[float]] = None
+        roi_size: Optional[List[int]] = None
+        max_epochs: Optional[int] = None
+        early_stop_patience: Optional[int] = None
+        training_threshold_count: Optional[int] = None
+
+        def __post_init__(self) -> None:
+            """Post init."""
+            if self.batch_count is None:
+                self.batch_count = 5
+            if self.target_spacing is None:
+                self.target_spacing = [1.5, 1.5, 1.5]
+            if self.roi_size is None:
+                self.roi_size = [96, 96, 96]
+            if self.max_epochs is None:
+                self.max_epochs = 200
+            if self.early_stop_patience is None:
+                self.early_stop_patience = 0
+            if self.training_threshold_count is None:
+                self.training_threshold_count = 5
+
+        @classmethod
+        def from_entity(cls, config: Optional[Dict] = None) -> "ModelStage.MONAIConfig":
+            """Get object from entity."""
+            config = config or {}
+            monai = config.get("monaiConfig") or {}
+            return cls(
+                batch_count=monai.get("batchCount"),
+                target_spacing=monai.get("targetSpacing"),
+                roi_size=monai.get("roiSize"),
+                max_epochs=monai.get("maxEpochs"),
+                early_stop_patience=monai.get("earlyStopPatience"),
+                training_threshold_count=monai.get("trainingThresholdCount"),
+            )
+
+        def to_entity(self) -> Dict:
+            """Get entity from object."""
+            return {
+                "batchCount": self.batch_count,
+                "monaiConfig": {
+                    "targetSpacing": self.target_spacing,
+                    "roiSize": self.roi_size,
+                    "maxEpochs": self.max_epochs,
+                    "earlyStopPatience": self.early_stop_patience,
+                    "trainingThresholdCount": self.training_threshold_count,
+                },
+            }
+
+    @dataclass
     class Config(Stage.Config):
         """Model Stage Config.
 
@@ -364,9 +438,6 @@ class ModelStage(Stage):
         version: Optional[str]
             Model version.
 
-        active_learning: bool = False
-            Whether active learning is enabled.
-
         app: Optional[str]
             App name.
 
@@ -376,17 +447,16 @@ class ModelStage(Stage):
         taxonomy_objects: Optional[List[ModelStage.ModelTaxonomyMap]]
             Mapping of model classes to project's taxonomy objects.
 
-        batch: Optional[int] = None
-            Number of in-progress tasks.
+        monai: Optional[ModelStage.MONAIConfig] = None
+            MONAI config.
         """
 
         name: str
         version: Optional[str] = None
-        active_learning: bool = False
         app: Optional[str] = None
         url: Optional[str] = None
         taxonomy_objects: Optional[List["ModelStage.ModelTaxonomyMap"]] = None
-        batch: Optional[int] = None
+        monai: Optional["ModelStage.MONAIConfig"] = None
 
         CT_SEGMENTATOR = "TOTAL_SEGMENTATOR"  # Boost
 
@@ -397,34 +467,38 @@ class ModelStage(Stage):
             """Get object from entity."""
             if not entity:
                 raise ValueError("Model name is required")
+
             return cls(
                 name=entity["name"],
-                version=entity.get("version"),
-                active_learning=entity.get("activeLearning") or False,
+                version=entity.get("version") or "v0",
                 app=entity.get("subType"),
                 url=entity.get("url"),
                 taxonomy_objects=ModelStage.Config._get_external_taxonomy_map(
                     entity.get("taxonomyObjects"), taxonomy
                 ),
-                batch=entity.get("batchCount"),
+                monai=(
+                    ModelStage.MONAIConfig.from_entity(entity)
+                    if entity.get("activeLearning")
+                    else None
+                ),
             )
 
         def to_entity(self, taxonomy: Optional[Taxonomy] = None) -> Dict:
             """Get entity from object."""
             entity: Dict[str, Any] = {
                 "name": self.name,
-                "activeLearning": self.active_learning,
+                "version": self.version or "v0",
             }
-            if self.version is not None:
-                entity["version"] = self.version
             if self.app is not None:
                 entity["subType"] = self.app
             if self.url is not None:
                 entity["url"] = self.url
             if self.taxonomy_objects is not None:
                 entity["taxonomyObjects"] = self._get_internal_taxonomy_map(taxonomy)
-            if self.active_learning:
-                entity["batchCount"] = max(self.batch or 1, 1)
+            if self.monai is not None:
+                entity["activeLearning"] = True
+                entity.update(self.monai.to_entity())
+
             return entity
 
         @staticmethod
