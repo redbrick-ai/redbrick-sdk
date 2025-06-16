@@ -85,6 +85,16 @@ class LabelingRepo(ABC):
     ) -> None:
         """Move groundtruth task back to start."""
 
+    @abstractmethod
+    def update_model_tasks_state(
+        self,
+        org_id: str,
+        project_id: str,
+        task_ids: List[str],
+        action: str,
+    ) -> None:
+        """Update model tasks state."""
+
 
 class Labeling(ABC):
     """

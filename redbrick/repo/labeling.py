@@ -289,3 +289,34 @@ class LabelingRepoImpl(LabelingRepo):
         variables = {"orgId": org_id, "projectId": project_id, "taskId": task_id}
 
         await self.client.execute_query_async(session, query, variables)
+
+    def update_model_tasks_state(
+        self, org_id: str, project_id: str, task_ids: List[str], action: str
+    ) -> None:
+        """Update model tasks state."""
+        query = """
+        mutation updateModelTasksStateSDK(
+            $orgId: UUID!
+            $projectId: UUID!
+            $taskIds: [UUID!]!
+            $action: ActiveLearningTaskAction!
+        ) {
+            updateModelTasksState(
+                orgId: $orgId
+                projectId: $projectId
+                taskIds: $taskIds
+                action: $action
+            ) {
+                ok
+            }
+        }
+        """
+
+        variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "taskIds": task_ids,
+            "action": action,
+        }
+
+        self.client.execute_query(query, variables)
