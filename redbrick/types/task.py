@@ -100,6 +100,26 @@ Category = Union[int, str, List[str]]
 Attributes = Dict[str, Union[str, bool, List[str]]]
 
 
+class CommentPin(TypedDict):
+    """Comment pin."""
+
+    pointX: float
+    pointY: float
+    pointZ: float
+    frameIndex: NotRequired[int]
+    volumeIndex: NotRequired[int]
+
+
+class CommentType(TypedDict):
+    """Comment type."""
+
+    text: str
+    pin: NotRequired[CommentPin]
+
+
+Comment = Union[str, CommentType]
+
+
 class CommonLabelProps(TypedDict, total=False):
     """Full version of :attr:`redbrick.types.task.Series.segmentMap`."""
 
@@ -122,7 +142,7 @@ class CommonLabelProps(TypedDict, total=False):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 SegmentMap = Dict[Union[str, int], Union[str, int, List[str], CommonLabelProps]]
@@ -147,7 +167,7 @@ class InstanceClassification(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class Classification(TypedDict):
@@ -162,7 +182,7 @@ class Classification(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class Polyline(TypedDict):
@@ -180,7 +200,7 @@ class Polyline(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class Polygon(TypedDict):
@@ -199,7 +219,7 @@ class Polygon(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class Cuboid(TypedDict):
@@ -223,7 +243,7 @@ class Cuboid(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class BoundingBox(TypedDict):
@@ -255,7 +275,7 @@ class BoundingBox(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class Ellipse(TypedDict):
@@ -291,7 +311,7 @@ class Ellipse(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class MeasureAngle(TypedDict):
@@ -328,7 +348,7 @@ class MeasureAngle(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class MeasureLength(TypedDict):
@@ -361,7 +381,7 @@ class MeasureLength(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class Landmark3D(TypedDict):
@@ -378,7 +398,7 @@ class Landmark3D(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class Landmark(TypedDict):
@@ -396,7 +416,7 @@ class Landmark(TypedDict):
     readOnly: NotRequired[bool]
 
     #: Comment to add for the label entity
-    comment: NotRequired[str]
+    comment: NotRequired[Comment]
 
 
 class ConsensusScore(TypedDict, total=False):

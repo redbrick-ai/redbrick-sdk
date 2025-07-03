@@ -25,7 +25,7 @@ from redbrick.utils.upload import (
 )
 from redbrick.utils.logging import log_error, logger
 from redbrick.utils.async_utils import gather_with_concurrency, get_session
-from redbrick.types.task import OutputTask
+from redbrick.types.task import OutputTask, Comment
 
 
 TFun = TypeVar("TFun", bound=Callable[..., Any])  # pylint: disable=invalid-name
@@ -91,7 +91,7 @@ class LabelingImpl(Labeling):
         task: Dict,
         finalize: bool,
         review_result: Optional[bool],
-        review_comment: Optional[str],
+        review_comment: Optional[Comment],
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
@@ -167,7 +167,7 @@ class LabelingImpl(Labeling):
         tasks: List[Dict],
         finalize: bool,
         review_result: Optional[bool],
-        review_comment: Optional[str],
+        review_comment: Optional[Comment],
         label_storage_id: str,
         project_label_storage_id: str,
         label_validate: bool,
@@ -209,7 +209,7 @@ class LabelingImpl(Labeling):
         dicom_seg: bool = False,
         mhd: bool = False,
         review_result: Optional[bool] = None,
-        review_comment: Optional[str] = None,
+        review_comment: Optional[Comment] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = False,
         prune_segmentations: bool = False,
@@ -290,7 +290,7 @@ class LabelingImpl(Labeling):
             Accepts or rejects the task based on the boolean value.
             Applies only to Review stage.
 
-        review_comment: Optional[str] = None
+        review_comment: Optional[:obj:`~redbrick.types.task.Comment`] = None
             Comment for the review result.
             Applies only to Review stage.
 

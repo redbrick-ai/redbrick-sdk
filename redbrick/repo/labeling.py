@@ -5,6 +5,7 @@ import aiohttp
 
 from redbrick.common.client import RBClient
 from redbrick.common.labeling import LabelingRepo
+from redbrick.types.task import Comment
 
 
 class LabelingRepoImpl(LabelingRepo):
@@ -175,7 +176,7 @@ class LabelingRepoImpl(LabelingRepo):
         stage_name: str,
         task_id: str,
         review_val: bool,
-        review_comment: Optional[str] = None,
+        review_comment: Optional[Comment] = None,
     ) -> None:
         """Put review result for task."""
         query = """
@@ -185,6 +186,7 @@ class LabelingRepoImpl(LabelingRepo):
             $stageName: String!
             $reviewVal: Boolean!
             $comment: String
+            $commentPin: PinInput
             $taskId: UUID!
             $elapsedTimeMs: Int!
         ) {
@@ -194,6 +196,7 @@ class LabelingRepoImpl(LabelingRepo):
                 stageName: $stageName
                 reviewVal: $reviewVal
                 comment: $comment
+                commentPin: $commentPin
                 taskId: $taskId
                 elapsedTimeMs: $elapsedTimeMs
             ) {
@@ -208,7 +211,14 @@ class LabelingRepoImpl(LabelingRepo):
             "stageName": stage_name,
             "taskId": task_id,
             "reviewVal": review_val,
-            "comment": review_comment,
+            "comment": (
+                review_comment.get("text")
+                if isinstance(review_comment, dict)
+                else review_comment
+            ),
+            "commentPin": (
+                review_comment.get("pin") if isinstance(review_comment, dict) else None
+            ),
             "elapsedTimeMs": 0,
         }
 

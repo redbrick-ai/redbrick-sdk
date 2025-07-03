@@ -312,6 +312,22 @@ TASK_COMMENT_SHARD = """
         stageName
         issueComment
         issueResolved
+        pin {
+            pinId
+            pointX
+            pointY
+            pointZ
+            frameIndex
+            volumeIndex
+        }
+    }
+    pin {
+        pinId
+        pointX
+        pointY
+        pointZ
+        frameIndex
+        volumeIndex
     }
 """
 

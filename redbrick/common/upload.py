@@ -7,7 +7,7 @@ import aiohttp
 
 from redbrick.common.constants import MAX_FILE_BATCH_SIZE
 from redbrick.common.storage import StorageMethod
-from redbrick.types.task import InputTask, OutputTask
+from redbrick.types.task import InputTask, OutputTask, CommentPin
 
 
 class UploadRepo(ABC):
@@ -206,6 +206,7 @@ class UploadRepo(ABC):
         stage_name: str,
         text_comment: str,
         reply_to_comment_id: Optional[str] = None,
+        comment_pin: Optional[CommentPin] = None,
     ) -> Optional[Dict]:
         """Create a task comment."""
 
@@ -621,6 +622,7 @@ class Upload(ABC):
         task_id: str,
         text_comment: str,
         reply_to_comment_id: Optional[str] = None,
+        comment_pin: Optional[CommentPin] = None,
     ) -> Dict:
         """Create a task comment.
 
@@ -634,6 +636,9 @@ class Upload(ABC):
 
         reply_to_comment_id: Optional[str] = None
             The comment id to reply to.
+
+        comment_pin: Optional[:obj:`~redbrick.types.task.CommentPin`] = None
+            The pin to add to the comment.
 
         Returns
         -------------

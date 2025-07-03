@@ -8,7 +8,7 @@ import aiohttp
 from redbrick.common.client import RBClient
 from redbrick.common.upload import UploadRepo
 from redbrick.repo.shards import TASK_COMMENT_SHARD
-from redbrick.types.task import InputTask
+from redbrick.types.task import InputTask, CommentPin
 
 
 class UploadRepoImpl(UploadRepo):
@@ -708,6 +708,7 @@ class UploadRepoImpl(UploadRepo):
         stage_name: str,
         text_comment: str,
         reply_to_comment_id: Optional[str] = None,
+        comment_pin: Optional[CommentPin] = None,
     ) -> Optional[Dict]:
         """Create a task comment."""
         query_string = f"""
@@ -719,6 +720,7 @@ class UploadRepoImpl(UploadRepo):
                 $textVal: String!
                 $replyTo: UUID
                 $issueComment: Boolean
+                $pin: PinInput
             ) {{
                 createComment(
                     orgId: $orgId
@@ -728,6 +730,7 @@ class UploadRepoImpl(UploadRepo):
                     textVal: $textVal
                     replyTo: $replyTo
                     issueComment: $issueComment
+                    pin: $pin
                 ) {{
                     {TASK_COMMENT_SHARD}
                 }}
@@ -741,6 +744,7 @@ class UploadRepoImpl(UploadRepo):
             "textVal": text_comment,
             "replyTo": reply_to_comment_id,
             "issueComment": True,
+            "pin": comment_pin,
         }
         result = self.client.execute_query(query_string, variables)
         return result.get("createComment")

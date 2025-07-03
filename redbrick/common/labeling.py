@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import aiohttp
 
 from redbrick.common.storage import StorageMethod
-from redbrick.types.task import OutputTask
+from redbrick.types.task import OutputTask, Comment
 
 
 class LabelingRepo(ABC):
@@ -59,7 +59,7 @@ class LabelingRepo(ABC):
         stage_name: str,
         task_id: str,
         review_val: bool,
-        review_comment: Optional[str] = None,
+        review_comment: Optional[Comment] = None,
     ) -> None:
         """Put review result for task."""
 
@@ -128,7 +128,7 @@ class Labeling(ABC):
         dicom_seg: bool = False,
         mhd: bool = False,
         review_result: Optional[bool] = None,
-        review_comment: Optional[str] = None,
+        review_comment: Optional[Comment] = None,
         label_storage_id: Optional[str] = StorageMethod.REDBRICK,
         label_validate: bool = False,
         prune_segmentations: bool = False,
@@ -209,7 +209,7 @@ class Labeling(ABC):
             Accepts or rejects the task based on the boolean value.
             Applies only to Review stage.
 
-        review_comment: Optional[str] = None
+        review_comment: Optional[:obj:`~redbrick.types.task.Comment`] = None
             Comment for the review result.
             Applies only to Review stage.
 

@@ -1,4 +1,4 @@
-""""""
+"""RedBrick AI Python SDK."""
 
 import sys
 import asyncio
@@ -33,7 +33,7 @@ from .config import config
 from .version_check import version_check
 
 
-__version__ = "2.28.1"
+__version__ = "2.28.2"
 
 # windows event loop close bug https://github.com/encode/httpx/issues/914#issuecomment-622586610
 try:

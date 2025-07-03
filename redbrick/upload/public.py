@@ -30,7 +30,7 @@ from redbrick.utils.upload import (
 from redbrick.utils.async_utils import gather_with_concurrency, get_session
 from redbrick.utils.logging import log_error, logger
 from redbrick.utils.files import get_file_type, is_dicom_file
-from redbrick.types.task import InputTask, OutputTask
+from redbrick.types.task import InputTask, OutputTask, CommentPin
 
 
 class UploadImpl(Upload):
@@ -858,6 +858,7 @@ class UploadImpl(Upload):
         task_id: str,
         text_comment: str,
         reply_to_comment_id: Optional[str] = None,
+        comment_pin: Optional[CommentPin] = None,
     ) -> Dict:
         """Create a task comment.
 
@@ -871,6 +872,9 @@ class UploadImpl(Upload):
 
         reply_to_comment_id: Optional[str] = None
             The comment id to reply to.
+
+        comment_pin: Optional[:obj:`~redbrick.types.task.CommentPin`] = None
+            The pin to add to the comment.
 
         Returns
         -------------
@@ -888,6 +892,7 @@ class UploadImpl(Upload):
             task["currentStageName"],
             text_comment,
             reply_to_comment_id,
+            comment_pin,
         )
         if not comment:
             raise ValueError("Failed to create comment")

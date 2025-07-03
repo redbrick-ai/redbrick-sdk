@@ -11,7 +11,7 @@ from redbrick.utils.rb_label_utils import clean_rb_label, flat_rb_format, user_f
 
 def comment_format(comment: Dict, users: Dict[str, str]) -> Dict:
     """Comment format."""
-    return {
+    comment_obj = {
         "commentId": comment["commentId"],
         "commentText": comment["textVal"],
         "createdBy": user_format(comment["createdBy"]["userId"], users),
@@ -19,6 +19,18 @@ def comment_format(comment: Dict, users: Dict[str, str]) -> Dict:
         "isIssue": comment["issueComment"],
         "issueResolved": comment["issueResolved"],
     }
+
+    if comment.get("pin"):
+        comment_obj["pin"] = {
+            "pinId": comment["pin"]["pinId"],
+            "pointX": comment["pin"]["pointX"],
+            "pointY": comment["pin"]["pointY"],
+            "pointZ": comment["pin"]["pointZ"],
+            "frameIndex": comment["pin"]["frameIndex"],
+            "volumeIndex": comment["pin"]["volumeIndex"],
+        }
+
+    return comment_obj
 
 
 def task_event_format(
