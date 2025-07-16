@@ -117,7 +117,7 @@ def convert_nii_to_dicom_seg(
     return dicom_seg_file
 
 
-def convert_dicom_seg_to_nii(masks: List[str]) -> List[str]:
+def convert_dicom_seg_to_nii(masks: List[str], dicom_series_path: str) -> List[str]:
     """Convert dicom seg to nifti."""
     new_masks: List[str] = []
     for mask in masks:

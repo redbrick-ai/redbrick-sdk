@@ -207,8 +207,15 @@ class UploadRepo(ABC):
         text_comment: str,
         reply_to_comment_id: Optional[str] = None,
         comment_pin: Optional[CommentPin] = None,
+        label_id: Optional[str] = None,
     ) -> Optional[Dict]:
         """Create a task comment."""
+
+    @abstractmethod
+    def delete_comment(
+        self, org_id: str, project_id: str, task_id: str, comment_id: str
+    ) -> None:
+        """Delete a task comment."""
 
 
 class DatasetUpload(ABC):
@@ -623,6 +630,7 @@ class Upload(ABC):
         text_comment: str,
         reply_to_comment_id: Optional[str] = None,
         comment_pin: Optional[CommentPin] = None,
+        label_id: Optional[str] = None,
     ) -> Dict:
         """Create a task comment.
 
@@ -640,8 +648,28 @@ class Upload(ABC):
         comment_pin: Optional[:obj:`~redbrick.types.task.CommentPin`] = None
             The pin to add to the comment.
 
+        label_id: Optional[str] = None
+            Label ID for entity-level comments.
+
         Returns
         -------------
         Dict
             The comment object.
+        """
+
+    @abstractmethod
+    def delete_comment(self, task_id: str, comment_id: str) -> None:
+        """Delete a task comment.
+
+        Parameters
+        --------------
+        task_id: str
+            The task id.
+
+        comment_id: str
+            The comment id to delete.
+
+        Returns
+        -------------
+        None
         """

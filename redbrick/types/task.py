@@ -123,6 +123,9 @@ Comment = Union[str, CommentType]
 class CommonLabelProps(TypedDict, total=False):
     """Full version of :attr:`redbrick.types.task.Series.segmentMap`."""
 
+    #: Label ID.
+    id: NotRequired[str]
+
     #: Taxonomy object category.
     category: Category
 
@@ -151,6 +154,9 @@ SegmentMap = Dict[Union[str, int], Union[str, int, List[str], CommonLabelProps]]
 class InstanceClassification(TypedDict):
     """Instance level classifications for frame-by-frame (video) or slice-by-slice (volume) classifications.."""
 
+    #: Label ID.
+    id: NotRequired[str]
+
     #: For video this is the frameIndex, for DICOM volumes this is the sliceIndex.
     fileIndex: int
 
@@ -173,6 +179,10 @@ class InstanceClassification(TypedDict):
 class Classification(TypedDict):
     """Study or series classification."""
 
+    #: Label ID.
+    id: NotRequired[str]
+
+    #: Classification attributes.
     attributes: NotRequired[Attributes]
 
     #: Linked label group id.
@@ -187,6 +197,9 @@ class Classification(TypedDict):
 
 class Polyline(TypedDict):
     """Open polylines, not supported in 3D images."""
+
+    #: Label ID.
+    id: NotRequired[str]
 
     points: List[Point2D]
     category: Category
@@ -206,6 +219,9 @@ class Polyline(TypedDict):
 class Polygon(TypedDict):
     """Closed polygons, not supported in 3D images."""
 
+    #: Label ID.
+    id: NotRequired[str]
+
     points: List[Point2D]
     category: Category
     attributes: NotRequired[Attributes]
@@ -224,6 +240,9 @@ class Polygon(TypedDict):
 
 class Cuboid(TypedDict):
     """3D bounding boxes for 3D images."""
+
+    #: Label ID.
+    id: NotRequired[str]
 
     #: Top left diagonal corner.
     point1: VoxelPoint
@@ -253,6 +272,9 @@ class BoundingBox(TypedDict):
     .. hint:: See the `following diagram <https://share.redbrickai.com/T0jPZFn9>`_ to understand the coordinate system.
 
     """
+
+    #: Label ID.
+    id: NotRequired[str]
 
     #: Coordinates of the top left of the bounding box.
     pointTopLeft: Point2D
@@ -287,6 +309,9 @@ class Ellipse(TypedDict):
     .. warning:: For DICOM images of a certain type, ellipse annotations might be flipped i.e., rotating the ellipse clockwise would result in counter-clockwise rotation.
         If you encounter these cases, reach out to our support for instructions on how to handle this support@redbrickai.com.
     """
+
+    #: Label ID.
+    id: NotRequired[str]
 
     #: The normalized center of the ellipse.
     pointCenter: Point2D
@@ -323,6 +348,9 @@ class MeasureAngle(TypedDict):
     .. hint:: See `this angle diagram <https://share.redbrickai.com/rqW3sZtf>`_ to understand the coordinate system.
     """
 
+    #: Label ID.
+    id: NotRequired[str]
+
     type: Literal["angle"]
     point1: VoxelPoint
     vertex: VoxelPoint
@@ -358,6 +386,9 @@ class MeasureLength(TypedDict):
     A length measurement is defined by two points, and the length measurement is the distance between the two points.
     """
 
+    #: Label ID.
+    id: NotRequired[str]
+
     type: Literal["length"]
     point1: VoxelPoint
     point2: VoxelPoint
@@ -387,6 +418,9 @@ class MeasureLength(TypedDict):
 class Landmark3D(TypedDict):
     """3D landmark for 3D data."""
 
+    #: Label ID.
+    id: NotRequired[str]
+
     point: VoxelPoint
     category: Category
     attributes: NotRequired[Attributes]
@@ -403,6 +437,9 @@ class Landmark3D(TypedDict):
 
 class Landmark(TypedDict):
     """2D landmark for 2D data."""
+
+    #: Label ID.
+    id: NotRequired[str]
 
     point: Point2D
     category: Category

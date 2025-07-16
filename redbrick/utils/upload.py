@@ -312,8 +312,10 @@ async def convert_dicom_seg_to_nii_labels(
 
             nii_mask = convert_dicom_seg_to_nii(
                 [os.path.join(temp_seg_dir, seg) for seg in os.listdir(temp_seg_dir)],
+                temp_img_dir,
             )
 
+            shutil.rmtree(temp_img_dir)
             if not nii_mask:
                 shutil.rmtree(temp_dir)
                 log_error(

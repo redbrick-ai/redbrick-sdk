@@ -709,6 +709,7 @@ class UploadRepoImpl(UploadRepo):
         text_comment: str,
         reply_to_comment_id: Optional[str] = None,
         comment_pin: Optional[CommentPin] = None,
+        label_id: Optional[str] = None,
     ) -> Optional[Dict]:
         """Create a task comment."""
         query_string = f"""
@@ -721,6 +722,7 @@ class UploadRepoImpl(UploadRepo):
                 $replyTo: UUID
                 $issueComment: Boolean
                 $pin: PinInput
+                labelEntityLabelId: String
             ) {{
                 createComment(
                     orgId: $orgId
@@ -731,6 +733,7 @@ class UploadRepoImpl(UploadRepo):
                     replyTo: $replyTo
                     issueComment: $issueComment
                     pin: $pin
+                    labelEntityLabelId: $labelEntityLabelId
                 ) {{
                     {TASK_COMMENT_SHARD}
                 }}
@@ -745,6 +748,34 @@ class UploadRepoImpl(UploadRepo):
             "replyTo": reply_to_comment_id,
             "issueComment": True,
             "pin": comment_pin,
+            "labelEntityLabelId": label_id,
         }
         result = self.client.execute_query(query_string, variables)
         return result.get("createComment")
+
+    def delete_comment(
+        self, org_id: str, project_id: str, task_id: str, comment_id: str
+    ) -> None:
+        """Delete a task comment."""
+        query_string = f"""
+            mutation deleteCommentSDK(
+                $orgId: UUID!
+                $projectId: UUID!
+                $taskId: UUID!
+                $commentId: UUID!
+            ) {{
+                deleteComment(
+                    orgId: $orgId
+                    projectId: $projectId
+                    taskId: $taskId
+                    commentId: $commentId
+                )
+            }}
+        """
+        variables = {
+            "orgId": org_id,
+            "projectId": project_id,
+            "taskId": task_id,
+            "commentId": comment_id,
+        }
+        self.client.execute_query(query_string, variables)

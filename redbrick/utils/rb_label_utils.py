@@ -399,6 +399,9 @@ def dicom_rb_series(
 
         volume: TaskType.Series = series[volume_index]
         label_obj: TaskType.CommonLabelProps = {}
+        if label.get("labelid"):
+            label_obj["id"] = label["labelid"]
+
         if "category" in label and label["category"] is not None:
             label_obj["category"] = (
                 label["category"]
