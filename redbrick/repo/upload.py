@@ -757,7 +757,7 @@ class UploadRepoImpl(UploadRepo):
         self, org_id: str, project_id: str, task_id: str, comment_id: str
     ) -> None:
         """Delete a task comment."""
-        query_string = f"""
+        query_string = """
             mutation deleteCommentSDK(
                 $orgId: UUID!
                 $projectId: UUID!
