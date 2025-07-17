@@ -722,7 +722,7 @@ class UploadRepoImpl(UploadRepo):
                 $replyTo: UUID
                 $issueComment: Boolean
                 $pin: PinInput
-                labelEntityLabelId: String
+                $labelEntityLabelId: String
             ) {{
                 createComment(
                     orgId: $orgId

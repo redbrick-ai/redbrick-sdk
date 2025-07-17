@@ -302,6 +302,7 @@ TASK_COMMENT_SHARD = """
     stageName
     issueComment
     issueResolved
+    labelEntityLabelId
     replies {
         commentId
         createdBy {
@@ -312,6 +313,7 @@ TASK_COMMENT_SHARD = """
         stageName
         issueComment
         issueResolved
+        labelEntityLabelId
         pin {
             pinId
             pointX

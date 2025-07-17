@@ -20,6 +20,9 @@ def comment_format(comment: Dict, users: Dict[str, str]) -> Dict:
         "issueResolved": comment["issueResolved"],
     }
 
+    if comment.get("labelEntityLabelId"):
+        comment_obj["labelId"] = comment["labelEntityLabelId"]
+
     if comment.get("pin"):
         comment_obj["pin"] = {
             "pinId": comment["pin"]["pinId"],

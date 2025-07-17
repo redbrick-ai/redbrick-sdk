@@ -487,15 +487,17 @@ def dicom_rb_series(
             }
 
         if label.get("tasklevelclassify") or label.get("studyclassify"):
-            output_task["classification"] = {**label_obj}  # type: ignore
+            if "id" not in label_obj or len(label_obj) > 1:
+                output_task["classification"] = {**label_obj}  # type: ignore
         elif label.get("multiclassify") or label.get("seriesclassify"):
-            volume["classifications"] = volume.get("classifications", []) or []
-            volume["classifications"].append(
-                {
-                    **label_obj,  # type: ignore
-                    **video_metadata,  # type: ignore
-                }
-            )
+            if "id" not in label_obj or len(label_obj) > 1 or video_metadata:
+                volume["classifications"] = volume.get("classifications", []) or []
+                volume["classifications"].append(
+                    {
+                        **label_obj,  # type: ignore
+                        **video_metadata,  # type: ignore
+                    }
+                )
         elif label.get("instanceclassify"):
             volume["instanceClassifications"] = (
                 volume.get("instanceClassifications", []) or []
