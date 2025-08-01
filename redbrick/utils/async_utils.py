@@ -98,11 +98,11 @@ async def gather_with_concurrency(
 
 
 @asynccontextmanager
-async def get_session() -> AsyncGenerator[aiohttp.ClientSession, None]:
+async def get_session(api: bool = True) -> AsyncGenerator[aiohttp.ClientSession, None]:
     """Get async client session."""
     async with aiohttp.ClientSession(
         connector=aiohttp.TCPConnector(verify_ssl=config.verify_ssl),
-        timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
+        timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT if api else None),
         trust_env=True,
     ) as session:
         yield session

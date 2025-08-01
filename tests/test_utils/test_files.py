@@ -140,11 +140,15 @@ async def test_download_files(tmpdir):
     download_path = str(tmpdir / "test")
     mock_data = b"some random data"
     mock_response = MagicMock()
+
+    async def mock_iter_chunked(chunk_size):
+        yield mock_data
+
     # Mock aiohttp client session
     with patch("aiohttp.ClientSession.get", return_value=mock_response):
         mock_response.__aenter__.return_value.status = 200
         mock_response.__aenter__.return_value.headers = {}
-        mock_response.__aenter__.return_value.read.return_value = mock_data
+        mock_response.__aenter__.return_value.content.iter_chunked = mock_iter_chunked
         result = await files.download_files([("mock_url", download_path)], zipped=True)
 
     assert result == [download_path + ".gz"]

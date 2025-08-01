@@ -1,10 +1,12 @@
 """Handler for file upload/download."""
 
+import asyncio
 import os
 import gzip
 from typing import Any, Callable, Dict, List, Optional, Tuple, Set
 import urllib.parse
 
+import aiofiles  # type: ignore
 import aiohttp
 from yarl import URL
 from tenacity import Retrying, RetryError
@@ -231,7 +233,7 @@ async def upload_files(
 
         raise ConnectionError(f"Error in uploading {path} to RedBrick")
 
-    async with get_session() as session:
+    async with get_session(api=False) as session:
         coros = [
             _upload_file(session, path, url, file_type)
             for path, url, file_type in files
@@ -242,6 +244,8 @@ async def upload_files(
             progress_bar_name=progress_bar_name,
             keep_progress_bar=keep_progress_bar,
         )
+        await asyncio.sleep(0.5)
+        await session.close()
 
     return uploaded
 
@@ -259,17 +263,25 @@ async def download_files(
     async def _download_file(
         session: aiohttp.ClientSession, url: Optional[str], path: Optional[str]
     ) -> Optional[str]:
-        # pylint: disable=no-member
+        # pylint: disable=no-member, too-many-branches
         if not url or not path:
             logger.debug(f"Downloading empty '{url}' to '{path}'")
             return None
 
         path = urllib.parse.unquote(path)
+        if zipped and not path.endswith(".gz"):
+            path += ".gz"
+
         if not overwrite and os.path.isfile(path):
+            logger.debug(f"File already exists: {path}")
             return path
 
+        if os.path.isdir(path):
+            logger.warning(f"Cannot download to a directory: {path}")
+            return None
+
         headers: Dict = {}
-        data: Optional[bytes] = None
+        tmp_path = f"{path}.tmp"
 
         try:
             for attempt in Retrying(
@@ -285,30 +297,53 @@ async def download_files(
                     async with session.get(
                         URL(url, encoded=True), **request_params
                     ) as response:
+                        if 400 <= response.status < 500:
+                            log_error(f"Client error {response.status} for {url}")
+                            return None
+
+                        response.raise_for_status()
+
                         if response.status == 200:
                             headers = dict(response.headers)
-                            data = await response.read()
-        except RetryError as error:
+                            async with aiofiles.open(tmp_path, "wb") as temp_file:
+                                async for chunk in response.content.iter_chunked(8192):
+                                    await temp_file.write(chunk)
+                            os.replace(tmp_path, path)
+        except Exception as error:  # pylint: disable=broad-except
             log_error(error)
+            if os.path.isfile(tmp_path):
+                os.remove(tmp_path)
             raise Exception("Unknown problem occurred") from error
 
-        if not data:
+        if os.path.isfile(tmp_path):
+            os.remove(tmp_path)
+
+        if not os.path.isfile(path) or not os.path.getsize(path):
             logger.debug(f"Received empty data from '{url}'")
+            if os.path.isfile(path):
+                os.remove(path)
             return None
 
-        if not zipped and headers.get("Content-Encoding") == "gzip":
+        if zipped:
+            with open(path, "rb") as file_:
+                part_data = file_.read(20)
+            if not is_gzipped_data(part_data):
+                with open(path, "rb") as file_:
+                    data = file_.read()
+                data = gzip.compress(data)
+                with open(path, "wb") as file_:
+                    file_.write(data)
+        elif headers.get("Content-Encoding") == "gzip":
+            with open(path, "rb") as file_:
+                data = file_.read()
             try:
                 data = gzip.decompress(data)
             except Exception:  # pylint: disable=broad-except
                 pass
-        if zipped and not is_gzipped_data(data):
-            data = gzip.compress(data)
-        if zipped and not path.endswith(".gz"):
-            path += ".gz"
-        if not overwrite:
-            path = uniquify_path(path)
-        with open(path, "wb") as file_:
-            file_.write(data)
+            else:
+                with open(path, "wb") as file_:
+                    file_.write(data)
+
         return path
 
     dirs: Set[str] = set()
@@ -323,7 +358,7 @@ async def download_files(
             os.makedirs(parent, exist_ok=True)
         dirs.add(parent)
 
-    async with get_session() as session:
+    async with get_session(api=False) as session:
         coros = [_download_file(session, url, path) for url, path in files]
         paths = await gather_with_concurrency(
             MAX_FILE_BATCH_SIZE,
@@ -332,6 +367,7 @@ async def download_files(
             keep_progress_bar=keep_progress_bar,
             return_exceptions=True,
         )
+        await asyncio.sleep(0.5)
         await session.close()
 
     output: List[Optional[str]] = []
@@ -387,7 +423,7 @@ async def is_valid_file_url(url: str) -> bool:
     """Check if the file url is valid."""
     result = False
     url = url.replace("altadb://", "https://")
-    async with get_session() as session:
+    async with get_session(api=False) as session:
         try:
             async with session.get(url) as response:
                 result = response.status == 200
