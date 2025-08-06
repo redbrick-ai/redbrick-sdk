@@ -41,7 +41,7 @@ def test_handle_report(
 
     mock_list_members = Mock(
         return_value=[
-            {"member": {"user": {"userId": "mock_user_id", "email": "mock@email.com"}}},
+            {"user": {"userId": "mock_user_id", "email": "mock@email.com"}},
         ]
     )
     mock_task_events = [
@@ -69,8 +69,12 @@ def test_handle_report(
                     "createdAt": "2023-10-20T14:33:01.540533+00:00",
                     "statusBefore": "ASSIGNED",
                     "statusAfter": "COMPLETED",
-                    "assignedToBefore": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
-                    "assignedToAfter": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                    "assignedToBeforeEntity": {
+                        "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                    },
+                    "assignedToAfterEntity": {
+                        "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                    },
                     "consensusAssigneesBefore": [],
                     "consensusAssigneesAfter": [],
                     "consensusStatusesBefore": [],
@@ -89,7 +93,7 @@ def test_handle_report(
     with (
         patch.object(
             controller.project.project.context.member,
-            "list_project_members",
+            "list_org_members",
             mock_list_members,
         ),
         patch.object(

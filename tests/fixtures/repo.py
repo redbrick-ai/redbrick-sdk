@@ -33,7 +33,10 @@ def get_datapoint_latest_resp(task_id):  # noqa: D103
                         "scores": [],
                         "taskData": {
                             "createdAt": "2023-10-20T14:31:38.610700+00:00",
-                            "createdByEmail": "mock@email.com",
+                            "createdByEntity": {
+                                "userId": "userId",
+                                "email": "mock@email.com",
+                            },
                             "labelsData": "[]",
                             "labelsMap": None,
                             "labelsStorage": {
@@ -51,7 +54,7 @@ def get_datapoint_latest_resp(task_id):  # noqa: D103
                 "subTasks": [],
                 "taskData": {
                     "createdAt": "2023-10-20T14:31:38.610700+00:00",
-                    "createdByEmail": "mock@email.com",
+                    "createdByEntity": {"userId": "userId", "email": "mock@email.com"},
                     "labelsData": "[]",
                     "labelsMap": None,
                     "labelsStorage": {
@@ -104,7 +107,7 @@ def get_datapoint_latest_resp(task_id):  # noqa: D103
             },
             "latestTaskData": {
                 "createdAt": "2023-10-20T14:31:38.610700+00:00",
-                "createdByEmail": "mock@email.com",
+                "createdByEntity": {"userId": "userId", "email": "mock@email.com"},
                 "labelsData": "[]",
                 "labelsMap": None,
                 "labelsStorage": {"storageId": "22222222-2222-2222-2222-222222222222"},
@@ -134,7 +137,10 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                     },
                     "taskData": {
                         "createdAt": "2023-10-20T14:31:38.610835+00:00",
-                        "createdByEmail": "mock@email.com",
+                        "createdByEntity": {
+                            "userId": "userId",
+                            "email": "mock@email.com",
+                        },
                         "labelsData": "[]",
                         "labelsStorage": {
                             "storageId": "22222222-2222-2222-2222-222222222222"
@@ -151,7 +157,10 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                             },
                             "taskData": {
                                 "createdAt": "2023-10-20T14:31:38.610835+00:00",
-                                "createdByEmail": "mock@email.com",
+                                "createdByEntity": {
+                                    "userId": "userId",
+                                    "email": "mock@email.com",
+                                },
                                 "labelsData": "[]",
                                 "labelsStorage": {
                                     "storageId": "22222222-2222-2222-2222-222222222222"
@@ -183,7 +192,7 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                 },
                 "latestTaskData": {
                     "createdAt": "2023-10-20T14:31:38.610835+00:00",
-                    "createdByEmail": "mock@email.com",
+                    "createdByEntity": {"userId": "userId", "email": "mock@email.com"},
                     "labelsData": "[]",
                     "labelsStorage": {
                         "storageId": "22222222-2222-2222-2222-222222222222"
@@ -204,7 +213,10 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                     },
                     "taskData": {
                         "createdAt": "2023-10-20T14:31:38.610700+00:00",
-                        "createdByEmail": "mock@email.com",
+                        "createdByEntity": {
+                            "userId": "userId",
+                            "email": "mock@email.com",
+                        },
                         "labelsData": "[]",
                         "labelsStorage": {
                             "storageId": "22222222-2222-2222-2222-222222222222"
@@ -221,7 +233,10 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                             },
                             "taskData": {
                                 "createdAt": "2023-10-20T14:31:38.610700+00:00",
-                                "createdByEmail": "mock@email.com",
+                                "createdByEntity": {
+                                    "userId": "userId",
+                                    "email": "mock@email.com",
+                                },
                                 "labelsData": "[]",
                                 "labelsStorage": {
                                     "storageId": "22222222-2222-2222-2222-222222222222"
@@ -278,7 +293,7 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                 },
                 "latestTaskData": {
                     "createdAt": "2023-10-20T14:31:38.610700+00:00",
-                    "createdByEmail": "mock@email.com",
+                    "createdByEntity": {"userId": "userId", "email": "mock@email.com"},
                     "labelsData": "[]",
                     "labelsStorage": {
                         "storageId": "22222222-2222-2222-2222-222222222222"
@@ -296,7 +311,10 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                     "assignedTo": None,
                     "taskData": {
                         "createdAt": "2023-10-20T14:33:27.664115+00:00",
-                        "createdByEmail": "mock@email.com",
+                        "createdByEntity": {
+                            "userId": "userId",
+                            "email": "mock@email.com",
+                        },
                         "labelsData": '[{"category":"liver","attributes":[],"classid":0,"labelid":"7f138361-dad9-4a90-853a-cf030a605221","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":0,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":"lung","attributes":[],"classid":1,"labelid":"302a87fc-eabd-402e-a95e-9c32529d2901","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":3,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":null,"attributes":[],"classid":null,"labelid":"d775111e-7a47-445e-9f46-dd84cd64b8ba","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":null,"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":null,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":true,"seriesclassify":null,"instanceclassify":null,"stats":null}]',  # noqa: E501
                         "labelsStorage": {
                             "storageId": "22222222-2222-2222-2222-222222222222"
@@ -324,7 +342,10 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                             },
                             "taskData": {
                                 "createdAt": "2023-10-20T14:33:27.664115+00:00",
-                                "createdByEmail": "mock@email.com",
+                                "createdByEntity": {
+                                    "userId": "userId",
+                                    "email": "mock@email.com",
+                                },
                                 "labelsData": '[{"category":"liver","attributes":[],"classid":0,"labelid":"7f138361-dad9-4a90-853a-cf030a605221","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":0,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":"lung","attributes":[],"classid":1,"labelid":"302a87fc-eabd-402e-a95e-9c32529d2901","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":3,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":null,"attributes":[],"classid":null,"labelid":"d775111e-7a47-445e-9f46-dd84cd64b8ba","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":null,"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":null,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":true,"seriesclassify":null,"instanceclassify":null,"stats":null}]',  # noqa: E501
                                 "labelsStorage": {
                                     "storageId": "22222222-2222-2222-2222-222222222222"
@@ -392,7 +413,7 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                 },
                 "latestTaskData": {
                     "createdAt": "2023-10-20T14:33:27.664115+00:00",
-                    "createdByEmail": "mock@email.com",
+                    "createdByEntity": {"userId": "userId", "email": "mock@email.com"},
                     "labelsData": '[{"category":"liver","attributes":[],"classid":0,"labelid":"7f138361-dad9-4a90-853a-cf030a605221","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":0,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":"lung","attributes":[],"classid":1,"labelid":"302a87fc-eabd-402e-a95e-9c32529d2901","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":3,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":null,"attributes":[],"classid":null,"labelid":"d775111e-7a47-445e-9f46-dd84cd64b8ba","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":null,"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":null,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":true,"seriesclassify":null,"instanceclassify":null,"stats":null}]',  # noqa: E501
                     "labelsStorage": {
                         "storageId": "22222222-2222-2222-2222-222222222222"
@@ -463,7 +484,7 @@ get_datapoints_latest_resp: t.Dict[str, t.Any] = {
                 },
                 "latestTaskData": {
                     "createdAt": "2023-10-20T14:32:32.204050+00:00",
-                    "createdByEmail": "mock@email.com",
+                    "createdByEntity": {"userId": "userId", "email": "mock@email.com"},
                     "labelsData": '[{"category":"liver","attributes":[],"classid":0,"labelid":"5542d87c-c0d2-49ca-a7d8-c04f825c7a32","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":0,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":"lung","attributes":[],"classid":1,"labelid":"89f52268-c5fb-40a3-ad88-0a3720854028","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":1,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":"kidney","attributes":[],"classid":2,"labelid":"ebaf2efc-3460-4115-b0a2-b4b5c237e19f","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":{"instanceid":1,"groupids":null},"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":2,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":null,"seriesclassify":null,"instanceclassify":null,"stats":null},{"category":null,"attributes":[],"classid":null,"labelid":"22d4cfc6-fe75-482c-8448-c377163bd66d","bbox2d":null,"point":null,"polyline":null,"polygon":null,"pixel":null,"ellipse":null,"dicom":null,"point3d":null,"bbox3d":null,"length3d":null,"angle3d":null,"volumeindex":null,"frameclassify":null,"taskclassify":null,"tasklevelclassify":null,"multiclassify":null,"frameindex":null,"trackid":null,"keyframe":null,"end":null,"dummy":null,"confidence":null,"ocrvalue":null,"studyclassify":true,"seriesclassify":null,"instanceclassify":null,"stats":null}]',  # noqa: E501
                     "labelsStorage": {
                         "storageId": "22222222-2222-2222-2222-222222222222"
@@ -609,8 +630,10 @@ task_events_resp = {
                         "createdAt": "2023-10-20T14:31:54.133802+00:00",
                         "statusBefore": "UNASSIGNED",
                         "statusAfter": "ASSIGNED",
-                        "assignedToBefore": None,
-                        "assignedToAfter": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                        "assignedToBeforeEntity": None,
+                        "assignedToAfterEntity": {
+                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                        },
                         "consensusAssigneesBefore": [],
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
@@ -623,8 +646,12 @@ task_events_resp = {
                         "createdAt": "2023-10-20T14:33:27.906925+00:00",
                         "statusBefore": "ASSIGNED",
                         "statusAfter": "COMPLETED",
-                        "assignedToBefore": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
-                        "assignedToAfter": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                        "assignedToBeforeEntity": {
+                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                        },
+                        "assignedToAfterEntity": {
+                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                        },
                         "consensusAssigneesBefore": [],
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
@@ -704,8 +731,10 @@ task_events_resp = {
                         "createdAt": "2023-10-20T14:31:49.584739+00:00",
                         "statusBefore": "UNASSIGNED",
                         "statusAfter": "ASSIGNED",
-                        "assignedToBefore": None,
-                        "assignedToAfter": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                        "assignedToBeforeEntity": None,
+                        "assignedToAfterEntity": {
+                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                        },
                         "consensusAssigneesBefore": [],
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
@@ -718,8 +747,12 @@ task_events_resp = {
                         "createdAt": "2023-10-20T14:32:32.487699+00:00",
                         "statusBefore": "ASSIGNED",
                         "statusAfter": "COMPLETED",
-                        "assignedToBefore": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
-                        "assignedToAfter": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                        "assignedToBeforeEntity": {
+                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                        },
+                        "assignedToAfterEntity": {
+                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                        },
                         "consensusAssigneesBefore": [],
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
@@ -762,8 +795,10 @@ task_events_resp = {
                         "createdAt": "2023-10-20T14:32:48.469884+00:00",
                         "statusBefore": "UNASSIGNED",
                         "statusAfter": "ASSIGNED",
-                        "assignedToBefore": None,
-                        "assignedToAfter": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                        "assignedToBeforeEntity": None,
+                        "assignedToAfterEntity": {
+                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                        },
                         "consensusAssigneesBefore": [],
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],
@@ -776,8 +811,12 @@ task_events_resp = {
                         "createdAt": "2023-10-20T14:33:01.540533+00:00",
                         "statusBefore": "ASSIGNED",
                         "statusAfter": "COMPLETED",
-                        "assignedToBefore": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
-                        "assignedToAfter": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7",
+                        "assignedToBeforeEntity": {
+                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                        },
+                        "assignedToAfterEntity": {
+                            "userId": "1c643889-5a8b-4b20-8e48-14e9cbd5eeb7"
+                        },
                         "consensusAssigneesBefore": [],
                         "consensusAssigneesAfter": [],
                         "consensusStatusesBefore": [],

@@ -75,7 +75,7 @@ def test_handle_export(
             "itemsPresigned": [],
             "name": "mock_dp",
             "createdAt": "2023-10-20T14:31:38.610700+00:00",
-            "createdByEntity": {"email": "mock@email.com"},
+            "createdByEntity": {"userId": "userId", "email": "mock@email.com"},
             "storageMethod": {"storageId": "11111111-1111-1111-1111-111111111111"},
             "seriesInfo": [
                 {
@@ -89,7 +89,7 @@ def test_handle_export(
         },
         "latestTaskData": {
             "createdAt": "2023-10-20T14:31:38.610700+00:00",
-            "createdByEmail": "mock@email.com",
+            "createdByEntity": {"userId": "userId", "email": "mock@email.com"},
             "labelsData": json.dumps([]),
             "labelsStorage": {"storageId": "22222222-2222-2222-2222-222222222222"},
             "labelsMap": None,

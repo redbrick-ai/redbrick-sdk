@@ -19,7 +19,7 @@ def test_user_format():
     """Test  rb_label_utils.user_format function"""
     users = {"RB:123": "System", "API:456": "API Key", "user123": "User123"}
     assert rb_label_utils.user_format("RB:123", users) == "System"
-    assert rb_label_utils.user_format("API:456", users) == "API Key"
+    assert rb_label_utils.user_format("API:456", users) == "API Key - API Key"
     assert rb_label_utils.user_format("user123", users) == "User123"
     assert rb_label_utils.user_format("unknown_user", users) == "unknown_user"
 
@@ -77,7 +77,7 @@ def test_from_rb_consensus_info():
     datapoint = repo_fixtures.get_datapoints_latest_resp["tasksPaged"]["entries"][2]
     consensus_info = datapoint["currentStageSubTask"]["consensusInfo"][0]
     expected_result = {
-        "assignee": "API Key",
+        "assignee": "API Key - API:08f698f7-4cf3-4299-bb83-52a3fe9c7517",
         "updatedAt": "2023-10-20T14:33:27.664115+00:00",
         "labels": [
             {

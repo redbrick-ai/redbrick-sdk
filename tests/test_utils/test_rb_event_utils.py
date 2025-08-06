@@ -9,7 +9,7 @@ from redbrick.utils import rb_event_utils
 
 
 @pytest.mark.unit
-def test_comment_format():
+def test_comment_format() -> None:
     """Test a basic comment"""
     comment = {
         "commentId": 1,
@@ -32,7 +32,7 @@ def test_comment_format():
 
 
 @pytest.mark.unit
-def test_task_event_format():
+def test_task_event_format() -> None:
     """Test a task creation event"""
     task: Dict = {
         "genericEvents": [
@@ -42,7 +42,7 @@ def test_task_event_format():
                     "isGroundTruth": False,
                     "currentStageName": "Label",
                 },
-                "taskData": {"createdBy": "user1"},
+                "taskData": {"createdBy": {"userId": "user1"}},
                 "createdAt": "2023-10-20T14:31:44.252197+00:00",
             }
         ],
@@ -136,7 +136,7 @@ def test_task_event_format_additional_paths():
                 "consensusStatusesBefore": ["IN_PROGRESS"],
                 "consensusStatusesAfter": ["SKIPPED"],
                 "stageNameAfter": "Review",
-                "assignedToAfter": "user3",
+                "assignedToAfterEntity": {"userId": "user3"},
                 "createdAt": "2023-10-20T14:31:44.252197+00:00",
                 "reviewResultBefore": None,
                 "reviewResultAfter": None,
