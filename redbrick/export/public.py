@@ -1307,9 +1307,7 @@ class ExportImpl(Export):
                 task_obj["updatedAt"] = task["updatedAt"]
 
             if datapoint.get("createdByEntity"):
-                task_obj["createdBy"] = user_format(
-                    datapoint["createdByEntity"].get("userId"), users
-                )
+                task_obj["createdBy"] = user_format(datapoint["createdByEntity"], users)
             if task["priority"]:
                 task_obj["priority"] = task["priority"]
             if datapoint.get("metaData"):
@@ -1502,7 +1500,7 @@ class ExportImpl(Export):
                     "projectId": self.project.project_id,
                     "stageName": stage_name,
                     "taskId": task["taskId"],
-                    "completedBy": user_format(task["user"]["userId"], users),
+                    "completedBy": user_format(task["user"], users),
                     "timeSpent": task["timeSpent"],
                     "completedAt": task["date"],
                     "cycle": task["cycle"],

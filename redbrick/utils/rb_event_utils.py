@@ -14,7 +14,7 @@ def comment_format(comment: Dict, users: Dict[str, str]) -> Dict:
     comment_obj = {
         "commentId": comment["commentId"],
         "commentText": comment["textVal"],
-        "createdBy": user_format(comment["createdBy"]["userId"], users),
+        "createdBy": user_format(comment["createdBy"], users),
         "stage": comment["stageName"],
         "isIssue": comment["issueComment"],
         "issueResolved": comment["issueResolved"],

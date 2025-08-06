@@ -61,7 +61,7 @@ def assignee_format(
     if not task:
         return None
 
-    user_val = user_format((task.get("assignedTo", {}) or {}).get("userId"), users)
+    user_val = user_format(task.get("assignedTo") or {}, users)
     if not user_val:
         return None
 
@@ -121,14 +121,7 @@ def from_rb_sub_task(task: Dict) -> Dict:
     assignee = task.get("assignedTo", {}) or {}
     return {
         "status": task.get("state"),
-        "assignee": user_format(
-            assignee.get("userId"),
-            {
-                assignee.get("userId", ""): assignee.get(
-                    "email", assignee.get("userId", "")
-                )
-            },
-        ),
+        "assignee": user_format(assignee),
         **from_rb_task_data(task.get("taskData", {}) or {}),
     }
 
@@ -138,29 +131,13 @@ def from_rb_consensus_info(task: Dict) -> Dict:
     scores = []
     for task_score in task.get("scores", []) or []:
         assignee = task_score["user"]
-        score: Dict[str, Any] = {
-            "assignee": user_format(
-                assignee.get("userId"),
-                {
-                    assignee.get("userId", ""): assignee.get(
-                        "email", assignee.get("userId", "")
-                    )
-                },
-            )
-        }
+        score: Dict[str, Any] = {"assignee": user_format(assignee)}
         score["score"] = (task_score.get("score", 0) or 0) * 100
         scores.append(score)
 
     assignee = task.get("user", {}) or {}
     return {
-        "assignee": user_format(
-            assignee.get("userId"),
-            {
-                assignee.get("userId", ""): assignee.get(
-                    "email", assignee.get("userId", "")
-                )
-            },
-        ),
+        "assignee": user_format(assignee),
         **from_rb_task_data(task.get("taskData", {}) or {}),
         "scores": scores,
     }
