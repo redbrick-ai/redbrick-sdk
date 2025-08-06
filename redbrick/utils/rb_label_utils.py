@@ -20,15 +20,38 @@ def clean_rb_label(label: Dict) -> Dict:
     return label
 
 
-def user_format(user: Optional[str], users: Dict[str, str]) -> Optional[str]:
+def user_format(
+    user: Optional[Union[str, Dict]], users: Optional[Dict[str, str]] = None
+) -> Optional[str]:
     """User format."""
     if not user:
-        return user
+        return None
+
+    users = users or {}
+    if isinstance(user, dict):
+        return (
+            user_format(
+                user["userId"],
+                {
+                    **{
+                        user["userId"]: (  # type: ignore
+                            user.get("givenName")
+                            if user["userId"].startswith("API:")
+                            else user.get("email")
+                        )
+                    },
+                    **users,
+                },
+            )
+            if user.get("userId")
+            else None
+        )
+
     if user.startswith("RB:"):
         return "System"
     if user.startswith("API:"):
-        return "API Key"
-    return users.get(user, user)
+        return f"API Key - {users.get(user) or user}"
+    return users.get(user) or user
 
 
 def assignee_format(
