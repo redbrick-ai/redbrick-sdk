@@ -1269,12 +1269,11 @@ class ExportImpl(Export):
         else:
             raise ValueError(f"Invalid task filter: {search}")
 
-        members = self.context.member.list_project_members(
-            self.project.org_id, self.project.project_id
-        )
+        members = self.context.member.list_org_members(self.project.org_id, False)
+
         users = {}
         for member in members:
-            user = member.get("member", {}).get("user", {})
+            user = member.get("user", {})
             if user.get("userId") and user.get("email"):
                 users[user["userId"]] = user["email"]
 
@@ -1392,12 +1391,11 @@ class ExportImpl(Export):
             }]
         """
         # pylint: disable=too-many-locals
-        members = self.context.member.list_project_members(
-            self.project.org_id, self.project.project_id
-        )
+        members = self.context.member.list_org_members(self.project.org_id, False)
+
         users = {}
         for member in members:
-            user = member.get("member", {}).get("user", {})
+            user = member.get("user", {})
             if user.get("userId") and user.get("email"):
                 users[user["userId"]] = user["email"]
 
@@ -1478,12 +1476,11 @@ class ExportImpl(Export):
                 "cycle": number  # Task cycle
             }]
         """
-        members = self.context.member.list_project_members(
-            self.project.org_id, self.project.project_id
-        )
+        members = self.context.member.list_org_members(self.project.org_id, False)
+
         users = {}
         for member in members:
-            user = member.get("member", {}).get("user", {})
+            user = member.get("user", {})
             if user.get("userId") and user.get("email"):
                 users[user["userId"]] = user["email"]
 
