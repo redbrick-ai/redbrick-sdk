@@ -6,7 +6,12 @@ from dateutil import parser  # type: ignore
 
 from redbrick.common.export import ExportRepo, TaskFilterParams
 from redbrick.common.client import RBClient
-from redbrick.repo.shards import datapoint_shard, task_shard, router_task_shard
+from redbrick.repo.shards import (
+    USER_SHARD,
+    datapoint_shard,
+    task_shard,
+    router_task_shard,
+)
 
 
 class ExportRepoImpl(ExportRepo):
@@ -246,7 +251,7 @@ class ExportRepoImpl(ExportRepo):
                     currentStageSubTask {{
                         ... on LabelingTask {{
                             assignedTo {{
-                                userId
+                                {USER_SHARD}
                             }}
                             state
                             assignedAt
@@ -255,7 +260,7 @@ class ExportRepoImpl(ExportRepo):
                             completionTimeMs
                             subTasks {{
                                 assignedTo {{
-                                    userId
+                                    {USER_SHARD}
                                 }}
                                 state
                                 assignedAt
@@ -387,7 +392,7 @@ class ExportRepoImpl(ExportRepo):
         after: Optional[str] = None,
     ) -> Tuple[List[Dict], Optional[str]]:
         """Get task active time."""
-        query_string = """
+        query_string = f"""
         query taskActiveTimeSDK(
             $orgId: UUID!
             $projectId: UUID!
@@ -395,7 +400,7 @@ class ExportRepoImpl(ExportRepo):
             $taskId: UUID
             $first: Int
             $after: String
-        ) {
+        ) {{
             taskActiveTime(
                 orgId: $orgId
                 projectId: $projectId
@@ -403,19 +408,19 @@ class ExportRepoImpl(ExportRepo):
                 taskId: $taskId
                 first: $first
                 after: $after
-            ) {
-                entries {
+            ) {{
+                entries {{
                     taskId
-                    user {
-                        userId
-                    }
+                    user {{
+                        {USER_SHARD}
+                    }}
                     timeSpent
                     cycle
                     date
-                }
+                }}
                 cursor
-            }
-        }
+            }}
+        }}
         """
 
         query_variables = {

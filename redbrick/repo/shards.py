@@ -1,5 +1,11 @@
 """Partial queries to prevent duplication."""
 
+USER_SHARD = """
+userId
+email
+givenName
+"""
+
 ORG_INVITE_SHARD = """
 email
 role
@@ -25,13 +31,13 @@ lastSeen
 """
 
 
-STORAGE_METHOD_SHARD = """
+STORAGE_METHOD_SHARD = f"""
 orgId
 storageId
 name
 provider
-details {
-    ... on S3BucketStorageDetails {
+details {{
+    ... on S3BucketStorageDetails {{
         bucket
         region
         duration
@@ -39,14 +45,14 @@ details {
         roleArn
         endpoint
         accelerate
-    }
-    ... on GCSBucketStorageDetails {
+    }}
+    ... on GCSBucketStorageDetails {{
         bucket
-    }
-}
-createdBy {
-    userId
-}
+    }}
+}}
+createdBy {{
+    {USER_SHARD}
+}}
 createdAt
 deleted
 """
@@ -227,37 +233,37 @@ objectTypes {{
 }}
 """
 
-TASK_DATA_SHARD = """
+TASK_DATA_SHARD = f"""
     createdAt
-    createdByEmail
+    createdByEntity {{
+        {USER_SHARD}
+    }}
     labelsData(interpolate: true)
     labelsDataPath(presigned: false)
-    labelsStorage {
+    labelsStorage {{
         storageId
-    }
-    labelsMap(presigned: false) {
+    }}
+    labelsMap(presigned: false) {{
         seriesIndex
         imageIndex
         labelName
-    }
+    }}
 """
 
-NORMAL_TASK_SHARD = """
-    ... on LabelingTask {
+NORMAL_TASK_SHARD = f"""
+    ... on LabelingTask {{
         state
-        assignedTo {
-            userId
-            email
-        }
-    }
+        assignedTo {{
+            {USER_SHARD}
+        }}
+    }}
 """
 
 CONSENSUS_TASK_SHARD = f"""
     ... on LabelingTask {{
         state
         assignedTo {{
-            userId
-            email
+            {USER_SHARD}
         }}
         taskData {{
             {TASK_DATA_SHARD}
@@ -265,8 +271,7 @@ CONSENSUS_TASK_SHARD = f"""
         subTasks {{
             state
             assignedTo {{
-                userId
-                email
+                {USER_SHARD}
             }}
             taskData {{
                 {TASK_DATA_SHARD}
@@ -275,16 +280,14 @@ CONSENSUS_TASK_SHARD = f"""
         overallConsensusScore
         consensusInfo {{
             user {{
-                userId
-                email
+                {USER_SHARD}
             }}
             taskData {{
                 {TASK_DATA_SHARD}
             }}
             scores {{
                 user {{
-                    userId
-                    email
+                    {USER_SHARD}
                 }}
                 score
             }}
@@ -292,45 +295,45 @@ CONSENSUS_TASK_SHARD = f"""
     }}
 """
 
-TASK_COMMENT_SHARD = """
+TASK_COMMENT_SHARD = f"""
     commentId
-    createdBy {
-        userId
-    }
+    createdBy {{
+        {USER_SHARD}
+    }}
     textVal
     createdAt
     stageName
     issueComment
     issueResolved
     labelEntityLabelId
-    replies {
+    replies {{
         commentId
-        createdBy {
-            userId
-        }
+        createdBy {{
+            {USER_SHARD}
+        }}
         textVal
         createdAt
         stageName
         issueComment
         issueResolved
         labelEntityLabelId
-        pin {
+        pin {{
             pinId
             pointX
             pointY
             pointZ
             frameIndex
             volumeIndex
-        }
-    }
-    pin {
+        }}
+    }}
+    pin {{
         pinId
         pointX
         pointY
         pointZ
         frameIndex
         volumeIndex
-    }
+    }}
 """
 
 
@@ -343,8 +346,7 @@ def datapoint_shard(raw_items: bool, presigned_items: bool) -> str:
         {"itemsPresigned:items(presigned: true)" if presigned_items else ""}
         createdAt
         createdByEntity {{
-            userId
-            email
+            {USER_SHARD}
         }}
         metaData
         seriesInfo {{
@@ -445,8 +447,12 @@ def router_task_shard(with_labels: bool) -> str:
                 createdAt
                 statusBefore
                 statusAfter
-                assignedToBefore
-                assignedToAfter
+                assignedToBeforeEntity {{
+                    {USER_SHARD}
+                }}
+                assignedToAfterEntity {{
+                    {USER_SHARD}
+                }}
                 consensusAssigneesBefore
                 consensusAssigneesAfter
                 consensusStatusesBefore

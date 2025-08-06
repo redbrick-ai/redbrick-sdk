@@ -287,7 +287,7 @@ def parse_entry_latest(item: Dict) -> Dict:
         name = datapoint["name"]
         created_by = (datapoint.get("createdByEntity", {}) or {}).get("email")
         created_at = datapoint["createdAt"]
-        updated_by = task_data.get("createdByEmail")
+        updated_by = user_format(task_data.get("createdByEntity"))
         updated_at = task_data.get("createdAt")
 
         if task_data.get("labelsDataPath"):

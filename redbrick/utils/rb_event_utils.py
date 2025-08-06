@@ -103,21 +103,21 @@ def task_event_format(
                 prev_stage = task_event["outputEvent"]["currentStageName"]
 
             if with_labels and task_event.get("taskData"):
-                updated_by = task_event["taskData"]["createdByEmail"]
-                updated_at = task_event["taskData"]["createdAt"]
-                if task_event["taskData"].get("labelsDataPath"):
+                task_data = task_event["taskData"]
+                updated_by = user_format(task_data.get("createdByEntity"))
+
+                updated_at = task_data["createdAt"]
+                if task_data.get("labelsDataPath"):
                     labels = None
-                    labels_data_path = task_event["taskData"]["labelsDataPath"]
+                    labels_data_path = task_data["labelsDataPath"]
                 else:
                     labels = [
                         clean_rb_label(label)
-                        for label in json.loads(
-                            task_event["taskData"].get("labelsData") or "[]"
-                        )
+                        for label in json.loads(task_data.get("labelsData") or "[]")
                     ]
                     labels_data_path = None
-                label_storage_id = task_event["taskData"]["labelsStorage"]["storageId"]
-                labels_map = task_event["taskData"].get("labelsMap", []) or []
+                label_storage_id = task_data["labelsStorage"]["storageId"]
+                labels_map = task_data.get("labelsMap", []) or []
                 task_datapoint_attributes: Optional[List[Dict]] = task["datapoint"].get(
                     "attributes"
                 )
@@ -178,38 +178,40 @@ def task_event_format(
                     )
                 ]
 
-            elif task_event["assignedToBefore"] != task_event["assignedToAfter"]:
-                if not task_event["assignedToAfter"]:
+            elif (task_event.get("assignedToBeforeEntity") or {}).get("userId") != (
+                task_event.get("assignedToAfterEntity") or {}
+            ).get("userId"):
+                if not task_event.get("assignedToAfterEntity"):
                     event_type = TaskEventTypes.TASK_UNASSIGNED
                     event["prevAssignee"] = user_format(
-                        task_event["assignedToBefore"], users
+                        task_event["assignedToBeforeEntity"], users
                     )
-                elif task_event["assignedToBefore"]:
+                elif task_event.get("assignedToBeforeEntity"):
                     event_type = TaskEventTypes.TASK_REASSIGNED
                     event["assignee"] = user_format(
-                        task_event["assignedToAfter"], users
+                        task_event["assignedToAfterEntity"], users
                     )
                     event["prevAssignee"] = user_format(
-                        task_event["assignedToBefore"], users
+                        task_event["assignedToBeforeEntity"], users
                     )
                 else:
                     event_type = TaskEventTypes.TASK_ASSIGNED
                     event["assignee"] = user_format(
-                        task_event["assignedToAfter"], users
+                        task_event["assignedToAfterEntity"], users
                     )
 
             elif task_event["statusBefore"] != task_event["statusAfter"]:
                 if task_event["statusAfter"] == "SKIPPED":
                     event_type = TaskEventTypes.TASK_SKIPPED
                     event["assignee"] = user_format(
-                        task_event["assignedToAfter"], users
+                        task_event.get("assignedToAfterEntity"), users
                     )
                 elif task_event["statusAfter"] == "IN_PROGRESS" and task_event[
                     "statusBefore"
                 ] in ("SKIPPED", "ASSIGNED"):
                     event_type = TaskEventTypes.TASK_SAVED
                     event["assignee"] = user_format(
-                        task_event["assignedToAfter"], users
+                        task_event.get("assignedToAfterEntity"), users
                     )
                     if type_pos.get(TaskEventTypes.TASK_SAVED, -1) >= 0:
                         events.pop(type_pos[TaskEventTypes.TASK_SAVED])
@@ -220,7 +222,7 @@ def task_event_format(
             if task_event["stageNameAfter"]:
                 prev_stage = task_event["stageNameAfter"]
 
-            prev_assignee = task_event["assignedToAfter"]
+            prev_assignee = task_event["assignedToAfterEntity"]
 
         if event_type:
             events.append(
