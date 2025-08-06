@@ -34,6 +34,25 @@ class MemberRepoImpl(MemberRepo):
         members: List[Dict] = result["members"]
         return members
 
+    def list_api_keys(self, org_id: str) -> List[Dict]:
+        """Get a list of all API keys."""
+        query_string = """
+        query apiKeysSDK(
+            $orgId: UUID!
+        ) {
+            apiKeys(
+                orgId: $orgId
+            ) {
+                keyId
+                keyName
+            }
+        }
+        """
+        query_variables = {"orgId": org_id}
+        result = self.client.execute_query(query_string, query_variables)
+        api_keys: List[Dict] = result["apiKeys"]
+        return api_keys
+
     def toggle_org_members_status(
         self, org_id: str, user_ids: List[str], active: bool
     ) -> None:

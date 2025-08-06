@@ -222,6 +222,10 @@ class MemberRepo(ABC):
         """Get a list of all org members."""
 
     @abstractmethod
+    def list_api_keys(self, org_id: str) -> List[Dict]:
+        """Get a list of all API keys."""
+
+    @abstractmethod
     def toggle_org_members_status(
         self, org_id: str, user_ids: List[str], active: bool
     ) -> None:
