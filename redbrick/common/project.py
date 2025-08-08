@@ -4,6 +4,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Tuple, Optional
 from abc import ABC, abstractmethod
 
+import aiohttp
+
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
 
 
@@ -65,7 +67,9 @@ class ProjectRepo(ABC):
         """Unarchive Project."""
 
     @abstractmethod
-    def delete_project(self, org_id: str, project_id: str) -> bool:
+    async def delete_project(
+        self, session: aiohttp.ClientSession, org_id: str, project_id: str
+    ) -> bool:
         """Delete Project."""
 
     @abstractmethod

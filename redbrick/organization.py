@@ -1,5 +1,6 @@
 """Organization class."""
 
+import asyncio
 from datetime import datetime
 from functools import partial
 from typing import Any, List, Optional, Dict, Sequence, Union
@@ -8,11 +9,13 @@ import platform
 from dateutil import parser  # type: ignore
 from tqdm import tqdm  # type: ignore
 
+from redbrick.common.constants import MAX_CONCURRENCY
 from redbrick.common.entities import RBOrganization, RBDataset, RBWorkspace, RBProject
 from redbrick.common.member import OrgMember
 from redbrick.common.context import RBContext
 from redbrick.config import config
 from redbrick.dataset import RBDatasetImpl
+from redbrick.utils.async_utils import gather_with_concurrency, get_session
 from redbrick.workspace import RBWorkspaceImpl
 from redbrick.project import RBProjectImpl
 from redbrick.types.taxonomy import Attribute, ObjectType, Taxonomy
@@ -417,13 +420,45 @@ class RBOrganizationImpl(RBOrganization):
             return False
         return self.context.project.unarchive_project(self._org_id, project_id)
 
+    async def _delete_projects(self, project_ids: List[str]) -> List[bool]:
+        """Delete a list of projects by ID."""
+        async with get_session() as session:
+            res = await gather_with_concurrency(
+                MAX_CONCURRENCY,
+                *[
+                    self.context.project.delete_project(
+                        session=session, org_id=self._org_id, project_id=project_id
+                    )
+                    for project_id in project_ids
+                ],
+                progress_bar_name=f"Deleting {len(project_ids)} archived project(s)",
+                keep_progress_bar=True,
+            )
+
+        return res
+
     def delete_project(self, project_id: str) -> bool:
         """Delete a project by ID."""
         project = self.get_project(project_id, include_archived=True)
         if not project.archived:
             log_error("Please archive the project before deleting it")
             return False
-        return self.context.project.delete_project(self._org_id, project_id)
+
+        return asyncio.run(self._delete_projects([project_id]))[0]
+
+    def delete_projects(self, project_ids: List[str]) -> None:
+        """Delete a list of projects by ID."""
+        projects = self.projects_raw(include_archived=True)
+        asyncio.run(
+            self._delete_projects(
+                [
+                    project["projectId"]
+                    for project in projects
+                    if project["status"] == "REMOVING"
+                    and project["projectId"] in project_ids
+                ]
+            )
+        )
 
     def labeling_time(
         self, start_date: datetime, end_date: datetime, concurrency: int = 50

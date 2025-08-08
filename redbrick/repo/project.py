@@ -4,6 +4,8 @@ import json
 from typing import Any, List, Dict, Tuple, Optional
 from datetime import datetime
 
+import aiohttp
+
 from redbrick.common.client import RBClient
 from redbrick.common.project import ProjectRepo
 from redbrick.repo.shards import PROJECT_SHARD, STAGE_SHARD, TAXONOMY_SHARD
@@ -202,7 +204,9 @@ class ProjectRepoImpl(ProjectRepo):
         )
         return (response.get("restoreProject") or {}).get("ok") or False
 
-    def delete_project(self, org_id: str, project_id: str) -> bool:
+    async def delete_project(
+        self, session: aiohttp.ClientSession, org_id: str, project_id: str
+    ) -> bool:
         """Delete Project."""
         query = """
             mutation removeProjectSDK($orgId: UUID!, $projectId: UUID!) {
@@ -211,8 +215,8 @@ class ProjectRepoImpl(ProjectRepo):
                 }
             }
         """
-        response = self.client.execute_query(
-            query, {"orgId": org_id, "projectId": project_id}
+        response = await self.client.execute_query_async(
+            session, query, {"orgId": org_id, "projectId": project_id}
         )
         return (response.get("removeProject") or {}).get("ok") or False
 

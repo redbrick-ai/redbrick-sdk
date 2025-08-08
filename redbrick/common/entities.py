@@ -235,6 +235,10 @@ class RBOrganization(ABC):
         """Delete a project by ID."""
 
     @abstractmethod
+    def delete_projects(self, project_ids: List[str]) -> None:
+        """Delete a list of projects by ID."""
+
+    @abstractmethod
     def labeling_time(
         self, start_date: datetime, end_date: datetime, concurrency: int = 50
     ) -> List[Dict]:
