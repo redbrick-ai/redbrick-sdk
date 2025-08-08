@@ -48,7 +48,9 @@ class RBOrganization(ABC):
         """Retrieve unique name of this organization."""
 
     @abstractmethod
-    def taxonomies(self, only_name: bool = True) -> Union[List[str], List[Taxonomy]]:
+    def taxonomies(
+        self, only_name: bool = True, concurrency: int = 10
+    ) -> Union[List[str], List[Taxonomy]]:
         """Get a list of taxonomy names/objects in the organization."""
 
     @abstractmethod

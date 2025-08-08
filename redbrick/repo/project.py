@@ -142,17 +142,19 @@ class ProjectRepoImpl(ProjectRepo):
         )
         return response["projects"]
 
-    def get_taxonomies(self, org_id: str) -> List[Taxonomy]:
+    def get_taxonomies(
+        self, org_id: str, first: int = 50, skip: int = 0
+    ) -> List[Taxonomy]:
         """Get a list of taxonomies."""
         query = f"""
-            query getTaxonomiesSDK($orgId: UUID!) {{
-                taxonomies(orgId: $orgId) {{
+            query getTaxonomiesSDK($orgId: UUID!, $first: Int, $skip: Int) {{
+                taxonomies(orgId: $orgId, first: $first, skip: $skip) {{
                     {TAXONOMY_SHARD}
                 }}
             }}
         """
         response: Dict[str, List[Taxonomy]] = self.client.execute_query(
-            query, {"orgId": org_id}
+            query, {"orgId": org_id, "first": first, "skip": skip}
         )
         return response["taxonomies"]
 

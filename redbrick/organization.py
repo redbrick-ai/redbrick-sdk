@@ -56,11 +56,26 @@ class RBOrganizationImpl(RBOrganization):
         org = self.context.project.get_org(self._org_id)
         self._name = org["name"]
 
-    def taxonomies(self, only_name: bool = True) -> Union[List[str], List[Taxonomy]]:
+    def taxonomies(
+        self, only_name: bool = True, concurrency: int = 10
+    ) -> Union[List[str], List[Taxonomy]]:
         """Get a list of taxonomy names/objects in the organization."""
-        taxonomies = self.context.project.get_taxonomies(self._org_id)
+        concurrency = min(max(1, concurrency), MAX_CONCURRENCY)
+        offset = 0
+        taxonomies: List[Taxonomy] = []
+
+        while True:
+            batched = self.context.project.get_taxonomies(
+                self._org_id, concurrency, offset
+            )
+            taxonomies.extend(batched)
+            if len(batched) < concurrency:
+                break
+            offset += concurrency
+
         if only_name:
             return [tax["name"] for tax in taxonomies]
+
         return list(map(format_taxonomy, taxonomies))
 
     def workspaces_raw(self) -> List[Dict]:
