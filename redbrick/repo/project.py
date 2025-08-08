@@ -160,8 +160,8 @@ class ProjectRepoImpl(ProjectRepo):
         )
         return response["taxonomies"]
 
-    def delete_taxonomy(
-        self, org_id: str, tax_id: Optional[str], name: Optional[str]
+    async def delete_taxonomy(
+        self, session: aiohttp.ClientSession, org_id: str, tax_id: str
     ) -> bool:
         """Delete Taxonomy."""
         query = """
@@ -171,8 +171,22 @@ class ProjectRepoImpl(ProjectRepo):
                 }
             }
         """
+        response = await self.client.execute_query_async(
+            session, query, {"orgId": org_id, "taxId": tax_id, "name": None}
+        )
+        return (response.get("removeTaxonomy") or {}).get("ok") or False
+
+    def delete_taxonomy_by_name(self, org_id: str, name: str) -> bool:
+        """Delete Taxonomy by name."""
+        query = """
+            mutation removeTaxonomySDK($orgId: UUID!, $taxId: UUID, $name: String) {
+                removeTaxonomy(orgId: $orgId, taxId: $taxId, name: $name) {
+                    ok
+                }
+            }
+        """
         response = self.client.execute_query(
-            query, {"orgId": org_id, "taxId": tax_id, "name": name}
+            query, {"orgId": org_id, "taxId": None, "name": name}
         )
         return (response.get("removeTaxonomy") or {}).get("ok") or False
 

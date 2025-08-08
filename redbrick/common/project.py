@@ -53,10 +53,14 @@ class ProjectRepo(ABC):
         """Get a list of taxonomies."""
 
     @abstractmethod
-    def delete_taxonomy(
-        self, org_id: str, tax_id: Optional[str], name: Optional[str]
+    async def delete_taxonomy(
+        self, session: aiohttp.ClientSession, org_id: str, tax_id: str
     ) -> bool:
         """Delete Taxonomy."""
+
+    @abstractmethod
+    def delete_taxonomy_by_name(self, org_id: str, name: str) -> bool:
+        """Delete Taxonomy by name."""
 
     @abstractmethod
     def archive_project(self, org_id: str, project_id: str) -> bool:

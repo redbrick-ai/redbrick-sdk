@@ -16,7 +16,7 @@ RedBrick
 Organization
 ----------------------
 .. autoclass:: redbrick.RBOrganization
-   :members: name, org_id, create_dataset, create_workspace, create_project, create_project_advanced, get_dataset, get_project, workspaces_raw, projects_raw, projects, delete_dataset, archive_project, unarchive_project, delete_project, delete_projects, taxonomies, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy, delete_taxonomy
+   :members: name, org_id, create_dataset, create_workspace, create_project, create_project_advanced, get_dataset, get_project, workspaces_raw, projects_raw, projects, delete_dataset, archive_project, unarchive_project, delete_project, delete_projects, taxonomies, labeling_time, create_taxonomy, get_taxonomy, update_taxonomy, delete_taxonomy, delete_taxonomies
    :show-inheritance:
 
 Team

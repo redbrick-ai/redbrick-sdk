@@ -315,6 +315,10 @@ class RBOrganization(ABC):
     ) -> bool:
         """Delete a taxonomy by name or ID."""
 
+    @abstractmethod
+    def delete_taxonomies(self, tax_ids: List[str]) -> None:
+        """Delete a list of taxonomies by ID."""
+
 
 class RBDataset(ABC):
     """Abstract interface to RBDataset.

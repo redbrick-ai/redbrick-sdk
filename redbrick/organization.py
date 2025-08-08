@@ -578,11 +578,39 @@ class RBOrganizationImpl(RBOrganization):
         ):
             logger.info(f"Successfully updated taxonomy: {tax_id}")
 
+    async def _delete_taxonomies(self, tax_ids: List[str]) -> List[bool]:
+        """Delete a list of taxonomies by ID."""
+        async with get_session() as session:
+            res = await gather_with_concurrency(
+                MAX_CONCURRENCY,
+                *[
+                    self.context.project.delete_taxonomy(
+                        session=session, org_id=self._org_id, tax_id=tax_id
+                    )
+                    for tax_id in tax_ids
+                ],
+                progress_bar_name=f"Deleting {len(tax_ids)} taxonomies",
+                keep_progress_bar=True,
+            )
+
+        return res
+
     def delete_taxonomy(
         self, name: Optional[str] = None, tax_id: Optional[str] = None
     ) -> bool:
         """Delete a taxonomy by name or ID."""
-        return self.context.project.delete_taxonomy(self._org_id, tax_id, name)
+        if not tax_id:
+            if not name:
+                log_error("Please provide taxonomy name or ID to delete")
+                return False
+
+            return self.context.project.delete_taxonomy_by_name(self._org_id, name)
+
+        return asyncio.run(self._delete_taxonomies([tax_id]))[0]
+
+    def delete_taxonomies(self, tax_ids: List[str]) -> None:
+        """Delete a list of taxonomies by ID."""
+        asyncio.run(self._delete_taxonomies(tax_ids))
 
     def self_health_check(self, self_url: str) -> Optional[str]:
         """Send a health check update from the model server."""
